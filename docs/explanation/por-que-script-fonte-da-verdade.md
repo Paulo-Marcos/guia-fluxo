@@ -1,5 +1,7 @@
 # Por que o script e a fonte da verdade
 
+> Decisao canonica registrada em [ADR-0001](../adr/0001-script-fonte-da-verdade.md). Este texto e a versao pedagogica - leia o ADR para o resumo objetivo.
+
 ## O problema com agentes "livres"
 
 Sem processo, um agente de IA esquece o que esta fazendo entre turnos. Sintomas tipicos:

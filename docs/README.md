@@ -47,3 +47,4 @@ Esta separacao nao se confunde com [`../README.md`](../README.md) (porta de entr
 ## Outros documentos nesta pasta
 
 - [`ROADMAP.md`](ROADMAP.md) - planejamento de versoes. Nao e Diataxis (e planejamento de projeto, nao documentacao de uso).
+- [`adr/`](adr/) - Architecture Decision Records. Registros curtos das decisoes arquiteturais (Contexto / Decisao / Consequencias). Nao e Diataxis (e historico de decisoes, nao documentacao de uso).

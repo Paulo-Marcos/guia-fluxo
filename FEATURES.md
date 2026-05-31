@@ -4,7 +4,7 @@
 
 ## [F-006] Smoke test do fluxo basico do pack (ai init -> feature -> ready -> finish)
 
-- **Status:** Em desenvolvimento
+- **Status:** Aguardando validacao
 - **Origem:** AI process (2026-05-31)
 - **Tipo:** Feature
 - **Contexto:** Sem teste automatizado, toda mudanca em ai.py ou render-skills.py e um pulo no escuro: hoje so se sabe que finish --lock ainda funciona rodando manualmente, o que e caro e ninguem faz sempre. Smoke test (engenharia eletrica: liga o aparelho, se nao soltou fumaca o primeiro check passou) cobre o caminho feliz mais comum num arquivo enxuto (~20 linhas, ~2s) e pega 80% das regressoes. Para o pack: tests/test_smoke.py cria diretorio temporario, roda em sequencia ai init / ai feature 'teste' / ai ready F-001 / ai finish F-001 e valida que .ai/tasks.json terminou com status 'Validada' no fim. Justamente porque o projeto e pequeno a barreira pra adicionar 1 teste e baixissima e ganha-se tranquilidade pra refatorar sem medo. Pendencias: (a) escolher framework (unittest da stdlib evita dependencia nova), (b) integrar no .github/workflows/ que entra via F-005 (rodar nos PRs), (c) documentar como rodar em CONTRIBUTING.md.
@@ -12,19 +12,23 @@
 ### Arquivos modificados/criados
 
 - `FEATURES.md`
+- `tests/test_smoke.py`
+- `.ai/tasks.json`
+- `.ai/current-task.json`
 
 ### O que foi feito
 
 - Demanda criada via ai-process.
+- tests/test_smoke.py adicionado: ~30 linhas, stdlib unittest (zero deps), roda init/feature/ready/finish num tempdir e valida que tasks.json terminou com status Validada. Smoke test sem framework externo.
 
 ### Validacao feita
 
-- Nenhuma.
+- python -m unittest tests.test_smoke -v -> OK, 1 teste passou em 1.365s.
 
 ### Validacao pendente
 
-- Executar implementacao e validacoes.
-
+- Plugar o teste no workflow CI que entra com F-005 (.github/workflows/).
+- Documentar 'como rodar testes' no CONTRIBUTING.md.
 
 ## [F-005] Pasta .github/ - templates de issue/PR e workflows (lock-check, render-check)
 
@@ -64,7 +68,7 @@
 
 ## [I-003] Arquivos de governanca faltando (LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, AGENTS.md, CLAUDE.md)
 
-- **Status:** Em desenvolvimento
+- **Status:** Validada
 - **Origem:** Revisao externa de governanca (2026-05-31)
 - **Tipo:** Issue / regressao
 - **Contexto:** Projeto serio no GitHub precisa de arquivos de governanca minimos. Hoje faltam: LICENSE (README diz 'a definir' = porta fechada para adocao, advogado nao deixa clonar repo sem licenca; sem licenca explicita, copyright manda 'todos os direitos reservados' por padrao), CONTRIBUTING.md (como rodar testes, padrao de commit, fluxo de PR; sem isso cada PR chega bagunçado e gasta tempo educando), SECURITY.md (canal privado para reportar falha; sem isso GitHub deixa o botao 'Report a vulnerability' apontando para issue publica e expoe vulnerabilidade), CODE_OF_CONDUCT.md (Contributor Covenant; comunidade toxica afasta contribuidor), AGENTS.md e CLAUDE.md na raiz (instrucoes para os agentes Claude Code/Codex/Cursor lerem ao abrir o repo - convencao emergente). Decisao: usar MIT como licenca (mais permissiva, alinha com extracao de gerador-cortes). LICENSE entra ja nesta issue; demais arquivos sao itens desta demanda.
@@ -72,19 +76,39 @@
 ### Arquivos modificados/criados
 
 - `FEATURES.md`
+- `LICENSE`
+- `CONTRIBUTING.md`
+- `SECURITY.md`
+- `CODE_OF_CONDUCT.md`
+- `AGENTS.md`
+- `CLAUDE.md`
+- `README.md`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+- `docs/README.md`
+- `docs/explanation/por-que-lock.md`
+- `docs/explanation/por-que-script-fonte-da-verdade.md`
 
 ### O que foi feito
 
 - Demanda criada via ai-process.
+- Adicionados os 5 arquivos de governanca + LICENSE MIT (entregue na resposta anterior) + atualizacao do README com secao 'Contribuindo' e troca de 'A definir' por link para MIT.
+- LICENSE: MIT padrao, copyright 2026 Paulo Marcos.
+- CONTRIBUTING.md: pre-requisitos, setup, fluxo via ai-process (issue/feature -> ready -> finish), edicao de skills via manifest + render, padrao de commit (feature:/issue:/chore: + [unlock:<id>]), PR.
+- SECURITY.md: canal privado paulolinhodboa@gmail.com + GitHub Security Advisory, prazos (5 dias uteis para acuse, 10 para avaliacao), escopo (bypass de lock/render, corrupcao de .ai, injecao em CLI).
+- CODE_OF_CONDUCT.md: Contributor Covenant v2.1 traduzido, contato paulolinhodboa@gmail.com.
+- AGENTS.md: brief generico (Codex/Cursor/Antigravity) - regras nao-negociaveis (script e fonte de verdade, nao editar skills/generated, respeitar lock), fluxo padrao, comandos uteis, anti-padroes.
+- CLAUDE.md: brief especifico Claude Code - skills locais, PowerShell, regras + verificacao antes de entregar, anti-padroes.
+- Demanda finalizada via ai-process.
 
 ### Validacao feita
 
-- Nenhuma.
+- .\\scripts\\ai.ps1 doctor => AI process files OK.
+- python scripts/render-skills.py --check => OK, 16 alvos em sincronia com o manifest
 
 ### Validacao pendente
 
-- Executar implementacao e validacoes.
-
+- Nenhuma.
 
 ## [F-004] Dogfood do proprio pack: ai init + githooks + features/
 

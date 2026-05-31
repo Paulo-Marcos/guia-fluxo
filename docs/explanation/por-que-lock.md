@@ -1,5 +1,7 @@
 # Por que travar arquivos
 
+> Decisao canonica sobre o mecanismo de unlock registrada em [ADR-0002](../adr/0002-lock-por-commit-message.md). Este texto cobre o "por que travar" (motivacao); o ADR cobre o "como" (marca por commit-message).
+
 ## O problema
 
 Agentes de IA (Claude, Cursor, Codex, Cline, Copilot, etc.) editam codigo livremente. Sem barreira, qualquer "limpeza de codigo" no chat seguinte pode quebrar uma feature que ja estava homologada e em uso real.

@@ -48,8 +48,16 @@ Documentacao organizada via [Diataxis](https://diataxis.fr/) - quatro portas por
 - [`docs/explanation/visao-geral.md`](docs/explanation/visao-geral.md) — desenho do processo: skill, script, JSON, YAML, hooks.
 - [`docs/reference/cli.md`](docs/reference/cli.md) — todos os comandos de `ai.py` / `ai.ps1`.
 - [`docs/how-to/`](docs/how-to/) — receitas: travar arquivo, promover backlog, renomear chat, etc.
+- [`docs/adr/`](docs/adr/) — Architecture Decision Records (decisoes arquiteturais e o porque).
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — proximas versoes.
 - [`CHANGELOG.md`](CHANGELOG.md) — historico de mudancas.
+
+## Contribuindo
+
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — pre-requisitos, fluxo de demanda, padrao de commit, PR.
+- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) — Contributor Covenant v2.1.
+- [`SECURITY.md`](SECURITY.md) — como reportar vulnerabilidade em canal privado.
+- [`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md) — briefing para agentes que abrirem o repo.
 
 ## Licenca
 

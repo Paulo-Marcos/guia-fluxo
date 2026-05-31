@@ -1,6 +1,6 @@
 {
-  "taskId": "F-005",
+  "taskId": "I-003",
   "status": "Validada",
-  "title": "Pasta .github/ - templates de issue/PR e workflows (lock-check, render-check)",
-  "chatTitle": "F-005 - #FINALIZADO - Pasta .github/ - templates de issue/PR e workflows (lock-check, render-check)"
+  "title": "Arquivos de governanca faltando (LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, AGENTS.md, CLAUDE.md)",
+  "chatTitle": "I-003 - #FINALIZADO - Arquivos de governanca faltando (LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, AGENTS.md, CLAUDE.md)"
 }
