@@ -1,4 +1,4 @@
-# Veja docs/PROTOCOL.md para o protocolo e formato.
+# Schema e protocolo: docs/reference/registry-yaml.md e docs/explanation/por-que-lock.md.
 # Edicao via CLI (recomendado): python bin/check-lock.py lock|unlock
 # Ou edite manualmente preservando o schema abaixo.
 

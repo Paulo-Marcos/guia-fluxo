@@ -134,7 +134,7 @@
 
 ## [I-002] Diátaxis para docs/: confirmar escopo vs README/CHANGELOG e implementar
 
-- **Status:** Em desenvolvimento
+- **Status:** Validada
 - **Origem:** AI process (2026-05-31)
 - **Tipo:** Issue / regressao
 - **Contexto:** Diátaxis para docs/: confirmar escopo vs README/CHANGELOG e implementar
@@ -142,19 +142,48 @@
 ### Arquivos modificados/criados
 
 - `FEATURES.md`
+- `docs/README.md`
+- `docs/tutorials/primeiro-uso.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/how-to/configurar-hooks-git.md`
+- `docs/how-to/promover-backlog.md`
+- `docs/how-to/renomear-chat.md`
+- `docs/how-to/travar-arquivo.md`
+- `docs/how-to/editar-arquivo-travado.md`
+- `docs/how-to/destravar-arquivo.md`
+- `docs/how-to/renomear-arquivo-travado.md`
+- `docs/how-to/auditar-desbloqueios.md`
+- `docs/reference/cli.md`
+- `docs/reference/files.md`
+- `docs/reference/registry-yaml.md`
+- `docs/reference/hooks-git.md`
+- `docs/reference/chat-rename-suporte.md`
+- `docs/reference/troubleshooting.md`
+- `docs/explanation/visao-geral.md`
+- `docs/explanation/por-que-script-fonte-da-verdade.md`
+- `docs/explanation/por-que-lock.md`
+- `docs/explanation/convencoes-de-lock.md`
+- `docs/explanation/por-que-diataxis.md`
+- `README.md`
+- `CHANGELOG.md`
+- `features/registry.yaml`
+- `templates/features/registry.yaml`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
 
 ### O que foi feito
 
 - Demanda criada via ai-process.
+- docs/ reorganizada via Diataxis: 1 tutorial, 9 how-tos, 6 references, 5 explanations. Removidos AI_PROCESS/PROTOCOL/HOOKS/INSTALL (conteudo migrado sem perda). README, CHANGELOG e comments do registry atualizados.
+- Demanda finalizada via ai-process.
 
 ### Validacao feita
 
-- Nenhuma.
+- ls docs/ confirma estrutura; grep por docs/AI_PROCESS|PROTOCOL|HOOKS|INSTALL retorna so historico imutavel (CHANGELOG, FEATURES.md, .ai/tasks.json) e a explanation por-que-diataxis.md (referencia intencional ao antes)
 
 ### Validacao pendente
 
-- Executar implementacao e validacoes.
-
+- Nenhuma.
 
 ## [F-001] Reestruturar skills/ com generated/ e deprecar .claude/commands
 

@@ -4,6 +4,14 @@ Todas as mudancas notaveis deste projeto serao documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
 versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
+## [Unreleased]
+
+### Changed
+- `docs/` reorganizada via framework [Diataxis](https://diataxis.fr/): conteudo separado em `tutorials/`, `how-to/`, `reference/` e `explanation/`. Indice em [`docs/README.md`](docs/README.md). README do projeto atualizado para apontar para a nova estrutura.
+
+### Removed
+- `docs/AI_PROCESS.md`, `docs/PROTOCOL.md`, `docs/HOOKS.md`, `docs/INSTALL.md` (conteudo migrado para a nova estrutura Diataxis sem perda).
+
 ## [0.1.0] - 2026-05-31
 
 ### Added

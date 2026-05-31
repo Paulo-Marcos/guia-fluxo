@@ -24,7 +24,7 @@ e inicialize:
 git config core.hooksPath .githooks
 ```
 
-Lista completa de arquivos a copiar: [`docs/INSTALL.md`](docs/INSTALL.md).
+Lista completa de arquivos a copiar: [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md).
 
 ## Uso
 
@@ -41,13 +41,16 @@ API/comando da ferramenta quando disponivel.
 
 ## Documentacao
 
-- [`docs/AI_PROCESS.md`](docs/AI_PROCESS.md) — desenho do processo, fluxo completo, comandos e paridade entre agentes.
-- [`docs/INSTALL.md`](docs/INSTALL.md) — lista de arquivos a copiar e bootstrap em outro projeto.
-- [`docs/PROTOCOL.md`](docs/PROTOCOL.md) — protocolo de lock de funcionalidades.
-- [`docs/HOOKS.md`](docs/HOOKS.md) — uso dos hooks git.
+Documentacao organizada via [Diataxis](https://diataxis.fr/) - quatro portas por intencao do leitor.
+
+- [`docs/`](docs/) — indice completo (tutorials, how-to, reference, explanation).
+- [`docs/tutorials/primeiro-uso.md`](docs/tutorials/primeiro-uso.md) — do clone ate finalizar a primeira demanda.
+- [`docs/explanation/visao-geral.md`](docs/explanation/visao-geral.md) — desenho do processo: skill, script, JSON, YAML, hooks.
+- [`docs/reference/cli.md`](docs/reference/cli.md) — todos os comandos de `ai.py` / `ai.ps1`.
+- [`docs/how-to/`](docs/how-to/) — receitas: travar arquivo, promover backlog, renomear chat, etc.
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — proximas versoes.
 - [`CHANGELOG.md`](CHANGELOG.md) — historico de mudancas.
 
 ## Licenca
 
-A definir.
+[MIT](LICENSE). Copyright (c) 2026 Paulo Marcos.
