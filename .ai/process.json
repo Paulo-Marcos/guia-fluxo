@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "name": "ai-process",
+  "projectName": "ai-process-pack",
+  "ids": {
+    "featurePrefix": "F",
+    "issuePrefix": "I",
+    "backlogPrefix": "B",
+    "digits": 3
+  },
+  "chatTitleFormat": "{id} - #{statusTag} - {title}",
+  "ready": {
+    "status": "Aguardando validacao",
+    "runValidationByDefault": false,
+    "validationCommands": []
+  },
+  "finish": {
+    "status": "Validada",
+    "runValidationByDefault": false,
+    "validationCommands": [],
+    "commitByDefault": true,
+    "lockOnFinish": false
+  },
+  "validate": {
+    "status": "Validada",
+    "deprecatedAliasFor": "finish --no-commit",
+    "lockOnValidate": false
+  }
+}

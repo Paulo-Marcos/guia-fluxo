@@ -1,0 +1,14 @@
+#!/bin/sh
+# Git hook commit-msg - valida travas em features/registry.yaml.
+# Instale uma vez por clone:
+#     git config core.hooksPath .githooks
+
+ROOT="$(git rev-parse --show-toplevel)"
+PY=$(command -v python3 || command -v python)
+
+if [ -z "$PY" ]; then
+    echo "Erro: Python nao encontrado no PATH. Hook abortado." >&2
+    exit 2
+fi
+
+exec "$PY" "$ROOT/bin/check-lock.py" hook "$1"

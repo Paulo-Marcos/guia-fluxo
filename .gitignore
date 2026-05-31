@@ -3,3 +3,7 @@ __pycache__/
 .venv/
 .DS_Store
 Thumbs.db
+
+# AI process: volateis por execucao, ficam locais
+.ai/chat-title.txt
+.ai/reports/

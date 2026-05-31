@@ -2,9 +2,33 @@
 
 ---
 
+## [I-003] Arquivos de governanca faltando (LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, AGENTS.md, CLAUDE.md)
+
+- **Status:** Em desenvolvimento
+- **Origem:** Revisao externa de governanca (2026-05-31)
+- **Tipo:** Issue / regressao
+- **Contexto:** Projeto serio no GitHub precisa de arquivos de governanca minimos. Hoje faltam: LICENSE (README diz 'a definir' = porta fechada para adocao, advogado nao deixa clonar repo sem licenca; sem licenca explicita, copyright manda 'todos os direitos reservados' por padrao), CONTRIBUTING.md (como rodar testes, padrao de commit, fluxo de PR; sem isso cada PR chega bagunçado e gasta tempo educando), SECURITY.md (canal privado para reportar falha; sem isso GitHub deixa o botao 'Report a vulnerability' apontando para issue publica e expoe vulnerabilidade), CODE_OF_CONDUCT.md (Contributor Covenant; comunidade toxica afasta contribuidor), AGENTS.md e CLAUDE.md na raiz (instrucoes para os agentes Claude Code/Codex/Cursor lerem ao abrir o repo - convencao emergente). Decisao: usar MIT como licenca (mais permissiva, alinha com extracao de gerador-cortes). LICENSE entra ja nesta issue; demais arquivos sao itens desta demanda.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Executar implementacao e validacoes.
+
+
 ## [F-004] Dogfood do proprio pack: ai init + githooks + features/
 
-- **Status:** Aguardando validacao
+- **Status:** Validada
 - **Origem:** AI process (2026-05-31)
 - **Tipo:** Feature
 - **Contexto:** Pack ensina .ai/ e FEATURES.md mas o repo nao usa: process.json e backlog.json faltam (ai doctor falha), .githooks/ nao instalado, features/registry.yaml ausente. Sem self-use o repo perde credibilidade e o pack nao recebe feedback de seu primeiro usuario. Instalar bootstrap completo aqui mesmo (modelo A: commitar JSON state, gitignore reports/chat-title).
@@ -18,6 +42,8 @@
 - `.githooks/commit-msg`
 - `features/registry.yaml`
 - `features/lock-ignore.txt`
+- `.ai/tasks.json`
+- `.ai/current-task.json`
 
 ### O que foi feito
 
@@ -25,6 +51,7 @@
 - ai init criou .ai/process.json e .ai/backlog.json (doctor agora passa).
 - Templates copiados para raiz: .githooks/commit-msg, features/registry.yaml, features/lock-ignore.txt.
 - .gitignore exclui .ai/chat-title.txt e .ai/reports/ (volateis); demais JSONs do .ai/ ficam versionados para cross-clone.
+- Pack agora dogfooda a si mesmo: bootstrap completo (ai init + .githooks/ + features/) instalado e versionado. Proximo melhoria entra como F-005/I-003 via ai feature/issue, fechando o ciclo.
 
 ### Validacao feita
 
@@ -34,8 +61,7 @@
 
 ### Validacao pendente
 
-- Ativar hook por clone: git config core.hooksPath .githooks (opcional, local).
-- Commit dos artefatos (vai precisar de [unlock:adicoes-exigem-autorizacao] se o hook estiver ativo, pois sao arquivos novos).
+- Nenhuma.
 
 ## [F-003] Diferenciar descriptions das skills para evitar trigger collision
 
