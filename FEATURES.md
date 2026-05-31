@@ -2,6 +2,45 @@
 
 ---
 
+## [F-008] Criar ADRs iniciais (4 decisoes fundadoras)
+
+- **Status:** Validada
+- **Origem:** AI process (2026-05-31)
+- **Tipo:** Feature
+- **Contexto:** Em 6 meses, contribuidor novo (ou voce mesmo) abre o repo, ve uma decisao 'estranha' (script como fonte de verdade, lock por commit-message, JSON+Markdown dual, chat-title sincronizado), refaz tudo, quebra caso ja resolvido. ADR e vacina contra retrabalho. Criados em docs/adr/: README+template+4 ADRs. Linkados a partir de explanation/ (decisao canonica vs ensinamento pedagogico) e do README raiz. Estrutura segue convencao classica: NNNN-kebab.md, status (Proposta/Aceita/Substituida/Depreciada), secoes Contexto/Decisao/Consequencias/Alternativas/Links.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `docs/adr/README.md`
+- `docs/adr/template.md`
+- `docs/adr/0001-script-fonte-da-verdade.md`
+- `docs/adr/0002-lock-por-commit-message.md`
+- `docs/adr/0003-json-maquina-markdown-humano.md`
+- `docs/adr/0004-chat-title-sincronizado.md`
+- `docs/README.md`
+- `docs/explanation/por-que-script-fonte-da-verdade.md`
+- `docs/explanation/por-que-lock.md`
+- `README.md`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Criada estrutura docs/adr/ com README (indice+convencoes), template, e 4 ADRs iniciais (script fonte de verdade, lock por commit-message, JSON/Markdown dual, chat-title sincronizado). Links cruzados: docs/README.md e README.md raiz apontam para adr/; explanation/por-que-script-fonte-da-verdade.md e explanation/por-que-lock.md ganharam banner apontando o ADR como decisao canonica (explanation continua como versao pedagogica). Convencao: NNNN-kebab.md, status Proposta/Aceita/Substituida/Depreciada, secoes Contexto/Decisao/Consequencias/Alternativas/Links.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- python scripts/ai.py doctor -> AI process files OK.
+- python scripts/render-skills.py --check -> OK: 16 alvo(s) em sincronia com o manifest.
+- ls docs/adr/ confirma 6 arquivos: README.md, template.md, 0001..0004.
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [F-007] .editorconfig e .gitattributes para padronizar line endings cross-platform
 
 - **Status:** Validada

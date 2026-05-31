@@ -1,6 +1,6 @@
 {
-  "taskId": "F-007",
+  "taskId": "F-008",
   "status": "Validada",
-  "title": ".editorconfig e .gitattributes para padronizar line endings cross-platform",
-  "chatTitle": "F-007 - #FINALIZADO - .editorconfig e .gitattributes para padronizar line endings cross-platform"
+  "title": "Criar ADRs iniciais (4 decisoes fundadoras)",
+  "chatTitle": "F-008 - #FINALIZADO - Criar ADRs iniciais (4 decisoes fundadoras)"
 }
