@@ -1,0 +1,50 @@
+# Controla como o git trata cada tipo de arquivo no commit/checkout.
+# Sem isso, mesma linha gravada no Windows (CRLF) e Mac (LF) aparece como
+# diff inteiro. E pior: scripts shell com CRLF sao recusados pelo bash.
+#
+# Regra geral: armazena em LF no repo, checkout LF na maquina.
+# Excecao: PowerShell e batch ficam CRLF mesmo no checkout (Windows-first).
+
+# Default: detecta texto vs binario; texto normaliza para LF.
+* text=auto eol=lf
+
+# --- Shell / bash (LF obrigatorio - bash recusa CRLF) ---
+*.sh                    text eol=lf
+*.bash                  text eol=lf
+.githooks/*             text eol=lf
+templates/.githooks/*   text eol=lf
+
+# --- Python (PEP 8: LF) ---
+*.py                    text eol=lf
+
+# --- PowerShell (CRLF para compatibilidade com Windows PowerShell 5.1) ---
+*.ps1                   text eol=crlf
+*.psm1                  text eol=crlf
+*.psd1                  text eol=crlf
+
+# --- Batch / cmd (Windows-nativo: CRLF) ---
+*.bat                   text eol=crlf
+*.cmd                   text eol=crlf
+
+# --- Config / dados / docs (LF) ---
+*.yml                   text eol=lf
+*.yaml                  text eol=lf
+*.json                  text eol=lf
+*.toml                  text eol=lf
+*.ini                   text eol=lf
+*.md                    text eol=lf
+*.txt                   text eol=lf
+
+# --- Binarios (nunca normalizar) ---
+*.png                   binary
+*.jpg                   binary
+*.jpeg                  binary
+*.gif                   binary
+*.ico                   binary
+*.svg                   text eol=lf
+*.pdf                   binary
+*.zip                   binary
+*.gz                    binary
+*.tar                   binary
+*.woff                  binary
+*.woff2                 binary

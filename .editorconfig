@@ -1,0 +1,37 @@
+# editorconfig.org - padroniza editores (VS Code, JetBrains, Vim, etc).
+# Complementa .gitattributes: editorconfig age na hora de gravar no editor,
+# gitattributes age no commit/checkout. Os dois precisam concordar.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Dados e config usam 2 espacos por convencao.
+[*.{yml,yaml,json,toml}]
+indent_size = 2
+
+# Markdown: dois espacos no fim da linha viram <br>, nao podem ser trimados.
+[*.md]
+trim_trailing_whitespace = false
+
+# PowerShell (Windows PowerShell 5.1) trabalha melhor com CRLF.
+[*.{ps1,psm1,psd1}]
+end_of_line = crlf
+
+# Batch/cmd sao nativos do Windows: CRLF.
+[*.{bat,cmd}]
+end_of_line = crlf
+
+# Git hooks sao shell scripts (sem extensao) - bash recusa CRLF.
+[{.githooks/*,templates/.githooks/*}]
+end_of_line = lf
+
+# Makefile exige tab real.
+[Makefile]
+indent_style = tab

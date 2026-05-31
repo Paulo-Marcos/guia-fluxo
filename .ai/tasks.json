@@ -2,6 +2,32 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "F-007",
+      "kind": "feature",
+      "title": ".editorconfig e .gitattributes para padronizar line endings cross-platform",
+      "status": "Validada",
+      "origin": "AI process (2026-05-31)",
+      "context": "Sem .gitattributes, Windows commita CRLF e Mac/Linux LF: diff inteiro fantasma a cada PR. Pior: pack tem .githooks/commit-msg (shell sem extensao) - bash recusa executar com CRLF, entao o primeiro Mac que clonar quebra o hook de lock. Roadmap promete Unix em v0.3 - sem isso, regressao garantida. Solucao: (a) .editorconfig (UTF-8, LF default, 4 espacos; YAML/JSON 2; Markdown sem trim; ps1/bat CRLF; hooks LF) que padroniza editores (VS Code, JetBrains, Vim leem nativamente); (b) .gitattributes que forca eol=lf no commit/checkout por default e overrides eol=crlf para *.ps1/*.psm1/*.psd1/*.bat/*.cmd e eol=lf explicito para .githooks/* e templates/.githooks/* (cobre o commit-msg sem extensao). Caveats: arquivos ja tracked com CRLF (FEATURES.md, skills/generated/**/SKILL.md) ficam stale ate rodar git add --renormalize . em commit separado; scripts/render-skills.py grava com newline do SO (write_text sem newline=) - fix de 1 linha que fica como follow-up.",
+      "createdAt": "2026-05-31",
+      "updatedAt": "2026-05-31",
+      "modifiedFiles": [
+        "FEATURES.md",
+        ".editorconfig",
+        ".gitattributes",
+        ".ai/current-task.json",
+        ".ai/tasks.json"
+      ],
+      "summary": [
+        "Demanda criada via ai-process.",
+        "Adicionados .editorconfig e .gitattributes na raiz. .editorconfig (UTF-8, LF default, 4 espacos; YAML/JSON/TOML em 2; Markdown sem trim_trailing_whitespace; *.ps1/*.psm1/*.psd1/*.bat/*.cmd em CRLF; .githooks/* e templates/.githooks/* em LF; Makefile com tab) padroniza editores VS Code/JetBrains/Vim. .gitattributes (* text=auto eol=lf como base; overrides eol=crlf para PowerShell e batch; eol=lf explicito para .sh/.bash/Python/YAML/JSON/TOML/INI/MD/TXT e para .githooks/* e templates/.githooks/* que cobrem commit-msg sem extensao; *.png/jpg/jpeg/gif/ico/pdf/zip/gz/tar/woff/woff2 marcados binary) garante normalizacao no commit. Validado via git check-attr: .githooks/commit-msg=lf, scripts/ai.ps1=crlf, scripts/ai.py=lf, templates/.githooks/commit-msg=lf.",
+        "Demanda finalizada via ai-process."
+      ],
+      "validations": [
+        "python scripts/ai.py doctor => AI process files OK. python scripts/render-skills.py --check => OK: 16 alvo(s) em sincronia com o manifest. git check-attr -a confirma rules aplicadas nos arquivos-chave."
+      ],
+      "pending": []
+    },
+    {
       "id": "F-006",
       "kind": "feature",
       "title": "Smoke test do fluxo basico do pack (ai init -> feature -> ready -> finish)",
