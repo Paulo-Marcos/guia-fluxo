@@ -1,0 +1,11 @@
+# Veja docs/PROTOCOL.md para o protocolo e formato.
+# Edicao via CLI (recomendado): python bin/check-lock.py lock|unlock
+# Ou edite manualmente preservando o schema abaixo.
+
+version: 1
+locks:
+- id: adicoes-exigem-autorizacao
+  description: Qualquer arquivo novo exige autorizacao explicita
+  operations: [add]
+  files:
+  - '*'
