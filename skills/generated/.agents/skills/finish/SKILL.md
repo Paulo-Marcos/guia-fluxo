@@ -1,6 +1,6 @@
 ---
 name: finish
-description: Shim for ai-process. Use when the user invokes $finish or asks to finalize/close a validated feature or issue, commit it, and optionally lock it.
+description: CLOSE an ALREADY-validated task; commits by default and optionally creates a lock. Triggered by /finish or "$finish" / "finalizar / fechar / concluir tarefa validada". Use ONLY after the developer explicitly confirms the work is final — never as a shortcut to skip validation. Do NOT use for: sending the task to validation first (use $ready), or showing current state without closing (use $status).
 ---
 
 # Finish Shim

@@ -1,6 +1,6 @@
 ---
 name: feature
-description: Shim for ai-process. Use when the user invokes $feature or asks to start/register a new feature.
+description: PRIMARY TRIGGER for /feature or "$feature". Creates a NEW F-NNN feature task and starts implementation immediately. Do NOT use for: bugs/regressions (use $issue), deferred ideas without starting work (use $backlog), or evaluating an existing B-NNN (use $promote).
 ---
 
 # Feature

@@ -1,6 +1,6 @@
 ---
 name: ai-process
-description: Portable task-process skill for Codex, Claude, Antigravity, and other agents. Use when the user invokes /feature, /issue, /backlog, /promote, /ready, /finish, /status, asks to register a demand, create a feature/issue, promote backlog, manage backlog, hand off for validation, finish a validated task, lock a validated feature, or keep AI-agent work synchronized across tools.
+description: REFERENCE/BACKGROUND ONLY for the portable task-process pipeline (F-NNN/I-NNN/B-NNN, locks, chat-rename, worktree). Loaded as context by the dedicated shims, not as a trigger competitor. Do NOT auto-fire on /feature, /issue, /backlog, /promote, /ready, /finish, /status — those route to their own shims first. Use ai-process directly ONLY when the user asks for the full process overview ("explain the AI process", "how does this pipeline work", "como funciona o ai-process") or needs the installation/portability guide.
 ---
 
 # AI Process

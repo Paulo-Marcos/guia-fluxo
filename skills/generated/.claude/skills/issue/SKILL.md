@@ -1,6 +1,6 @@
 ---
 name: issue
-description: Shim for ai-process. Use when the user invokes $issue or asks to start/register a bug, issue, or regression.
+description: PRIMARY TRIGGER for /issue or "$issue". Creates a NEW I-NNN bug/regression task and starts the fix immediately. Do NOT use for: new features or net-new functionality (use $feature), deferred bug ideas (use $backlog), or evaluating an existing B-NNN (use $promote).
 ---
 
 # Issue

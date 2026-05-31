@@ -1,6 +1,6 @@
 ---
 name: promote
-description: Shim for ai-process. Use when the user invokes $promote or /promote with a backlog id and wants AI to evaluate and promote backlog into a feature or issue.
+description: EVALUATE-AND-CONVERT one specific backlog item. Triggered ONLY by /promote <B-NNN> or "$promote B-NNN" with an explicit backlog ID. AI reads the item, asks missing questions, proposes a plan, confronts locks/risks, asks worktree y/n, then converts the B-NNN into F-NNN or I-NNN. Do NOT use for: adding or listing backlog items (use $backlog), or creating a task without going through backlog first (use $feature or $issue).
 ---
 
 # Promote

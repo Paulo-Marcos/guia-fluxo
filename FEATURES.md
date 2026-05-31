@@ -2,6 +2,82 @@
 
 ---
 
+## [F-004] Dogfood do proprio pack: ai init + githooks + features/
+
+- **Status:** Aguardando validacao
+- **Origem:** AI process (2026-05-31)
+- **Tipo:** Feature
+- **Contexto:** Pack ensina .ai/ e FEATURES.md mas o repo nao usa: process.json e backlog.json faltam (ai doctor falha), .githooks/ nao instalado, features/registry.yaml ausente. Sem self-use o repo perde credibilidade e o pack nao recebe feedback de seu primeiro usuario. Instalar bootstrap completo aqui mesmo (modelo A: commitar JSON state, gitignore reports/chat-title).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `.ai/process.json`
+- `.ai/backlog.json`
+- `.gitignore`
+- `.githooks/commit-msg`
+- `features/registry.yaml`
+- `features/lock-ignore.txt`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- ai init criou .ai/process.json e .ai/backlog.json (doctor agora passa).
+- Templates copiados para raiz: .githooks/commit-msg, features/registry.yaml, features/lock-ignore.txt.
+- .gitignore exclui .ai/chat-title.txt e .ai/reports/ (volateis); demais JSONs do .ai/ ficam versionados para cross-clone.
+
+### Validacao feita
+
+- python scripts/ai.py doctor -> AI process files OK.
+- python scripts/ai.py render --check -> OK: 16 alvo(s) em sincronia.
+- python bin/check-lock.py list -> lista a trava 'adicoes-exigem-autorizacao' do template.
+
+### Validacao pendente
+
+- Ativar hook por clone: git config core.hooksPath .githooks (opcional, local).
+- Commit dos artefatos (vai precisar de [unlock:adicoes-exigem-autorizacao] se o hook estiver ativo, pois sao arquivos novos).
+
+## [F-003] Diferenciar descriptions das skills para evitar trigger collision
+
+- **Status:** Validada
+- **Origem:** AI process (2026-05-31)
+- **Tipo:** Feature
+- **Contexto:** As 7 shims (feature, issue, backlog, ready, finish, status, promote) e a ai-process tem descriptions parecidas. O agente fica confuso sobre qual disparar. Cada description precisa de marcadores unicos no inicio (gatilho explicito, escopo, quando NAO usar) para que o roteador escolha a skill certa sem ambiguidade.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `skills/manifest.yaml`
+- `skills/generated/.claude/skills/ai-process/SKILL.md`
+- `skills/generated/.claude/skills/feature/SKILL.md`
+- `skills/generated/.claude/skills/issue/SKILL.md`
+- `skills/generated/.claude/skills/backlog/SKILL.md`
+- `skills/generated/.claude/skills/promote/SKILL.md`
+- `skills/generated/.claude/skills/ready/SKILL.md`
+- `skills/generated/.claude/skills/finish/SKILL.md`
+- `skills/generated/.claude/skills/status/SKILL.md`
+- `skills/generated/.agents/skills/ai-process/SKILL.md`
+- `skills/generated/.agents/skills/feature/SKILL.md`
+- `skills/generated/.agents/skills/issue/SKILL.md`
+- `skills/generated/.agents/skills/backlog/SKILL.md`
+- `skills/generated/.agents/skills/promote/SKILL.md`
+- `skills/generated/.agents/skills/ready/SKILL.md`
+- `skills/generated/.agents/skills/finish/SKILL.md`
+- `skills/generated/.agents/skills/status/SKILL.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Reescritas as 8 descriptions (ai-process + 7 shims) com marcadores unicos em CAPS (PRIMARY TRIGGER, REFERENCE/BACKGROUND, READ-ONLY, DEFER-AND-PARK, EVALUATE-AND-CONVERT, HANDOFF, CLOSE) e clausula 'Do NOT use for: ... (use )' para eliminar trigger collision entre as skills do pack.
+
+### Validacao feita
+
+- python scripts/render-skills.py --check => OK, 16 alvos em sincronia com o manifest
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [F-002] Enxugar README seguindo Standard Readme
 
 - **Status:** Validada
