@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""Render per-agent skill/command files from skills/manifest.yaml.
+"""Render per-agent skill files from skills/manifest.yaml.
 
 Source of truth:
     skills/manifest.yaml
 
 Generated targets (per verb):
-    skills/agents/<verb>/SKILL.md          (Codex + Antigravity)
-    skills/claude/commands/<verb>.md       (Claude Code slash command)
-    skills/claude/skills/<verb>/SKILL.md   (Claude Code auto-discovery skill)
+    skills/generated/.agents/skills/<verb>/SKILL.md   (Codex + Antigravity)
+    skills/generated/.claude/skills/<verb>/SKILL.md   (Claude Code)
+
+The output tree mirrors the destination path under each consumer project,
+so installation is a straight copy of `skills/generated/.agents/` and
+`skills/generated/.claude/` into the project root.
 
 Usage:
     python scripts/render-skills.py            # write all targets
@@ -30,14 +33,13 @@ except ImportError:
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "skills" / "manifest.yaml"
-AGENT_DIR = ROOT / "skills" / "agents"
-CLAUDE_COMMAND_DIR = ROOT / "skills" / "claude" / "commands"
-CLAUDE_SKILL_DIR = ROOT / "skills" / "claude" / "skills"
+GENERATED_DIR = ROOT / "skills" / "generated"
+AGENT_DIR = GENERATED_DIR / ".agents" / "skills"
+CLAUDE_SKILL_DIR = GENERATED_DIR / ".claude" / "skills"
 
 TARGET_LABELS = {
-    "agent_skill": "skills/agents/<verb>/SKILL.md",
-    "claude_command": "skills/claude/commands/<verb>.md",
-    "claude_skill": "skills/claude/skills/<verb>/SKILL.md",
+    "agent_skill": "skills/generated/.agents/skills/<verb>/SKILL.md",
+    "claude_skill": "skills/generated/.claude/skills/<verb>/SKILL.md",
 }
 
 
@@ -51,8 +53,6 @@ def load_manifest() -> dict:
 def target_path(target: str, verb: str) -> Path:
     if target == "agent_skill":
         return AGENT_DIR / verb / "SKILL.md"
-    if target == "claude_command":
-        return CLAUDE_COMMAND_DIR / f"{verb}.md"
     if target == "claude_skill":
         return CLAUDE_SKILL_DIR / verb / "SKILL.md"
     raise ValueError(f"target desconhecido: {target}")
@@ -71,15 +71,9 @@ def render_skill_md(verb: str, description: str, body: str) -> str:
     )
 
 
-def render_claude_command(body: str) -> str:
-    return dedent(body).strip("\n") + "\n"
-
-
 def render_target(target: str, verb: str, description: str, body: str) -> str:
     if target in ("agent_skill", "claude_skill"):
         return render_skill_md(verb, description, body)
-    if target == "claude_command":
-        return render_claude_command(body)
     raise ValueError(f"target desconhecido: {target}")
 
 

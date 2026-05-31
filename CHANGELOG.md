@@ -10,8 +10,10 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 - Extracao inicial do projeto gerador-cortes para um repositorio dedicado.
 - Motor CLI em Python: `scripts/ai.py` e wrapper PowerShell `scripts/ai.ps1`.
 - Verificador de locks: `bin/check-lock.py`.
-- Skills para Codex/Antigravity em `skills/agents/` (ai-process, feature, issue, backlog, promote, ready, finish, status).
-- Skill e slash commands para Claude em `skills/claude/skills/` e `skills/claude/commands/`.
+- Skills geradas em `skills/generated/` espelhando o destino:
+  - `skills/generated/.agents/skills/<verb>/SKILL.md` (Codex + Antigravity).
+  - `skills/generated/.claude/skills/<verb>/SKILL.md` (Claude Code, ja com slash command).
+- Verbos: ai-process, feature, issue, backlog, promote, ready, finish, status.
 - Templates de bootstrap em `templates/`:
   - `features/registry.yaml` com lock global `adicoes-exigem-autorizacao`.
   - `features/lock-ignore.txt`.

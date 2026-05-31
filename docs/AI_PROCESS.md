@@ -54,8 +54,7 @@ scripts/
   finish/            Shim para `$finish` no Codex.
 .claude/skills/
   ai-process/        Skill espelhada para Claude.
-.claude/commands/
-  feature.md         Slash commands finos do Claude.
+  feature/           Skill `/feature` (substitui o antigo slash command).
 ```
 
 ## Fluxo recomendado
@@ -70,7 +69,7 @@ scripts/
 8. `/finish F-016` marca `Validada`, sugere `F-016 - #FINALIZADO - ...` e commita por padrao.
 9. Se Paulo quiser travar, use `finish --lock --lock-id <slug>`.
 
-`validate` ainda existe como compatibilidade, mas nao e o fluxo recomendado.
+`validate` ainda existe como subcomando do CLI por compatibilidade, mas nao ha mais skill para `/validate` — o fluxo recomendado e `/ready` (em validacao) -> `/finish` (validado).
 
 ## Promote
 
@@ -208,7 +207,8 @@ scripts/ai.ps1
 .agents/skills/promote/SKILL.md
 .agents/skills/finish/SKILL.md
 .claude/skills/ai-process/SKILL.md
-.claude/commands/
+.claude/skills/feature/SKILL.md
+.claude/skills/finish/SKILL.md
 docs/AI_PROCESS.md
 ```
 

@@ -2,6 +2,61 @@
 
 ---
 
+## [I-002] Diátaxis para docs/: confirmar escopo vs README/CHANGELOG e implementar
+
+- **Status:** Em desenvolvimento
+- **Origem:** AI process (2026-05-31)
+- **Tipo:** Issue / regressao
+- **Contexto:** Diátaxis para docs/: confirmar escopo vs README/CHANGELOG e implementar
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Executar implementacao e validacoes.
+
+
+## [F-001] Reestruturar skills/ com generated/ e deprecar .claude/commands
+
+- **Status:** Validada
+- **Origem:** AI process (2026-05-31)
+- **Tipo:** Feature
+- **Contexto:** Mirror-the-destination: skills/generated/.agents/skills/ (Codex+Antigravity) e skills/generated/.claude/skills/ (Claude). Remove arvore .claude/commands/ (legado segundo docs Anthropic). Atualiza manifest, render-skills.py, README.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `skills/manifest.yaml`
+- `scripts/render-skills.py`
+- `README.md`
+- `docs/AI_PROCESS.md`
+- `CHANGELOG.md`
+- `skills/generated/`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Manifest: claude_command convertido em claude_skill em todos os verbos; validate (deprecated) removido. Render: alvos passam a sair em skills/generated/.agents/skills/ e skills/generated/.claude/skills/, target claude_command removido. Apagadas as arvores skills/agents/ e skills/claude/. README/AI_PROCESS/CHANGELOG atualizados refletindo a nova estrutura mirror-the-destination.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- python scripts/render-skills.py (16/16 alvos gerados), python scripts/render-skills.py --check (OK)
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [I-001] Paridade de skills/comandos entre Claude, Codex e Antigravity - usar fonte unica
 
 - **Status:** Validada

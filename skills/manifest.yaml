@@ -1,12 +1,14 @@
-# Fonte unica de verdade para os skills/comandos do pack.
+# Fonte unica de verdade para os skills do pack.
 #
 # Como funciona:
 #   - Cada entrada em `verbs` descreve uma capacidade do pack.
 #   - Por verbo, definimos quais alvos por agente devem ser gerados.
 #   - `scripts/render-skills.py` le este arquivo e escreve:
-#       * agent_skill   -> skills/agents/<verb>/SKILL.md       (Codex e Antigravity)
-#       * claude_command-> skills/claude/commands/<verb>.md    (slash command do Claude Code)
-#       * claude_skill  -> skills/claude/skills/<verb>/SKILL.md (skill auto-discovery do Claude)
+#       * agent_skill  -> skills/generated/.agents/skills/<verb>/SKILL.md  (Codex + Antigravity)
+#       * claude_skill -> skills/generated/.claude/skills/<verb>/SKILL.md  (Claude Code)
+#
+# Claude Code mergeou slash commands em skills (`/feature` continua funcionando a partir
+# de `.claude/skills/feature/SKILL.md`). Por isso so geramos a arvore de skills.
 #
 # Para alterar comportamento de um agente, edite o body do alvo correspondente abaixo
 # e rode `python scripts/render-skills.py`. Nao edite os arquivos gerados diretamente.
@@ -84,7 +86,7 @@ verbs:
 
           - Codex does not treat arbitrary `/feature` or `/finish` as custom slash commands in every surface. Reliable Codex calls are direct script commands, `/use ai-process`, or shim skills such as `$finish` after skills reload.
           - Antigravity reads skills from the same `.agents/skills/` tree as Codex. The shim skills in this pack work for both surfaces; treat any verb listed above as a callable workflow.
-          - Claude can use `.claude/commands/*.md` as thin slash-command adapters and `.claude/skills/*` for auto-discovery skills. Both surfaces are generated from `skills/manifest.yaml`.
+          - Claude Code reads skills from `.claude/skills/*`. The skill name itself is callable as a slash command (`/feature`, `/finish`, etc.) and Claude can also load them automatically by description. All bodies are generated from `skills/manifest.yaml`.
           - Codex App chat rename is explicit: printing `NOME DO CHAT: ...` does not rename the UI. Use `codex_app.list_threads` to find the current thread id and `codex_app.set_thread_title` with the exact suggested title. If those tools are not loaded, search for thread tools first.
           - Claude chat rename: use `/rename <suggested-title>` when Claude Code exposes it, or start a session with `claude -n <suggested-title>` when that flag is supported. Claude does not use Codex App `codex_app.*` tools.
           - If a host cannot rename from the agent turn, print the suggested title and keep working.
@@ -99,7 +101,7 @@ verbs:
           - `scripts/ai.ps1`
           - `skills/manifest.yaml`
           - `scripts/render-skills.py`
-          - the generated `.agents/skills/*` and `.claude/{skills,commands}/*` trees
+          - the generated `.agents/skills/*` and `.claude/skills/*` trees
 
           Then run:
 
@@ -163,8 +165,10 @@ verbs:
           ```
 
           Then continue using `ai-process`.
-      claude_command:
+      claude_skill:
         body: |
+          # Feature
+
           Create a new feature task before editing code.
 
           Run:
@@ -190,8 +194,10 @@ verbs:
           ```
 
           Then continue using `ai-process`.
-      claude_command:
+      claude_skill:
         body: |
+          # Issue
+
           Create a new issue or regression task before editing code.
 
           Run:
@@ -219,8 +225,10 @@ verbs:
           ```
 
           Then continue using `ai-process`.
-      claude_command:
+      claude_skill:
         body: |
+          # Backlog
+
           Manage future work without starting implementation.
 
           If the user provided a title, run:
@@ -263,24 +271,26 @@ verbs:
           ```
 
           `finish` removes the created worktree when the task is closed.
-      claude_command:
+      claude_skill:
         body: |
+          # Promote
+
           Evaluate and promote a backlog item into a feature or issue.
 
           Process:
 
           1. Read `.ai/backlog.json` and find `$ARGUMENTS`.
           2. Decide whether the item is issue or feature.
-          3. Check if it is actionable. If information is missing, ask Paulo before creating a task.
+          3. Check if it is actionable. If information is missing, ask the developer before creating a task.
           4. Present a short execution plan, impacted areas, lock risks, and tradeoffs.
           5. Ask whether to use a worktree.
-          6. After Paulo approves, run:
+          6. After the developer approves, run:
 
           ```powershell
           .\scripts\ai.ps1 promote B-001 --kind feature --assessment "..." --plan "..."
           ```
 
-          If Paulo chose worktree, include `--worktree`.
+          If the developer chose worktree, include `--worktree`.
 
           Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.
 
@@ -299,8 +309,10 @@ verbs:
           ```
 
           Then continue using `ai-process`.
-      claude_command:
+      claude_skill:
         body: |
+          # Ready
+
           Move the current task to developer validation without finalizing it.
 
           Run:
@@ -328,8 +340,10 @@ verbs:
           ```
 
           `finish` means the developer already validated the work. It suggests `#FINALIZADO` and commits by default. Use `--no-commit` for dry close.
-      claude_command:
+      claude_skill:
         body: |
+          # Finish
+
           Finish the current task after developer validation.
 
           Run:
@@ -355,8 +369,10 @@ verbs:
           ```powershell
           .\scripts\ai.ps1 status
           ```
-      claude_command:
+      claude_skill:
         body: |
+          # Status
+
           Show current AI-process task and suggested chat title.
 
           Run:
@@ -364,24 +380,5 @@ verbs:
           ```powershell
           .\scripts\ai.ps1 status $ARGUMENTS
           ```
-
-          Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.
-
-  validate:
-    description: |
-      Deprecated alias of /finish that marks validation without committing. Kept for backwards compatibility.
-    deprecated: true
-    targets:
-      claude_command:
-        body: |
-          Deprecated. Prefer `/finish`.
-
-          Run:
-
-          ```powershell
-          .\scripts\ai.ps1 validate $ARGUMENTS
-          ```
-
-          This remains as a compatibility alias for marking validation without commit. For normal final closure, use `/finish`.
 
           Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.
