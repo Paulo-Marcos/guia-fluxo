@@ -116,6 +116,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_doctor = sub.add_parser("doctor", help="Check process files.")
     p_doctor.set_defaults(func=cmd_doctor)
 
+    p_render = sub.add_parser("render", help="Render per-agent skill/command files from skills/manifest.yaml.")
+    p_render.add_argument("--check", action="store_true", help="Exit 1 se algum alvo gerado estiver stale.")
+    p_render.add_argument("--verb", help="Renderiza apenas um verbo do manifest.")
+    p_render.set_defaults(func=cmd_render)
+
     return parser
 
 
@@ -342,6 +347,19 @@ def cmd_doctor(_args: argparse.Namespace) -> int:
         return 1
     print("AI process files OK.")
     return 0
+
+
+def cmd_render(args: argparse.Namespace) -> int:
+    render_script = ROOT / "scripts" / "render-skills.py"
+    if not render_script.exists():
+        print(f"missing: {relative(render_script)}", file=sys.stderr)
+        return 2
+    cmd = [sys.executable, str(render_script)]
+    if args.check:
+        cmd.append("--check")
+    if args.verb:
+        cmd.extend(["--verb", args.verb])
+    return subprocess.call(cmd)
 
 
 def default_process(project_name: str) -> dict[str, Any]:

@@ -32,15 +32,17 @@ ai-process-pack/
 ├── CHANGELOG.md             ← Keep a Changelog
 ├── scripts/
 │   ├── ai.py                ← motor CLI (Python 3.10+)
-│   └── ai.ps1               ← wrapper PowerShell que localiza Python
+│   ├── ai.ps1               ← wrapper PowerShell que localiza Python
+│   └── render-skills.py     ← gera skills/comandos por agente a partir do manifest
 ├── bin/
 │   └── check-lock.py        ← validador de locks usado pelo hook commit-msg
 ├── skills/
-│   ├── agents/              ← skills para Codex/Antigravity (.agents/skills/)
+│   ├── manifest.yaml        ← FONTE UNICA de skills/comandos para todos os agentes
+│   ├── agents/              ← GERADO: skills para Codex/Antigravity (.agents/skills/)
 │   │   └── {ai-process,feature,issue,backlog,promote,ready,finish,status}/
 │   └── claude/
-│       ├── skills/          ← skill para Claude (.claude/skills/)
-│       └── commands/        ← slash commands do Claude (.claude/commands/)
+│       ├── skills/          ← GERADO: skill para Claude (.claude/skills/)
+│       └── commands/        ← GERADO: slash commands do Claude (.claude/commands/)
 ├── templates/               ← seeds copiados pelo instalador
 │   ├── features/
 │   │   ├── registry.yaml    ← inclui lock global "adicoes-exigem-autorizacao"
@@ -55,6 +57,31 @@ ai-process-pack/
 
 Tudo que o `ai init` regera (process.json, tasks.json, backlog.json, current-task.json,
 chat-title.txt) nao vai em `templates/` porque o motor cria sob demanda.
+
+## Paridade entre agentes
+
+Os tres agentes suportados (Claude Code, Codex, Antigravity) executam os MESMOS verbos
+do processo. A "traducao" para cada agente respeita a interface nativa dele:
+
+| Agente | Como recebe os verbos | Pasta de instalacao |
+| --- | --- | --- |
+| Claude Code | Slash commands em `.claude/commands/*.md` + skill `ai-process` em `.claude/skills/` | `.claude/` no projeto consumidor |
+| Codex | Skills (SKILL.md com frontmatter) | `.agents/skills/` no projeto consumidor |
+| Antigravity | Skills (mesmo formato do Codex) | `.agents/skills/` no projeto consumidor |
+
+Codex e Antigravity compartilham o tree `.agents/skills/`; o mesmo arquivo serve aos dois.
+Claude usa slash commands como adapter porque sao mais confiaveis na superficie dele.
+
+Edicao da matriz inteira passa por um arquivo so:
+
+1. Edite `skills/manifest.yaml` (descricoes, bodies por agente, alvos por verbo).
+2. Rode `.\scripts\ai.ps1 render` para regenerar todos os arquivos por agente.
+3. Em CI/hook, rode `.\scripts\ai.ps1 render --check` para barrar drift entre manifest e arquivos gerados.
+
+Os arquivos sob `skills/agents/`, `skills/claude/commands/` e `skills/claude/skills/` sao
+gerados — nao edite a mao. Se precisar de uma diferenca legitima por agente, expresse-a
+como dois `body` distintos no manifest, ou como `targets` ausentes (ex.: `validate` so
+existe em `claude_command`).
 
 ## Como funciona (visao rapida)
 
@@ -82,8 +109,10 @@ Ainda nao ha instalador. Por enquanto, copie manualmente:
 | --- | --- |
 | `scripts/ai.py` | `scripts/ai.py` |
 | `scripts/ai.ps1` | `scripts/ai.ps1` |
+| `scripts/render-skills.py` | `scripts/render-skills.py` |
 | `bin/check-lock.py` | `bin/check-lock.py` |
-| `skills/agents/*` | `.agents/skills/*` |
+| `skills/manifest.yaml` | `skills/manifest.yaml` |
+| `skills/agents/*` | `.agents/skills/*` (Codex e Antigravity) |
 | `skills/claude/skills/*` | `.claude/skills/*` |
 | `skills/claude/commands/*` | `.claude/commands/*` |
 | `templates/features/registry.yaml` | `features/registry.yaml` |

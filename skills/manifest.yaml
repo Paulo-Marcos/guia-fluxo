@@ -1,0 +1,387 @@
+# Fonte unica de verdade para os skills/comandos do pack.
+#
+# Como funciona:
+#   - Cada entrada em `verbs` descreve uma capacidade do pack.
+#   - Por verbo, definimos quais alvos por agente devem ser gerados.
+#   - `scripts/render-skills.py` le este arquivo e escreve:
+#       * agent_skill   -> skills/agents/<verb>/SKILL.md       (Codex e Antigravity)
+#       * claude_command-> skills/claude/commands/<verb>.md    (slash command do Claude Code)
+#       * claude_skill  -> skills/claude/skills/<verb>/SKILL.md (skill auto-discovery do Claude)
+#
+# Para alterar comportamento de um agente, edite o body do alvo correspondente abaixo
+# e rode `python scripts/render-skills.py`. Nao edite os arquivos gerados diretamente.
+
+version: 1
+
+verbs:
+  ai-process:
+    description: |
+      Portable task-process skill for Codex, Claude, Antigravity, and other agents. Use when the user invokes /feature, /issue, /backlog, /promote, /ready, /finish, /status, asks to register a demand, create a feature/issue, promote backlog, manage backlog, hand off for validation, finish a validated task, lock a validated feature, or keep AI-agent work synchronized across tools.
+    targets:
+      agent_skill:
+        body: |
+          # AI Process
+
+          Use this skill to run the repository process through deterministic scripts instead of hand-editing process files.
+
+          ## Trigger Commands
+
+          - `/feature <title>`: create a new `F-NNN` task.
+          - `/issue <title>`: create a new `I-NNN` task.
+          - `/backlog add <title>`: save future work without starting implementation.
+          - `/backlog list`: show future work.
+          - `/backlog promote <B-NNN>`: convert backlog item into feature or issue.
+          - `/promote <B-NNN>`: AI evaluates backlog item, asks for missing information, proposes plan, asks worktree yes/no, then promotes it.
+          - `/status [F-NNN|I-NNN]`: show active task and suggested chat title.
+          - `/ready [F-NNN|I-NNN]`: mark implementation as waiting for developer validation.
+          - `/finish [F-NNN|I-NNN]`: close an already validated task, suggest `#FINALIZADO`, and commit by default.
+
+          ## Core Rule
+
+          Run `scripts/ai.ps1` or `scripts/ai.py`. Do not manually create IDs, status blocks, backlog records, or current-task records when the script can do it.
+
+          Preferred Windows commands:
+
+          ```powershell
+          .\scripts\ai.ps1 feature "Short title" --context "Why this matters"
+          .\scripts\ai.ps1 issue "Bug title" --context "Observed failure"
+          .\scripts\ai.ps1 backlog add "Future idea" --context "Useful later"
+          .\scripts\ai.ps1 promote B-001 --kind feature --assessment "Clear feature" --plan "Inspect affected files"
+          .\scripts\ai.ps1 status
+          .\scripts\ai.ps1 ready F-016 --file scripts/ai.py --summary "Implemented process CLI"
+          .\scripts\ai.ps1 finish F-016 --lock --lock-id ai-process-pack
+          ```
+
+          Portable fallback:
+
+          ```bash
+          python scripts/ai.py feature "Short title" --context "Why this matters"
+          ```
+
+          ## Agent Behavior
+
+          1. On `/feature` or `/issue`, create the task before code edits.
+          2. Read `.ai/current-task.json` before continuing implementation.
+          3. After every phase command, repeat the exact line printed by the script:
+             - `NOME DO CHAT: F-016 - #DEV - Example title`
+             - `NOME DO CHAT: F-016 - #VALIDACAO - Example title`
+             - `NOME DO CHAT: F-016 - #FINALIZADO - Example title`
+          4. Rename the real chat/session, not only the visible message, whenever the host exposes a supported thread/session API.
+          5. In Codex App, search for the thread tools if needed, call `codex_app.list_threads` to find the current thread id, then call `codex_app.set_thread_title` with exactly the title printed after `NOME DO CHAT:`.
+          6. If no thread API is available, use that title as best-effort chat title:
+             - `F-016 - #DEV - Example title`
+             - `F-016 - #VALIDACAO - Example title`
+             - `F-016 - #FINALIZADO - Example title`
+          7. Before editing files, honor `features/registry.yaml` locks.
+          8. If a needed file is locked, explain the lock id, protected functionality, why the edit is needed, expected impact, regression risk, and alternatives before asking for unlock.
+          9. On `/promote <B-NNN>`, read the backlog item first. Decide issue vs feature, check if the request is actionable, ask missing questions if needed, propose a short execution plan, confront risks/locks, and ask whether to use worktree. Only after user OK, run `scripts/ai.ps1 promote ...`.
+          10. If user chooses worktree, pass `--worktree`; the task stores worktree metadata and `finish` removes it when closing.
+          11. On `/ready`, register changed files, summary, validations, and pending manual validation.
+          12. On `/finish`, only close when the developer says the work is validated/final. Commit is on by default; pass `--no-commit` for dry close.
+          13. Use `--lock` on `/finish` only when the developer asks to create/update the lock.
+
+          ## Tool Notes
+
+          - Codex does not treat arbitrary `/feature` or `/finish` as custom slash commands in every surface. Reliable Codex calls are direct script commands, `/use ai-process`, or shim skills such as `$finish` after skills reload.
+          - Antigravity reads skills from the same `.agents/skills/` tree as Codex. The shim skills in this pack work for both surfaces; treat any verb listed above as a callable workflow.
+          - Claude can use `.claude/commands/*.md` as thin slash-command adapters and `.claude/skills/*` for auto-discovery skills. Both surfaces are generated from `skills/manifest.yaml`.
+          - Codex App chat rename is explicit: printing `NOME DO CHAT: ...` does not rename the UI. Use `codex_app.list_threads` to find the current thread id and `codex_app.set_thread_title` with the exact suggested title. If those tools are not loaded, search for thread tools first.
+          - Claude chat rename: use `/rename <suggested-title>` when Claude Code exposes it, or start a session with `claude -n <suggested-title>` when that flag is supported. Claude does not use Codex App `codex_app.*` tools.
+          - If a host cannot rename from the agent turn, print the suggested title and keep working.
+          - If shell access fails, explain the exact command the developer can run.
+
+          ## Portability
+
+          This skill is intentionally project-neutral. To reuse it elsewhere, copy:
+
+          - `.ai/process.json`
+          - `scripts/ai.py`
+          - `scripts/ai.ps1`
+          - `skills/manifest.yaml`
+          - `scripts/render-skills.py`
+          - the generated `.agents/skills/*` and `.claude/{skills,commands}/*` trees
+
+          Then run:
+
+          ```powershell
+          .\scripts\ai.ps1 init --project-name "new-project"
+          ```
+
+          To regenerate the per-agent files after editing the manifest:
+
+          ```powershell
+          python scripts/render-skills.py
+          ```
+      claude_skill:
+        body: |
+          # AI Process
+
+          Use repository scripts as the source of truth:
+
+          ```powershell
+          .\scripts\ai.ps1 feature "Short title" --context "Why this matters"
+          .\scripts\ai.ps1 issue "Bug title" --context "Observed failure"
+          .\scripts\ai.ps1 backlog add "Future idea" --context "Useful later"
+          .\scripts\ai.ps1 promote B-001 --kind feature --assessment "Clear feature" --plan "Inspect affected files"
+          .\scripts\ai.ps1 status
+          .\scripts\ai.ps1 ready F-016 --file scripts/ai.py --summary "Implemented process CLI"
+          .\scripts\ai.ps1 finish F-016 --lock --lock-id ai-process-pack
+          ```
+
+          Rules:
+
+          1. Create or update the task before code edits.
+          2. Do not hand-generate IDs when `scripts/ai.ps1` can do it.
+          3. After every phase command, repeat the exact `NOME DO CHAT: ...` line printed by the script.
+          4. Rename the real Claude chat/session when Claude exposes a supported path: use `/rename <suggested-title>` during the session, or start a new session with `claude -n <suggested-title>` when that flag is supported.
+          5. If Claude cannot rename from the agent turn, print the suggested title and keep working. Do not use Codex App `codex_app.*` tools in Claude.
+          6. Honor `features/registry.yaml` before file edits. If a file is locked, explain the lock id, protected functionality, why the edit is needed, expected impact, regression risk, and alternatives before asking for unlock.
+          7. Use `/promote <B-NNN>` to evaluate a backlog item before creating a task: classify feature/issue, ask missing questions, propose plan, confront risks/locks, ask worktree yes/no, then run `scripts/ai.ps1 promote ...` after user OK.
+          8. If user chooses worktree, pass `--worktree`; `finish` removes the created worktree when the task is closed.
+          9. Use `/ready` when implementation is done but still needs developer validation.
+          10. Use `/finish` only after the developer confirms final validation. It commits by default and suggests `#FINALIZADO`.
+          11. Use `--lock` only when the developer asks to create a lock.
+
+          Portable install:
+
+          ```powershell
+          .\scripts\ai.ps1 init --project-name "new-project"
+          ```
+
+  feature:
+    description: |
+      Shim for ai-process. Use when the user invokes $feature or asks to start/register a new feature.
+    targets:
+      agent_skill:
+        body: |
+          # Feature Shim
+
+          Call the core process script:
+
+          ```powershell
+          .\scripts\ai.ps1 feature "<title>" --context "<context>"
+          ```
+
+          Then continue using `ai-process`.
+      claude_command:
+        body: |
+          Create a new feature task before editing code.
+
+          Run:
+
+          ```powershell
+          .\scripts\ai.ps1 feature "$ARGUMENTS"
+          ```
+
+          Then read `.ai/current-task.json`, repeat the exact `NOME DO CHAT: ...` line, run `/rename <suggested-title>` if Claude supports it, and continue with the implementation.
+
+  issue:
+    description: |
+      Shim for ai-process. Use when the user invokes $issue or asks to start/register a bug, issue, or regression.
+    targets:
+      agent_skill:
+        body: |
+          # Issue Shim
+
+          Call the core process script:
+
+          ```powershell
+          .\scripts\ai.ps1 issue "<title>" --context "<context>"
+          ```
+
+          Then continue using `ai-process`.
+      claude_command:
+        body: |
+          Create a new issue or regression task before editing code.
+
+          Run:
+
+          ```powershell
+          .\scripts\ai.ps1 issue "$ARGUMENTS"
+          ```
+
+          Then read `.ai/current-task.json`, repeat the exact `NOME DO CHAT: ...` line, run `/rename <suggested-title>` if Claude supports it, and continue with the fix.
+
+  backlog:
+    description: |
+      Shim for ai-process. Use when the user invokes $backlog or asks to add, list, or promote backlog items.
+    targets:
+      agent_skill:
+        body: |
+          # Backlog Shim
+
+          Call the core process script:
+
+          ```powershell
+          .\scripts\ai.ps1 backlog add "<title>" --context "<context>"
+          .\scripts\ai.ps1 backlog list
+          .\scripts\ai.ps1 backlog promote B-001
+          ```
+
+          Then continue using `ai-process`.
+      claude_command:
+        body: |
+          Manage future work without starting implementation.
+
+          If the user provided a title, run:
+
+          ```powershell
+          .\scripts\ai.ps1 backlog add "$ARGUMENTS"
+          ```
+
+          If the user asks to list backlog, run:
+
+          ```powershell
+          .\scripts\ai.ps1 backlog list
+          ```
+
+  promote:
+    description: |
+      Shim for ai-process. Use when the user invokes $promote or /promote with a backlog id and wants AI to evaluate and promote backlog into a feature or issue.
+    targets:
+      agent_skill:
+        body: |
+          # Promote Shim
+
+          Process:
+
+          1. Read `.ai/backlog.json` and find the requested `B-NNN`.
+          2. Decide whether it is likely `feature` or `issue`.
+          3. Check if title/context are actionable. If not, ask concise missing questions before creating a task.
+          4. Propose a short execution plan and call out risks, locked files, and likely impacted functionality.
+          5. Ask whether to use a worktree.
+          6. After user OK, run:
+
+          ```powershell
+          .\scripts\ai.ps1 promote B-001 --kind feature --assessment "..." --plan "..."
+          ```
+
+          If user chose worktree:
+
+          ```powershell
+          .\scripts\ai.ps1 promote B-001 --kind feature --worktree --assessment "..." --plan "..."
+          ```
+
+          `finish` removes the created worktree when the task is closed.
+      claude_command:
+        body: |
+          Evaluate and promote a backlog item into a feature or issue.
+
+          Process:
+
+          1. Read `.ai/backlog.json` and find `$ARGUMENTS`.
+          2. Decide whether the item is issue or feature.
+          3. Check if it is actionable. If information is missing, ask Paulo before creating a task.
+          4. Present a short execution plan, impacted areas, lock risks, and tradeoffs.
+          5. Ask whether to use a worktree.
+          6. After Paulo approves, run:
+
+          ```powershell
+          .\scripts\ai.ps1 promote B-001 --kind feature --assessment "..." --plan "..."
+          ```
+
+          If Paulo chose worktree, include `--worktree`.
+
+          Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.
+
+  ready:
+    description: |
+      Shim for ai-process. Use when the user invokes $ready or asks to send the current task to developer validation.
+    targets:
+      agent_skill:
+        body: |
+          # Ready Shim
+
+          Call the core process script:
+
+          ```powershell
+          .\scripts\ai.ps1 ready F-000 --file path/to/file --summary "What changed" --validation "What passed"
+          ```
+
+          Then continue using `ai-process`.
+      claude_command:
+        body: |
+          Move the current task to developer validation without finalizing it.
+
+          Run:
+
+          ```powershell
+          .\scripts\ai.ps1 ready $ARGUMENTS
+          ```
+
+          Pass changed files with `--file`, implementation notes with `--summary`, validation commands with `--validation`, and manual gaps with `--pending`.
+
+          Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.
+
+  finish:
+    description: |
+      Shim for ai-process. Use when the user invokes $finish or asks to finalize/close a validated feature or issue, commit it, and optionally lock it.
+    targets:
+      agent_skill:
+        body: |
+          # Finish Shim
+
+          Call the core process script:
+
+          ```powershell
+          .\scripts\ai.ps1 finish F-000 --lock --lock-id feature-slug
+          ```
+
+          `finish` means the developer already validated the work. It suggests `#FINALIZADO` and commits by default. Use `--no-commit` for dry close.
+      claude_command:
+        body: |
+          Finish the current task after developer validation.
+
+          Run:
+
+          ```powershell
+          .\scripts\ai.ps1 finish $ARGUMENTS
+          ```
+
+          This marks the task as final, suggests `#FINALIZADO`, and commits by default. Pass changed files with `--file`, implementation notes with `--summary`, validation commands with `--validation`, and use `--lock --lock-id <slug>` only when the developer asks to lock the finalized files. Use `--no-commit` for dry close.
+
+          Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.
+
+  status:
+    description: |
+      Shim for ai-process. Use when the user invokes $status or asks for the current process task/status/title.
+    targets:
+      agent_skill:
+        body: |
+          # Status Shim
+
+          Call the core process script:
+
+          ```powershell
+          .\scripts\ai.ps1 status
+          ```
+      claude_command:
+        body: |
+          Show current AI-process task and suggested chat title.
+
+          Run:
+
+          ```powershell
+          .\scripts\ai.ps1 status $ARGUMENTS
+          ```
+
+          Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.
+
+  validate:
+    description: |
+      Deprecated alias of /finish that marks validation without committing. Kept for backwards compatibility.
+    deprecated: true
+    targets:
+      claude_command:
+        body: |
+          Deprecated. Prefer `/finish`.
+
+          Run:
+
+          ```powershell
+          .\scripts\ai.ps1 validate $ARGUMENTS
+          ```
+
+          This remains as a compatibility alias for marking validation without commit. For normal final closure, use `/finish`.
+
+          Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.

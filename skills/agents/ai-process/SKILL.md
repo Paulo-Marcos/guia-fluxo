@@ -66,8 +66,8 @@ python scripts/ai.py feature "Short title" --context "Why this matters"
 ## Tool Notes
 
 - Codex does not treat arbitrary `/feature` or `/finish` as custom slash commands in every surface. Reliable Codex calls are direct script commands, `/use ai-process`, or shim skills such as `$finish` after skills reload.
-- Antigravity can expose plugin/skill workflows as slash commands.
-- Claude can use `.claude/commands/*.md` as thin slash-command adapters.
+- Antigravity reads skills from the same `.agents/skills/` tree as Codex. The shim skills in this pack work for both surfaces; treat any verb listed above as a callable workflow.
+- Claude can use `.claude/commands/*.md` as thin slash-command adapters and `.claude/skills/*` for auto-discovery skills. Both surfaces are generated from `skills/manifest.yaml`.
 - Codex App chat rename is explicit: printing `NOME DO CHAT: ...` does not rename the UI. Use `codex_app.list_threads` to find the current thread id and `codex_app.set_thread_title` with the exact suggested title. If those tools are not loaded, search for thread tools first.
 - Claude chat rename: use `/rename <suggested-title>` when Claude Code exposes it, or start a session with `claude -n <suggested-title>` when that flag is supported. Claude does not use Codex App `codex_app.*` tools.
 - If a host cannot rename from the agent turn, print the suggested title and keep working.
@@ -80,12 +80,18 @@ This skill is intentionally project-neutral. To reuse it elsewhere, copy:
 - `.ai/process.json`
 - `scripts/ai.py`
 - `scripts/ai.ps1`
-- `.agents/skills/ai-process/SKILL.md`
-- `.claude/skills/ai-process/SKILL.md`
-- `.claude/commands/*.md`
+- `skills/manifest.yaml`
+- `scripts/render-skills.py`
+- the generated `.agents/skills/*` and `.claude/{skills,commands}/*` trees
 
 Then run:
 
 ```powershell
 .\scripts\ai.ps1 init --project-name "new-project"
+```
+
+To regenerate the per-agent files after editing the manifest:
+
+```powershell
+python scripts/render-skills.py
 ```

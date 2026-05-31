@@ -15,7 +15,7 @@ Process:
 6. After user OK, run:
 
 ```powershell
-.\scripts\ai.ps1 promote B-001 --kind feature --assessment "..." --plan "..." 
+.\scripts\ai.ps1 promote B-001 --kind feature --assessment "..." --plan "..."
 ```
 
 If user chose worktree:
