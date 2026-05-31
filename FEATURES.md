@@ -2,6 +2,34 @@
 
 ---
 
+## [F-002] Enxugar README seguindo Standard Readme
+
+- **Status:** Validada
+- **Origem:** AI process (2026-05-31)
+- **Tipo:** Feature
+- **Contexto:** README tinha ~120 linhas misturando intro, layout, paridade entre agentes, copy table de instalacao e roadmap. Padrao Standard Readme manda responder em ordem com cortes (o que e, por que, instalar, usar, links para o resto). Mover detalhe para docs/INSTALL.md e docs/ROADMAP.md; manter README como porta de entrada.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `README.md`
+- `docs/INSTALL.md`
+- `docs/ROADMAP.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- README reduzido de ~120 para 53 linhas na ordem Standard Readme (o que e -> por que -> instalar -> usar -> links). docs/INSTALL.md absorveu a copy table e bootstrap; docs/ROADMAP.md absorveu as 4 entradas de roadmap.
+- Commit feito manualmente apos finish para nao misturar com arquivos do F-001 ainda nao commitados (skills/agents/* e skills/claude/* deletados, FEATURES.md de F-001 ja estava em e053a84).
+
+### Validacao feita
+
+- Inspecao visual do README e verificacao de que todos os links da secao Documentacao apontam para arquivos existentes (ls docs/).
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [I-002] Diátaxis para docs/: confirmar escopo vs README/CHANGELOG e implementar
 
 - **Status:** Em desenvolvimento
