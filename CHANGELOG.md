@@ -6,6 +6,13 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added
+- Pasta [`.github/`](.github/) com templates e workflows do GitHub:
+  - [`.github/ISSUE_TEMPLATE/bug_report.md`](.github/ISSUE_TEMPLATE/bug_report.md) e [`.github/ISSUE_TEMPLATE/config.yml`](.github/ISSUE_TEMPLATE/config.yml) (bloqueia issue em branco).
+  - [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md) com checklist de demanda, locks e validacoes.
+  - [`.github/workflows/lock-check.yml`](.github/workflows/lock-check.yml) - terceira camada do lock: re-checa no PR via `python bin/check-lock.py ci` mesmo se o hook local foi pulado.
+  - [`.github/workflows/render-check.yml`](.github/workflows/render-check.yml) - roda `ai doctor` e `render-skills.py --check` em mudancas que afetam skills ou `.ai/`.
+
 ### Changed
 - `docs/` reorganizada via framework [Diataxis](https://diataxis.fr/): conteudo separado em `tutorials/`, `how-to/`, `reference/` e `explanation/`. Indice em [`docs/README.md`](docs/README.md). README do projeto atualizado para apontar para a nova estrutura.
 

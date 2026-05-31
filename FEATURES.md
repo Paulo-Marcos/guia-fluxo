@@ -2,6 +2,66 @@
 
 ---
 
+## [F-006] Smoke test do fluxo basico do pack (ai init -> feature -> ready -> finish)
+
+- **Status:** Em desenvolvimento
+- **Origem:** AI process (2026-05-31)
+- **Tipo:** Feature
+- **Contexto:** Sem teste automatizado, toda mudanca em ai.py ou render-skills.py e um pulo no escuro: hoje so se sabe que finish --lock ainda funciona rodando manualmente, o que e caro e ninguem faz sempre. Smoke test (engenharia eletrica: liga o aparelho, se nao soltou fumaca o primeiro check passou) cobre o caminho feliz mais comum num arquivo enxuto (~20 linhas, ~2s) e pega 80% das regressoes. Para o pack: tests/test_smoke.py cria diretorio temporario, roda em sequencia ai init / ai feature 'teste' / ai ready F-001 / ai finish F-001 e valida que .ai/tasks.json terminou com status 'Validada' no fim. Justamente porque o projeto e pequeno a barreira pra adicionar 1 teste e baixissima e ganha-se tranquilidade pra refatorar sem medo. Pendencias: (a) escolher framework (unittest da stdlib evita dependencia nova), (b) integrar no .github/workflows/ que entra via F-005 (rodar nos PRs), (c) documentar como rodar em CONTRIBUTING.md.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Executar implementacao e validacoes.
+
+
+## [F-005] Pasta .github/ - templates de issue/PR e workflows (lock-check, render-check)
+
+- **Status:** Validada
+- **Origem:** AI process (2026-05-31)
+- **Tipo:** Feature
+- **Contexto:** PROTOCOL/explanation/por-que-lock e docs/reference/hooks-git prometem que o CI re-checa travas no PR mesmo se o hook local for pulado (terceira camada). O arquivo .github/workflows/lock-check.yml nao existe: a promessa esta no doc mas a execucao nao. Falta tambem template de issue (bug_report) e PR para padronizar relatos. Adicionar (a) .github/ISSUE_TEMPLATE/bug_report.md, (b) .github/ISSUE_TEMPLATE/config.yml apontando o canal de seguranca, (c) .github/PULL_REQUEST_TEMPLATE.md, (d) .github/workflows/lock-check.yml usando python bin/check-lock.py ci, e (e) .github/workflows/render-check.yml para detectar drift do manifest (python scripts/render-skills.py --check + ai doctor). Lock global obriga marcar [unlock:adicoes-exigem-autorizacao] no commit.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `.github/ISSUE_TEMPLATE/bug_report.md`
+- `.github/ISSUE_TEMPLATE/config.yml`
+- `.github/PULL_REQUEST_TEMPLATE.md`
+- `.github/workflows/lock-check.yml`
+- `.github/workflows/render-check.yml`
+- `CHANGELOG.md`
+- `.ai/tasks.json`
+- `.ai/current-task.json`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Criada estrutura .github/ com 5 arquivos: bug_report.md (template de issue), config.yml (bloqueia issue em branco), PULL_REQUEST_TEMPLATE.md (checklist de demanda/lock/validacao), lock-check.yml (workflow que re-checa python bin/check-lock.py ci no PR - terceira camada do protocolo de lock prometida em docs/explanation/por-que-lock.md), render-check.yml (rodam ai doctor + render-skills.py --check em mudancas que afetam skills/.ai).
+- Sem hardcode de URL absoluta: nao ha git remote configurado ainda; config.yml deixa contact_links vazio e aponta para SECURITY.md (rastreado em I-003).
+- Pasta .github/ entregue e validada localmente. Commit feito manualmente apos finish para incluir [unlock:adicoes-exigem-autorizacao] no message (5 arquivos novos sob .github/ disparariam o lock global), e para isolar os arquivos da demanda dos demais nao commitados no working tree (CONTRIBUTING.md, LICENSE, SECURITY.md de I-003, deletes do skills/ legados, etc.).
+
+### Validacao feita
+
+- YAML parseado com pyyaml para .github/workflows/{lock-check,render-check}.yml e .github/ISSUE_TEMPLATE/config.yml -> OK.
+- Simulado python bin/check-lock.py ci com features de teste: bloqueia add sem [unlock:...] (exit 1, mensagem com instrucao); passa com [unlock:adicoes-exigem-autorizacao] no msg (exit 0).
+- python scripts/ai.py doctor -> AI process files OK; python scripts/render-skills.py --check -> 16 alvos em sincronia.
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [I-003] Arquivos de governanca faltando (LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, AGENTS.md, CLAUDE.md)
 
 - **Status:** Em desenvolvimento

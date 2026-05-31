@@ -1,0 +1,52 @@
+# Terceira camada do protocolo de lock (ver docs/explanation/por-que-lock.md).
+# Re-checa, no servidor, se o PR modifica arquivo travado em
+# features/registry.yaml sem [unlock:<feature-id>] na mensagem de algum commit
+# do PR. Roda mesmo se o autor passou --no-verify no hook local.
+#
+# Para barrar o merge: adicione "lock-check" em Settings -> Branches ->
+# Branch protection rules -> Required status checks.
+
+name: lock-check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  lock-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head (com historico para diff)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Collect changed files and commit messages
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git diff --name-status --diff-filter=ACMRD "$BASE_SHA" "$HEAD_SHA" > /tmp/files.txt
+          git log --format=%B "$BASE_SHA..$HEAD_SHA" > /tmp/messages.txt
+          echo "::group::Arquivos do PR"
+          cat /tmp/files.txt
+          echo "::endgroup::"
+          echo "::group::Mensagens de commit do PR"
+          cat /tmp/messages.txt
+          echo "::endgroup::"
+
+      - name: Validate locks
+        run: python bin/check-lock.py ci --files /tmp/files.txt --messages /tmp/messages.txt

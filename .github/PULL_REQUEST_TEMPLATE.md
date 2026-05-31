@@ -1,0 +1,51 @@
+<!--
+Template aplicado a todo PR. Apague o que nao se aplica.
+Veja docs/how-to/ antes de abrir o PR.
+-->
+
+## Resumo
+
+<!-- 1-2 frases. O que mudou e por que. -->
+
+## Demanda relacionada
+
+<!-- ID do FEATURES.md (F-### ou I-###) e link, se houver. -->
+
+- Demanda: F-### / I-###
+
+## O que mudou
+
+- [ ] Codigo
+- [ ] Documentacao (`docs/` ou `README.md`)
+- [ ] Skills (`skills/manifest.yaml` + `skills/generated/`)
+- [ ] Templates de bootstrap (`templates/`)
+- [ ] Lock (`features/registry.yaml`)
+- [ ] Outro: <!-- ... -->
+
+## Como testei
+
+<!-- Comandos que voce rodou e o que esperava ver. Cole saidas relevantes. -->
+
+```
+python scripts/ai.py doctor
+python scripts/render-skills.py --check
+```
+
+## Locks tocados
+
+<!--
+Se o PR modifica arquivo travado em features/registry.yaml, cada commit
+relevante precisa ter [unlock:<feature-id>] motivo: ... na mensagem.
+O workflow .github/workflows/lock-check.yml re-checa no PR e barra merge.
+Liste aqui quais features foram desbloqueadas e por que.
+-->
+
+- [ ] PR nao toca em arquivo travado.
+- [ ] PR toca em arquivo travado e os commits trazem `[unlock:<id>]`.
+
+## Checklist final
+
+- [ ] `python scripts/ai.py doctor` passa.
+- [ ] `python scripts/render-skills.py --check` passa (se mexeu em skills).
+- [ ] Demanda no `FEATURES.md` atualizada via `ai ready`/`ai finish`.
+- [ ] Documentacao atualizada (se mudou comportamento).

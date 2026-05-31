@@ -1,0 +1,11 @@
+# Bloqueia o botao "Open a blank issue" do GitHub: toda issue precisa cair em
+# um dos templates de ISSUE_TEMPLATE/. Reduz issue vazia ("ta quebrado").
+#
+# Canal privado de seguranca: ver SECURITY.md na raiz do repo. Quando o repo
+# tem SECURITY.md + private vulnerability reporting habilitado em Settings ->
+# Security, o GitHub mostra automaticamente o botao "Report a vulnerability"
+# que vira o canal correto - nao abra issue publica para falha de seguranca.
+#
+# contact_links adicionais (docs, discussions) podem ser ligados aqui depois
+# que um remote estavel for definido.
+blank_issues_enabled: false

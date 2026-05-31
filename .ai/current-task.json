@@ -1,6 +1,6 @@
 {
-  "taskId": "I-002",
+  "taskId": "F-005",
   "status": "Validada",
-  "title": "Di\u00e1taxis para docs/: confirmar escopo vs README/CHANGELOG e implementar",
-  "chatTitle": "I-002 - #FINALIZADO - Di\u00e1taxis para docs/: confirmar escopo vs README/CHANGELOG e implementar"
+  "title": "Pasta .github/ - templates de issue/PR e workflows (lock-check, render-check)",
+  "chatTitle": "F-005 - #FINALIZADO - Pasta .github/ - templates de issue/PR e workflows (lock-check, render-check)"
 }
