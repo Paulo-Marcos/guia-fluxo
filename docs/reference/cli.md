@@ -80,10 +80,34 @@ Move a task para `Aguardando validacao`. Gera relatorio em `.ai/reports/`. Impri
 ### `finish`
 
 ```powershell
-.\scripts\ai.ps1 finish F-NNN [--lock --lock-id <slug>]
+.\scripts\ai.ps1 finish F-NNN `
+    [--lock --lock-id <slug>] `
+    [--docs-touched <path> ...] `
+    [--docs-skip "<motivo>"]
 ```
 
 Marca como `Validada`, sugere `#FINALIZADO` e commita por padrao. Com `--lock`, registra os arquivos da task em `features/registry.yaml` sob o slug informado.
+
+**Hook de docs (F-010).** Antes do fechamento, `finish` consulta `.ai/docs-map.yaml` (se existir) e computa candidatos de doc a atualizar. Quando ha candidatos, voce precisa registrar um dos flags abaixo, senao o comando aborta:
+
+- `--docs-touched <path>` (repetivel): docs que voce atualizou nesta task.
+- `--docs-skip "<motivo>"`: avaliou os candidatos e nada precisou mudar - escreva o motivo curto.
+- `--docs-checked`: confirmacao explicita de que revisou (use em ultimo caso, ou junto com `--docs-touched`/`--docs-skip`).
+
+O resultado fica em `task.docsReview` no `.ai/tasks.json`. Quando `.ai/docs-map.yaml` nao existe, o hook vira no-op com aviso no stderr. Detalhes em [`docs-map.md`](docs-map.md) e [`docs/how-to/manter-docs-atualizados.md`](../how-to/manter-docs-atualizados.md).
+
+### `docs-check`
+
+```powershell
+.\scripts\ai.ps1 docs-check [F-NNN] [--json]
+```
+
+Lista docs candidatos a atualizacao para a task indicada (ou a task corrente, se omitida). Le `.ai/docs-map.yaml` e aplica triggers contra `task.modifiedFiles` + `git diff --name-only HEAD`. Nao muda estado, e seguro de rodar a qualquer momento.
+
+- Sem `--json`: imprime em texto com `purpose`, `motivo` e `hint` por candidato.
+- Com `--json`: retorna `{hasMap, taskId, candidates: [...]}` para consumo por agente.
+
+Quando o mapa nao existe, retorna `{"hasMap": false, "candidates": []}` (JSON) ou aviso curto (texto).
 
 ### `validate` (deprecado)
 

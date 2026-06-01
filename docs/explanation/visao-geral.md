@@ -24,8 +24,9 @@ Cada uma tem responsabilidade distinta e nenhuma sobrepoe a outra. A skill nunca
 5. Durante a implementacao, o agente registra arquivos e validacoes.
 6. `/ready <ID>` move para `Aguardando validacao`.
 7. Humano testa em uso real.
-8. `/finish <ID>` marca `Validada`, sugere `#FINALIZADO` e commita por padrao.
-9. Se quiser travar, use `finish --lock --lock-id <slug>`.
+8. Antes de fechar, o agente roda `docs-check`: le `.ai/docs-map.yaml` e lista docs vivos a atualizar. Quando ha mapa, o `finish` bloqueia ate o agente registrar `--docs-touched`/`--docs-skip`. Sem mapa, vira no-op. Veja [`por-que-docs-hook.md`](por-que-docs-hook.md).
+9. `/finish <ID>` marca `Validada`, sugere `#FINALIZADO` e commita por padrao.
+10. Se quiser travar, use `finish --lock --lock-id <slug>`.
 
 `validate` ainda existe como subcomando do CLI por compatibilidade, mas o fluxo recomendado e `/ready` -> `/finish`.
 

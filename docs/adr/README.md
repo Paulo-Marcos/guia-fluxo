@@ -14,6 +14,7 @@ ADR nao se confunde com [`explanation/`](../explanation/): explanation ensina o 
 | [0002](0002-lock-por-commit-message.md) | Unlock por marca no commit-message, nao arquivo separado | Aceita |
 | [0003](0003-json-maquina-markdown-humano.md) | JSON para maquina, Markdown para humano | Aceita |
 | [0004](0004-chat-title-sincronizado.md) | Chat-title sincronizado com a task corrente | Aceita |
+| [0005](0005-docs-hook-no-finish.md) | Hook de docs bloqueante no `/finish` | Aceita |
 
 ## Como adicionar um ADR novo
 

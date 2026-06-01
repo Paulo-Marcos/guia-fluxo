@@ -9,6 +9,7 @@
   backlog.json       Itens futuros, ainda nao iniciados.
   current-task.json  Demanda ativa.
   chat-title.txt     Ultimo nome sugerido para o chat.
+  docs-map.yaml      Opcional. Declaracao dos docs vivos para o hook do `finish`.
   reports/           Relatorios gerados por ready/finish.
 
 FEATURES.md          Historico legivel por humano. Espelha tasks.json em prosa.
@@ -65,6 +66,12 @@ Exemplo:
 ## `.ai/backlog.json`
 
 Itens futuros (`B-NNN`). Cada entrada tem id, titulo e contexto. Promovidos via `/promote` viram feature ou issue.
+
+## `.ai/docs-map.yaml`
+
+Opcional. Declara os documentos vivos do projeto (README, CHANGELOG, docs/reference, ADRs, etc.) e quando cada um deve ser considerado para atualizacao. Quando presente, o `ai.py finish` bloqueia o fechamento ate o agente registrar o que fez com cada candidato. Quando ausente, o hook vira no-op com aviso amigavel.
+
+Schema completo em [`docs-map.md`](docs-map.md). Receita de uso em [`docs/how-to/manter-docs-atualizados.md`](../how-to/manter-docs-atualizados.md).
 
 ## `.ai/reports/`
 

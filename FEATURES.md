@@ -2,6 +2,81 @@
 
 ---
 
+## [F-010] Hook de docs no /finish para atualizar documentacao da feature ou issue
+
+- **Status:** Validada
+- **Origem:** AI process (2026-05-31)
+- **Tipo:** Feature
+- **Contexto:** Hook de docs no /finish para atualizar documentacao da feature ou issue
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `scripts/ai.py`
+- `.ai/docs-map.yaml`
+- `skills/manifest.yaml`
+- `skills/generated/.agents/skills/finish/SKILL.md`
+- `skills/generated/.claude/skills/finish/SKILL.md`
+- `docs/how-to/manter-docs-atualizados.md`
+- `docs/reference/docs-map.md`
+- `docs/reference/cli.md`
+- `docs/reference/files.md`
+- `docs/explanation/por-que-docs-hook.md`
+- `docs/explanation/visao-geral.md`
+- `docs/adr/0005-docs-hook-no-finish.md`
+- `docs/adr/README.md`
+- `CHANGELOG.md`
+- `CLAUDE.md`
+- `AGENTS.md`
+- `CONTRIBUTING.md`
+- `README.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Hook de docs no /finish: ai.py le .ai/docs-map.yaml (opcional), computa candidatos via triggers (task-finished, touched, architectural-decision), e bloqueia o finish ate o agente passar --docs-touched/--docs-skip. Subcomando standalone docs-check exposto (texto e --json). docsReview gravado em tasks.json. Dogfood: .ai/docs-map.yaml deste repo lista 9 docs vivos.
+- Skill /finish reescrita: ensina rodar docs-check antes, registrar com --docs-touched/--docs-skip; agent_skill e claude_skill regenerados via render-skills.py.
+- Docs novos: how-to/manter-docs-atualizados.md, reference/docs-map.md, explanation/por-que-docs-hook.md, adr/0005-docs-hook-no-finish.md. ADR README, files.md, cli.md, visao-geral.md, CHANGELOG, CLAUDE.md, AGENTS.md, CONTRIBUTING.md, README.md atualizados pra refletir o novo passo.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- python scripts/ai.py doctor -> AI process files OK.
+- python scripts/render-skills.py --check -> OK: 16 alvo(s) em sincronia com o manifest.
+- python scripts/ai.py docs-check F-010 -> lista 9 candidatos corretos (FEATURES, CHANGELOG, README, cli.md, visao-geral, adr/, CLAUDE.md, AGENTS.md, CONTRIBUTING.md) com motivos task-finished/touched/architectural-decision.
+- python scripts/ai.py finish F-010 --no-commit (sem flags de docs) -> bloqueia com exit 1 e imprime o painel completo. Hook funciona.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [F-009] Migrar layout para plugin oficial Claude Code (A+B base) + ADR-0005
+
+- **Status:** Em desenvolvimento
+- **Origem:** AI process (2026-05-31)
+- **Tipo:** Feature
+- **Contexto:** Pesquisa arquitetural (2026-05-31) confirmou opcao A+B com alvo tri-agente (Claude principal, Codex secundario, Antigravity terciario). Esta demanda e o fundamento estrutural: (1) adicionar .claude-plugin/plugin.json na raiz com manifest oficial; (2) reorganizar a saida do render-skills.py para o layout root-level oficial (skills/, commands/, hooks/, bin/) em vez de skills/generated/.claude/...; (3) manter skills/generated/.agents/ para Codex+Antigravity via AGENTS.md+SKILL.md cross-tool; (4) preservar scripts/ai.py como motor (skills continuam thin wrappers); (5) escrever ADR-0005 documentando a decisao com links pra https://code.claude.com/docs/en/plugins e o padrao AGENTS.md (Linux Foundation). Bloqueia o restante do backlog (marketplace.json, MCP server, PreToolUse hook, compat cross-agent, consolidacao AGENTS/CLAUDE, docs Diataxis).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Executar implementacao e validacoes.
+
+
 ## [F-008] Criar ADRs iniciais (4 decisoes fundadoras)
 
 - **Status:** Validada

@@ -12,6 +12,7 @@ Usage examples:
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
 import re
 import shutil
@@ -29,6 +30,7 @@ TASKS_FILE = AI_DIR / "tasks.json"
 BACKLOG_FILE = AI_DIR / "backlog.json"
 CURRENT_FILE = AI_DIR / "current-task.json"
 CHAT_TITLE_FILE = AI_DIR / "chat-title.txt"
+DOCS_MAP_FILE = AI_DIR / "docs-map.yaml"
 REPORTS_DIR = AI_DIR / "reports"
 FEATURES_FILE = ROOT / "FEATURES.md"
 
@@ -82,7 +84,34 @@ def build_parser() -> argparse.ArgumentParser:
     p_finish.add_argument("--lock", action="store_true")
     p_finish.add_argument("--lock-id")
     p_finish.add_argument("--lock-description")
+    p_finish.add_argument(
+        "--docs-touched",
+        action="append",
+        default=[],
+        help="Doc atualizado durante esta finalizacao. Repetir por arquivo.",
+    )
+    p_finish.add_argument(
+        "--docs-skip",
+        help="Justificativa quando nenhum doc precisou ser atualizado.",
+    )
+    p_finish.add_argument(
+        "--docs-checked",
+        action="store_true",
+        help="Confirmacao explicita de que os docs foram revisados (use junto com --docs-touched ou --docs-skip).",
+    )
     p_finish.set_defaults(func=cmd_finish)
+
+    p_docs_check = sub.add_parser(
+        "docs-check",
+        help="Lista docs candidatos a atualizacao para a task atual (le .ai/docs-map.yaml).",
+    )
+    p_docs_check.add_argument("task_id", nargs="?")
+    p_docs_check.add_argument(
+        "--json",
+        action="store_true",
+        help="Saida em JSON para consumo por agente.",
+    )
+    p_docs_check.set_defaults(func=cmd_docs_check)
 
     p_validate = sub.add_parser("validate", help="Deprecated alias: mark task as validated without committing.")
     p_validate.add_argument("task_id", nargs="?")
@@ -204,12 +233,29 @@ def cmd_finish(args: argparse.Namespace) -> int:
     task = find_task_or_current(args.task_id)
     config = read_json(PROCESS_FILE, default_process(ROOT.name))
     changed_files = args.file or git_changed_files()
+
+    docs_map = load_docs_map()
+    if docs_map is not None:
+        ensure_docs_review_ok(task, changed_files, docs_map, args)
+    else:
+        print(
+            "docs-check: .ai/docs-map.yaml nao encontrado. "
+            "Pulando hook de docs. "
+            "Crie o mapa para ativar o controle de docs (docs/reference/docs-map.md).",
+            file=sys.stderr,
+        )
+
     finish_config = config.get("finish", {})
     task["status"] = finish_config.get("status", "Validada")
     merge_list(task, "modifiedFiles", changed_files)
+    merge_list(task, "modifiedFiles", args.docs_touched)
     merge_list(task, "summary", args.summary or ["Demanda finalizada via ai-process."])
     merge_list(task, "validations", args.validation)
     task["pending"] = args.pending or []
+    if docs_map is not None:
+        task["docsReview"] = build_docs_review_record(
+            task, changed_files, docs_map, args
+        )
 
     if args.run_tests or finish_config.get("runValidationByDefault", False):
         run_validation_commands(task, config, "finish")
@@ -623,6 +669,187 @@ def git_changed_files() -> list[str]:
     except (subprocess.CalledProcessError, FileNotFoundError):
         return []
     return [line.strip() for line in output.splitlines() if line.strip()]
+
+
+# --- Docs hook (F-010) -------------------------------------------------------
+
+def load_docs_map() -> dict[str, Any] | None:
+    """Carrega .ai/docs-map.yaml. Retorna None se nao existir."""
+    if not DOCS_MAP_FILE.exists():
+        return None
+    try:
+        import yaml  # type: ignore
+    except ImportError:
+        sys.stderr.write(
+            "docs-check: PyYAML nao instalado. Rode: pip install pyyaml\n"
+        )
+        return None
+    data = yaml.safe_load(DOCS_MAP_FILE.read_text(encoding="utf-8")) or {}
+    if not isinstance(data, dict):
+        raise SystemExit(f"{relative(DOCS_MAP_FILE)}: raiz precisa ser um mapping.")
+    return data
+
+
+def compute_docs_candidates(
+    task: dict[str, Any],
+    changed_files: list[str],
+    docs_map: dict[str, Any],
+) -> list[dict[str, str]]:
+    """Aplica triggers do docs-map a uma task. Retorna lista de candidatos."""
+    files = list(dict.fromkeys(task.get("modifiedFiles", []) + (changed_files or [])))
+    files = [f for f in files if f and f != "Nenhuma."]
+
+    candidates: list[dict[str, str]] = []
+    for entry in docs_map.get("docs", []) or []:
+        if not isinstance(entry, dict):
+            continue
+        path = entry.get("path")
+        if not path:
+            continue
+        purpose = entry.get("purpose", "")
+        for trigger in entry.get("triggers", []) or []:
+            if not isinstance(trigger, dict):
+                continue
+            # `event` e o nome canonico. Aceitamos `on` para compat futura, mas
+            # apenas quando vier como string (PyYAML/YAML 1.1 converte `on:`
+            # nao-quotada em True; nesse caso ignoramos para nao mascarar bug).
+            kind = trigger.get("event")
+            if kind is None:
+                raw_on = trigger.get("on")
+                if isinstance(raw_on, str):
+                    kind = raw_on
+            hint = trigger.get("hint", "")
+            reason = trigger_reason(kind, trigger, files, task)
+            if reason is None:
+                continue
+            candidates.append(
+                {
+                    "path": path,
+                    "trigger": kind or "",
+                    "reason": reason,
+                    "hint": hint,
+                    "purpose": purpose,
+                }
+            )
+            break  # uma entrada de doc gera no maximo 1 candidato
+    return candidates
+
+
+def trigger_reason(
+    kind: str | None,
+    trigger: dict[str, Any],
+    files: list[str],
+    task: dict[str, Any],
+) -> str | None:
+    """Retorna a razao de match, ou None se o trigger nao bate."""
+    if kind == "task-finished":
+        kind_label = "feature" if task.get("kind") == "feature" else "issue"
+        return f"task-finished: {kind_label} {task.get('id')}"
+    if kind == "touched":
+        patterns = [p for p in (trigger.get("paths") or []) if p]
+        matches = [f for f in files if any(fnmatch.fnmatch(f, p) for p in patterns)]
+        if matches:
+            joined = ", ".join(matches[:3])
+            extra = "" if len(matches) <= 3 else f" (+{len(matches) - 3} outros)"
+            return f"touched: {joined}{extra}"
+        return None
+    if kind == "architectural-decision":
+        # Heuristica humana: agente decide. Sempre lista como candidato a avaliar.
+        return "architectural-decision: avalie se a feature/issue mudou regra arquitetural"
+    # Trigger desconhecido: silenciosamente ignora pra nao quebrar mapas futuros.
+    return None
+
+
+def ensure_docs_review_ok(
+    task: dict[str, Any],
+    changed_files: list[str],
+    docs_map: dict[str, Any],
+    args: argparse.Namespace,
+) -> None:
+    """Bloqueia o finish quando ha candidatos sem revisao registrada."""
+    candidates = compute_docs_candidates(task, changed_files, docs_map)
+    if not candidates:
+        return
+    touched = [t for t in (args.docs_touched or []) if t]
+    skipped_reason = (args.docs_skip or "").strip()
+    if not touched and not skipped_reason and not args.docs_checked:
+        print_docs_block(task, candidates)
+        raise SystemExit(
+            "docs-check: revise os docs candidatos acima e rode novamente com "
+            "--docs-touched <path> (pode repetir) ou --docs-skip \"<motivo>\". "
+            "Use --docs-checked sozinho apenas se tem certeza de que nao ha nada a tocar."
+        )
+
+
+def build_docs_review_record(
+    task: dict[str, Any],
+    changed_files: list[str],
+    docs_map: dict[str, Any],
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    candidates = compute_docs_candidates(task, changed_files, docs_map)
+    record = {
+        "candidates": candidates,
+        "touched": [t for t in (args.docs_touched or []) if t],
+        "checkedAt": today(),
+    }
+    if args.docs_skip:
+        record["skipped"] = args.docs_skip.strip()
+    return record
+
+
+def print_docs_block(task: dict[str, Any], candidates: list[dict[str, str]]) -> None:
+    print()
+    print(f"=== docs-check: {task.get('id')} ===")
+    print(
+        "Os docs abaixo foram listados como candidatos a atualizacao por causa "
+        "desta demanda. Avalie cada um, atualize quando fizer sentido, e feche o "
+        "finish registrando o que fez."
+    )
+    print()
+    for candidate in candidates:
+        print(f"- {candidate['path']}")
+        if candidate.get("purpose"):
+            print(f"    purpose: {candidate['purpose']}")
+        print(f"    motivo:  {candidate['reason']}")
+        if candidate.get("hint"):
+            print(f"    hint:    {candidate['hint']}")
+    print()
+    print("Como prosseguir:")
+    print("  - Atualizou alguns? Re-rode com --docs-touched <path> [--docs-touched ...].")
+    print("  - Nenhum precisava? Re-rode com --docs-skip \"<motivo curto>\".")
+    print("  - Misto e OK: --docs-touched A --docs-touched B --docs-skip \"...\".")
+
+
+def cmd_docs_check(args: argparse.Namespace) -> int:
+    task = find_task_or_current(args.task_id)
+    docs_map = load_docs_map()
+    if docs_map is None:
+        payload = {"hasMap": False, "candidates": []}
+        if args.json:
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+        else:
+            print(
+                f"docs-check: {relative(DOCS_MAP_FILE)} nao existe. "
+                "Projeto sem controle de docs. (docs/reference/docs-map.md)"
+            )
+        return 0
+    changed_files = git_changed_files()
+    candidates = compute_docs_candidates(task, changed_files, docs_map)
+    if args.json:
+        print(
+            json.dumps(
+                {"hasMap": True, "taskId": task.get("id"), "candidates": candidates},
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        return 0
+    if not candidates:
+        print(f"docs-check: {task.get('id')} - nenhum candidato. Nada a fazer.")
+        return 0
+    print_docs_block(task, candidates)
+    return 0
 
 
 def write_report(task: dict[str, Any], event: str) -> None:

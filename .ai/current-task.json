@@ -1,6 +1,6 @@
 {
-  "taskId": "F-006",
+  "taskId": "F-010",
   "status": "Validada",
-  "title": "Smoke test do fluxo basico do pack (ai init -> feature -> ready -> finish)",
-  "chatTitle": "F-006 - #FINALIZADO - Smoke test do fluxo basico do pack (ai init -> feature -> ready -> finish)"
+  "title": "Hook de docs no /finish para atualizar documentacao da feature ou issue",
+  "chatTitle": "F-010 - #FINALIZADO - Hook de docs no /finish para atualizar documentacao da feature ou issue"
 }

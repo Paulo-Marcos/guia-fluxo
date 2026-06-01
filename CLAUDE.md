@@ -44,7 +44,9 @@ A skill mae `ai-process` em `.claude/skills/ai-process/SKILL.md` carrega context
 2. Se nao houver, abra `/feature`, `/issue` ou `/backlog add`.
 3. Implemente (Edit/Write nos arquivos comuns; siga o how-to do unlock para travados).
 4. `.\scripts\ai.ps1 ready <ID> --file <...> --summary "..." --validation "..."` quando o codigo esta pronto, **antes** do usuario validar.
-5. Aguarde validacao humana em uso real. So entao `.\scripts\ai.ps1 finish <ID>`.
+5. Aguarde validacao humana em uso real.
+6. **Antes de fechar, rode `.\scripts\ai.ps1 docs-check`** - lista docs candidatos a atualizar (le `.ai/docs-map.yaml`). Atualize o que fizer sentido. Sem mapa, esse passo vira no-op com aviso.
+7. So entao `.\scripts\ai.ps1 finish <ID> --docs-touched <path>...` ou `--docs-skip "<motivo>"`. O `finish` bloqueia o fechamento se houver candidatos sem registro. Detalhes em [`docs/how-to/manter-docs-atualizados.md`](docs/how-to/manter-docs-atualizados.md).
 
 ## Verificacao antes de entregar
 

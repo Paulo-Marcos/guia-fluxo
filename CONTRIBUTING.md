@@ -39,7 +39,12 @@ Toda contribuicao passa pelo proprio processo do pack (dogfooding). Nao edite `.
        --validation "Comando ou check executado"
    ```
 4. **Aguarde teste humano** (uso real, nao so test suite).
-5. **Feche:** `.\scripts\ai.ps1 finish I-NNN`. Para travar arquivos homologados, use `--lock --lock-id <slug>`.
+5. **Antes de fechar, rode o docs-check:**
+   ```powershell
+   .\scripts\ai.ps1 docs-check
+   ```
+   Le `.ai/docs-map.yaml` e lista docs vivos que podem precisar de atualizacao. Atualize o que fizer sentido. Sem mapa, vira no-op com aviso. Detalhes em [`docs/how-to/manter-docs-atualizados.md`](docs/how-to/manter-docs-atualizados.md).
+6. **Feche:** `.\scripts\ai.ps1 finish I-NNN --docs-touched <path>...` ou `--docs-skip "<motivo>"`. Para travar arquivos homologados, use `--lock --lock-id <slug>`.
 
 Detalhes de cada subcomando: [`docs/reference/cli.md`](docs/reference/cli.md).
 

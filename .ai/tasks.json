@@ -2,6 +2,165 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "F-010",
+      "kind": "feature",
+      "title": "Hook de docs no /finish para atualizar documentacao da feature ou issue",
+      "status": "Validada",
+      "origin": "AI process (2026-05-31)",
+      "context": "Hook de docs no /finish para atualizar documentacao da feature ou issue",
+      "createdAt": "2026-05-31",
+      "updatedAt": "2026-06-01",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "scripts/ai.py",
+        ".ai/docs-map.yaml",
+        "skills/manifest.yaml",
+        "skills/generated/.agents/skills/finish/SKILL.md",
+        "skills/generated/.claude/skills/finish/SKILL.md",
+        "docs/how-to/manter-docs-atualizados.md",
+        "docs/reference/docs-map.md",
+        "docs/reference/cli.md",
+        "docs/reference/files.md",
+        "docs/explanation/por-que-docs-hook.md",
+        "docs/explanation/visao-geral.md",
+        "docs/adr/0005-docs-hook-no-finish.md",
+        "docs/adr/README.md",
+        "CHANGELOG.md",
+        "CLAUDE.md",
+        "AGENTS.md",
+        "CONTRIBUTING.md",
+        "README.md",
+        ".ai/backlog.json",
+        ".ai/current-task.json",
+        ".ai/tasks.json"
+      ],
+      "summary": [
+        "Demanda criada via ai-process.",
+        "Hook de docs no /finish: ai.py le .ai/docs-map.yaml (opcional), computa candidatos via triggers (task-finished, touched, architectural-decision), e bloqueia o finish ate o agente passar --docs-touched/--docs-skip. Subcomando standalone docs-check exposto (texto e --json). docsReview gravado em tasks.json. Dogfood: .ai/docs-map.yaml deste repo lista 9 docs vivos.",
+        "Skill /finish reescrita: ensina rodar docs-check antes, registrar com --docs-touched/--docs-skip; agent_skill e claude_skill regenerados via render-skills.py.",
+        "Docs novos: how-to/manter-docs-atualizados.md, reference/docs-map.md, explanation/por-que-docs-hook.md, adr/0005-docs-hook-no-finish.md. ADR README, files.md, cli.md, visao-geral.md, CHANGELOG, CLAUDE.md, AGENTS.md, CONTRIBUTING.md, README.md atualizados pra refletir o novo passo.",
+        "Demanda finalizada via ai-process."
+      ],
+      "validations": [
+        "python scripts/ai.py doctor -> AI process files OK.",
+        "python scripts/render-skills.py --check -> OK: 16 alvo(s) em sincronia com o manifest.",
+        "python scripts/ai.py docs-check F-010 -> lista 9 candidatos corretos (FEATURES, CHANGELOG, README, cli.md, visao-geral, adr/, CLAUDE.md, AGENTS.md, CONTRIBUTING.md) com motivos task-finished/touched/architectural-decision.",
+        "python scripts/ai.py finish F-010 --no-commit (sem flags de docs) -> bloqueia com exit 1 e imprime o painel completo. Hook funciona."
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature F-010",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por ai.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature F-010",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "README.md",
+            "trigger": "touched",
+            "reason": "touched: scripts/ai.py",
+            "hint": "Se o fluxo padrao ou os comandos da capa mudaram, atualize.",
+            "purpose": "Porta de entrada do projeto."
+          },
+          {
+            "path": "docs/reference/cli.md",
+            "trigger": "touched",
+            "reason": "touched: scripts/ai.py",
+            "hint": "Se voce adicionou/mudou subcomando ou flag, documente aqui.",
+            "purpose": "Referencia completa de subcomandos do ai.py / ai.ps1."
+          },
+          {
+            "path": "docs/reference/files.md",
+            "trigger": "touched",
+            "reason": "touched: .ai/docs-map.yaml",
+            "hint": "Atualize se criou novo arquivo de estado/config.",
+            "purpose": "Mapa dos arquivos de estado (.ai/*, FEATURES.md, registry.yaml)."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: scripts/ai.py, .ai/docs-map.yaml, skills/manifest.yaml",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: scripts/ai.py, .ai/docs-map.yaml, skills/manifest.yaml",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          },
+          {
+            "path": "CONTRIBUTING.md",
+            "trigger": "touched",
+            "reason": "touched: scripts/ai.py",
+            "hint": "Se o fluxo humano mudou (novo passo, nova checagem), atualize.",
+            "purpose": "Guia pra humanos contribuirem."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md",
+          "README.md",
+          "docs/reference/cli.md",
+          "docs/reference/files.md",
+          "docs/reference/docs-map.md",
+          "docs/how-to/manter-docs-atualizados.md",
+          "docs/explanation/visao-geral.md",
+          "docs/explanation/por-que-docs-hook.md",
+          "docs/adr/0005-docs-hook-no-finish.md",
+          "docs/adr/README.md",
+          "CLAUDE.md",
+          "AGENTS.md",
+          "CONTRIBUTING.md"
+        ],
+        "checkedAt": "2026-06-01",
+        "skipped": "FEATURES.md e atualizado automaticamente pelo proprio script via upsert_features_entry; nada a editar a mao."
+      }
+    },
+    {
+      "id": "F-009",
+      "kind": "feature",
+      "title": "Migrar layout para plugin oficial Claude Code (A+B base) + ADR-0005",
+      "status": "Em desenvolvimento",
+      "origin": "AI process (2026-05-31)",
+      "context": "Pesquisa arquitetural (2026-05-31) confirmou opcao A+B com alvo tri-agente (Claude principal, Codex secundario, Antigravity terciario). Esta demanda e o fundamento estrutural: (1) adicionar .claude-plugin/plugin.json na raiz com manifest oficial; (2) reorganizar a saida do render-skills.py para o layout root-level oficial (skills/, commands/, hooks/, bin/) em vez de skills/generated/.claude/...; (3) manter skills/generated/.agents/ para Codex+Antigravity via AGENTS.md+SKILL.md cross-tool; (4) preservar scripts/ai.py como motor (skills continuam thin wrappers); (5) escrever ADR-0005 documentando a decisao com links pra https://code.claude.com/docs/en/plugins e o padrao AGENTS.md (Linux Foundation). Bloqueia o restante do backlog (marketplace.json, MCP server, PreToolUse hook, compat cross-agent, consolidacao AGENTS/CLAUDE, docs Diataxis).",
+      "createdAt": "2026-05-31",
+      "updatedAt": "2026-05-31",
+      "modifiedFiles": [
+        "FEATURES.md"
+      ],
+      "summary": [
+        "Demanda criada via ai-process."
+      ],
+      "validations": [],
+      "pending": [
+        "Executar implementacao e validacoes."
+      ]
+    },
+    {
       "id": "F-008",
       "kind": "feature",
       "title": "Criar ADRs iniciais (4 decisoes fundadoras)",

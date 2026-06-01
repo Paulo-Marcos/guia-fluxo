@@ -32,6 +32,11 @@ Camadas: skill (interface conversacional) -> script (`scripts/ai.py`, fonte de v
        --validation "Comando/check executado e resultado"
    ```
 5. **Nao feche sozinho.** `finish` so depois de validacao humana em uso real. Test suite passar **nao basta** - o usuario testa de verdade e ai pede o `finish`.
+6. **Antes de fechar, rode o docs-check:**
+   ```powershell
+   .\scripts\ai.ps1 docs-check
+   ```
+   Le `.ai/docs-map.yaml` e lista os docs vivos que podem precisar atualizar. Avalie cada candidato, edite o que fizer sentido e feche com `--docs-touched <path>` (repetivel) e/ou `--docs-skip "<motivo>"`. Sem mapa, o passo vira no-op com aviso. Receita em [`docs/how-to/manter-docs-atualizados.md`](docs/how-to/manter-docs-atualizados.md).
 
 ## Comandos uteis
 
@@ -41,6 +46,7 @@ Camadas: skill (interface conversacional) -> script (`scripts/ai.py`, fonte de v
 | Ver task atual | `.\scripts\ai.ps1 status` |
 | Ver uma task especifica | `.\scripts\ai.ps1 status <ID>` |
 | Listar backlog | `.\scripts\ai.ps1 backlog list` |
+| Listar docs candidatos a atualizar | `.\scripts\ai.ps1 docs-check [F-NNN]` |
 | Regerar skills | `python scripts/render-skills.py` |
 | Conferir drift de skills (CI) | `python scripts/render-skills.py --check` |
 | Help geral | `.\scripts\ai.ps1 --help` |

@@ -32,7 +32,8 @@ Lista completa de arquivos a copiar: [`docs/how-to/instalar-em-outro-projeto.md`
 .\scripts\ai.ps1 feature "Titulo curto" --context "Motivo e escopo"
 .\scripts\ai.ps1 status
 .\scripts\ai.ps1 ready F-016 --file scripts/ai.py --summary "Implementacao pronta"
-.\scripts\ai.ps1 finish F-016 --lock --lock-id ai-process-pack
+.\scripts\ai.ps1 docs-check                                          # hook opcional: lista docs vivos a atualizar
+.\scripts\ai.ps1 finish F-016 --docs-touched docs/reference/cli.md --lock --lock-id ai-process-pack
 ```
 
 Cada comando atualiza `.ai/*.json`, `FEATURES.md` e imprime um titulo sugerido

@@ -1,4 +1,53 @@
 {
   "schemaVersion": 1,
-  "items": []
+  "items": [
+    {
+      "id": "B-006",
+      "title": "Atualizar docs Diataxis pos refactor: tutorial install via plugin, how-to migracao, README, ROADMAP",
+      "context": "Apos F-009 + backlog acima estarem mergeados: (1) atualizar docs/tutorials/primeiro-uso.md com '/plugin install' como rota primaria; (2) novo docs/how-to/migrar-do-copy-paste-para-plugin.md; (3) revisar docs/reference/cli.md (operacoes agora tambem como MCP tools); (4) revisar docs/explanation/visao-geral.md (Plugin vs repo agora resolvido - virou plugin); (5) atualizar README.md secao Instalacao; (6) atualizar docs/ROADMAP.md (v0.2 Instalador foi superado por plugin format).",
+      "status": "Backlog",
+      "createdAt": "2026-05-31",
+      "updatedAt": "2026-05-31"
+    },
+    {
+      "id": "B-005",
+      "title": "Consolidar AGENTS.md como fonte unica cross-agent, CLAUDE.md vira pointer",
+      "context": "AGENTS.md e padrao Linux Foundation (60k+ repos) adotado por Antigravity nativo + Codex + Claude. Hoje temos CLAUDE.md (briefing Claude) + AGENTS.md (briefing outros) com ~80% duplicado. Consolidar tudo em AGENTS.md e deixar CLAUDE.md como pointer fino com so as especificidades Claude (como /rename, comandos Claude-only). Reduz manutencao e segue o padrao de mercado.",
+      "status": "Backlog",
+      "createdAt": "2026-05-31",
+      "updatedAt": "2026-05-31"
+    },
+    {
+      "id": "B-004",
+      "title": "Validar e ajustar .agents/skills/ para Codex CLI e Antigravity v1.20.3+",
+      "context": "Garantir que o refactor pra plugin oficial Claude nao quebre Codex/Antigravity. Antigravity v1.20.3 (mar/2026) le AGENTS.md nativamente + .agents/skills/. Codex CLI tem suporte a Agent Skills no formato SKILL.md. Auditar render-skills.py para emitir nos locais corretos de cada agente, testar 'codex /feature' e 'antigravity /feature' apos refactor. Considerar publicar conformance check em CI.",
+      "status": "Backlog",
+      "createdAt": "2026-05-31",
+      "updatedAt": "2026-05-31"
+    },
+    {
+      "id": "B-003",
+      "title": "Adicionar PreToolUse hook bloqueando Edit/Write em arquivo travado",
+      "context": "Defesa em profundidade vs commit-msg hook atual (que so pega no commit, depois do estrago). hooks/hooks.json com matcher 'Edit|Write|MultiEdit' chama bin/check-lock.py recebendo file_path via stdin (JSON), retorna exit 2 com motivo se arquivo esta em features/registry.yaml. commit-msg continua existindo como segunda linha (defende push direto de outras ferramentas).",
+      "status": "Backlog",
+      "createdAt": "2026-05-31",
+      "updatedAt": "2026-05-31"
+    },
+    {
+      "id": "B-002",
+      "title": "Criar MCP server Python expondo feature/issue/ready/finish/status/backlog/promote como tools",
+      "context": "Etapa B do plano arquitetural. Adiciona .mcp.json na raiz apontando para um MCP server local (Python, mesmo motor scripts/ai.py). Cada subcomando do ai.py vira uma tool MCP que retorna JSON estruturado {id, title, status, chatTitle, ...}. Elimina o parsing fragil de 'NOME DO CHAT:' do stdout. Agente chama feature(title, context) e recebe o resultado direto. Avaliar usar mcp-python-sdk ou implementacao stdlib pura para manter zero-deps.",
+      "status": "Backlog",
+      "createdAt": "2026-05-31",
+      "updatedAt": "2026-05-31"
+    },
+    {
+      "id": "B-001",
+      "title": "Adicionar .claude-plugin/marketplace.json + documentar distribuicao via /plugin marketplace add",
+      "context": "Pos F-009. Cria marketplace proprio (pmarcos/ai-process-pack) para usuarios instalarem via '/plugin marketplace add pmarcosa/ai-process-pack' + '/plugin install ai-process@pmarcos'. Define name, version, owner, plugins[]. Atualizar docs/how-to/instalar-em-outro-projeto.md e README com a nova rota oficial.",
+      "status": "Backlog",
+      "createdAt": "2026-05-31",
+      "updatedAt": "2026-05-31"
+    }
+  ]
 }
