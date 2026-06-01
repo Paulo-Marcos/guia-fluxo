@@ -1,6 +1,6 @@
 {
-  "taskId": "F-008",
+  "taskId": "F-006",
   "status": "Validada",
-  "title": "Criar ADRs iniciais (4 decisoes fundadoras)",
-  "chatTitle": "F-008 - #FINALIZADO - Criar ADRs iniciais (4 decisoes fundadoras)"
+  "title": "Smoke test do fluxo basico do pack (ai init -> feature -> ready -> finish)",
+  "chatTitle": "F-006 - #FINALIZADO - Smoke test do fluxo basico do pack (ai init -> feature -> ready -> finish)"
 }

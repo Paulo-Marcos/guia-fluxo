@@ -72,7 +72,7 @@
 
 ## [F-006] Smoke test do fluxo basico do pack (ai init -> feature -> ready -> finish)
 
-- **Status:** Aguardando validacao
+- **Status:** Validada
 - **Origem:** AI process (2026-05-31)
 - **Tipo:** Feature
 - **Contexto:** Sem teste automatizado, toda mudanca em ai.py ou render-skills.py e um pulo no escuro: hoje so se sabe que finish --lock ainda funciona rodando manualmente, o que e caro e ninguem faz sempre. Smoke test (engenharia eletrica: liga o aparelho, se nao soltou fumaca o primeiro check passou) cobre o caminho feliz mais comum num arquivo enxuto (~20 linhas, ~2s) e pega 80% das regressoes. Para o pack: tests/test_smoke.py cria diretorio temporario, roda em sequencia ai init / ai feature 'teste' / ai ready F-001 / ai finish F-001 e valida que .ai/tasks.json terminou com status 'Validada' no fim. Justamente porque o projeto e pequeno a barreira pra adicionar 1 teste e baixissima e ganha-se tranquilidade pra refatorar sem medo. Pendencias: (a) escolher framework (unittest da stdlib evita dependencia nova), (b) integrar no .github/workflows/ que entra via F-005 (rodar nos PRs), (c) documentar como rodar em CONTRIBUTING.md.
@@ -88,6 +88,7 @@
 
 - Demanda criada via ai-process.
 - tests/test_smoke.py adicionado: ~30 linhas, stdlib unittest (zero deps), roda init/feature/ready/finish num tempdir e valida que tasks.json terminou com status Validada. Smoke test sem framework externo.
+- Demanda finalizada via ai-process.
 
 ### Validacao feita
 
@@ -95,8 +96,7 @@
 
 ### Validacao pendente
 
-- Plugar o teste no workflow CI que entra com F-005 (.github/workflows/).
-- Documentar 'como rodar testes' no CONTRIBUTING.md.
+- Nenhuma.
 
 ## [F-005] Pasta .github/ - templates de issue/PR e workflows (lock-check, render-check)
 
