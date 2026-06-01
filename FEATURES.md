@@ -2,6 +2,38 @@
 
 ---
 
+## [I-004] Skills do pack nao habilitadas localmente: render-skills.py nao escreve em .claude/ na raiz
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-01)
+- **Tipo:** Issue / regressao
+- **Contexto:** Causa raiz: render-skills.py emite SKILL.md em skills/generated/.claude/skills/<verbo>/ (stage de distribuicao), mas Claude Code so descobre skills em .claude/skills/ na raiz do projeto. Como o repo-mae nao tem essa pasta, os atalhos /feature, /issue, /backlog, /promote, /ready, /finish, /status, ai-process nao aparecem na sessao do Claude. Sintoma confirmado neste chat: Skill issue retornou 'Unknown skill: issue' e a lista de available skills do turno nao inclui nenhum verbo do pack. Doc tambem desalinhada: CLAUDE.md afirma que as skills estao em .claude/skills/<verbo>/SKILL.md, caminho inexistente. Fix decidido com o usuario: render-skills.py passa a escrever em ambos os destinos (skills/generated/.claude/ para distribuicao + .claude/ na raiz para dogfood local). Mesmo tratamento para .agents/ (Codex/Antigravity). Atualizar CLAUDE.md/AGENTS.md/docs/reference/cli.md refletindo o duplo destino. Issue serve como ADR informal do problema; F-009 (refactor para plugin oficial) absorve a soluc�o definitiva depois.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `scripts/render-skills.py`
+- `CLAUDE.md`
+- `AGENTS.md`
+- `docs/reference/cli.md`
+- `CHANGELOG.md`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- render-skills.py agora escreve em 4 destinos: skills/generated/.claude/ e skills/generated/.agents/ (stages de distribuicao) e .claude/skills/ e .agents/skills/ na raiz (ativo runtime do dogfood). Adicionados constantes ROOT_AGENT_DIR/ROOT_CLAUDE_SKILL_DIR e func target_paths() retornando lista de Path por target logico. TARGET_LABELS virou dict de listas. collect_outputs() explode cada target em N arquivos. CLAUDE.md/AGENTS.md ajustados: regra 3 amplia o read-only para os 4 destinos. docs/reference/cli.md descreve os 4 destinos no sub-comando render. CHANGELOG ganha entrada Fixed em [Unreleased].
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- python scripts/render-skills.py -> renderizou 16 arquivos novos (.claude/skills/* e .agents/skills/* na raiz). python scripts/render-skills.py --check -> OK: 32 alvo(s) em sincronia com o manifest. python scripts/ai.py doctor -> AI process files OK. Get-ChildItem .claude/skills confirma 8 pastas (ai-process, backlog, feature, finish, issue, promote, ready, status).
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [F-010] Hook de docs no /finish para atualizar documentacao da feature ou issue
 
 - **Status:** Validada

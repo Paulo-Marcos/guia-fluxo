@@ -12,7 +12,7 @@ Camadas: skill (interface conversacional) -> script (`scripts/ai.py`, fonte de v
 
 1. **Toda mutacao de estado passa pelo script.** Nunca edite `.ai/*.json`, `FEATURES.md`, `features/registry.yaml` ou `.ai/chat-title.txt` a mao. Use `scripts/ai.ps1` (Windows) ou `python scripts/ai.py` (qualquer SO).
 2. **Toda demanda nasce de `feature`, `issue` ou `backlog`.** Antes de editar codigo a pedido do usuario, abra a demanda. Sem demanda ativa, nao ha rastreabilidade.
-3. **Nao edite `skills/generated/*`.** Esses arquivos sao gerados a partir de `skills/manifest.yaml`. Mude o manifest e rode `python scripts/render-skills.py`. Edicao direta e sobrescrita na proxima render e quebra o `--check` da CI.
+3. **Nao edite arquivos gerados.** `skills/generated/*`, `.claude/skills/*` e `.agents/skills/*` sao todos saida de `scripts/render-skills.py` a partir de `skills/manifest.yaml`. As pastas na raiz (`.claude/`, `.agents/`) sao o ativo runtime do dogfood deste repo; as em `skills/generated/` sao o stage de distribuicao para projetos consumidores. Mude o manifest e rode `python scripts/render-skills.py`. Edicao direta e sobrescrita na proxima render e quebra o `--check` da CI.
 4. **Respeite o lock.** `features/registry.yaml` lista arquivos travados. Se voce precisa editar um deles, a mensagem de commit precisa de `[unlock:<feature-id>] motivo: <razao curta>`. Receita: [`docs/how-to/editar-arquivo-travado.md`](docs/how-to/editar-arquivo-travado.md). O hook `commit-msg` rejeita commits sem a marca.
 5. **Nao use `--no-verify`** para escapar do hook. Se a trava parece errada, investigue antes - normalmente significa que o usuario nao autorizou aquela edicao.
 

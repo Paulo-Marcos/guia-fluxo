@@ -6,6 +6,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Fixed
+- **Skills do pack agora ficam habilitadas no proprio repo-mae (I-004).** `scripts/render-skills.py` passou a escrever em quatro destinos: `skills/generated/.claude/skills/` e `skills/generated/.agents/skills/` (stages de distribuicao para projetos consumidores) **e** `.claude/skills/` e `.agents/skills/` na raiz (ativo runtime do dogfood). Antes, so o stage era emitido - como Claude Code/Codex descobrem skills em `.claude/skills/` / `.agents/skills/` na raiz, os atalhos (`/feature`, `/issue`, etc.) nao funcionavam durante o desenvolvimento do proprio pack. Doc desalinhada em `CLAUDE.md`/`AGENTS.md`/`docs/reference/cli.md` corrigida.
+
 ### Added
 - **Hook de docs no `/finish` (F-010).** O `ai.py finish` agora consulta `.ai/docs-map.yaml` (opcional), lista docs candidatos a atualizacao e bloqueia o fechamento ate o agente registrar `--docs-touched <path>` ou `--docs-skip "<motivo>"`. Quando o mapa nao existe, vira no-op com aviso. Subcomando standalone `ai.py docs-check [--json]` exposto para consulta. Schema em [`docs/reference/docs-map.md`](docs/reference/docs-map.md), receita em [`docs/how-to/manter-docs-atualizados.md`](docs/how-to/manter-docs-atualizados.md), racional em [`docs/explanation/por-que-docs-hook.md`](docs/explanation/por-que-docs-hook.md), decisao em [`docs/adr/0005-docs-hook-no-finish.md`](docs/adr/0005-docs-hook-no-finish.md).
 - Pasta [`.github/`](.github/) com templates e workflows do GitHub:

@@ -119,10 +119,16 @@ Ainda existe como subcomando do CLI por compatibilidade. Nao ha mais skill para 
 .\scripts\ai.ps1 render [--check] [--verb <nome>]
 ```
 
-Wrapper de `scripts/render-skills.py`. Regenera `skills/generated/` a partir de `skills/manifest.yaml`.
+Wrapper de `scripts/render-skills.py`. Regenera as skills a partir de `skills/manifest.yaml` em quatro destinos:
 
-- `--check`: nao escreve. Sai com codigo != 0 se houver drift entre manifest e geracao.
-- `--verb <nome>`: limita o render a um verbo especifico.
+- `skills/generated/.claude/skills/<verbo>/SKILL.md` - stage de distribuicao para Claude Code.
+- `skills/generated/.agents/skills/<verbo>/SKILL.md` - stage de distribuicao para Codex + Antigravity.
+- `.claude/skills/<verbo>/SKILL.md` - ativo runtime do dogfood deste repo (Claude Code descobre as skills aqui).
+- `.agents/skills/<verbo>/SKILL.md` - ativo runtime do dogfood deste repo (Codex/Antigravity).
+
+Cada verbo do manifest emite quatro arquivos. `--check` sai com codigo != 0 se qualquer um estiver fora de sincronia. `--verb <nome>` limita o render a um verbo especifico.
+
+Os destinos em `skills/generated/` sao copiados pra raiz dos projetos consumidores na instalacao. Os destinos na raiz so existem aqui (no repo-mae) - sao o que faz `/feature`, `/issue` etc. funcionarem enquanto voce desenvolve o pack.
 
 ## Aliases conversacionais
 

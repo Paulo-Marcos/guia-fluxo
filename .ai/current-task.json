@@ -1,6 +1,6 @@
 {
-  "taskId": "F-010",
+  "taskId": "I-004",
   "status": "Validada",
-  "title": "Hook de docs no /finish para atualizar documentacao da feature ou issue",
-  "chatTitle": "F-010 - #FINALIZADO - Hook de docs no /finish para atualizar documentacao da feature ou issue"
+  "title": "Skills do pack nao habilitadas localmente: render-skills.py nao escreve em .claude/ na raiz",
+  "chatTitle": "I-004 - #FINALIZADO - Skills do pack nao habilitadas localmente: render-skills.py nao escreve em .claude/ na raiz"
 }

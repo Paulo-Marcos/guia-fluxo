@@ -5,12 +5,16 @@ Source of truth:
     skills/manifest.yaml
 
 Generated targets (per verb):
-    skills/generated/.agents/skills/<verb>/SKILL.md   (Codex + Antigravity)
-    skills/generated/.claude/skills/<verb>/SKILL.md   (Claude Code)
+    skills/generated/.agents/skills/<verb>/SKILL.md   (Codex + Antigravity - stage)
+    skills/generated/.claude/skills/<verb>/SKILL.md   (Claude Code - stage)
+    .agents/skills/<verb>/SKILL.md                    (Codex + Antigravity - dogfood)
+    .claude/skills/<verb>/SKILL.md                    (Claude Code - dogfood)
 
-The output tree mirrors the destination path under each consumer project,
-so installation is a straight copy of `skills/generated/.agents/` and
-`skills/generated/.claude/` into the project root.
+`skills/generated/` e o stage de distribuicao: copiado/installado em projetos
+consumidores. `.agents/` e `.claude/` na raiz sao o ativo runtime do proprio
+repo-mae (dogfood): e dai que o Claude Code / Codex descobrem as skills
+durante o desenvolvimento do pack. Os dois lados precisam estar em sincronia,
+por isso este script escreve em ambos.
 
 Usage:
     python scripts/render-skills.py            # write all targets
@@ -36,10 +40,18 @@ MANIFEST = ROOT / "skills" / "manifest.yaml"
 GENERATED_DIR = ROOT / "skills" / "generated"
 AGENT_DIR = GENERATED_DIR / ".agents" / "skills"
 CLAUDE_SKILL_DIR = GENERATED_DIR / ".claude" / "skills"
+ROOT_AGENT_DIR = ROOT / ".agents" / "skills"
+ROOT_CLAUDE_SKILL_DIR = ROOT / ".claude" / "skills"
 
 TARGET_LABELS = {
-    "agent_skill": "skills/generated/.agents/skills/<verb>/SKILL.md",
-    "claude_skill": "skills/generated/.claude/skills/<verb>/SKILL.md",
+    "agent_skill": [
+        "skills/generated/.agents/skills/<verb>/SKILL.md",
+        ".agents/skills/<verb>/SKILL.md",
+    ],
+    "claude_skill": [
+        "skills/generated/.claude/skills/<verb>/SKILL.md",
+        ".claude/skills/<verb>/SKILL.md",
+    ],
 }
 
 
@@ -50,11 +62,17 @@ def load_manifest() -> dict:
     return yaml.safe_load(MANIFEST.read_text(encoding="utf-8")) or {}
 
 
-def target_path(target: str, verb: str) -> Path:
+def target_paths(target: str, verb: str) -> list[Path]:
     if target == "agent_skill":
-        return AGENT_DIR / verb / "SKILL.md"
+        return [
+            AGENT_DIR / verb / "SKILL.md",
+            ROOT_AGENT_DIR / verb / "SKILL.md",
+        ]
     if target == "claude_skill":
-        return CLAUDE_SKILL_DIR / verb / "SKILL.md"
+        return [
+            CLAUDE_SKILL_DIR / verb / "SKILL.md",
+            ROOT_CLAUDE_SKILL_DIR / verb / "SKILL.md",
+        ]
     raise ValueError(f"target desconhecido: {target}")
 
 
@@ -78,7 +96,11 @@ def render_target(target: str, verb: str, description: str, body: str) -> str:
 
 
 def collect_outputs(manifest: dict, only_verb: str | None = None) -> list[tuple[Path, str, str, str]]:
-    """Return list of (path, target, verb, content) tuples."""
+    """Return list of (path, target, verb, content) tuples.
+
+    Cada target logico emite multiplas saidas: o stage em skills/generated/ e o
+    espelho na raiz (.claude/, .agents/) consumido pelo dogfood do proprio repo.
+    """
     outputs: list[tuple[Path, str, str, str]] = []
     verbs = manifest.get("verbs") or {}
     for verb, spec in verbs.items():
@@ -89,7 +111,8 @@ def collect_outputs(manifest: dict, only_verb: str | None = None) -> list[tuple[
         for target_name, target_spec in targets.items():
             body = target_spec.get("body") or ""
             content = render_target(target_name, verb, description, body)
-            outputs.append((target_path(target_name, verb), target_name, verb, content))
+            for path in target_paths(target_name, verb):
+                outputs.append((path, target_name, verb, content))
     return outputs
 
 

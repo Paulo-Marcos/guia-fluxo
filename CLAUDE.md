@@ -22,6 +22,8 @@ Quando o usuario digitar uma das shims abaixo, dispare a skill correspondente em
 
 A skill mae `ai-process` em `.claude/skills/ai-process/SKILL.md` carrega contexto compartilhado. As descriptions foram diferenciadas em F-003 para evitar trigger collision - confie no roteador e nao force uma skill diferente da que o usuario invocou.
 
+> `.claude/skills/` (e `.agents/skills/`) na raiz e o **ativo runtime do dogfood**, gerado por `scripts/render-skills.py` a partir de `skills/manifest.yaml`. O mesmo script tambem mantem `skills/generated/.claude/skills/` e `skills/generated/.agents/skills/` (stages de distribuicao para projetos consumidores). Nao edite nenhum dos quatro a mao - veja regra 3 abaixo.
+
 ## Plataforma
 
 - **OS:** Windows (PowerShell e o shell padrao do usuario). Use sintaxe PowerShell: `$null`, `$env:VAR`, backtick para continuacao, `if ($?)` em vez de `&&`.
@@ -32,7 +34,7 @@ A skill mae `ai-process` em `.claude/skills/ai-process/SKILL.md` carrega context
 
 1. **Toda mutacao de estado passa pelo script.** Nunca edite `.ai/*.json`, `FEATURES.md`, `features/registry.yaml` ou `.ai/chat-title.txt` com Edit/Write. Use o CLI.
 2. **Abra demanda antes de codar.** Sem `feature`/`issue`/`backlog`, nao ha rastreabilidade.
-3. **`skills/generated/*` e read-only para voce.** Edite `skills/manifest.yaml` e rode `python scripts/render-skills.py`.
+3. **Arquivos gerados sao read-only para voce.** `skills/generated/*`, `.claude/skills/*` e `.agents/skills/*` sao todos saida de `scripts/render-skills.py`. Edite `skills/manifest.yaml` e rode `python scripts/render-skills.py` (ou `.\scripts\ai.ps1 render`).
 4. **Respeite o lock.** `features/registry.yaml` lista travados. Para editar um deles, commit precisa de `[unlock:<feature-id>] motivo: <razao>`. Hook `commit-msg` rejeita o resto.
 5. **Nao use `git commit --no-verify`** para passar pelo hook. O proprio prompt do sistema ja proibe pular hooks. Se o hook bloquear, investigue.
 6. **Repita `NOME DO CHAT: ...`** sempre que o CLI imprimir essa linha. E como o usuario sabe que voce viu e registrou a etapa. Se a sessao expoe API de renomeacao, aplique tambem.
