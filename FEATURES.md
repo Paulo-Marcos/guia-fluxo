@@ -2,6 +2,102 @@
 
 ---
 
+## [F-013] B-008 passos 3+4: install.ps1/install.sh + templates em dist/ + smoke do consumer
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-02)
+- **Tipo:** Feature
+- **Contexto:** Continuacao direta de F-012 (que entregou passos 1+2 de B-008: renderer com prefixo ai- + dist/bin/ standalone). Faltam: (a) install.ps1 + install.sh na raiz do repo-mae que copia dist/.claude-plugin/ + dist/skills/ + dist/bin/ -> consumer/.ai-process/, dist/.agents/skills/ -> consumer/.agents/skills/, e dispara 'ai init' pra semear .ai/ + FEATURES.md. (b) Templates em dist/templates/ (.githooks/commit-msg, features/registry.yaml, features/lock-ignore.txt) que o instalador opcionalmente copia. (c) Atualizar docs/how-to/instalar-em-outro-projeto.md com a rota install.ps1. (d) Smoke test estendido pra simular install num tempdir + 'ai doctor' do .ai-process/bin/ e validar layout final. Decisao tecnica: install.ps1 sera idempotente (re-rodar sobrescreve dist/* mas preserva .ai/ existente) e --dry-run para previsualizar. Dogfood do repo-mae nao e tocado nesta feature - fica como follow-up separado (criar symlink .agents -> dist/.agents no proprio repo ou install loopback).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `install.ps1`
+- `install.sh`
+- `core/build/render-skills.py`
+- `dist/templates/.githooks/commit-msg`
+- `dist/templates/features/registry.yaml`
+- `dist/templates/features/lock-ignore.txt`
+- `tests/test_install.py`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+- `CHANGELOG.md`
+- `docs/explanation/visao-geral.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Renderer estendido para empacotar templates em dist/templates/: copia core/templates/.githooks/commit-msg, core/templates/features/registry.yaml e core/templates/features/lock-ignore.txt mantendo layout 1:1. Total de alvos cobertos passou de 19 para 22.
+- install.ps1 na raiz: copia idempotente de dist/* para o consumer (.ai-process/ recebe .claude-plugin/+skills/+bin/; .agents/skills/ vai pra raiz do consumer; templates vao pra .githooks/ e features/ preservando customizacao - use -Force pra sobrescrever). Roda 'python .ai-process/bin/ai.py init' ao final. Flags -Target, -DryRun, -Force, -SkipInit. Validado dry-run e real install em tempdir.
+- install.sh paridade comportamental: mesmas flags em formato POSIX (--target, --dry-run, --force, --skip-init), mesmo mapa de copia via cp -R, chmod +x automatico em .githooks/commit-msg e .ai-process/bin/ai.
+- tests/test_install.py: 3 casos cobrindo (a) layout completo apos install + frontmatter ai-feature/ai-process + doctor exit 0 do consumer; (b) shim POSIX LF puro (anti-regressao); (c) wrapper ps1 aponta pra ai.py local (nao ..\\src\\ai.py). Roda cross-platform porque replica logica do installer em Python puro.
+- docs/how-to/instalar-em-outro-projeto.md reescrito: TL;DR com install.ps1/install.sh, layout final, tabela de flags, secao 'idempotencia', upgrade flow, desinstalar, mapa por agente, fallback copia-manual.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- python core/build/render-skills.py --check -> OK 22 alvo(s).
+- python -m unittest tests.test_smoke tests.test_install -v -> Ran 4 tests, OK (smoke base + 3 novos do install).
+- .\core\bin\ai.ps1 doctor -> AI process files OK.
+- install.ps1 -DryRun em tempdir: lista as 9 operacoes de copia + init sem escrever; install real em tempdir: cria todos os 28 arquivos esperados; 'python .ai-process/bin/ai.py doctor' do consumer retorna AI process files OK.
+- test_install valida: name: ai-feature no frontmatter cross-tool, name: ai-process sem duplo prefixo, sem skills 'feature' (sem prefixo) em .agents/skills/, shim POSIX e LF puro.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [F-012] B-008: Passo 2 - Layout .ai-process/ no consumidor com bin/ e prefixo ai- nas skills cross-tool
+
+- **Status:** Validada
+- **Origem:** Backlog B-008 (2026-06-02)
+- **Tipo:** Feature
+- **Contexto:** Backlog B-008: Migrar projeto consumidor pro layout: 3 pastas (.agents/, .claude/, .ai-process/) + raiz (.ai/, FEATURES.md, opcional features/). Especifico: (a) plugin Claude inteiro dentro de .ai-process/ com .claude-plugin/, skills/ (nomes curtos feature, issue, etc.) e bin/ (motor ai/ai.ps1 que vira PATH automaticamente segundo doc Anthropic - feature ja existente). (b) Codex/Antigravity em .agents/skills/ com prefixo ai- nos nomes (ai-feature, ai-issue, etc.) pra evitar colisao - decisao confirmada com user em F-009. (c) Renderer adaptado pra gerar 2 outputs com nomes diferentes. (d) instalador install.ps1 + install.sh que copia dist/ pra .ai-process/ no consumidor + inicializa .ai/. Depende de B-007 (Passo 1).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/build/render-skills.py`
+- `dist/.agents/skills/ai-process/SKILL.md`
+- `dist/.agents/skills/ai-feature/SKILL.md`
+- `dist/.agents/skills/ai-issue/SKILL.md`
+- `dist/.agents/skills/ai-backlog/SKILL.md`
+- `dist/.agents/skills/ai-promote/SKILL.md`
+- `dist/.agents/skills/ai-ready/SKILL.md`
+- `dist/.agents/skills/ai-finish/SKILL.md`
+- `dist/.agents/skills/ai-status/SKILL.md`
+- `dist/bin/ai.py`
+- `dist/bin/ai.ps1`
+- `dist/bin/ai`
+- `CHANGELOG.md`
+- `docs/explanation/visao-geral.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Backlog promovido via ai-process.
+- Avaliacao IA: Feature: nova capacidade (gerador estendido + instalador + layout consumer). F-011 entregou core/+dist/ (lado dev); B-008 fecha lado consumer (.ai-process/+.agents/skills com prefixo ai-+install.ps1/.sh). Acionavel - F-009 ja confirmou prefixo ai-, dependencia B-007 entregue, deliverables claros.
+- Renderer estendido (core/build/render-skills.py) com 2 mudancas: (1) prefixo ai- aplicado no nome do diretorio E no frontmatter name: dos arquivos .agents/skills/ai-<verb>/SKILL.md cross-tool (Codex+Antigravity); excecao para verbo ai-process que ja carrega o prefixo (helper agent_skill_name). Output Claude (dist/skills/<verb>/) inalterado pois namespace ai: do plugin ja qualifica os atalhos como /ai:feature etc. (2) Renderer agora copia core/src/ai.py -> dist/bin/ai.py (motor) e core/bin/ai.ps1 -> dist/bin/ai.ps1 (com path adaptado via _adapt_wrapper_for_plugin: ..\src\ai.py reescrito para ai.py), e gera shim POSIX dist/bin/ai. Total de alvos cobertos por --check passou de 16 para 19.
+- Fix de newline (F-007 follow-up): write_text agora usa newline="\n" para evitar traducao automatica de \n para CRLF no Windows. Critico para o shim POSIX (bash quebra com CRLF: bash\r: not found) e coerente com normalizacao do .gitattributes (eol=lf default; *.ps1 eol=crlf re-aplicado no checkout).
+- Docs: CHANGELOG.md ganhou entry Unreleased/Changed descrevendo F-012; docs/explanation/visao-geral.md atualizada (dist/ inclui bin/, .agents/skills/ai-<verb>, item 5 do roadmap marca passos 1+2 entregues e installer pendente).
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- python core/build/render-skills.py --check -> OK: 19 alvo(s) em sincronia com o manifest.
+- python -m unittest tests.test_smoke -v -> Ran 1 test in 1.057s, OK.
+- .\core\bin\ai.ps1 doctor -> AI process files OK.
+- .\dist\bin\ai.ps1 doctor -> AI process files OK (wrapper standalone valida que rewriting do path ai.py funciona).
+- Bytes do shim POSIX dist/bin/ai: LF puro (verificado via [System.IO.File]::ReadAllBytes).
+- Frontmatter inspecionado: dist/.agents/skills/ai-feature/SKILL.md tem 'name: ai-feature'; dist/.agents/skills/ai-process/SKILL.md tem 'name: ai-process' (sem duplo prefixo); dist/skills/feature/SKILL.md tem 'name: feature' (sem prefixo).
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [F-011] B-007: Passo 1 - Reorganizar repo do pack em core/ (dev) + dist/ (buildado)
 
 - **Status:** Validada

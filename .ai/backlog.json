@@ -18,14 +18,6 @@
       "updatedAt": "2026-06-01"
     },
     {
-      "id": "B-008",
-      "title": "Passo 2 - Layout .ai-process/ no consumidor com bin/ e prefixo ai- nas skills cross-tool",
-      "context": "Migrar projeto consumidor pro layout: 3 pastas (.agents/, .claude/, .ai-process/) + raiz (.ai/, FEATURES.md, opcional features/). Especifico: (a) plugin Claude inteiro dentro de .ai-process/ com .claude-plugin/, skills/ (nomes curtos feature, issue, etc.) e bin/ (motor ai/ai.ps1 que vira PATH automaticamente segundo doc Anthropic - feature ja existente). (b) Codex/Antigravity em .agents/skills/ com prefixo ai- nos nomes (ai-feature, ai-issue, etc.) pra evitar colisao - decisao confirmada com user em F-009. (c) Renderer adaptado pra gerar 2 outputs com nomes diferentes. (d) instalador install.ps1 + install.sh que copia dist/ pra .ai-process/ no consumidor + inicializa .ai/. Depende de B-007 (Passo 1).",
-      "status": "Backlog",
-      "createdAt": "2026-06-01",
-      "updatedAt": "2026-06-01"
-    },
-    {
       "id": "B-006",
       "title": "Atualizar docs Diataxis pos refactor: tutorial install via plugin, how-to migracao, README, ROADMAP",
       "context": "Apos F-009 + backlog acima estarem mergeados: (1) atualizar docs/tutorials/primeiro-uso.md com '/plugin install' como rota primaria; (2) novo docs/how-to/migrar-do-copy-paste-para-plugin.md; (3) revisar docs/reference/cli.md (operacoes agora tambem como MCP tools); (4) revisar docs/explanation/visao-geral.md (Plugin vs repo agora resolvido - virou plugin); (5) atualizar README.md secao Instalacao; (6) atualizar docs/ROADMAP.md (v0.2 Instalador foi superado por plugin format).",

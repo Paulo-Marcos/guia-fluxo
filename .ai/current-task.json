@@ -1,6 +1,6 @@
 {
-  "taskId": "F-011",
+  "taskId": "F-013",
   "status": "Validada",
-  "title": "B-007: Passo 1 - Reorganizar repo do pack em core/ (dev) + dist/ (buildado)",
-  "chatTitle": "F-011 - #FINALIZADO - B-007: Passo 1 - Reorganizar repo do pack em core/ (dev) + dist/ (buildado)"
+  "title": "B-008 passos 3+4: install.ps1/install.sh + templates em dist/ + smoke do consumer",
+  "chatTitle": "F-013 - #FINALIZADO - B-008 passos 3+4: install.ps1/install.sh + templates em dist/ + smoke do consumer"
 }

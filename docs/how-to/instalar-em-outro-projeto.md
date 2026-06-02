@@ -1,66 +1,145 @@
 # Como instalar em outro projeto
 
-Ainda nao ha instalador automatico (ver [`../ROADMAP.md`](../ROADMAP.md)). Por enquanto, copie manualmente os arquivos do pack para os mesmos caminhos no projeto consumidor.
+Desde F-013 (2026-06-02) o pack tem **instalador oficial**: `install.ps1` (Windows) e `install.sh` (Linux/Mac). O instalador copia `dist/` (build do repo-mae) para o layout final no projeto consumidor e roda `ai init` pra semear `.ai/`.
 
-## Layout do repo-mae
-
-O pack separa **fabrica** (`core/`) de **produto buildado** (`dist/`):
-
-- `core/` - fontes: `core/src/ai.py`, `core/build/render-skills.py`, `core/manifest/manifest.yaml`, `core/lock/check-lock.py`, `core/hooks/commit-msg`, `core/templates/`.
-- `dist/` - saida do build (gerada por `python core/build/render-skills.py`): `dist/.claude-plugin/`, `dist/skills/`, `dist/.agents/skills/`.
-
-Refactor consumidor (`.ai-process/` com tudo embutido) chega em B-008. Por enquanto, mirror direto.
-
-## Arquivos a copiar
-
-| Origem (no pack) | Destino (no projeto consumidor) |
-| --- | --- |
-| `core/src/ai.py` | `core/src/ai.py` |
-| `core/bin/ai.ps1` | `core/bin/ai.ps1` |
-| `core/build/render-skills.py` | `core/build/render-skills.py` |
-| `core/lock/check-lock.py` | `core/lock/check-lock.py` |
-| `core/manifest/manifest.yaml` | `core/manifest/manifest.yaml` |
-| `core/hooks/commit-msg` | `core/hooks/commit-msg` |
-| `core/templates/features/registry.yaml` | `features/registry.yaml` |
-| `core/templates/features/lock-ignore.txt` | `features/lock-ignore.txt` |
-| `dist/.claude-plugin/plugin.json` | `dist/.claude-plugin/plugin.json` (manifest oficial Claude Code) |
-| `dist/.claude-plugin/marketplace.json` | `dist/.claude-plugin/marketplace.json` (catalogo do marketplace local) |
-| `dist/skills/*` (output gerado para Claude Code) | `dist/skills/*` |
-| `dist/.agents/skills/*` (output gerado para Codex e Antigravity) | `dist/.agents/skills/*` |
-| `.claude/settings.json` | `.claude/settings.json` (aponta o marketplace para `./dist`) |
-| `docs/` (todo o conteudo) | `docs/` |
-
-> **Claude Code:** ao abrir o projeto consumidor, `.claude/settings.json` aponta para `dist/.claude-plugin/marketplace.json` via `extraKnownMarketplaces.ai-process-pack.source.path = "./dist"`. Claude prompta pra confirmar trust + instalacao do plugin `ai` (com `enabledPlugins` habilitando por padrao). Atalhos `/ai:feature`, `/ai:issue`, etc. ficam disponiveis automaticamente nas sessoes seguintes. Fallback manual: `claude --plugin-dir ./dist` ou `/plugin marketplace add ./dist` + `/plugin install ai@ai-process-pack`.
->
-> **Codex e Antigravity:** descobrem via `dist/.agents/skills/` (convencao AGENTS.md) - basta a pasta existir. Sem plugin/marketplace.
->
-> Detalhes do layout em [`../adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md).
-
-## Bootstrap
-
-No projeto consumidor:
+## TL;DR
 
 ```powershell
-.\core\bin\ai.ps1 init --project-name "nome-do-projeto"
-git config core.hooksPath core/hooks
+# Windows
+git clone https://github.com/paulosmarcos/ai-process-pack C:\dev\ai-process-pack
+cd C:\dev\meu-projeto
+C:\dev\ai-process-pack\install.ps1
 ```
 
-O `init` cria os JSONs vazios em `.ai/`, escreve `process.json` com o nome do projeto e zera `chat-title.txt`. O `core.hooksPath` ativa o hook que valida marcas `[unlock:<id>]`.
+```bash
+# Linux/Mac
+git clone https://github.com/paulosmarcos/ai-process-pack /opt/ai-process-pack
+cd /path/to/meu-projeto
+/opt/ai-process-pack/install.sh
+```
 
-## Editando skills geradas
+## Layout final no consumidor
 
-Skills sao geradas a partir de `core/manifest/manifest.yaml` (fonte unica para os tres agentes). Para alterar:
+```
+<projeto-consumidor>/
+├── .ai-process/                    plugin Claude (tudo numa pasta, seguro pra rm -rf)
+│   ├── .claude-plugin/             manifest do plugin + marketplace
+│   ├── bin/                        motor standalone (ai, ai.ps1, ai.py) - vira PATH no Claude
+│   └── skills/                     skills do plugin (namespace ai:)
+├── .agents/                        externo ao .ai-process/ (convencao AGENTS.md)
+│   └── skills/ai-*/                cross-tool Codex + Antigravity (prefixo ai-)
+├── .githooks/commit-msg            hook git para validar [unlock:<id>] (opcional)
+├── features/registry.yaml          lock de arquivos homologados (opcional)
+├── features/lock-ignore.txt        excecoes do lock (opcional)
+├── .ai/                            estado da maquina (process, tasks, backlog)
+└── FEATURES.md                     catalogo legivel (criado no primeiro `feature`)
+```
 
-1. Edite `core/manifest/manifest.yaml`.
-2. Rode `python core/build/render-skills.py` para regenerar `dist/skills/<verbo>/SKILL.md` (output do plugin Claude Code) e `dist/.agents/skills/<verbo>/SKILL.md` (Codex + Antigravity, convencao AGENTS.md).
-3. Em CI/hook, use `python core/build/render-skills.py --check` para barrar drift entre o manifest e os arquivos gerados.
+## Flags do instalador
 
-Nao edite arquivos sob `dist/skills/<verbo>/` ou `dist/.agents/skills/<verbo>/` a mao - eles sao sobrescritos.
+| Flag (PS) | Flag (sh) | Efeito |
+| --- | --- | --- |
+| `-Target <path>` | `--target <path>` | Onde instalar. Default: diretorio atual. |
+| `-DryRun` | `--dry-run` | Mostra o que seria copiado, nao escreve nada. |
+| `-Force` | `--force` | Sobrescreve `.githooks/`, `features/registry.yaml` e `features/lock-ignore.txt` se ja existirem. Por padrao, **preserva** customizacoes do consumidor. |
+| `-SkipInit` | `--skip-init` | Nao chama `ai init` no final. Use se for rodar manualmente com flags. |
+
+`-DryRun` recomendado na primeira tentativa, pra revisar o mapa de copia antes.
+
+## O que e idempotente
+
+Re-rodar o installer e seguro:
+
+- `.ai-process/` e `.agents/skills/` sao **substituidos** pelo build atual (sao "produto", nao customizaveis).
+- `.githooks/commit-msg` e `features/*` sao **preservados** se ja existirem (use `-Force` pra sobrescrever).
+- `.ai/*.json` e `FEATURES.md` sao preservados pelo proprio `ai init` (que nao destroi estado existente).
+
+## Ativando o hook git no consumidor
+
+Apos o install:
+
+```powershell
+git config core.hooksPath .githooks
+```
+
+Isso ativa o `commit-msg` que valida `[unlock:<id>]` antes de aceitar commits que mexem em arquivos travados.
 
 ## Verificacao
 
 ```powershell
-.\core\bin\ai.ps1 doctor
+# Windows
+python .ai-process/bin/ai.py doctor
+# ou direto via shim se .ai-process/bin/ estiver no PATH (Claude faz automatico)
+ai doctor
 ```
 
-Depois, ajuste `.ai/process.json` para os comandos de teste e a politica de lock do seu projeto.
+```bash
+# Linux/Mac
+python3 .ai-process/bin/ai.py doctor
+# ou
+.ai-process/bin/ai doctor
+```
+
+Esperado: `AI process files OK.`
+
+## Como atualizar para uma nova versao do pack
+
+```powershell
+cd C:\dev\ai-process-pack
+git pull
+python core/build/render-skills.py    # rebuilda dist/
+cd C:\dev\meu-projeto
+C:\dev\ai-process-pack\install.ps1    # re-instala (substitui .ai-process/ e .agents/)
+```
+
+Suas customizacoes em `.githooks/commit-msg`, `features/registry.yaml`, `features/lock-ignore.txt` e `.ai/` sao preservadas.
+
+## Como desinstalar
+
+```powershell
+Remove-Item -Recurse -Force .ai-process
+Remove-Item -Recurse -Force .agents/skills
+# opcional, se quiser remover hook git e lock:
+git config --unset core.hooksPath
+Remove-Item .githooks/commit-msg
+Remove-Item -Recurse features
+```
+
+Estado do processo (`.ai/`, `FEATURES.md`) e dados seus — apague separadamente se quiser zerar tudo.
+
+## Quem descobre o que
+
+| Agente | Como descobre o pack | Comandos |
+| --- | --- | --- |
+| Claude Code | Plugin em `.ai-process/.claude-plugin/plugin.json` (auto-detectado quando abre o projeto). | `/ai:feature`, `/ai:issue`, `/ai:status`, etc. |
+| Codex CLI | Convencao AGENTS.md: le `.agents/skills/ai-*/SKILL.md`. | `/ai-feature`, `/ai-issue`, etc. |
+| Antigravity | Mesma convencao do Codex (AGENTS.md). | `$ai-feature`, `$ai-issue`, etc. |
+
+Detalhes da decisao em [`../adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md).
+
+## Sem instalador (rota copia-manual, ainda suportada)
+
+Se voce nao quiser usar `install.ps1`/`install.sh` (ex.: ambiente sem PowerShell e sem bash), faca a copia manual seguindo o mapa:
+
+| Origem (em `dist/`) | Destino (no consumidor) |
+| --- | --- |
+| `dist/.claude-plugin/` | `.ai-process/.claude-plugin/` |
+| `dist/skills/` | `.ai-process/skills/` |
+| `dist/bin/` | `.ai-process/bin/` |
+| `dist/.agents/skills/` | `.agents/skills/` |
+| `dist/templates/.githooks/commit-msg` | `.githooks/commit-msg` |
+| `dist/templates/features/registry.yaml` | `features/registry.yaml` |
+| `dist/templates/features/lock-ignore.txt` | `features/lock-ignore.txt` |
+
+Depois rode `python .ai-process/bin/ai.py init --project-name <nome>` no consumidor.
+
+## Editando skills (so faz sentido se voce e o mantenedor do pack)
+
+Skills sao geradas a partir de `core/manifest/manifest.yaml` no repo-mae. Para alterar:
+
+1. Edite `core/manifest/manifest.yaml` (no repo do pack, nao no consumidor).
+2. Rode `python core/build/render-skills.py` (regenera `dist/skills/`, `dist/.agents/skills/`, `dist/bin/`, `dist/templates/`).
+3. Em CI, use `python core/build/render-skills.py --check` para barrar drift.
+4. Re-instale no consumidor com `install.ps1`/`install.sh`.
+
+Nao edite arquivos sob `dist/` a mao — sao sobrescritos pelo render. No consumidor, nunca edite `.ai-process/` a mao — sobrescritos pelo installer.

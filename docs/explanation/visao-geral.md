@@ -38,7 +38,9 @@ Cada uma tem responsabilidade distinta e nenhuma sobrepoe a outra. A skill nunca
 
 ## Plugin ou repo?
 
-Desde F-009 (2026-06-01) o pack adota o **layout oficial de plugin Claude Code**. Desde F-011 (B-007, 2026-06-02) o repo-mae separa **fontes em `core/`** (`src/`, `build/`, `manifest/`, `lock/`, `hooks/`, `templates/`) de **buildado em `dist/`** (`.claude-plugin/`, `skills/`, `.agents/skills/`). O marketplace local fica em `dist/.claude-plugin/marketplace.json` apontando o plugin raiz para `dist/`. Os atalhos no Claude saem `/ai:feature`, `/ai:issue`, etc. Codex e Antigravity continuam descobrindo via `dist/.agents/skills/<verbo>/SKILL.md` (convencao AGENTS.md), entao continuam podendo usar `/feature` ou `$feature`. Decisao em [`../adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md).
+Desde F-009 (2026-06-01) o pack adota o **layout oficial de plugin Claude Code**. Desde F-011 (B-007, 2026-06-02) o repo-mae separa **fontes em `core/`** (`src/`, `build/`, `manifest/`, `lock/`, `hooks/`, `templates/`) de **buildado em `dist/`** (`.claude-plugin/`, `skills/`, `.agents/skills/`, `bin/`). O marketplace local fica em `dist/.claude-plugin/marketplace.json` apontando o plugin raiz para `dist/`. Os atalhos no Claude saem `/ai:feature`, `/ai:issue`, etc. Codex e Antigravity descobrem via `dist/.agents/skills/ai-<verbo>/SKILL.md` (convencao AGENTS.md, prefixo `ai-` desde F-012 pra evitar colisao com comandos nativos), entao usam `/ai-feature` ou `$ai-feature`. Decisao em [`../adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md).
+
+`dist/bin/` (introduzido em F-012) empacota o motor standalone do plugin: copia exata de `core/src/ai.py`, wrapper `ai.ps1` reescrito pra layout flat (motor lado a lado), e shim POSIX `ai`. O `bin/` do plugin e auto-mapeado pra PATH pelo Claude Code, entao apos o instalador (passo 3 de B-008, ainda nao entregue) copiar `dist/*` pra `.ai-process/` no consumidor, basta digitar `ai status` no terminal de qualquer sessao.
 
 Caminho do roadmap a partir daqui:
 
@@ -46,6 +48,6 @@ Caminho do roadmap a partir daqui:
 2. ~~Extrair para um repo Git~~ (feito - `ai-process-pack`).
 3. ~~Adotar layout oficial de plugin Claude Code~~ (feito em F-009).
 4. ~~Reorganizar repo-mae em `core/` + `dist/`~~ (feito em F-011, prepara B-008/B-009).
-5. Layout `.ai-process/` no consumidor (B-008).
+5. ~~Layout `.ai-process/` no consumidor (B-008)~~ (feito: F-012 entregou renderer + bin standalone; F-013 entregou `install.ps1`/`install.sh`, templates em `dist/templates/`, e smoke test do consumer). Pendente apenas o dogfood Codex/Antigravity do proprio repo-mae (`.agents/skills/` so existe em `dist/`, nao na raiz).
 6. Publicar marketplace remoto em `github.com/paulosmarcos/ai-process-pack` (B-009).
 7. Opcional: adicionar hooks (`core/hooks/hooks.json`) pra automacao de eventos; adicionar MCP server pra exposicao programatica do estado das tasks.

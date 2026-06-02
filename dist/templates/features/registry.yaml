@@ -1,0 +1,11 @@
+# Schema e protocolo: docs/reference/registry-yaml.md e docs/explanation/por-que-lock.md.
+# Edicao via CLI (recomendado): python core/lock/check-lock.py lock|unlock
+# Ou edite manualmente preservando o schema abaixo.
+
+version: 1
+locks:
+- id: adicoes-exigem-autorizacao
+  description: Qualquer arquivo novo exige autorizacao explicita
+  operations: [add]
+  files:
+  - '*'

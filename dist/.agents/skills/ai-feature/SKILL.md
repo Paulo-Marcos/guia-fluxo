@@ -1,5 +1,5 @@
 ---
-name: feature
+name: ai-feature
 description: PRIMARY TRIGGER for /feature or "$feature". Creates a NEW F-NNN feature task and starts implementation immediately. Do NOT use for: bugs/regressions (use $issue), deferred ideas without starting work (use $backlog), or evaluating an existing B-NNN (use $promote).
 ---
 
