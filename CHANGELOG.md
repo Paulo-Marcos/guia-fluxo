@@ -6,8 +6,19 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Changed
+- **Repo-mae reorganizado em `core/` + `dist/` (F-011, B-007).** Fontes do pack ficam em `core/` (subpastas `src/` para `ai.py`, `build/` para `render-skills.py`, `manifest/` para `manifest.yaml`, `lock/` para `check-lock.py`, `hooks/` para `commit-msg`, `templates/` para snippets de install) e o buildado (output do render + plugin manifest) fica em `dist/.claude-plugin/` + `dist/skills/` + `dist/.agents/skills/`. Separa "fabrica" de "produto", prepara B-008 (layout consumidor com `.ai-process/`) e B-009 (marketplace remoto). Self-dogfood do repo-mae aponta o marketplace local pra `./dist` via `.claude/settings.json`; `git config core.hooksPath` migrou de `.githooks` para `core/hooks`. Wrapper `.\core\bin\ai.ps1` mantido como entry point e roteia internamente pra `core/src/ai.py`. Docs atualizadas com os novos paths.
+
+- **Layout oficial de plugin Claude Code (F-009).** O repo-mae virou um plugin Claude Code oficial: `.claude-plugin/plugin.json` na raiz (name=`ai`), skills geradas em `skills/<verbo>/SKILL.md` (output do plugin) e `.agents/skills/<verbo>/SKILL.md` (cross-tool Codex+Antigravity via convencao AGENTS.md). Source do manifest movido de `skills/manifest.yaml` para `plugin-src/manifest.yaml` (skills/ na raiz e agora exclusivamente output). Atalhos no Claude saem namespaced: `/ai:feature`, `/ai:issue`, `/ai:backlog`, `/ai:promote`, `/ai:ready`, `/ai:finish`, `/ai:status`. Codex e Antigravity continuam com `/feature`, `$feature`, etc. via `.agents/skills/`. Razao e tradeoffs em [`docs/adr/0006-plugin-oficial-claude-code.md`](docs/adr/0006-plugin-oficial-claude-code.md).
+
+### Added
+- **Marketplace local autoregistrado (F-009).** `.claude-plugin/marketplace.json` (name=`ai-process-pack`) cataloga o plugin `ai` apontando pra raiz do proprio repo (`source: "./"`). `.claude/settings.json` declara `extraKnownMarketplaces` + `enabledPlugins` apontando pro marketplace local via `source: { source: "directory", path: "." }`, de modo que ao abrir o repo em Claude Code o usuario recebe prompt de instalacao e atalhos `/ai:*` ficam disponiveis nas sessoes futuras sem precisar de `--plugin-dir` ou `/plugin marketplace add` manual. Absorve a demanda que era rastreada como B-001 no backlog.
+
+### Removed
+- `skills/generated/.claude/skills/` e `skills/generated/.agents/skills/` (stages de distribuicao) e `.claude/skills/` na raiz - substituidos pelo layout oficial em `skills/` + `.agents/skills/`. `render-skills.py` reduziu de 4 destinos para 2.
+
 ### Fixed
-- **Skills do pack agora ficam habilitadas no proprio repo-mae (I-004).** `scripts/render-skills.py` passou a escrever em quatro destinos: `skills/generated/.claude/skills/` e `skills/generated/.agents/skills/` (stages de distribuicao para projetos consumidores) **e** `.claude/skills/` e `.agents/skills/` na raiz (ativo runtime do dogfood). Antes, so o stage era emitido - como Claude Code/Codex descobrem skills em `.claude/skills/` / `.agents/skills/` na raiz, os atalhos (`/feature`, `/issue`, etc.) nao funcionavam durante o desenvolvimento do proprio pack. Doc desalinhada em `CLAUDE.md`/`AGENTS.md`/`docs/reference/cli.md` corrigida.
+- **Skills do pack agora ficam habilitadas no proprio repo-mae (I-004).** `scripts/render-skills.py` passou a escrever em quatro destinos: `skills/generated/.claude/skills/` e `skills/generated/.agents/skills/` (stages de distribuicao para projetos consumidores) **e** `.claude/skills/` e `.agents/skills/` na raiz (ativo runtime do dogfood). Antes, so o stage era emitido - como Claude Code/Codex descobrem skills em `.claude/skills/` / `.agents/skills/` na raiz, os atalhos (`/feature`, `/issue`, etc.) nao funcionavam durante o desenvolvimento do proprio pack. Doc desalinhada em `CLAUDE.md`/`AGENTS.md`/`docs/reference/cli.md` corrigida. (Superado por F-009: layout standalone `.claude/skills/` foi substituido pelo plugin oficial em `.claude-plugin/`.)
 
 ### Added
 - **Hook de docs no `/finish` (F-010).** O `ai.py finish` agora consulta `.ai/docs-map.yaml` (opcional), lista docs candidatos a atualizacao e bloqueia o fechamento ate o agente registrar `--docs-touched <path>` ou `--docs-skip "<motivo>"`. Quando o mapa nao existe, vira no-op com aviso. Subcomando standalone `ai.py docs-check [--json]` exposto para consulta. Schema em [`docs/reference/docs-map.md`](docs/reference/docs-map.md), receita em [`docs/how-to/manter-docs-atualizados.md`](docs/how-to/manter-docs-atualizados.md), racional em [`docs/explanation/por-que-docs-hook.md`](docs/explanation/por-que-docs-hook.md), decisao em [`docs/adr/0005-docs-hook-no-finish.md`](docs/adr/0005-docs-hook-no-finish.md).
@@ -27,7 +38,7 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ### Added
 - Extracao inicial do projeto gerador-cortes para um repositorio dedicado.
-- Motor CLI em Python: `scripts/ai.py` e wrapper PowerShell `scripts/ai.ps1`.
+- Motor CLI em Python: `scripts/ai.py` e wrapper PowerShell `core/bin/ai.ps1`.
 - Verificador de locks: `bin/check-lock.py`.
 - Skills geradas em `skills/generated/` espelhando o destino:
   - `skills/generated/.agents/skills/<verb>/SKILL.md` (Codex + Antigravity).

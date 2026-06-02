@@ -16,7 +16,7 @@
 ## Exemplo sem worktree
 
 ```powershell
-.\scripts\ai.ps1 promote B-019 --kind issue `
+.\core\bin\ai.ps1 promote B-019 --kind issue `
     --assessment "Regressao de agendamento" `
     --plan "Inspecionar servico de publicacao em massa"
 ```
@@ -24,7 +24,7 @@
 ## Exemplo com worktree
 
 ```powershell
-.\scripts\ai.ps1 promote B-019 --kind issue --worktree `
+.\core\bin\ai.ps1 promote B-019 --kind issue --worktree `
     --assessment "Regressao de agendamento" `
     --plan "Criar teste de intervalo antes do fix"
 ```

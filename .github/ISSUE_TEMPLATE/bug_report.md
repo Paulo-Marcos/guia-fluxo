@@ -39,5 +39,5 @@ labels: bug
 
 <!--
 Trechos uteis: .ai/current-task.json, mensagem do commit que falhou, conteudo
-relevante de features/registry.yaml, saida de `python scripts/ai.py doctor`.
+relevante de features/registry.yaml, saida de `python core/src/ai.py doctor`.
 -->

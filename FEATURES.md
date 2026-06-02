@@ -2,6 +2,84 @@
 
 ---
 
+## [F-011] B-007: Passo 1 - Reorganizar repo do pack em core/ (dev) + dist/ (buildado)
+
+- **Status:** Validada
+- **Origem:** Backlog B-007 (2026-06-01)
+- **Tipo:** Feature
+- **Contexto:** Backlog B-007: Refactor interno do repo-mae: mover scripts/, plugin-src/, bin/, .githooks/, templates/ pra dentro de core/ (com subpastas src/, manifest/, build/, lock/, hooks/, templates/). Criar dist/ como saida buildada que espelha o layout do consumidor. Nao muda nada no projeto consumidor ainda - continua copia manual. Beneficio: limpa o repo-mae, separa fabrica de produto, prepara terreno pro Passo 2. Estimativa: refactor amplo, mexe em paths em todas as docs/CI/wrappers/testes.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/docs-map.yaml`
+- `.ai/tasks.json`
+- `.editorconfig`
+- `.gitattributes`
+- `.github/ISSUE_TEMPLATE/bug_report.md`
+- `.github/PULL_REQUEST_TEMPLATE.md`
+- `.github/workflows/lock-check.yml`
+- `.github/workflows/render-check.yml`
+- `AGENTS.md`
+- `CHANGELOG.md`
+- `CLAUDE.md`
+- `CONTRIBUTING.md`
+- `README.md`
+- `SECURITY.md`
+- `core/build/render-skills.py`
+- `core/hooks/commit-msg`
+- `core/lock/check-lock.py`
+- `core/manifest/manifest.yaml`
+- `core/src/ai.py`
+- `core/templates/.githooks/commit-msg`
+- `core/templates/features/lock-ignore.txt`
+- `core/templates/features/registry.yaml`
+- `docs/adr/0001-script-fonte-da-verdade.md`
+- `docs/adr/README.md`
+- `docs/explanation/por-que-lock.md`
+- `docs/explanation/por-que-script-fonte-da-verdade.md`
+- `docs/explanation/visao-geral.md`
+- `docs/how-to/auditar-desbloqueios.md`
+- `docs/how-to/configurar-hooks-git.md`
+- `docs/how-to/destravar-arquivo.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/how-to/renomear-arquivo-travado.md`
+- `docs/how-to/travar-arquivo.md`
+- `docs/reference/cli.md`
+- `docs/reference/docs-map.md`
+- `docs/reference/files.md`
+- `docs/reference/hooks-git.md`
+- `docs/reference/registry-yaml.md`
+- `docs/reference/troubleshooting.md`
+- `docs/tutorials/primeiro-uso.md`
+- `features/registry.yaml`
+- `scripts/ai.ps1`
+- `tests/test_smoke.py`
+- `core/bin/ai.ps1`
+- `docs/how-to/manter-docs-atualizados.md`
+- `docs/how-to/promover-backlog.md`
+- `docs/adr/0006-plugin-oficial-claude-code.md`
+
+### O que foi feito
+
+- Backlog promovido via ai-process.
+- Avaliacao IA: Refactor estrutural amplo: mover scripts/, plugin-src/, .githooks/, templates/, bin/ para core/{src,manifest,build,lock,hooks,templates} e criar dist/ como saida buildada espelhando o layout do consumidor. Separa fabrica de produto, prepara B-008/B-009. Acionavel - destino e origem claros no contexto.
+- Repo-mae reorganizado em core/ (src, build, manifest, lock, hooks, templates) + dist/ (.claude-plugin, skills, .agents/skills). Self-dogfood preservado: .claude/settings.json aponta marketplace pra ./dist, marketplace.json plugin source = ../, git core.hooksPath = core/hooks. Wrapper scripts/ai.ps1 mantido e roteia pra core/src/ai.py. Render-skills.py adaptado, CI atualizada, smoke test atualizado, todos docs com paths novos. ADRs 0001 e 0006 com nota de atualizacao por F-011.
+- Ajuste adicional pos-review: ai.ps1 movido de scripts/ pra core/bin/ (cumpre B-007 estritamente). Pasta scripts/ removida. Wrapper atualizado pra resolver core/src/ai.py via ..\src\ai.py e .venv via ..\..\.venv. Todas as referencias em docs/manifest/settings substituidas: .\scripts\ai.ps1 -> .\core\bin\ai.ps1 e scripts/ai.ps1 -> core/bin/ai.ps1.
+- F-011 entregue. Refactor estrutural concluido: core/ (src, bin, build, manifest, lock, hooks, templates) + dist/ (.claude-plugin, skills, .agents/skills). scripts/ removida. ai.ps1 final em core/bin/ai.ps1. Wrapper testado, smoke test passa, render --check passa, doctor passa. Docs sincronizadas com novos paths (3 ADRs + 6 explanation/reference + 7 how-to + 1 tutorial + CHANGELOG + briefings + raiz). Limitacao: reinstall do plugin Claude (/plugin marketplace add ./dist) precisa de sessao nova - fica pra teste manual. Commit deixado para passo separado por causa do lock global adicoes-exigem-autorizacao.
+
+### Validacao feita
+
+- doctor: AI process files OK. render --check: OK 16 alvo(s) em sincronia. tests/test_smoke.py: ok (Ran 1 test in 0.857s). docs-check F-011: lista 10 candidatos, todos ja atualizados nesta entrega. core.hooksPath = core/hooks.
+- Limitacao conhecida: reinstall do plugin no Claude Code (/plugin marketplace add ./dist) exige nova sessao - nao validei automaticamente, fica pra teste manual humano em uso real.
+- doctor: AI process files OK. render --check: OK 16 alvos. test_smoke: ok. Wrapper testado de raiz: .\core\bin\ai.ps1 doctor responde.
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [I-004] Skills do pack nao habilitadas localmente: render-skills.py nao escreve em .claude/ na raiz
 
 - **Status:** Validada
@@ -87,7 +165,7 @@
 
 ## [F-009] Migrar layout para plugin oficial Claude Code (A+B base) + ADR-0005
 
-- **Status:** Em desenvolvimento
+- **Status:** Validada
 - **Origem:** AI process (2026-05-31)
 - **Tipo:** Feature
 - **Contexto:** Pesquisa arquitetural (2026-05-31) confirmou opcao A+B com alvo tri-agente (Claude principal, Codex secundario, Antigravity terciario). Esta demanda e o fundamento estrutural: (1) adicionar .claude-plugin/plugin.json na raiz com manifest oficial; (2) reorganizar a saida do render-skills.py para o layout root-level oficial (skills/, commands/, hooks/, bin/) em vez de skills/generated/.claude/...; (3) manter skills/generated/.agents/ para Codex+Antigravity via AGENTS.md+SKILL.md cross-tool; (4) preservar scripts/ai.py como motor (skills continuam thin wrappers); (5) escrever ADR-0005 documentando a decisao com links pra https://code.claude.com/docs/en/plugins e o padrao AGENTS.md (Linux Foundation). Bloqueia o restante do backlog (marketplace.json, MCP server, PreToolUse hook, compat cross-agent, consolidacao AGENTS/CLAUDE, docs Diataxis).
@@ -95,19 +173,59 @@
 ### Arquivos modificados/criados
 
 - `FEATURES.md`
+- `.claude-plugin/plugin.json`
+- `plugin-src/manifest.yaml`
+- `scripts/render-skills.py`
+- `scripts/ai.py`
+- `skills/ai-process/SKILL.md`
+- `skills/feature/SKILL.md`
+- `skills/issue/SKILL.md`
+- `skills/backlog/SKILL.md`
+- `skills/promote/SKILL.md`
+- `skills/ready/SKILL.md`
+- `skills/finish/SKILL.md`
+- `skills/status/SKILL.md`
+- `.agents/skills/ai-process/SKILL.md`
+- `docs/adr/0006-plugin-oficial-claude-code.md`
+- `docs/adr/README.md`
+- `CLAUDE.md`
+- `AGENTS.md`
+- `CHANGELOG.md`
+- `README.md`
+- `docs/reference/cli.md`
+- `docs/reference/files.md`
+- `docs/explanation/visao-geral.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `CONTRIBUTING.md`
+- `SECURITY.md`
+- `.ai/docs-map.yaml`
+- `.github/PULL_REQUEST_TEMPLATE.md`
+- `.github/workflows/render-check.yml`
+- `.claude-plugin/marketplace.json`
+- `.claude/settings.json`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
 
 ### O que foi feito
 
 - Demanda criada via ai-process.
+- Layout oficial de plugin Claude Code: .claude-plugin/plugin.json (name=ai) na raiz expoe os 8 verbos sob namespace ai (/ai:feature, /ai:issue, etc.). Source do manifest movido de skills/manifest.yaml para plugin-src/manifest.yaml. render-skills.py reduzido de 4 destinos para 2: skills/<verbo>/SKILL.md (output do plugin Claude oficial) + .agents/skills/<verbo>/SKILL.md (cross-tool Codex+Antigravity via convencao AGENTS.md). Removidos skills/generated/ e .claude/skills/ na raiz. ADR-0006 criado documentando a decisao com tradeoffs e alternativas rejeitadas (standalone, nome longo, source em path nao-padrao, bin/ ja nesta demanda). Docs vivos atualizados: CLAUDE.md, AGENTS.md, cli.md, files.md, visao-geral.md, CHANGELOG.md, README.md, CONTRIBUTING.md, instalar-em-outro-projeto.md, SECURITY.md, PULL_REQUEST_TEMPLATE.md, render-check.yml, docs-map.yaml. scripts/ai.py: help text do subcomando render ajustado.
+- Scope expandido durante validacao: alem do plugin oficial Claude Code (item 1-6 do ADR-0006), incluido marketplace local autoregistrado (item 7). Adicionados .claude-plugin/marketplace.json (catalogo name=ai-process-pack, plugin source=./) e .claude/settings.json (extraKnownMarketplaces com source directory + enabledPlugins habilitando ai@ai-process-pack). Resultado: ao abrir o repo em Claude Code (primeira vez), o user recebe prompt de trust + install e os atalhos /ai:feature, /ai:issue, etc ficam disponiveis nas sessoes futuras sem precisar de --plugin-dir manual. Absorve a demanda B-001 do backlog. ADR-0006 atualizado com item 7 da Decisao, consequencia positiva da descoberta automatica recuperada, e nota de versao minima (Claude Code 2.1.x+) nas Consequencias. CLAUDE.md, README.md, instalar-em-outro-projeto.md atualizados com as 3 vias de instalacao (dogfood/marketplace publico/copia manual). CHANGELOG.md ganhou nova entry Added sobre o marketplace local.
+- Demanda finalizada via ai-process.
 
 ### Validacao feita
 
-- Nenhuma.
+- python scripts/render-skills.py --check -> OK: 16 alvo(s) em sincronia com o manifest.
+- python scripts/ai.py doctor -> AI process files OK.
+- python -m unittest tests.test_smoke -v -> OK, 1 teste passou. Smoke nao depende dos paths novos, mas confirma que scripts/ai.py continua intacto.
+- Get-ChildItem skills, .agents/skills -Directory confirma 8 pastas em cada (ai-process, backlog, feature, finish, issue, promote, ready, status). 16 SKILL.md no total.
+- python -m unittest tests.test_smoke -v -> OK, 1 teste passou.
+- Get-ChildItem .claude-plugin confirma 2 arquivos (marketplace.json, plugin.json). Get-ChildItem .claude confirma settings.json. Get-ChildItem skills, .agents/skills -Directory confirma 8 pastas em cada (16 SKILL.md no total).
 
 ### Validacao pendente
 
-- Executar implementacao e validacoes.
-
+- Nenhuma.
 
 ## [F-008] Criar ADRs iniciais (4 decisoes fundadoras)
 

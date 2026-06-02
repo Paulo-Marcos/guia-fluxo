@@ -49,4 +49,4 @@ jobs:
           echo "::endgroup::"
 
       - name: Validate locks
-        run: python bin/check-lock.py ci --files /tmp/files.txt --messages /tmp/messages.txt
+        run: python core/lock/check-lock.py ci --files /tmp/files.txt --messages /tmp/messages.txt

@@ -12,8 +12,8 @@ git commit -m "refactor: renomeia ingestao para livestream_ingestao
 [unlock:ingestao-livestream] motivo: nome mais especifico"
 
 # 2. Atualize o registry para apontar para o novo caminho
-python bin/check-lock.py unlock ingestao-livestream
-python bin/check-lock.py lock ingestao-livestream `
+python core/lock/check-lock.py unlock ingestao-livestream
+python core/lock/check-lock.py lock ingestao-livestream `
     --description "Download e parse de VTT da livestream" `
     backend/app/services/livestream_ingestao.py `
     backend/app/domain/vtt_parser.py
@@ -28,8 +28,8 @@ A trava em `registry.yaml` referencia caminhos. Renomear o arquivo sem atualizar
 A trava nao impede criar arquivos novos em outros caminhos. Para incluir o novo arquivo na protecao:
 
 ```powershell
-python bin/check-lock.py unlock ingestao-livestream
-python bin/check-lock.py lock ingestao-livestream `
+python core/lock/check-lock.py unlock ingestao-livestream
+python core/lock/check-lock.py lock ingestao-livestream `
     --description "Download e parse de VTT" `
     backend/app/services/ingestao.py `
     backend/app/domain/vtt_parser.py `

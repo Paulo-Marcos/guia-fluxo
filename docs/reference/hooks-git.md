@@ -6,12 +6,12 @@
 
 Valida travas declaradas em [`features/registry.yaml`](registry-yaml.md). Rejeita commits que modifiquem arquivos travados sem a marca `[unlock:<feature-id>] motivo: <razao>` na mensagem.
 
-Implementacao: chama `python bin/check-lock.py`.
+Implementacao: chama `python core/lock/check-lock.py`.
 
 ## Instalacao
 
 ```powershell
-git config core.hooksPath .githooks
+git config core.hooksPath core/hooks
 ```
 
 Por clone (nao fica em commit). Ver [how-to/configurar-hooks-git.md](../how-to/configurar-hooks-git.md).

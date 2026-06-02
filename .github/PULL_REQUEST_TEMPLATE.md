@@ -17,8 +17,8 @@ Veja docs/how-to/ antes de abrir o PR.
 
 - [ ] Codigo
 - [ ] Documentacao (`docs/` ou `README.md`)
-- [ ] Skills (`skills/manifest.yaml` + `skills/generated/`)
-- [ ] Templates de bootstrap (`templates/`)
+- [ ] Skills (`core/manifest/manifest.yaml` + `dist/skills/` + `dist/.agents/skills/`)
+- [ ] Templates de bootstrap (`core/templates/`)
 - [ ] Lock (`features/registry.yaml`)
 - [ ] Outro: <!-- ... -->
 
@@ -27,8 +27,8 @@ Veja docs/how-to/ antes de abrir o PR.
 <!-- Comandos que voce rodou e o que esperava ver. Cole saidas relevantes. -->
 
 ```
-python scripts/ai.py doctor
-python scripts/render-skills.py --check
+python core/src/ai.py doctor
+python core/build/render-skills.py --check
 ```
 
 ## Locks tocados
@@ -45,7 +45,7 @@ Liste aqui quais features foram desbloqueadas e por que.
 
 ## Checklist final
 
-- [ ] `python scripts/ai.py doctor` passa.
-- [ ] `python scripts/render-skills.py --check` passa (se mexeu em skills).
+- [ ] `python core/src/ai.py doctor` passa.
+- [ ] `python core/build/render-skills.py --check` passa (se mexeu em skills).
 - [ ] Demanda no `FEATURES.md` atualizada via `ai ready`/`ai finish`.
 - [ ] Documentacao atualizada (se mudou comportamento).

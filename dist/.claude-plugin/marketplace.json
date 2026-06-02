@@ -1,0 +1,25 @@
+{
+  "name": "ai-process-pack",
+  "description": "Marketplace local do ai-process-pack: catalogo de plugins que distribuem o processo de demandas portavel (feature/issue/backlog/promote/ready/finish/status) para Claude Code, Codex e Antigravity.",
+  "owner": {
+    "name": "Paulo Marcos",
+    "email": "paulolinhodboa@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "ai",
+      "source": "../",
+      "description": "Pack de processo: skills /ai:feature, /ai:issue, /ai:backlog, /ai:promote, /ai:ready, /ai:finish, /ai:status (thin wrappers sobre core/src/ai.py).",
+      "version": "0.2.0",
+      "author": {
+        "name": "Paulo Marcos",
+        "email": "paulolinhodboa@gmail.com"
+      },
+      "homepage": "https://github.com/paulosmarcos/ai-process-pack",
+      "repository": "https://github.com/paulosmarcos/ai-process-pack",
+      "license": "MIT",
+      "category": "workflow",
+      "tags": ["process", "tasks", "backlog", "agents-md"]
+    }
+  ]
+}

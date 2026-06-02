@@ -30,9 +30,9 @@ Se nao houver resposta em 10 dias uteis, voce esta liberado para escalar (issue 
 
 Em escopo (reporte privado):
 
-- Falhas no `scripts/ai.py` / `scripts/ai.ps1` que permitem corromper `.ai/*.json`, `FEATURES.md` ou `features/registry.yaml` de fora do fluxo previsto.
-- Bypass do hook `commit-msg` / `bin/check-lock.py` (commitar em arquivo travado sem marca `[unlock:...]`).
-- Falhas no `scripts/render-skills.py` que permitem injetar conteudo em `skills/generated/` divergente do manifest.
+- Falhas no `core/src/ai.py` / `core/bin/ai.ps1` que permitem corromper `.ai/*.json`, `FEATURES.md` ou `features/registry.yaml` de fora do fluxo previsto.
+- Bypass do hook `commit-msg` / `core/lock/check-lock.py` (commitar em arquivo travado sem marca `[unlock:...]`).
+- Falhas no `core/build/render-skills.py` que permitem injetar conteudo em `dist/skills/<verbo>/SKILL.md` ou `dist/.agents/skills/<verbo>/SKILL.md` divergente do manifest (`core/manifest/manifest.yaml`).
 - Injecao em mensagens de commit, paths, ou inputs de CLI que escapem para shell/Python.
 - Vazamento de credenciais ou paths sensiveis em logs/output do CLI.
 
@@ -51,6 +51,6 @@ Enquanto o pack esta pre-1.0, apenas a versao corrente do branch `main` recebe f
 
 Contexto para quem investiga: o pack ja tem tres camadas para o lock de arquivos homologados (`docs/explanation/por-que-lock.md`). Falhas que rompem qualquer uma das tres sao tratadas como seguranca:
 
-1. `commit-msg` local (`.githooks/commit-msg` -> `bin/check-lock.py hook`).
+1. `commit-msg` local (`core/hooks/commit-msg` -> `core/lock/check-lock.py hook`).
 2. CI remoto (`.github/workflows/lock-check.yml`, planejado em [F-005](FEATURES.md)).
 3. Inspecao manual no PR.

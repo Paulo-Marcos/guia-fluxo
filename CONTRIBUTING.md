@@ -1,13 +1,13 @@
 # Contribuindo com o ai-process-pack
 
-Obrigado por considerar contribuir. Este projeto e um pack de processo: skill, script (`scripts/ai.py`, fonte de verdade), arquivos JSON/YAML de estado e hooks. As regras abaixo refletem essa arquitetura - se algo aqui parecer inesperado, leia antes [`docs/explanation/visao-geral.md`](docs/explanation/visao-geral.md) e [`docs/explanation/por-que-script-fonte-da-verdade.md`](docs/explanation/por-que-script-fonte-da-verdade.md).
+Obrigado por considerar contribuir. Este projeto e um pack de processo: skill, script (`core/src/ai.py`, fonte de verdade), arquivos JSON/YAML de estado e hooks. As regras abaixo refletem essa arquitetura - se algo aqui parecer inesperado, leia antes [`docs/explanation/visao-geral.md`](docs/explanation/visao-geral.md) e [`docs/explanation/por-que-script-fonte-da-verdade.md`](docs/explanation/por-que-script-fonte-da-verdade.md).
 
 ## Pre-requisitos
 
 - Python 3.8+ no PATH.
 - `pyyaml` (`pip install pyyaml`) - usado pelo hook `commit-msg` e pelo render.
 - Git 2.30+ (para `core.hooksPath`).
-- PowerShell 5.1+ (Windows) **ou** Bash equivalente para invocar `scripts/ai.ps1`/`scripts/ai.py` diretamente.
+- PowerShell 5.1+ (Windows) **ou** Bash equivalente para invocar `core/bin/ai.ps1`/`python core/src/ai.py` diretamente.
 
 ## Setup local
 
@@ -16,8 +16,8 @@ Clone, instale os hooks e rode o doctor:
 ```powershell
 git clone <url>
 cd ai-process-pack
-git config core.hooksPath .githooks
-.\scripts\ai.ps1 doctor
+git config core.hooksPath core/hooks
+.\core\bin\ai.ps1 doctor
 ```
 
 `doctor` deve sair com codigo 0. Se falhar, ele aponta o que esta faltando.
@@ -27,13 +27,13 @@ git config core.hooksPath .githooks
 Toda contribuicao passa pelo proprio processo do pack (dogfooding). Nao edite `.ai/*.json` nem `FEATURES.md` a mao - quem altera e o script.
 
 1. **Abra uma demanda.**
-   - Bug ou regressao: `.\scripts\ai.ps1 issue "Titulo curto" --context "Sintoma e impacto"`
-   - Nova capacidade: `.\scripts\ai.ps1 feature "Titulo curto" --context "Motivo e escopo"`
-   - Ideia futura, sem prazo: `.\scripts\ai.ps1 backlog add "Ideia" --context "Quando pode ser util"`
+   - Bug ou regressao: `.\core\bin\ai.ps1 issue "Titulo curto" --context "Sintoma e impacto"`
+   - Nova capacidade: `.\core\bin\ai.ps1 feature "Titulo curto" --context "Motivo e escopo"`
+   - Ideia futura, sem prazo: `.\core\bin\ai.ps1 backlog add "Ideia" --context "Quando pode ser util"`
 2. **Implemente.** Edite arquivos. Se algum estiver travado em `features/registry.yaml`, siga [`docs/how-to/editar-arquivo-travado.md`](docs/how-to/editar-arquivo-travado.md).
 3. **Marque pronto para validacao:**
    ```powershell
-   .\scripts\ai.ps1 ready I-NNN `
+   .\core\bin\ai.ps1 ready I-NNN `
        --file <caminho> [--file <outro>] `
        --summary "Resumo do que foi feito" `
        --validation "Comando ou check executado"
@@ -41,22 +41,22 @@ Toda contribuicao passa pelo proprio processo do pack (dogfooding). Nao edite `.
 4. **Aguarde teste humano** (uso real, nao so test suite).
 5. **Antes de fechar, rode o docs-check:**
    ```powershell
-   .\scripts\ai.ps1 docs-check
+   .\core\bin\ai.ps1 docs-check
    ```
    Le `.ai/docs-map.yaml` e lista docs vivos que podem precisar de atualizacao. Atualize o que fizer sentido. Sem mapa, vira no-op com aviso. Detalhes em [`docs/how-to/manter-docs-atualizados.md`](docs/how-to/manter-docs-atualizados.md).
-6. **Feche:** `.\scripts\ai.ps1 finish I-NNN --docs-touched <path>...` ou `--docs-skip "<motivo>"`. Para travar arquivos homologados, use `--lock --lock-id <slug>`.
+6. **Feche:** `.\core\bin\ai.ps1 finish I-NNN --docs-touched <path>...` ou `--docs-skip "<motivo>"`. Para travar arquivos homologados, use `--lock --lock-id <slug>`.
 
 Detalhes de cada subcomando: [`docs/reference/cli.md`](docs/reference/cli.md).
 
 ## Editando skills
 
-Skills sao geradas a partir de `skills/manifest.yaml` (fonte unica para Claude Code, Codex e Antigravity). Para alterar:
+Skills sao geradas a partir de `core/manifest/manifest.yaml` (fonte unica para Claude Code, Codex e Antigravity). Para alterar:
 
-1. Edite `skills/manifest.yaml`.
-2. Rode `python scripts/render-skills.py` para regenerar `skills/generated/`.
-3. Em CI/hook, rode `python scripts/render-skills.py --check` para barrar drift.
+1. Edite `core/manifest/manifest.yaml`.
+2. Rode `python core/build/render-skills.py` para regenerar `dist/skills/<verbo>/SKILL.md` (output do plugin Claude Code, `dist/.claude-plugin/plugin.json`, namespace `ai`) e `dist/.agents/skills/<verbo>/SKILL.md` (Codex + Antigravity, convencao AGENTS.md cross-tool).
+3. Em CI/hook, rode `python core/build/render-skills.py --check` para barrar drift.
 
-**Nao edite arquivos sob `skills/generated/` a mao** - eles sao sobrescritos. Mais contexto em [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md#editando-skills-geradas).
+**Nao edite arquivos sob `dist/skills/<verbo>/` ou `dist/.agents/skills/<verbo>/` a mao** - eles sao sobrescritos. Decisao do layout em [`docs/adr/0006-plugin-oficial-claude-code.md`](docs/adr/0006-plugin-oficial-claude-code.md). Mais contexto em [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md#editando-skills-geradas).
 
 ## Documentacao
 
@@ -94,7 +94,7 @@ Se a edicao toca arquivo travado em `features/registry.yaml`, a mensagem **preci
 [unlock:<feature-id>] motivo: <razao curta>
 ```
 
-O hook `commit-msg` (instalado por `git config core.hooksPath .githooks`) rejeita commits sem essa marca. Receita completa: [`docs/how-to/editar-arquivo-travado.md`](docs/how-to/editar-arquivo-travado.md).
+O hook `commit-msg` (instalado por `git config core.hooksPath core/hooks`) rejeita commits sem essa marca. Receita completa: [`docs/how-to/editar-arquivo-travado.md`](docs/how-to/editar-arquivo-travado.md).
 
 ## Pull Requests
 
@@ -102,8 +102,8 @@ O hook `commit-msg` (instalado por `git config core.hooksPath .githooks`) rejeit
 - Inclua o ID da demanda no titulo do PR.
 - Verifique antes de abrir:
   ```powershell
-  .\scripts\ai.ps1 doctor
-  python scripts/render-skills.py --check
+  .\core\bin\ai.ps1 doctor
+  python core/build/render-skills.py --check
   ```
   Ambos devem sair com codigo 0.
 - Descreva o que foi feito e como testar em uso real (nao so test suite).

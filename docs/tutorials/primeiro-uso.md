@@ -13,8 +13,8 @@ Voce vai sair do zero ate ter uma feature criada, implementada e finalizada usan
 No diretorio do projeto consumidor:
 
 ```powershell
-.\scripts\ai.ps1 init --project-name "meu-projeto"
-git config core.hooksPath .githooks
+.\core\bin\ai.ps1 init --project-name "meu-projeto"
+git config core.hooksPath core/hooks
 ```
 
 O `init` cria:
@@ -27,13 +27,13 @@ O `core.hooksPath` ativa o hook `commit-msg` que valida marcas `[unlock:<id>]` e
 Confira:
 
 ```powershell
-.\scripts\ai.ps1 doctor
+.\core\bin\ai.ps1 doctor
 ```
 
 ## 2. Crie sua primeira feature
 
 ```powershell
-.\scripts\ai.ps1 feature "Adicionar comando de export" --context "Cliente pediu CSV"
+.\core\bin\ai.ps1 feature "Adicionar comando de export" --context "Cliente pediu CSV"
 ```
 
 Saida tipica:
@@ -62,7 +62,7 @@ Edite os arquivos do projeto normalmente.
 ## 4. Marque como pronta para validacao
 
 ```powershell
-.\scripts\ai.ps1 ready F-001 --file scripts/export.py --summary "CLI export criado" --validation "python scripts/export.py --help"
+.\core\bin\ai.ps1 ready F-001 --file scripts/export.py --summary "CLI export criado" --validation "python scripts/export.py --help"
 ```
 
 Isso move a task para `Aguardando validacao` e gera um relatorio em `.ai/reports/`.
@@ -74,7 +74,7 @@ Voce (humano) testa a feature em uso real.
 ## 6. Finalize
 
 ```powershell
-.\scripts\ai.ps1 finish F-001
+.\core\bin\ai.ps1 finish F-001
 ```
 
 Saida inclui `NOME DO CHAT: F-001 - #FINALIZADO - ...`. Por padrao, `finish` commita as mudancas.
@@ -82,7 +82,7 @@ Saida inclui `NOME DO CHAT: F-001 - #FINALIZADO - ...`. Por padrao, `finish` com
 Para travar a feature contra refactor futuro (opcional):
 
 ```powershell
-.\scripts\ai.ps1 finish F-001 --lock --lock-id meu-projeto-export
+.\core\bin\ai.ps1 finish F-001 --lock --lock-id meu-projeto-export
 ```
 
 ## Proximos passos

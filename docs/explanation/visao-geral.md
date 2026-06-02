@@ -7,7 +7,7 @@ O ai-process-pack transforma pedidos soltos em demandas rastreaveis usando scrip
 | Peca | Papel |
 | --- | --- |
 | **Skill** | Interface conversacional. Como o agente entende `/feature`, `/issue`, etc. |
-| **Script** (`scripts/ai.py`) | Fonte de verdade e automacao. Todas as mutacoes passam por aqui. |
+| **Script** (`core/src/ai.py`) | Fonte de verdade e automacao. Todas as mutacoes passam por aqui. |
 | **`.ai/*.json`** | Estado legivel por programas. Tasks, backlog, current, reports. |
 | **`FEATURES.md`** | Historico legivel por humano. Espelha o JSON em prosa. |
 | **`features/registry.yaml`** | Lock de arquivos homologados. |
@@ -38,11 +38,14 @@ Cada uma tem responsabilidade distinta e nenhuma sobrepoe a outra. A skill nunca
 
 ## Plugin ou repo?
 
-Plugin e viavel e provavelmente e o destino ideal quando o processo estabilizar. Ele empacotaria skills, hooks, comandos e instalador. Para agora, este repo usa um pack local porque e mais facil iterar e debugar.
+Desde F-009 (2026-06-01) o pack adota o **layout oficial de plugin Claude Code**. Desde F-011 (B-007, 2026-06-02) o repo-mae separa **fontes em `core/`** (`src/`, `build/`, `manifest/`, `lock/`, `hooks/`, `templates/`) de **buildado em `dist/`** (`.claude-plugin/`, `skills/`, `.agents/skills/`). O marketplace local fica em `dist/.claude-plugin/marketplace.json` apontando o plugin raiz para `dist/`. Os atalhos no Claude saem `/ai:feature`, `/ai:issue`, etc. Codex e Antigravity continuam descobrindo via `dist/.agents/skills/<verbo>/SKILL.md` (convencao AGENTS.md), entao continuam podendo usar `/feature` ou `$feature`. Decisao em [`../adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md).
 
-Caminho sugerido (ja registrado no [ROADMAP](../ROADMAP.md)):
+Caminho do roadmap a partir daqui:
 
-1. Estabilizar aqui.
-2. Extrair para um repo Git (feito - `ai-process-pack`).
-3. Criar instalador que copie `scripts`, `.ai` base, skills e comandos.
-4. Opcionalmente transformar em plugin para Codex/Antigravity quando a API de plugin for o melhor encaixe.
+1. ~~Estabilizar aqui~~ (feito).
+2. ~~Extrair para um repo Git~~ (feito - `ai-process-pack`).
+3. ~~Adotar layout oficial de plugin Claude Code~~ (feito em F-009).
+4. ~~Reorganizar repo-mae em `core/` + `dist/`~~ (feito em F-011, prepara B-008/B-009).
+5. Layout `.ai-process/` no consumidor (B-008).
+6. Publicar marketplace remoto em `github.com/paulosmarcos/ai-process-pack` (B-009).
+7. Opcional: adicionar hooks (`core/hooks/hooks.json`) pra automacao de eventos; adicionar MCP server pra exposicao programatica do estado das tasks.

@@ -16,7 +16,7 @@ version: 1
 #   - event: task-finished               # toda F-NNN ou I-NNN ao finalizar
 #       hint: "..."                      # opcional, mostrado ao agente
 #   - event: touched                     # se `modifiedFiles` ou git diff contem match
-#       paths: ["scripts/ai.*", ...]     # globs (fnmatch)
+#       paths: ["core/src/ai.*", ...]    # globs (fnmatch)
 #   - event: architectural-decision      # agente julga: mudou regra de arquitetura?
 #       hint: "..."
 # Obs: usamos `event:` em vez de `on:` porque YAML 1.1 trata `on/off/yes/no`
@@ -24,7 +24,7 @@ version: 1
 
 docs:
   - path: FEATURES.md
-    purpose: "Catalogo de features e issues entregues (gerado/mantido por ai.py)."
+    purpose: "Catalogo de features e issues entregues (gerado/mantido por core/src/ai.py)."
     triggers:
       - event: task-finished
         hint: "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa."
@@ -40,19 +40,19 @@ docs:
     triggers:
       - event: touched
         paths:
-          - "scripts/ai.py"
-          - "scripts/ai.ps1"
+          - "core/src/ai.py"
+          - "core/bin/ai.ps1"
           - ".ai/process.json"
         hint: "Se o fluxo padrao ou os comandos da capa mudaram, atualize."
 
   - path: docs/reference/cli.md
     diataxis: reference
-    purpose: "Referencia completa de subcomandos do ai.py / ai.ps1."
+    purpose: "Referencia completa de subcomandos do core/src/ai.py / core/bin/ai.ps1."
     triggers:
       - event: touched
         paths:
-          - "scripts/ai.py"
-          - "scripts/ai.ps1"
+          - "core/src/ai.py"
+          - "core/bin/ai.ps1"
         hint: "Se voce adicionou/mudou subcomando ou flag, documente aqui."
 
   - path: docs/reference/files.md
@@ -84,8 +84,8 @@ docs:
     triggers:
       - event: touched
         paths:
-          - "skills/manifest.yaml"
-          - "scripts/ai.py"
+          - "core/manifest/manifest.yaml"
+          - "core/src/ai.py"
           - ".ai/process.json"
           - ".ai/docs-map.yaml"
         hint: "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize."
@@ -95,8 +95,8 @@ docs:
     triggers:
       - event: touched
         paths:
-          - "skills/manifest.yaml"
-          - "scripts/ai.py"
+          - "core/manifest/manifest.yaml"
+          - "core/src/ai.py"
           - ".ai/process.json"
           - ".ai/docs-map.yaml"
         hint: "Mesma logica do CLAUDE.md."
@@ -106,7 +106,7 @@ docs:
     triggers:
       - event: touched
         paths:
-          - "scripts/ai.py"
+          - "core/src/ai.py"
           - ".ai/process.json"
         hint: "Se o fluxo humano mudou (novo passo, nova checagem), atualize."
 

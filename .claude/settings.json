@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "ai-process-pack": {
+      "source": {
+        "source": "directory",
+        "path": "./dist"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "ai@ai-process-pack": true
+  }
+}

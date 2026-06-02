@@ -57,8 +57,8 @@ Sempre dispara quando uma F-NNN ou I-NNN entra em `finish`. Use para docs cumula
 ```yaml
 - event: touched
   paths:
-    - "scripts/ai.py"
-    - "scripts/ai.ps1"
+    - "core/src/ai.py"
+    - "core/bin/ai.ps1"
   hint: "Se voce adicionou/mudou subcomando, documente aqui."
 ```
 

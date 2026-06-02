@@ -3,10 +3,10 @@
 ## Instalacao (uma vez por clone)
 
 ```powershell
-git config core.hooksPath .githooks
+git config core.hooksPath core/hooks
 ```
 
-Isso aponta o git deste repositorio para os hooks versionados em `.githooks/`. Como os hooks ficam no controle de versao, qualquer clone que rode o comando acima passa a usa-los.
+Isso aponta o git deste repositorio para os hooks versionados em `core/hooks/`. Como os hooks ficam no controle de versao, qualquer clone que rode o comando acima passa a usa-los.
 
 > Este passo e **por clone**. Se voce (ou outra pessoa) clonar o repo de novo, refaca.
 
@@ -16,11 +16,11 @@ Isso aponta o git deste repositorio para os hooks versionados em `.githooks/`. C
 git config --get core.hooksPath
 ```
 
-Deve imprimir `.githooks`.
+Deve imprimir `core/hooks`.
 
 ## Dependencia do hook
 
-O `commit-msg` chama `python bin/check-lock.py`. Requer Python 3.8+ e `pyyaml`:
+O `commit-msg` chama `python core/lock/check-lock.py`. Requer Python 3.8+ e `pyyaml`:
 
 ```powershell
 pip install pyyaml

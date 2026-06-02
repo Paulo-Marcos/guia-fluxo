@@ -82,6 +82,6 @@ Isso garante que mesmo o lock global `adicoes-exigem-autorizacao` nao bloqueie e
 ## Validacao
 
 ```powershell
-python bin/check-lock.py list                # lista travas
-python bin/check-lock.py check <arquivo>     # exit 1 se travado
+python core/lock/check-lock.py list                # lista travas
+python core/lock/check-lock.py check <arquivo>     # exit 1 se travado
 ```

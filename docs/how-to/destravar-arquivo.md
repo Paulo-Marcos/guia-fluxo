@@ -7,7 +7,7 @@ Use quando uma feature deixou de fazer sentido travar (ex.: voce vai reescrever 
 ## Comando
 
 ```powershell
-python bin/check-lock.py unlock ingestao-livestream
+python core/lock/check-lock.py unlock ingestao-livestream
 ```
 
 Isso remove o bloco do `registry.yaml`. Diferente do unlock temporario, **nao exige marca em commit** - voce esta dizendo "essa feature nao precisa mais ser protegida".
@@ -15,7 +15,7 @@ Isso remove o bloco do `registry.yaml`. Diferente do unlock temporario, **nao ex
 ## Confirmar
 
 ```powershell
-python bin/check-lock.py list
+python core/lock/check-lock.py list
 ```
 
 A feature nao deve mais aparecer.

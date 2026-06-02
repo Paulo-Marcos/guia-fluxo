@@ -9,10 +9,10 @@
 * text=auto eol=lf
 
 # --- Shell / bash (LF obrigatorio - bash recusa CRLF) ---
-*.sh                    text eol=lf
-*.bash                  text eol=lf
-.githooks/*             text eol=lf
-templates/.githooks/*   text eol=lf
+*.sh                         text eol=lf
+*.bash                       text eol=lf
+core/hooks/*                 text eol=lf
+core/templates/.githooks/*   text eol=lf
 
 # --- Python (PEP 8: LF) ---
 *.py                    text eol=lf

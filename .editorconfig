@@ -29,7 +29,7 @@ end_of_line = crlf
 end_of_line = crlf
 
 # Git hooks sao shell scripts (sem extensao) - bash recusa CRLF.
-[{.githooks/*,templates/.githooks/*}]
+[{core/hooks/*,core/templates/.githooks/*}]
 end_of_line = lf
 
 # Makefile exige tab real.

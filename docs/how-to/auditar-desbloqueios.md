@@ -5,7 +5,7 @@ Cada `[unlock:<id>]` em commit fica no `git log` para sempre. Auditoria automati
 ## Resumo via CLI
 
 ```powershell
-python bin/check-lock.py audit
+python core/lock/check-lock.py audit
 ```
 
 Saida:

@@ -12,18 +12,18 @@ pip install pyyaml
 git config --get core.hooksPath
 ```
 
-Deve imprimir `.githooks`. Se vazio:
+Deve imprimir `core/hooks`. Se vazio:
 
 ```powershell
-git config core.hooksPath .githooks
+git config core.hooksPath core/hooks
 ```
 
 ## O hook roda mas nao bloqueia
 
-Verifique se `.githooks/commit-msg` esta acessivel e se `bin/check-lock.py` retorna erro 1 para um arquivo travado:
+Verifique se `core/hooks/commit-msg` esta acessivel e se `core/lock/check-lock.py` retorna erro 1 para um arquivo travado:
 
 ```powershell
-python bin/check-lock.py check <arquivo-que-deveria-estar-travado>
+python core/lock/check-lock.py check <arquivo-que-deveria-estar-travado>
 echo $LASTEXITCODE   # esperado: 1
 ```
 
@@ -46,14 +46,14 @@ Voce esta em outro diretorio. Use caminho absoluto ou:
 
 ```powershell
 cd C:\caminho\do\projeto
-.\scripts\ai.ps1 status
+.\core\bin\ai.ps1 status
 ```
 
 ## "Python not found" ao invocar `ai.ps1`
 
 ```powershell
 $env:AI_PROCESS_PYTHON = "C:\caminho\para\python.exe"
-.\scripts\ai.ps1 doctor
+.\core\bin\ai.ps1 doctor
 ```
 
 Ou instale Python 3.10+ em local conhecido (o wrapper tenta `python`, `python3`, `py`, `%LOCALAPPDATA%\Programs\Python\Python313\python.exe` e a venv do repo).
@@ -61,11 +61,11 @@ Ou instale Python 3.10+ em local conhecido (o wrapper tenta `python`, `python3`,
 ## Skills geradas divergem do manifest
 
 ```powershell
-python scripts/render-skills.py --check
+python core/build/render-skills.py --check
 ```
 
 Se sair com erro, rode sem `--check` para regenerar:
 
 ```powershell
-python scripts/render-skills.py
+python core/build/render-skills.py
 ```

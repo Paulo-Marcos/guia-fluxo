@@ -15,10 +15,10 @@ O custo nao e o bug introduzido - o agente provavelmente conserta se voce pedir.
 ## A solucao: tres camadas de defesa
 
 ```
-features/registry.yaml     <- fonte da verdade (lista de travas)
-bin/check-lock.py          <- CLI: gerencia, valida, roda no hook e no CI
-.githooks/commit-msg       <- hook git que rejeita commits violando trava
-.github/workflows/         <- CI que rejeita PRs violando trava
+features/registry.yaml      <- fonte da verdade (lista de travas)
+core/lock/check-lock.py     <- CLI: gerencia, valida, roda no hook e no CI
+core/hooks/commit-msg       <- hook git que rejeita commits violando trava
+.github/workflows/          <- CI que rejeita PRs violando trava
    lock-check.yml
 docs/                       <- regras para os agentes lerem antes de editar
 ```

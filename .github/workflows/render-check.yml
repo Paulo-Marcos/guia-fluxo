@@ -1,15 +1,19 @@
-# Detecta drift do manifest: se alguem editou skills/generated/* a mao em vez
-# de regenerar via scripts/render-skills.py, este workflow falha. Tambem roda
-# ai doctor para confirmar que .ai/ esta integro.
+# Detecta drift do manifest: se alguem editou dist/skills/<verbo>/SKILL.md ou
+# dist/.agents/skills/<verbo>/SKILL.md a mao em vez de regenerar via
+# core/build/render-skills.py a partir de core/manifest/manifest.yaml, este
+# workflow falha. Tambem roda ai doctor para confirmar que .ai/ esta integro.
 
 name: render-check
 
 on:
   pull_request:
     paths:
-      - 'skills/**'
-      - 'scripts/render-skills.py'
-      - 'scripts/ai.py'
+      - 'core/manifest/**'
+      - 'core/build/**'
+      - 'core/src/ai.py'
+      - 'dist/skills/**'
+      - 'dist/.agents/skills/**'
+      - 'dist/.claude-plugin/**'
       - '.ai/process.json'
       - '.ai/backlog.json'
       - '.ai/tasks.json'
@@ -34,7 +38,7 @@ jobs:
         run: pip install pyyaml
 
       - name: ai doctor (arquivos de processo integros)
-        run: python scripts/ai.py doctor
+        run: python core/src/ai.py doctor
 
       - name: render --check (skills geradas em sincronia com manifest)
-        run: python scripts/render-skills.py --check
+        run: python core/build/render-skills.py --check

@@ -5,7 +5,7 @@ Travas declaram que um conjunto de arquivos esta homologado e nao pode ser edita
 ## Via CLI (recomendado)
 
 ```powershell
-python bin/check-lock.py lock ingestao-livestream `
+python core/lock/check-lock.py lock ingestao-livestream `
     --description "Download e parse de VTT da livestream" `
     backend/app/services/ingestao.py `
     backend/app/domain/vtt_parser.py
@@ -34,7 +34,7 @@ locks:
 Confira:
 
 ```powershell
-python bin/check-lock.py list
+python core/lock/check-lock.py list
 ```
 
 ## Quando travar e quando NAO travar

@@ -1,13 +1,13 @@
-# Reference: CLI `ai.py` / `ai.ps1`
+# Reference: CLI `core/src/ai.py` / `core/bin/ai.ps1`
 
-Wrapper PowerShell `scripts/ai.ps1` localiza o Python adequado e invoca `scripts/ai.py`. Tudo aqui vale para ambos.
+Wrapper PowerShell `core/bin/ai.ps1` localiza o Python adequado e invoca `core/src/ai.py`. Tudo aqui vale para ambos.
 
 ## Subcomandos
 
 ### `init`
 
 ```powershell
-.\scripts\ai.ps1 init --project-name "nome-do-projeto"
+.\core\bin\ai.ps1 init --project-name "nome-do-projeto"
 ```
 
 Cria os JSONs vazios em `.ai/`, escreve `process.json` com o nome do projeto e zera `chat-title.txt`.
@@ -15,7 +15,7 @@ Cria os JSONs vazios em `.ai/`, escreve `process.json` com o nome do projeto e z
 ### `doctor`
 
 ```powershell
-.\scripts\ai.ps1 doctor
+.\core\bin\ai.ps1 doctor
 ```
 
 Sanity check: confirma layout, dependencias e que os arquivos esperados existem.
@@ -23,7 +23,7 @@ Sanity check: confirma layout, dependencias e que os arquivos esperados existem.
 ### `feature`
 
 ```powershell
-.\scripts\ai.ps1 feature "Titulo curto" --context "Motivo e escopo"
+.\core\bin\ai.ps1 feature "Titulo curto" --context "Motivo e escopo"
 ```
 
 Cria `F-NNN`, atualiza `.ai/tasks.json`, `.ai/current-task.json` e `FEATURES.md`. Imprime `NOME DO CHAT: F-NNN - #DEV - ...`.
@@ -31,7 +31,7 @@ Cria `F-NNN`, atualiza `.ai/tasks.json`, `.ai/current-task.json` e `FEATURES.md`
 ### `issue`
 
 ```powershell
-.\scripts\ai.ps1 issue "Bug observado" --context "Sintoma e impacto"
+.\core\bin\ai.ps1 issue "Bug observado" --context "Sintoma e impacto"
 ```
 
 Cria `I-NNN`. Demais comportamentos identicos ao `feature`.
@@ -39,8 +39,8 @@ Cria `I-NNN`. Demais comportamentos identicos ao `feature`.
 ### `backlog`
 
 ```powershell
-.\scripts\ai.ps1 backlog add "Ideia futura" --context "Quando pode ser util"
-.\scripts\ai.ps1 backlog list
+.\core\bin\ai.ps1 backlog add "Ideia futura" --context "Quando pode ser util"
+.\core\bin\ai.ps1 backlog list
 ```
 
 `add` cria `B-NNN` em `.ai/backlog.json`. `list` enumera o backlog atual.
@@ -48,7 +48,7 @@ Cria `I-NNN`. Demais comportamentos identicos ao `feature`.
 ### `promote`
 
 ```powershell
-.\scripts\ai.ps1 promote B-NNN --kind {feature|issue} `
+.\core\bin\ai.ps1 promote B-NNN --kind {feature|issue} `
     --assessment "Avaliacao curta" `
     --plan "Plano de execucao" `
     [--worktree]
@@ -61,7 +61,7 @@ Promove item do backlog para feature ou issue. Quando `--worktree` e passado, `f
 ### `status`
 
 ```powershell
-.\scripts\ai.ps1 status
+.\core\bin\ai.ps1 status
 ```
 
 Mostra a tarefa atual e o titulo sugerido para o chat.
@@ -69,7 +69,7 @@ Mostra a tarefa atual e o titulo sugerido para o chat.
 ### `ready`
 
 ```powershell
-.\scripts\ai.ps1 ready F-NNN `
+.\core\bin\ai.ps1 ready F-NNN `
     --file <caminho> [--file <outro>] `
     --summary "Resumo do que foi feito" `
     --validation "Comando ou check feito"
@@ -80,7 +80,7 @@ Move a task para `Aguardando validacao`. Gera relatorio em `.ai/reports/`. Impri
 ### `finish`
 
 ```powershell
-.\scripts\ai.ps1 finish F-NNN `
+.\core\bin\ai.ps1 finish F-NNN `
     [--lock --lock-id <slug>] `
     [--docs-touched <path> ...] `
     [--docs-skip "<motivo>"]
@@ -99,7 +99,7 @@ O resultado fica em `task.docsReview` no `.ai/tasks.json`. Quando `.ai/docs-map.
 ### `docs-check`
 
 ```powershell
-.\scripts\ai.ps1 docs-check [F-NNN] [--json]
+.\core\bin\ai.ps1 docs-check [F-NNN] [--json]
 ```
 
 Lista docs candidatos a atualizacao para a task indicada (ou a task corrente, se omitida). Le `.ai/docs-map.yaml` e aplica triggers contra `task.modifiedFiles` + `git diff --name-only HEAD`. Nao muda estado, e seguro de rodar a qualquer momento.
@@ -116,30 +116,28 @@ Ainda existe como subcomando do CLI por compatibilidade. Nao ha mais skill para 
 ### `render`
 
 ```powershell
-.\scripts\ai.ps1 render [--check] [--verb <nome>]
+.\core\bin\ai.ps1 render [--check] [--verb <nome>]
 ```
 
-Wrapper de `scripts/render-skills.py`. Regenera as skills a partir de `skills/manifest.yaml` em quatro destinos:
+Wrapper de `core/build/render-skills.py`. Regenera as skills a partir de `core/manifest/manifest.yaml` em dois destinos:
 
-- `skills/generated/.claude/skills/<verbo>/SKILL.md` - stage de distribuicao para Claude Code.
-- `skills/generated/.agents/skills/<verbo>/SKILL.md` - stage de distribuicao para Codex + Antigravity.
-- `.claude/skills/<verbo>/SKILL.md` - ativo runtime do dogfood deste repo (Claude Code descobre as skills aqui).
-- `.agents/skills/<verbo>/SKILL.md` - ativo runtime do dogfood deste repo (Codex/Antigravity).
+- `dist/skills/<verbo>/SKILL.md` - output oficial do plugin Claude Code (`dist/.claude-plugin/plugin.json`, namespace `ai`). Atalhos saem como `/ai:feature`, `/ai:issue`, etc.
+- `dist/.agents/skills/<verbo>/SKILL.md` - convencao AGENTS.md cross-tool para Codex + Antigravity.
 
-Cada verbo do manifest emite quatro arquivos. `--check` sai com codigo != 0 se qualquer um estiver fora de sincronia. `--verb <nome>` limita o render a um verbo especifico.
+Cada verbo do manifest emite dois arquivos. `--check` sai com codigo != 0 se qualquer um estiver fora de sincronia. `--verb <nome>` limita o render a um verbo especifico.
 
-Os destinos em `skills/generated/` sao copiados pra raiz dos projetos consumidores na instalacao. Os destinos na raiz so existem aqui (no repo-mae) - sao o que faz `/feature`, `/issue` etc. funcionarem enquanto voce desenvolve o pack.
+Os dois destinos sao distribuiveis: ao instalar o pack em outro projeto, copie `dist/skills/` (Claude) e/ou `dist/.agents/skills/` (Codex/Antigravity) junto com `dist/.claude-plugin/plugin.json`, `core/manifest/manifest.yaml`, `core/src/ai.py`, `core/bin/ai.ps1` e `.ai/`. Decisao arquitetural em [`docs/adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md).
 
 ## Aliases conversacionais
 
-Os comandos acima sao expostos para agentes via skills/shims:
+Os comandos acima sao expostos para agentes via skills/shims. No Claude Code (plugin oficial, namespace `ai`) os atalhos saem namespaced; em Codex/Antigravity (via `dist/.agents/skills/`) o nome curto continua valendo:
 
-| Alias | Subcomando |
-| --- | --- |
-| `/feature` | `feature` |
-| `/issue` | `issue` |
-| `/backlog` | `backlog` |
-| `/promote B-NNN` | `promote` |
-| `/ready` | `ready` |
-| `/finish` | `finish` |
-| `/status` | `status` |
+| Alias Claude | Alias Codex/Antigravity | Subcomando |
+| --- | --- | --- |
+| `/ai:feature` | `/feature` ou `$feature` | `feature` |
+| `/ai:issue` | `/issue` ou `$issue` | `issue` |
+| `/ai:backlog` | `/backlog` ou `$backlog` | `backlog` |
+| `/ai:promote B-NNN` | `/promote` ou `$promote` | `promote` |
+| `/ai:ready` | `/ready` ou `$ready` | `ready` |
+| `/ai:finish` | `/finish` ou `$finish` | `finish` |
+| `/ai:status` | `/status` ou `$status` | `status` |

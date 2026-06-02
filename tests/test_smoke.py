@@ -11,19 +11,19 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-AI_SCRIPT = REPO_ROOT / "scripts" / "ai.py"
+AI_SCRIPT = REPO_ROOT / "core" / "src" / "ai.py"
 
 
 class SmokeTest(unittest.TestCase):
     def test_fluxo_basico(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             sandbox = Path(tmp)
-            (sandbox / "scripts").mkdir()
-            shutil.copy2(AI_SCRIPT, sandbox / "scripts" / "ai.py")
+            (sandbox / "core" / "src").mkdir(parents=True)
+            shutil.copy2(AI_SCRIPT, sandbox / "core" / "src" / "ai.py")
 
             def run(*args: str) -> subprocess.CompletedProcess[str]:
                 return subprocess.run(
-                    [sys.executable, "scripts/ai.py", *args],
+                    [sys.executable, "core/src/ai.py", *args],
                     cwd=sandbox, check=True, capture_output=True, text=True,
                 )
 

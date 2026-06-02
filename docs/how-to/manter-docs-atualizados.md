@@ -20,7 +20,7 @@ Test-Path .ai/docs-map.yaml
 1. Quando o desenvolvedor confirmou que a feature/issue esta validada, rode o check antes de fechar:
 
    ```powershell
-   .\scripts\ai.ps1 docs-check
+   .\core\bin\ai.ps1 docs-check
    ```
 
    A saida lista cada doc candidato com:
@@ -35,23 +35,23 @@ Test-Path .ai/docs-map.yaml
 3. Quando terminar de editar, rode o `finish` declarando o que tocou:
 
    ```powershell
-   .\scripts\ai.ps1 finish F-010 `
+   .\core\bin\ai.ps1 finish F-010 `
        --docs-touched docs/reference/cli.md `
        --docs-touched CHANGELOG.md `
        --summary "Hook de docs no finish" `
-       --validation ".\scripts\ai.ps1 doctor"
+       --validation ".\core\bin\ai.ps1 doctor"
    ```
 
 4. Se a avaliacao concluiu que nenhum doc precisava mudar, passe o motivo:
 
    ```powershell
-   .\scripts\ai.ps1 finish F-010 --docs-skip "feature interna, sem impacto em fluxo, comandos ou arquitetura"
+   .\core\bin\ai.ps1 finish F-010 --docs-skip "feature interna, sem impacto em fluxo, comandos ou arquitetura"
    ```
 
    Tambem da pra misturar:
 
    ```powershell
-   .\scripts\ai.ps1 finish F-010 `
+   .\core\bin\ai.ps1 finish F-010 `
        --docs-touched CHANGELOG.md `
        --docs-skip "demais candidatos nao se aplicam"
    ```
@@ -81,7 +81,7 @@ Tres tipos de trigger no `.ai/docs-map.yaml`:
 
 1. Edite `.ai/docs-map.yaml`.
 2. Adicione uma entrada em `docs:` com `path`, `purpose` e um ou mais `triggers`.
-3. Rode `.\scripts\ai.ps1 docs-check` para conferir que aparece com a razao certa.
+3. Rode `.\core\bin\ai.ps1 docs-check` para conferir que aparece com a razao certa.
 
 Lembre que o proprio `.ai/docs-map.yaml` esta nos paths dos triggers de CLAUDE.md/AGENTS.md neste repo - mexer no mapa lista esses dois como candidatos no proximo `finish`.
 

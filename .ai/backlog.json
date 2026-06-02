@@ -2,6 +2,30 @@
   "schemaVersion": 1,
   "items": [
     {
+      "id": "B-010",
+      "title": "Investigar gap: /ai:feature, /ai:issue, etc. nao apareceram como slash commands na sessao Claude apos instalar plugin (so ai:ai-process foi listada)",
+      "context": "Validacao parcial de F-009 detectou que apos instalar o plugin ai@ai-process-pack via marketplace local, a system-reminder de skills disponiveis no Claude listou APENAS ai:ai-process. As 7 shims (feature, issue, backlog, promote, ready, finish, status) - presentes em skills/<verbo>/SKILL.md gerados pelo render - nao apareceram. Resultado pratico: /ai:finish retorna 'Unknown command'. Hipoteses a investigar: (a) reload de plugin faltando, (b) cache do Claude Code corrompido, (c) frontmatter dos shims requer flag explicito (disable-model-invocation, ou outro campo), (d) versao do Claude Code (verificar se 2.1.142+), (e) limitacao do plugin de descobrir multiplas skills em pasta skills/ vs single-skill. Reproduzir e propor fix.",
+      "status": "Backlog",
+      "createdAt": "2026-06-01",
+      "updatedAt": "2026-06-01"
+    },
+    {
+      "id": "B-009",
+      "title": "Passo 3 - Publicar marketplace em github.com/paulosmarcos/ai-process-pack",
+      "context": "Substituir marketplace local (source: directory) por marketplace remoto (source: github, repo: paulosmarcos/ai-process-pack). Vantagem: cache global do plugin Anthropic (~/.claude/plugins/cache/) elimina .ai-process/ do projeto consumidor inteiro. Sobra so .agents/skills/ai-* (Codex/Antigravity) + .claude/settings.json + .ai/ + FEATURES.md no projeto consumidor. Cobre auto-update via /plugin marketplace update + auto-update do Claude. Requer publicar repo, configurar marketplace.json apontando pra subdir /dist (output do build do repo), documentar fluxo de versionamento. Depende de B-007 e B-008.",
+      "status": "Backlog",
+      "createdAt": "2026-06-01",
+      "updatedAt": "2026-06-01"
+    },
+    {
+      "id": "B-008",
+      "title": "Passo 2 - Layout .ai-process/ no consumidor com bin/ e prefixo ai- nas skills cross-tool",
+      "context": "Migrar projeto consumidor pro layout: 3 pastas (.agents/, .claude/, .ai-process/) + raiz (.ai/, FEATURES.md, opcional features/). Especifico: (a) plugin Claude inteiro dentro de .ai-process/ com .claude-plugin/, skills/ (nomes curtos feature, issue, etc.) e bin/ (motor ai/ai.ps1 que vira PATH automaticamente segundo doc Anthropic - feature ja existente). (b) Codex/Antigravity em .agents/skills/ com prefixo ai- nos nomes (ai-feature, ai-issue, etc.) pra evitar colisao - decisao confirmada com user em F-009. (c) Renderer adaptado pra gerar 2 outputs com nomes diferentes. (d) instalador install.ps1 + install.sh que copia dist/ pra .ai-process/ no consumidor + inicializa .ai/. Depende de B-007 (Passo 1).",
+      "status": "Backlog",
+      "createdAt": "2026-06-01",
+      "updatedAt": "2026-06-01"
+    },
+    {
       "id": "B-006",
       "title": "Atualizar docs Diataxis pos refactor: tutorial install via plugin, how-to migracao, README, ROADMAP",
       "context": "Apos F-009 + backlog acima estarem mergeados: (1) atualizar docs/tutorials/primeiro-uso.md com '/plugin install' como rota primaria; (2) novo docs/how-to/migrar-do-copy-paste-para-plugin.md; (3) revisar docs/reference/cli.md (operacoes agora tambem como MCP tools); (4) revisar docs/explanation/visao-geral.md (Plugin vs repo agora resolvido - virou plugin); (5) atualizar README.md secao Instalacao; (6) atualizar docs/ROADMAP.md (v0.2 Instalador foi superado por plugin format).",

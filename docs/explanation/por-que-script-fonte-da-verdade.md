@@ -16,7 +16,7 @@ Nenhum desses sintomas e culpa do agente especifico. E inerente a confiar em "le
 
 ## A inversao
 
-O **script** (`scripts/ai.py`) e a unica coisa que escreve em `.ai/*.json` e `FEATURES.md`. O agente nunca toca nesses arquivos diretamente.
+O **script** (`core/src/ai.py`) e a unica coisa que escreve em `.ai/*.json` e `FEATURES.md`. O agente nunca toca nesses arquivos diretamente.
 
 Resultado:
 
@@ -27,7 +27,7 @@ Resultado:
 
 ## A skill como interface, nao como motor
 
-A **skill** existe so para o agente entender que `/feature "X"` significa rodar `.\scripts\ai.ps1 feature "X"`. Ela nao implementa logica - chama o script.
+A **skill** existe so para o agente entender que `/feature "X"` significa rodar `.\core\bin\ai.ps1 feature "X"`. Ela nao implementa logica - chama o script.
 
 Isso da paridade entre agentes de graca: trocar Codex por Claude nao muda comportamento, porque o motor e o mesmo Python.
 
@@ -35,4 +35,4 @@ Isso da paridade entre agentes de graca: trocar Codex por Claude nao muda compor
 
 Quando voce duvidar do estado, **leia o JSON** (`.ai/current-task.json`, `.ai/tasks.json`), nao o `FEATURES.md` nem a memoria do agente. O JSON e a verdade. O markdown e um espelho.
 
-Quando precisar mudar comportamento (novo campo, nova validacao, nova fase), edite `scripts/ai.py`. Nao edite a skill - ela so transporta o comando.
+Quando precisar mudar comportamento (novo campo, nova validacao, nova fase), edite `core/src/ai.py`. Nao edite a skill - ela so transporta o comando.
