@@ -2,11 +2,28 @@
 """Render per-agent skill files and standalone bin/ from core/manifest/manifest.yaml.
 
 Source of truth:
-    core/manifest/manifest.yaml   (skills)
+    core/manifest/manifest.yaml   (skills index: verbs + descriptions + body refs)
+    core/manifest/bodies/*.md     (skill bodies - Layout B, F-016)
     core/src/*.py                 (motor + helpers - todos copiados para dist/bin/)
     core/lock/lock_api.py         (modulo de locks reutilizavel - tambem em dist/bin/)
     core/bin/ai.ps1               (wrapper PowerShell copiado para dist/bin/)
     core/templates/...            (templates copiados para dist/templates/)
+
+Manifest schema:
+    version: 2
+    verbs:
+      <verb>:
+        description: |
+          ...trigger description...
+        targets:
+          agent_skill:
+            body_file: bodies/<verb>.agent.md    # path relativo a core/manifest/
+            # ou body: |  (legacy v1, ainda aceito)
+            #   ...inline markdown...
+          claude_skill:
+            body_file: bodies/<verb>.claude.md
+
+    Para shared body entre targets, aponte ambos para o mesmo arquivo.
 
 Generated targets (por verbo):
     dist/skills/<verb>/SKILL.md             (Claude Code - layout oficial de plugin)
@@ -54,7 +71,9 @@ except ImportError:
 
 
 ROOT = Path(__file__).resolve().parents[2]
-MANIFEST = ROOT / "core" / "manifest" / "manifest.yaml"
+MANIFEST_DIR = ROOT / "core" / "manifest"
+MANIFEST = MANIFEST_DIR / "manifest.yaml"
+BODIES_DIR = MANIFEST_DIR / "bodies"
 DIST_DIR = ROOT / "dist"
 CLAUDE_SKILL_DIR = DIST_DIR / "skills"
 AGENT_SKILL_DIR = DIST_DIR / ".agents" / "skills"
@@ -160,9 +179,39 @@ def render_target(target: str, verb: str, description: str, body: str) -> str:
     raise ValueError(f"target desconhecido: {target}")
 
 
+def _resolve_body(verb: str, target_name: str, target_spec: dict, body_cache: dict[Path, str]) -> str:
+    """Return the body for a target, resolving body_file with caching.
+
+    Layout B (v2): `body_file: bodies/<verb>.<target>.md` relativo a
+    core/manifest/. Layout A (v1, legacy): `body: |` inline. Suportamos
+    os dois para migracao gradual; abortamos se o arquivo nao existir.
+
+    `body_cache` permite que dois targets apontando para o MESMO arquivo
+    leiam uma unica vez (shared_body trivial).
+    """
+    body_file = target_spec.get("body_file")
+    if body_file:
+        path = (MANIFEST_DIR / body_file).resolve()
+        if not path.exists():
+            sys.stderr.write(
+                f"Erro: body_file `{body_file}` (de `{verb}.{target_name}`) nao existe em {path}.\n"
+            )
+            sys.exit(2)
+        if not str(path).startswith(str(MANIFEST_DIR.resolve())):
+            sys.stderr.write(
+                f"Erro: body_file `{body_file}` aponta fora de core/manifest/ (path traversal recusado).\n"
+            )
+            sys.exit(2)
+        if path not in body_cache:
+            body_cache[path] = path.read_text(encoding="utf-8")
+        return body_cache[path]
+    return target_spec.get("body") or ""
+
+
 def collect_outputs(manifest: dict, only_verb: str | None = None) -> list[Output]:
     outputs: list[Output] = []
     verbs = manifest.get("verbs") or {}
+    body_cache: dict[Path, str] = {}
     for verb, spec in verbs.items():
         if only_verb and verb != only_verb:
             continue
@@ -179,7 +228,7 @@ def collect_outputs(manifest: dict, only_verb: str | None = None) -> list[Output
                     f"Erro: targets.{target_name} de `{verb}` precisa ser um mapping.\n"
                 )
                 sys.exit(2)
-            body = target_spec.get("body") or ""
+            body = _resolve_body(verb, target_name, target_spec, body_cache)
             content = render_target(target_name, verb, description, body)
             outputs.append(Output(target_path(target_name, verb), target_name, verb, content))
     return outputs

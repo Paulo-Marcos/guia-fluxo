@@ -1,6 +1,6 @@
 {
-  "taskId": "I-005",
+  "taskId": "F-016",
   "status": "Validada",
-  "title": "Bugs e melhorias do CLI/check-lock identificados na auditoria F-014",
-  "chatTitle": "I-005 - #FINALIZADO - Bugs e melhorias do CLI/check-lock identificados na auditoria F-014"
+  "title": "Layout B do manifest: index YAML + bodies markdown em core/manifest/bodies/",
+  "chatTitle": "F-016 - #FINALIZADO - Layout B do manifest: index YAML + bodies markdown em core/manifest/bodies/"
 }

@@ -2,6 +2,59 @@
 
 ---
 
+## [F-016] Layout B do manifest: index YAML + bodies markdown em core/manifest/bodies/
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-03)
+- **Tipo:** Feature
+- **Contexto:** F-014 Etapa 1 Q2 (aprovada): migrar core/manifest/manifest.yaml (arquivo unico 422 linhas) para layout B. Index YAML curto declara verbos, descriptions e referencia body_file/shared_body. Bodies viram arquivos markdown puros em core/manifest/bodies/<verb>.<target>.md. Renderer atualizado para resolver body_file (le do disco), shared_body (uma vez, reusa). Deliverable: manifest.yaml ~80 linhas + 14 bodies markdown + renderer estendido + smoke tests do schema novo. Saida SKILL.md em dist/ permanece byte-identica.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/manifest/manifest.yaml`
+- `core/manifest/bodies/ai-process.agent.md`
+- `core/manifest/bodies/ai-process.claude.md`
+- `core/manifest/bodies/feature.agent.md`
+- `core/manifest/bodies/feature.claude.md`
+- `core/manifest/bodies/issue.agent.md`
+- `core/manifest/bodies/issue.claude.md`
+- `core/manifest/bodies/backlog.agent.md`
+- `core/manifest/bodies/backlog.claude.md`
+- `core/manifest/bodies/promote.agent.md`
+- `core/manifest/bodies/promote.claude.md`
+- `core/manifest/bodies/ready.agent.md`
+- `core/manifest/bodies/ready.claude.md`
+- `core/manifest/bodies/finish.agent.md`
+- `core/manifest/bodies/finish.claude.md`
+- `core/manifest/bodies/status.agent.md`
+- `core/manifest/bodies/status.claude.md`
+- `core/build/render-skills.py`
+- `tests/test_manifest_layout_b.py`
+- `docs/adr/0008-layout-b-manifest.md`
+- `docs/adr/README.md`
+- `CHANGELOG.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Layout B implementado: manifest.yaml passa de 422 linhas (bodies inline) para ~80 linhas (index com body_file:). 16 bodies extraidos como markdown puro em core/manifest/bodies/<verb>.<target>.md. Schema v2: body_file aponta path relativo a core/manifest/, renderer valida existencia + recusa path traversal + cacheia leituras (shared_body trivial). Backward compat com body inline v1 mantida. Saida dist/ byte-identica - confirmado por --check 40 alvos.
+- Tests: 4 novos casos em test_manifest_layout_b.py validam schema (version 2, body_file presente, files existem, sem orfaos em bodies/). Total da suite: 69 testes.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- python core/build/render-skills.py --check -> OK: 40 alvo(s) em sincronia
+- python -m unittest discover -s tests -> Ran 69 tests in 12.5s, OK
+- .\core\bin\ai.ps1 doctor -> AI process files OK
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [I-005] Bugs e melhorias do CLI/check-lock identificados na auditoria F-014
 
 - **Status:** Validada

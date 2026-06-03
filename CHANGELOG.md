@@ -7,6 +7,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Changed
+- **Manifest em layout B: index YAML + bodies markdown (F-016).** `core/manifest/manifest.yaml` migrou de arquivo unico de 422 linhas (todos os bodies inline em `body: |`) para **index curto + 16 arquivos markdown puros** em `core/manifest/bodies/<verb>.<target>.md`. Schema `version: 2` declara `body_file:` por target; renderer resolve o path (relativo a `core/manifest/`), valida path traversal e cacheia leituras (shared body trivial entre targets). Saida em `dist/` permanece **byte-identica**. ADR em [`docs/adr/0008-layout-b-manifest.md`](docs/adr/0008-layout-b-manifest.md). Testes em `tests/test_manifest_layout_b.py`.
+
+### Changed
 - **Refactor SOLID/Clean Architecture do `core/` (F-015).** `core/src/ai.py` decomposto de **965 -> ~205 linhas** em 17 modulos sob `core/src/_*.py` (constantes, infra, dominio, application/CLI) e 1 modulo de lock reutilizavel em `core/lock/lock_api.py`. `check-lock.py` virou CLI fino sobre `lock_api`. `core/build/render-skills.py` ganhou hardening (`dataclass Output`, `--check-orphans`, abort em marker ausente, validacao YAML de templates, abort em description vazia). Wrappers: `core/bin/ai.ps1` com `Resolve-Python` em 6 camadas + validacao 3.10+ + diagnostico rico; novo `core/bin/ai` POSIX simetrico. Bodies do manifest ajustados (--context em feature/issue, worktree branch `codex/<slug>` em promote, rodape `ai-process` em promote+finish). Renderer empacota agora **todo o pacote** (`core/src/*.py` + `core/lock/lock_api.py`) em `dist/bin/` flat, mantendo plugin standalone. Total de alvos sob `--check` foi de 22 para 40. Suite de testes expandida de 4 para **63 testes** em `tests/`. ADR em [`docs/adr/0007-arquitetura-modular-core-src.md`](docs/adr/0007-arquitetura-modular-core-src.md). Relatorio em [`docs/auditorias/F-014-validacao.md`](docs/auditorias/F-014-validacao.md).
 
 ### Fixed
