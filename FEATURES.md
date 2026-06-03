@@ -4,7 +4,7 @@
 
 ## [I-005] Bugs e melhorias do CLI/check-lock identificados na auditoria F-014
 
-- **Status:** Aguardando validacao
+- **Status:** Validada
 - **Origem:** AI process (2026-06-03)
 - **Tipo:** Issue / regressao
 - **Contexto:** Cobre achados 2.1 (cleanup duplicado), 2.2 (promote grava antes de criar), 2.4 (paths Windows nao normalizados em commit_task), 2.5 (mensagem 'task not found' sem hint), 2.9 (--no-commit removia worktree), 2.12 (git ausente sem msg clara), 2.13 (attach_worktree sem pre-check de branch), 2.Q2 (validate deprecated sem warning), 5.3 (audit silencioso fora de repo), 5.10 (cmd_lock sem --allow-missing), 5.14 (UNLOCK_RE sem validacao de motivo), 5.19 (path traversal em _norm), 5.2 (sem cache em _load_lock_ignore). Implementado dentro do refactor F-015.
@@ -19,11 +19,13 @@
 - `core/src/_cli_lifecycle.py`
 - `core/lock/lock_api.py`
 - `core/lock/check-lock.py`
+- `.ai/backlog.json`
 
 ### O que foi feito
 
 - Demanda criada via ai-process.
 - Corrigidos no refactor F-015: 2.1 cleanup_task_worktree chamado uma vez so; 2.2 cmd_promote constroi task+worktree antes de mutar backlog; 2.4 _commit.commit_task normaliza paths via _paths.normalize_path; 2.5 find_task_or_current sugere recent_task_ids; 2.9 cleanup pula quando --no-commit; 2.12 has_git + MSG_GIT_NOT_FOUND em git_ops; 2.13 git_branch_exists pre-check em attach_worktree; 2.Q2 cmd_validate imprime warning de deprecacao; 5.3 cmd_audit pre-checa .git/; 5.10 cmd_lock aceita --allow-missing; 5.14 unlocked_ids exige MOTIVO_RE; 5.19 add_lock valida path traversal via _path_inside_repo; 5.2 _load_lock_ignore_cached via lru_cache.
+- Demanda finalizada via ai-process.
 
 ### Validacao feita
 
@@ -33,7 +35,7 @@
 
 ### Validacao pendente
 
-- Validacao manual do desenvolvedor.
+- Nenhuma.
 
 ## [F-015] Refactor SOLID/Clean Arch do core (constantes + lock_api + split modular)
 

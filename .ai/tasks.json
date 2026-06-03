@@ -5,7 +5,7 @@
       "id": "I-005",
       "kind": "issue",
       "title": "Bugs e melhorias do CLI/check-lock identificados na auditoria F-014",
-      "status": "Aguardando validacao",
+      "status": "Validada",
       "origin": "AI process (2026-06-03)",
       "context": "Cobre achados 2.1 (cleanup duplicado), 2.2 (promote grava antes de criar), 2.4 (paths Windows nao normalizados em commit_task), 2.5 (mensagem 'task not found' sem hint), 2.9 (--no-commit removia worktree), 2.12 (git ausente sem msg clara), 2.13 (attach_worktree sem pre-check de branch), 2.Q2 (validate deprecated sem warning), 5.3 (audit silencioso fora de repo), 5.10 (cmd_lock sem --allow-missing), 5.14 (UNLOCK_RE sem validacao de motivo), 5.19 (path traversal em _norm), 5.2 (sem cache em _load_lock_ignore). Implementado dentro do refactor F-015.",
       "createdAt": "2026-06-03",
@@ -18,20 +18,55 @@
         "core/src/_tasks.py",
         "core/src/_cli_lifecycle.py",
         "core/lock/lock_api.py",
-        "core/lock/check-lock.py"
+        "core/lock/check-lock.py",
+        ".ai/backlog.json"
       ],
       "summary": [
         "Demanda criada via ai-process.",
-        "Corrigidos no refactor F-015: 2.1 cleanup_task_worktree chamado uma vez so; 2.2 cmd_promote constroi task+worktree antes de mutar backlog; 2.4 _commit.commit_task normaliza paths via _paths.normalize_path; 2.5 find_task_or_current sugere recent_task_ids; 2.9 cleanup pula quando --no-commit; 2.12 has_git + MSG_GIT_NOT_FOUND em git_ops; 2.13 git_branch_exists pre-check em attach_worktree; 2.Q2 cmd_validate imprime warning de deprecacao; 5.3 cmd_audit pre-checa .git/; 5.10 cmd_lock aceita --allow-missing; 5.14 unlocked_ids exige MOTIVO_RE; 5.19 add_lock valida path traversal via _path_inside_repo; 5.2 _load_lock_ignore_cached via lru_cache."
+        "Corrigidos no refactor F-015: 2.1 cleanup_task_worktree chamado uma vez so; 2.2 cmd_promote constroi task+worktree antes de mutar backlog; 2.4 _commit.commit_task normaliza paths via _paths.normalize_path; 2.5 find_task_or_current sugere recent_task_ids; 2.9 cleanup pula quando --no-commit; 2.12 has_git + MSG_GIT_NOT_FOUND em git_ops; 2.13 git_branch_exists pre-check em attach_worktree; 2.Q2 cmd_validate imprime warning de deprecacao; 5.3 cmd_audit pre-checa .git/; 5.10 cmd_lock aceita --allow-missing; 5.14 unlocked_ids exige MOTIVO_RE; 5.19 add_lock valida path traversal via _path_inside_repo; 5.2 _load_lock_ignore_cached via lru_cache.",
+        "Demanda finalizada via ai-process."
       ],
       "validations": [
         "python -m unittest discover -s tests -> 63 testes OK",
         ".\\core\\bin\\ai.ps1 doctor -> OK",
         "python core\\build\\render-skills.py --check -> OK 40 alvos"
       ],
-      "pending": [
-        "Validacao manual do desenvolvedor."
-      ]
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: issue I-005",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/ai.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: issue I-005",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [],
+        "checkedAt": "2026-06-03",
+        "skipped": "Os fixes desta issue foram implementados dentro do refactor F-015 (commit anterior). Nada novo a documentar - CHANGELOG ja menciona em entrada Fixed."
+      }
     },
     {
       "id": "F-015",

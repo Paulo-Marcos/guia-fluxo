@@ -1,6 +1,6 @@
 {
-  "taskId": "F-015",
+  "taskId": "I-005",
   "status": "Validada",
-  "title": "Refactor SOLID/Clean Arch do core (constantes + lock_api + split modular)",
-  "chatTitle": "F-015 - #FINALIZADO - Refactor SOLID/Clean Arch do core (constantes + lock_api + split modular)"
+  "title": "Bugs e melhorias do CLI/check-lock identificados na auditoria F-014",
+  "chatTitle": "I-005 - #FINALIZADO - Bugs e melhorias do CLI/check-lock identificados na auditoria F-014"
 }
