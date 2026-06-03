@@ -21,4 +21,6 @@ Then close the task:
 .\core\bin\ai.ps1 finish F-000 --docs-skip "fluxo interno, sem mudanca user-facing"
 ```
 
-`finish` means the developer already validated the work. It suggests `#FINALIZADO` and commits by default. Use `--no-commit` for dry close. Lock with `--lock --lock-id feature-slug` when asked.
+`finish` means the developer already validated the work. It suggests `#FINALIZADO` and commits by default. Use `--no-commit` for dry close. Lock with `--lock --lock-id feature-slug --lock-description "..."` when asked.
+
+Then continue using `ai-process`.

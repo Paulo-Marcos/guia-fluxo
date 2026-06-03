@@ -1,0 +1,200 @@
+"""Task domain: shape, identity, persistence.
+
+Public surface:
+    new_task(...)               build a fresh task dict
+    next_task_id(kind, tasks)   compute next F-NNN/I-NNN id
+    next_backlog_id(items)      compute next B-NNN id
+    find_task(id)               lookup in tasks.json
+    find_task_or_current(id)    resolve from current-task.json if id missing
+    save_task(task)             upsert in tasks.json
+    merge_list(task, key, vals) idempotent list append
+    pop_item(items, id)         find+remove from backlog list
+    set_current_task(task)      write current-task.json + chat-title
+
+No I/O outside the .ai/ files defined in _constants.
+"""
+
+from __future__ import annotations
+
+import re
+import sys
+from typing import Any
+
+from _clock import today
+from _constants import (
+    BACKLOG_FILE,
+    CHAT_TITLE_FILE,
+    CHAT_TITLE_FORMAT_DEFAULT,
+    CURRENT_FILE,
+    FEATURES_FILE,
+    KIND_FEATURE,
+    MSG_DEFAULT_TASK_CREATED,
+    MSG_DEFAULT_TASK_PENDING,
+    MSG_NO_CURRENT_TASK,
+    MSG_TASK_NOT_FOUND,
+    PREFIX_BACKLOG,
+    PREFIX_FEATURE,
+    PREFIX_ISSUE,
+    PROCESS_FILE,
+    STATUS_IN_DEVELOPMENT,
+    STATUS_TAGS,
+    TASK_HEADING_RE,
+    TASKS_FILE,
+)
+from _state import read_json, read_text, write_json
+
+
+def new_task(task_id: str, kind: str, title: str, context: str, origin: str) -> dict[str, Any]:
+    return {
+        "id": task_id,
+        "kind": kind,
+        "title": title,
+        "status": STATUS_IN_DEVELOPMENT,
+        "origin": origin,
+        "context": context or title,
+        "createdAt": today(),
+        "updatedAt": today(),
+        "modifiedFiles": [FEATURES_FILE.name],
+        "summary": [MSG_DEFAULT_TASK_CREATED],
+        "validations": [],
+        "pending": [MSG_DEFAULT_TASK_PENDING],
+    }
+
+
+def _number_from_id(value: str, prefix: str) -> int | None:
+    match = re.fullmatch(rf"{prefix}-(\d+)", value or "")
+    return int(match.group(1)) if match else None
+
+
+def _numbers_from_features(prefix: str) -> list[int]:
+    if not FEATURES_FILE.exists():
+        return []
+    return [
+        int(match.group(2))
+        for match in TASK_HEADING_RE.finditer(read_text(FEATURES_FILE))
+        if match.group(1) == prefix
+    ]
+
+
+def next_task_id(kind: str, tasks: list[dict[str, Any]]) -> str:
+    prefix = PREFIX_FEATURE if kind == KIND_FEATURE else PREFIX_ISSUE
+    numbers = [_number_from_id(task.get("id", ""), prefix) for task in tasks]
+    numbers.extend(_numbers_from_features(prefix))
+    valid = [n for n in numbers if n is not None]
+    next_number = max(valid, default=0) + 1
+    return f"{prefix}-{next_number:03d}"
+
+
+def next_backlog_id(items: list[dict[str, Any]]) -> str:
+    numbers = [_number_from_id(item.get("id", ""), PREFIX_BACKLOG) for item in items]
+    valid = [n for n in numbers if n is not None]
+    next_number = max(valid, default=0) + 1
+    return f"{PREFIX_BACKLOG}-{next_number:03d}"
+
+
+def find_task(task_id: str) -> dict[str, Any] | None:
+    data = read_json(TASKS_FILE, {"tasks": []})
+    return next((task for task in data.get("tasks", []) if task.get("id") == task_id), None)
+
+
+def recent_task_ids(limit: int = 5) -> list[str]:
+    data = read_json(TASKS_FILE, {"tasks": []})
+    return [task.get("id", "") for task in data.get("tasks", [])[:limit] if task.get("id")]
+
+
+def find_task_or_current(task_id: str | None) -> dict[str, Any]:
+    current = read_json(CURRENT_FILE, {})
+    chosen_id = task_id or current.get("taskId")
+    if not chosen_id:
+        raise SystemExit(MSG_NO_CURRENT_TASK)
+    task = find_task(chosen_id)
+    if task is None:
+        suggestions = recent_task_ids()
+        hint = f" Recent: {', '.join(suggestions)}" if suggestions else ""
+        raise SystemExit(MSG_TASK_NOT_FOUND.format(id=chosen_id) + hint)
+    return task
+
+
+def save_task(updated: dict[str, Any]) -> None:
+    data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
+    for index, task in enumerate(data.get("tasks", [])):
+        if task.get("id") == updated.get("id"):
+            updated["updatedAt"] = today()
+            data["tasks"][index] = updated
+            write_json(TASKS_FILE, data)
+            return
+    raise SystemExit(MSG_TASK_NOT_FOUND.format(id=updated.get("id")))
+
+
+def pop_item(items: list[dict[str, Any]], item_id: str) -> dict[str, Any] | None:
+    for index, item in enumerate(items):
+        if item.get("id") == item_id:
+            return items.pop(index)
+    return None
+
+
+def merge_list(task: dict[str, Any], key: str, values: list[str]) -> None:
+    current = list(task.get(key, []))
+    for value in values:
+        if value and value not in current:
+            current.append(value)
+    task[key] = current
+
+
+def status_tag(status: str) -> str:
+    return STATUS_TAGS.get(status, status.upper().replace(" ", "_"))
+
+
+def chat_title(task: dict[str, Any]) -> str:
+    template = read_json(PROCESS_FILE, {}).get(
+        "chatTitleFormat",
+        CHAT_TITLE_FORMAT_DEFAULT,
+    )
+    return template.format(
+        id=task["id"],
+        statusTag=status_tag(task["status"]),
+        title=task["title"],
+    )
+
+
+def current_task_payload(task: dict[str, Any]) -> dict[str, str]:
+    return {
+        "taskId": task["id"],
+        "status": task["status"],
+        "title": task["title"],
+        "chatTitle": chat_title(task),
+    }
+
+
+def set_current_task(task: dict[str, Any]) -> None:
+    write_json(CURRENT_FILE, current_task_payload(task))
+    CHAT_TITLE_FILE.write_text(chat_title(task) + "\n", encoding="utf-8")
+
+
+def print_chat_title(task: dict[str, Any]) -> None:
+    print(f"\nNOME DO CHAT: {chat_title(task)}")
+    print(f"CHAT_TITLE={chat_title(task)}")
+
+
+def print_task_created(task: dict[str, Any]) -> None:
+    print(f"{task['id']} created: {task['title']}")
+    print_chat_title(task)
+
+
+__all__ = [
+    "new_task",
+    "next_task_id",
+    "next_backlog_id",
+    "find_task",
+    "find_task_or_current",
+    "save_task",
+    "pop_item",
+    "merge_list",
+    "status_tag",
+    "chat_title",
+    "current_task_payload",
+    "set_current_task",
+    "print_chat_title",
+    "print_task_created",
+    "recent_task_ids",
+]

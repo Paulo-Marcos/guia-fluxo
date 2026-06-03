@@ -16,6 +16,7 @@ ADR nao se confunde com [`explanation/`](../explanation/): explanation ensina o 
 | [0004](0004-chat-title-sincronizado.md) | Chat-title sincronizado com a task corrente | Aceita |
 | [0005](0005-docs-hook-no-finish.md) | Hook de docs bloqueante no `/finish` | Aceita |
 | [0006](0006-plugin-oficial-claude-code.md) | Adotar layout oficial de plugin Claude Code com namespace `ai` | Aceita |
+| [0007](0007-arquitetura-modular-core-src.md) | Decompor `core/src/ai.py` em modulos com Clean Architecture | Aceita |
 
 ## Como adicionar um ADR novo
 

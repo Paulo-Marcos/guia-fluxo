@@ -2,43 +2,47 @@
 """Render per-agent skill files and standalone bin/ from core/manifest/manifest.yaml.
 
 Source of truth:
-    core/manifest/manifest.yaml  (skills)
-    core/src/ai.py               (motor copiado para dist/bin/)
-    core/bin/ai.ps1              (wrapper PowerShell copiado para dist/bin/)
+    core/manifest/manifest.yaml   (skills)
+    core/src/*.py                 (motor + helpers - todos copiados para dist/bin/)
+    core/lock/lock_api.py         (modulo de locks reutilizavel - tambem em dist/bin/)
+    core/bin/ai.ps1               (wrapper PowerShell copiado para dist/bin/)
+    core/templates/...            (templates copiados para dist/templates/)
 
 Generated targets (por verbo):
-    dist/skills/<verb>/SKILL.md             (Claude Code - layout oficial de plugin, sem prefixo: o namespace `ai:` ja qualifica os atalhos como /ai:feature, /ai:issue, etc.)
-    dist/.agents/skills/ai-<verb>/SKILL.md  (Codex + Antigravity - convencao AGENTS.md cross-tool. Prefixo `ai-` evita colisao com comandos nativos do agente. Verbos que ja comecam com `ai-` - como `ai-process` - nao recebem o prefixo de novo.)
+    dist/skills/<verb>/SKILL.md             (Claude Code - layout oficial de plugin)
+    dist/.agents/skills/ai-<verb>/SKILL.md  (Codex + Antigravity - prefixo `ai-`)
 
 Generated bin/ (motor standalone do plugin):
-    dist/bin/ai.py    (copia exata de core/src/ai.py)
-    dist/bin/ai.ps1   (copia de core/bin/ai.ps1 com path adaptado para layout flat)
-    dist/bin/ai       (shim POSIX que chama python3 ai.py "$@")
+    dist/bin/ai.py        (entry point, copia exata de core/src/ai.py)
+    dist/bin/_*.py        (modulos sibling: _constants, _state, _tasks, etc.)
+    dist/bin/lock_api.py  (lock domain - copiado de core/lock/lock_api.py)
+    dist/bin/ai.ps1       (copia de core/bin/ai.ps1 com path adaptado para layout flat)
+    dist/bin/ai           (shim POSIX que chama python3 ai.py "$@")
 
-Generated templates/ (consumiveis pelo instalador install.ps1/install.sh):
+Generated templates/:
     dist/templates/.githooks/commit-msg
     dist/templates/features/registry.yaml
     dist/templates/features/lock-ignore.txt
 
-dist/ espelha o layout que o consumidor recebe: marketplace.json/plugin.json
-em `dist/.claude-plugin/` apontam para o plugin com root `dist/`. O `dist/bin/`
-e auto-mapeado para PATH pelo Claude Code segundo a doc oficial, entao no
-consumidor (apos B-008 copiar dist/* para .ai-process/) basta digitar `ai status`
-em qualquer sessao do agente.
-
-Codex + Antigravity continuam descobrindo via `dist/.agents/skills/ai-<verb>/`
-seguindo a convencao AGENTS.md. Detalhes em
-docs/adr/0006-plugin-oficial-claude-code.md.
+Hardening (F-015):
+- TEMPLATE_FILES validado: --check detecta arquivos em core/templates/ nao listados.
+- Renderer aborta (sys.exit 2) se o marcador `..\\src\\ai.py` sumir do wrapper.
+- YAML dos templates e validado via yaml.safe_load antes de copiar.
+- dataclass Output substitui a tupla de 4 elementos.
+- --check-orphans lista arquivos em dist/bin/ ou dist/skills/ sem correspondente.
+- Description vazia gera erro explicito em vez de SKILL.md silenciosamente quebrado.
 
 Usage:
-    python core/build/render-skills.py            # write all targets (skills + bin/)
-    python core/build/render-skills.py --check    # exit 1 if any target is stale
-    python core/build/render-skills.py --verb X   # render only one verb (skip bin/)
+    python core/build/render-skills.py
+    python core/build/render-skills.py --check
+    python core/build/render-skills.py --verb feature
+    python core/build/render-skills.py --check-orphans
 """
 from __future__ import annotations
 
 import argparse
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from textwrap import dedent
 
@@ -56,14 +60,22 @@ CLAUDE_SKILL_DIR = DIST_DIR / "skills"
 AGENT_SKILL_DIR = DIST_DIR / ".agents" / "skills"
 BIN_DIR = DIST_DIR / "bin"
 TEMPLATES_DIR = DIST_DIR / "templates"
-ENGINE_SRC = ROOT / "core" / "src" / "ai.py"
+
+CORE_SRC_DIR = ROOT / "core" / "src"
+ENGINE_SRC = CORE_SRC_DIR / "ai.py"
+LOCK_API_SRC = ROOT / "core" / "lock" / "lock_api.py"
 WRAPPER_SRC = ROOT / "core" / "bin" / "ai.ps1"
 TEMPLATES_SRC = ROOT / "core" / "templates"
 
-# Cada par e (caminho relativo dentro de core/templates/, caminho relativo
-# dentro de dist/templates/). Mantemos paridade 1:1 para o instalador
-# consumir sem aplanar a arvore.
-TEMPLATE_FILES = [
+# Marcador usado por core/bin/ai.ps1 para resolver o motor. No dist/, o
+# layout vira flat (ai.py vizinho do wrapper), entao o marcador e
+# reescrito. Aborta se ausente: o renderer presume invariante.
+WRAPPER_MARKER = "..\\src\\ai.py"
+WRAPPER_REPLACEMENT = "ai.py"
+
+# Templates copiados byte-a-byte para dist/templates/. Validacao
+# estrutural por extensao: arquivos .yaml passam por yaml.safe_load.
+TEMPLATE_FILES: list[tuple[str, str]] = [
     (".githooks/commit-msg", ".githooks/commit-msg"),
     ("features/registry.yaml", "features/registry.yaml"),
     ("features/lock-ignore.txt", "features/lock-ignore.txt"),
@@ -76,7 +88,6 @@ TARGET_LABELS = {
     "template": "dist/templates/<file>",
 }
 
-# Shim POSIX para o plugin: roda o motor Python da mesma pasta.
 POSIX_SHIM = (
     "#!/usr/bin/env bash\n"
     "# Auto-gerado por core/build/render-skills.py. Nao edite.\n"
@@ -84,20 +95,31 @@ POSIX_SHIM = (
 )
 
 
+@dataclass(frozen=True)
+class Output:
+    path: Path
+    target: str
+    name: str
+    content: str
+
+
+# --- Loaders ---------------------------------------------------------------
+
+
 def load_manifest() -> dict:
     if not MANIFEST.exists():
         sys.stderr.write(f"Erro: manifest nao encontrado em {MANIFEST}\n")
         sys.exit(2)
-    return yaml.safe_load(MANIFEST.read_text(encoding="utf-8")) or {}
+    data = yaml.safe_load(MANIFEST.read_text(encoding="utf-8")) or {}
+    if not isinstance(data, dict) or not data.get("verbs"):
+        sys.stderr.write(
+            "Erro: manifest invalido ou vazio (esperado mapping com chave `verbs:`)\n"
+        )
+        sys.exit(2)
+    return data
 
 
 def agent_skill_name(verb: str) -> str:
-    """Nome do skill no destino cross-tool (Codex/Antigravity).
-
-    Aplica prefixo `ai-` para evitar colisao com comandos nativos do agente.
-    Verbos que ja comecam com `ai-` (ex.: `ai-process`) ficam inalterados
-    em vez de virar `ai-ai-process`.
-    """
     return verb if verb.startswith("ai-") else f"ai-{verb}"
 
 
@@ -109,9 +131,17 @@ def target_path(target: str, verb: str) -> Path:
     raise ValueError(f"target desconhecido: {target}")
 
 
-def render_skill_md(name: str, description: str, body: str) -> str:
+def render_skill_md(name: str, description: str, body: str, verb: str) -> str:
     desc = description.strip()
+    if not desc:
+        sys.stderr.write(
+            f"Erro: description vazio para verbo `{verb}` no manifest.\n"
+            f"      Sem description o frontmatter da skill fica invalido.\n"
+        )
+        sys.exit(2)
     body_text = dedent(body).strip("\n")
+    if not body_text:
+        sys.stderr.write(f"Aviso: body vazio para verbo `{verb}`. SKILL.md sera so frontmatter.\n")
     return (
         "---\n"
         f"name: {name}\n"
@@ -124,107 +154,200 @@ def render_skill_md(name: str, description: str, body: str) -> str:
 
 def render_target(target: str, verb: str, description: str, body: str) -> str:
     if target == "agent_skill":
-        return render_skill_md(agent_skill_name(verb), description, body)
+        return render_skill_md(agent_skill_name(verb), description, body, verb)
     if target == "claude_skill":
-        return render_skill_md(verb, description, body)
+        return render_skill_md(verb, description, body, verb)
     raise ValueError(f"target desconhecido: {target}")
 
 
-def collect_outputs(manifest: dict, only_verb: str | None = None) -> list[tuple[Path, str, str, str]]:
-    """Return list of (path, target, verb, content) tuples for skills."""
-    outputs: list[tuple[Path, str, str, str]] = []
+def collect_outputs(manifest: dict, only_verb: str | None = None) -> list[Output]:
+    outputs: list[Output] = []
     verbs = manifest.get("verbs") or {}
     for verb, spec in verbs.items():
         if only_verb and verb != only_verb:
             continue
+        if not isinstance(spec, dict):
+            sys.stderr.write(f"Erro: verb `{verb}` no manifest precisa ser um mapping.\n")
+            sys.exit(2)
         description = (spec.get("description") or "").strip()
         targets = spec.get("targets") or {}
+        if not targets:
+            sys.stderr.write(f"Aviso: verbo `{verb}` sem `targets:` declarado.\n")
         for target_name, target_spec in targets.items():
+            if not isinstance(target_spec, dict):
+                sys.stderr.write(
+                    f"Erro: targets.{target_name} de `{verb}` precisa ser um mapping.\n"
+                )
+                sys.exit(2)
             body = target_spec.get("body") or ""
             content = render_target(target_name, verb, description, body)
-            outputs.append((target_path(target_name, verb), target_name, verb, content))
+            outputs.append(Output(target_path(target_name, verb), target_name, verb, content))
     return outputs
+
+
+# --- bin/ -----------------------------------------------------------------
 
 
 def _adapt_wrapper_for_plugin(text: str) -> str:
     """Reescreve o wrapper para o layout flat do plugin.
 
     No repo-mae, `core/bin/ai.ps1` resolve o motor via `..\\src\\ai.py`.
-    No plugin/consumidor, `dist/bin/ai.ps1` e `dist/bin/ai.py` vivem lado a
-    lado (mesma pasta), entao o path vira `ai.py` relativo a $PSScriptRoot.
+    No plugin/consumidor, `dist/bin/ai.ps1` e `dist/bin/ai.py` vivem
+    lado a lado, entao o path vira `ai.py`. ABORTA se o marcador sumir,
+    em vez do warning silencioso de antes (achado 4.3).
     """
-    if "..\\src\\ai.py" not in text:
+    if WRAPPER_MARKER not in text:
         sys.stderr.write(
-            "Aviso: core/bin/ai.ps1 nao contem o marcador '..\\src\\ai.py'. "
-            "O renderer precisa ser revisado.\n"
+            f"Erro: core/bin/ai.ps1 nao contem o marcador `{WRAPPER_MARKER}`.\n"
+            "      O renderer presume esse marker para adaptar o wrapper ao layout flat\n"
+            "      do plugin. Se voce reescreveu o wrapper, ajuste WRAPPER_MARKER em\n"
+            "      core/build/render-skills.py para o novo marker.\n"
         )
-    return text.replace("..\\src\\ai.py", "ai.py")
+        sys.exit(2)
+    return text.replace(WRAPPER_MARKER, WRAPPER_REPLACEMENT)
 
 
-def collect_bin_outputs() -> list[tuple[Path, str, str, str]]:
-    """Return list of (path, target, name, content) tuples for dist/bin/."""
+def _python_source_files() -> list[Path]:
+    """All .py files in core/src/ (ai.py + helpers _*.py).
+
+    Excludes __pycache__/ and the like. The whole pack is shipped flat to
+    dist/bin/ so imports work side-by-side.
+    """
+    if not CORE_SRC_DIR.exists():
+        sys.stderr.write(f"Erro: pasta de motor nao encontrada em {CORE_SRC_DIR}\n")
+        sys.exit(2)
+    files = sorted(
+        path
+        for path in CORE_SRC_DIR.glob("*.py")
+        if path.is_file() and not path.name.startswith("__")
+    )
+    return files
+
+
+def collect_bin_outputs() -> list[Output]:
     if not ENGINE_SRC.exists():
         sys.stderr.write(f"Erro: motor nao encontrado em {ENGINE_SRC}\n")
         sys.exit(2)
     if not WRAPPER_SRC.exists():
         sys.stderr.write(f"Erro: wrapper nao encontrado em {WRAPPER_SRC}\n")
         sys.exit(2)
-    engine = ENGINE_SRC.read_text(encoding="utf-8")
+    if not LOCK_API_SRC.exists():
+        sys.stderr.write(f"Erro: lock_api nao encontrado em {LOCK_API_SRC}\n")
+        sys.exit(2)
+
+    outputs: list[Output] = []
+    for src in _python_source_files():
+        outputs.append(Output(BIN_DIR / src.name, "bin", src.name, src.read_text(encoding="utf-8")))
+    outputs.append(
+        Output(BIN_DIR / "lock_api.py", "bin", "lock_api.py", LOCK_API_SRC.read_text(encoding="utf-8"))
+    )
     wrapper = _adapt_wrapper_for_plugin(WRAPPER_SRC.read_text(encoding="utf-8"))
-    return [
-        (BIN_DIR / "ai.py", "bin", "ai.py", engine),
-        (BIN_DIR / "ai.ps1", "bin", "ai.ps1", wrapper),
-        (BIN_DIR / "ai", "bin", "ai", POSIX_SHIM),
-    ]
+    outputs.append(Output(BIN_DIR / "ai.ps1", "bin", "ai.ps1", wrapper))
+    outputs.append(Output(BIN_DIR / "ai", "bin", "ai", POSIX_SHIM))
+    return outputs
 
 
-def collect_template_outputs() -> list[tuple[Path, str, str, str]]:
-    """Return list of (path, target, name, content) tuples for dist/templates/.
+# --- templates/ -----------------------------------------------------------
 
-    Templates ficam em `dist/templates/` espelhando o layout em que o
-    instalador vai depositar no consumidor (`<consumer>/.githooks/`,
-    `<consumer>/features/`). Copia byte-a-byte de `core/templates/`.
-    """
-    outputs: list[tuple[Path, str, str, str]] = []
+
+def _validate_template_set() -> None:
+    """Fail if core/templates/ has files not declared in TEMPLATE_FILES."""
+    declared = {src for src, _dst in TEMPLATE_FILES}
+    found: set[str] = set()
+    for path in TEMPLATES_SRC.rglob("*"):
+        if path.is_file():
+            rel = path.relative_to(TEMPLATES_SRC).as_posix()
+            found.add(rel)
+    extras = found - declared
+    if extras:
+        sys.stderr.write(
+            "Erro: arquivos em core/templates/ nao declarados em TEMPLATE_FILES:\n"
+            + "\n".join(f"  - {x}" for x in sorted(extras))
+            + "\n"
+        )
+        sys.exit(2)
+
+
+def _validate_template_yaml(src: Path) -> None:
+    """yaml.safe_load templates antes de copiar (achado 7.7)."""
+    if src.suffix not in (".yaml", ".yml"):
+        return
+    try:
+        yaml.safe_load(src.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        sys.stderr.write(f"Erro: template YAML invalido em {src}: {exc}\n")
+        sys.exit(2)
+
+
+def collect_template_outputs() -> list[Output]:
+    _validate_template_set()
+    outputs: list[Output] = []
     for src_rel, dst_rel in TEMPLATE_FILES:
         src = TEMPLATES_SRC / src_rel
         if not src.exists():
             sys.stderr.write(f"Erro: template nao encontrado em {src}\n")
             sys.exit(2)
+        _validate_template_yaml(src)
         content = src.read_text(encoding="utf-8")
-        outputs.append((TEMPLATES_DIR / dst_rel, "template", dst_rel, content))
+        outputs.append(Output(TEMPLATES_DIR / dst_rel, "template", dst_rel, content))
     return outputs
 
 
-def write_outputs(outputs: list[tuple[Path, str, str, str]]) -> list[Path]:
+# --- I/O ------------------------------------------------------------------
+
+
+def write_outputs(outputs: list[Output]) -> list[Path]:
     written: list[Path] = []
-    for path, _target, _name, content in outputs:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        current = path.read_text(encoding="utf-8") if path.exists() else None
-        if current != content:
-            # newline="\n" evita que Python traduza \n -> \r\n no Windows.
-            # Critico para dist/bin/ai (shim bash precisa de LF puro) e
-            # coerente com a normalizacao de .gitattributes (eol=lf default).
-            # Wrappers/scripts .ps1 sao re-normalizados para CRLF no checkout
-            # via *.ps1 -> eol=crlf, entao gravar em LF aqui e seguro.
-            path.write_text(content, encoding="utf-8", newline="\n")
-            written.append(path)
+    for output in outputs:
+        output.path.parent.mkdir(parents=True, exist_ok=True)
+        current = output.path.read_text(encoding="utf-8") if output.path.exists() else None
+        if current != output.content:
+            output.path.write_text(output.content, encoding="utf-8", newline="\n")
+            written.append(output.path)
     return written
 
 
-def check_outputs(outputs: list[tuple[Path, str, str, str]]) -> list[Path]:
+def check_outputs(outputs: list[Output]) -> list[Path]:
     stale: list[Path] = []
-    for path, _target, _name, content in outputs:
-        current = path.read_text(encoding="utf-8") if path.exists() else None
-        if current != content:
-            stale.append(path)
+    for output in outputs:
+        current = output.path.read_text(encoding="utf-8") if output.path.exists() else None
+        if current != output.content:
+            stale.append(output.path)
     return stale
+
+
+# --- Orphan detection (--check-orphans) -----------------------------------
+
+
+def find_orphans(outputs: list[Output]) -> list[Path]:
+    """List files in dist/bin/ and dist/skills/ that are not part of outputs.
+
+    Useful to detect verb removals or renamed helpers that left stale
+    files in dist/. Renderer itself does not delete; only reports.
+    """
+    expected = {output.path.resolve() for output in outputs}
+    orphans: list[Path] = []
+    for root in (BIN_DIR, CLAUDE_SKILL_DIR, AGENT_SKILL_DIR, TEMPLATES_DIR):
+        if not root.exists():
+            continue
+        for path in root.rglob("*"):
+            if path.is_file() and path.resolve() not in expected:
+                orphans.append(path)
+    return orphans
+
+
+# --- Entry point ----------------------------------------------------------
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="Exit 1 se algum alvo estiver stale (uso em CI).")
+    parser.add_argument("--check", action="store_true", help="Exit 1 se algum alvo estiver stale.")
     parser.add_argument("--verb", help="Renderiza apenas um verbo do manifest (pula dist/bin/).")
+    parser.add_argument(
+        "--check-orphans",
+        action="store_true",
+        help="Lista arquivos em dist/ sem correspondente no manifest/motor (nao apaga).",
+    )
     args = parser.parse_args()
 
     manifest = load_manifest()
@@ -236,10 +359,23 @@ def main() -> int:
         sys.stderr.write("Aviso: nenhum alvo a renderizar (manifest vazio ou --verb nao bate).\n")
         return 0
 
+    if args.check_orphans:
+        orphans = find_orphans(outputs)
+        if not orphans:
+            print("OK: nenhum orfao em dist/.")
+            return 0
+        print("Arquivos orfaos (em dist/ sem origem no manifest/motor):\n", file=sys.stderr)
+        for path in orphans:
+            print(f"  - {path.relative_to(ROOT)}", file=sys.stderr)
+        return 1
+
     if args.check:
         stale = check_outputs(outputs)
         if stale:
-            print("Arquivos gerados estao desatualizados em relacao ao manifest/motor/wrapper:\n", file=sys.stderr)
+            print(
+                "Arquivos gerados estao desatualizados em relacao ao manifest/motor/wrapper:\n",
+                file=sys.stderr,
+            )
             for p in stale:
                 print(f"  - {p.relative_to(ROOT)}", file=sys.stderr)
             print("\nRode: python core/build/render-skills.py", file=sys.stderr)

@@ -2,6 +2,140 @@
 
 ---
 
+## [I-005] Bugs e melhorias do CLI/check-lock identificados na auditoria F-014
+
+- **Status:** Aguardando validacao
+- **Origem:** AI process (2026-06-03)
+- **Tipo:** Issue / regressao
+- **Contexto:** Cobre achados 2.1 (cleanup duplicado), 2.2 (promote grava antes de criar), 2.4 (paths Windows nao normalizados em commit_task), 2.5 (mensagem 'task not found' sem hint), 2.9 (--no-commit removia worktree), 2.12 (git ausente sem msg clara), 2.13 (attach_worktree sem pre-check de branch), 2.Q2 (validate deprecated sem warning), 5.3 (audit silencioso fora de repo), 5.10 (cmd_lock sem --allow-missing), 5.14 (UNLOCK_RE sem validacao de motivo), 5.19 (path traversal em _norm), 5.2 (sem cache em _load_lock_ignore). Implementado dentro do refactor F-015.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_cli_creation.py`
+- `core/src/_commit.py`
+- `core/src/_worktree.py`
+- `core/src/_tasks.py`
+- `core/src/_cli_lifecycle.py`
+- `core/lock/lock_api.py`
+- `core/lock/check-lock.py`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Corrigidos no refactor F-015: 2.1 cleanup_task_worktree chamado uma vez so; 2.2 cmd_promote constroi task+worktree antes de mutar backlog; 2.4 _commit.commit_task normaliza paths via _paths.normalize_path; 2.5 find_task_or_current sugere recent_task_ids; 2.9 cleanup pula quando --no-commit; 2.12 has_git + MSG_GIT_NOT_FOUND em git_ops; 2.13 git_branch_exists pre-check em attach_worktree; 2.Q2 cmd_validate imprime warning de deprecacao; 5.3 cmd_audit pre-checa .git/; 5.10 cmd_lock aceita --allow-missing; 5.14 unlocked_ids exige MOTIVO_RE; 5.19 add_lock valida path traversal via _path_inside_repo; 5.2 _load_lock_ignore_cached via lru_cache.
+
+### Validacao feita
+
+- python -m unittest discover -s tests -> 63 testes OK
+- .\core\bin\ai.ps1 doctor -> OK
+- python core\build\render-skills.py --check -> OK 40 alvos
+
+### Validacao pendente
+
+- Validacao manual do desenvolvedor.
+
+## [F-015] Refactor SOLID/Clean Arch do core (constantes + lock_api + split modular)
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-03)
+- **Tipo:** Feature
+- **Contexto:** F-014 etapa 8 cluster A+B+C: centralizar strings/paths em _constants, extrair lock_api importavel (remove duplicacao 2.Q3+5.Q1, corrige bug latente lock_task_files), decompor core/src/ai.py em domain/infrastructure/cli mantendo dist/bin/ standalone via renderer que copia pacote inteiro. SOLID: SRP por modulo, OCP nos comandos via dispatch table, DIP via injecao de filesystem nos services.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_constants.py`
+- `core/src/_state.py`
+- `core/src/_paths.py`
+- `core/src/_clock.py`
+- `core/src/_git_ops.py`
+- `core/src/_tasks.py`
+- `core/src/_features_md.py`
+- `core/src/_process_config.py`
+- `core/src/_docs_hook.py`
+- `core/src/_locks.py`
+- `core/src/_worktree.py`
+- `core/src/_commit.py`
+- `core/src/_reports.py`
+- `core/src/_validation_runner.py`
+- `core/src/_cli_lifecycle.py`
+- `core/src/_cli_creation.py`
+- `core/src/_cli_meta.py`
+- `core/src/ai.py`
+- `core/lock/lock_api.py`
+- `core/lock/check-lock.py`
+- `core/build/render-skills.py`
+- `core/bin/ai`
+- `core/bin/ai.ps1`
+- `core/manifest/manifest.yaml`
+- `tests/conftest_paths.py`
+- `tests/test_smoke.py`
+- `tests/test_constants.py`
+- `tests/test_paths.py`
+- `tests/test_tasks_domain.py`
+- `tests/test_features_md.py`
+- `tests/test_docs_hook.py`
+- `tests/test_lock_api.py`
+- `tests/test_render_skills.py`
+- `tests/test_check_lock_cli.py`
+- `tests/test_cli_promote_order.py`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+- `CHANGELOG.md`
+- `dist/.agents/skills/ai-finish/SKILL.md`
+- `dist/.agents/skills/ai-promote/SKILL.md`
+- `dist/bin/ai.ps1`
+- `dist/bin/ai.py`
+- `dist/skills/feature/SKILL.md`
+- `dist/skills/issue/SKILL.md`
+- `dist/skills/promote/SKILL.md`
+- `docs/adr/README.md`
+- `docs/adr/0007-arquitetura-modular-core-src.md`
+- `docs/auditorias/F-014-validacao.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Refactor SOLID/Clean Architecture/DDD do core: 17 novos modulos sob core/src/_*.py (constants, state, paths, clock, git_ops, tasks, features_md, process_config, docs_hook, locks, worktree, commit, reports, validation_runner, cli_lifecycle, cli_creation, cli_meta) + lock_api em core/lock/. ai.py reduzido de 965 para ~205 linhas (so wiring + parser). check-lock.py reduzido a CLI fino sobre lock_api. render-skills.py hardened com dataclass Output, --check-orphans, abortar em marker ausente, validacao YAML. Wrappers: ai.ps1 com Resolve-Python em camadas + validacao versao 3.10+ + diagnostico rico + glob de Python3*; core/bin/ai POSIX simetrico. Bodies do manifest alinhados ao CLI (--context, worktree branch codex/<slug>, rodape ai-process em promote/finish).
+- Achados implementados: A (constants), B (lock_api), C (split modular), D (1,2,4,5,9,12,13,Q2), E (Q1,Q2,4,5,6,8), F (3,6,Q2,Q3,12,17), G (1,3,8), H (3,10,14,19,2). Total ~28 dos 90 achados endereco direto, mais alguns indiretos por centralizacao.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- python -m unittest discover -s tests: 63 testes em 6.3s, OK
+- .\core\bin\ai.ps1 doctor: AI process files OK
+- python core\build\render-skills.py --check: OK 40 alvos em sincronia
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [F-014] Auditoria estruturada de core/ para mapear features, issues e backlog
+
+- **Status:** Em desenvolvimento
+- **Origem:** AI process (2026-06-02)
+- **Tipo:** Feature
+- **Contexto:** Walkthrough em 7 etapas (manifest, ai.py, ai.ps1, render-skills.py, check-lock.py, hooks, templates) de cada arquivo em core/. Para cada arquivo: funcao atual, riscos, melhorias, possiveis adicoes. Saida: lista de candidatos classificados como feature/issue/backlog para abertura em lote ao final. Inclui doc de acompanhamento em docs/explanation/ para rastrear progresso entre sessoes e fora do chat.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Executar implementacao e validacoes.
+
+
 ## [F-013] B-008 passos 3+4: install.ps1/install.sh + templates em dist/ + smoke do consumer
 
 - **Status:** Validada

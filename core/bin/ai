@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# core/bin/ai - POSIX shim simetrico ao dist/bin/ai.
+# Resolve um interpretador Python 3.10+ e dispara core/src/ai.py.
+# Cobre achado 3.Q1 (faltava simetria POSIX no repo-mae).
+
+set -eu
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+AI_PY="${SCRIPT_DIR}/../src/ai.py"
+
+if [ ! -f "${AI_PY}" ]; then
+  printf "Erro: motor nao encontrado em %s\n" "${AI_PY}" >&2
+  exit 2
+fi
+
+# Cumulativo: preserva $AI_PROCESS_PYTHON e $VIRTUAL_ENV; depois tenta py
+# launcher, python3, python; por ultimo erra com a lista do que foi
+# tentado para diagnostico (achado 3.4).
+candidates=""
+if [ -n "${AI_PROCESS_PYTHON:-}" ]; then
+  candidates="${AI_PROCESS_PYTHON}"
+fi
+if [ -n "${VIRTUAL_ENV:-}" ]; then
+  candidates="${candidates}
+${VIRTUAL_ENV}/bin/python"
+fi
+candidates="${candidates}
+python3
+python"
+
+minimum_ok() {
+  # Aceita 3.10+ (achado 3.5).
+  "$1" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' >/dev/null 2>&1
+}
+
+selected=""
+tried=""
+IFS='
+'
+for cmd in ${candidates}; do
+  [ -z "${cmd}" ] && continue
+  tried="${tried} ${cmd}"
+  if command -v "${cmd}" >/dev/null 2>&1 && minimum_ok "${cmd}"; then
+    selected="${cmd}"
+    break
+  fi
+done
+unset IFS
+
+if [ -z "${selected}" ]; then
+  printf "Erro: nenhum Python 3.10+ encontrado.\n" >&2
+  printf "Tentado:%s\n" "${tried}" >&2
+  printf "Sugestoes:\n" >&2
+  printf "  - export AI_PROCESS_PYTHON=/caminho/para/python\n" >&2
+  printf "  - source <venv>/bin/activate\n" >&2
+  printf "  - instale Python 3.10+ via gerenciador de pacotes\n" >&2
+  exit 2
+fi
+
+exec "${selected}" "${AI_PY}" "$@"

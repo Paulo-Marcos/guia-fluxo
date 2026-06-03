@@ -24,4 +24,6 @@ If user chose worktree:
 .\core\bin\ai.ps1 promote B-001 --kind feature --worktree --assessment "..." --plan "..."
 ```
 
-`finish` removes the created worktree when the task is closed.
+`--worktree` creates branch `codex/<slug>` in path `.claude/worktrees/<slug>`. Override with `--branch <name>` or `--worktree-path <path>`. `finish` removes the created worktree when the task is closed.
+
+Then continue using `ai-process`.

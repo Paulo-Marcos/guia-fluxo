@@ -1,6 +1,6 @@
 {
-  "taskId": "F-013",
+  "taskId": "F-015",
   "status": "Validada",
-  "title": "B-008 passos 3+4: install.ps1/install.sh + templates em dist/ + smoke do consumer",
-  "chatTitle": "F-013 - #FINALIZADO - B-008 passos 3+4: install.ps1/install.sh + templates em dist/ + smoke do consumer"
+  "title": "Refactor SOLID/Clean Arch do core (constantes + lock_api + split modular)",
+  "chatTitle": "F-015 - #FINALIZADO - Refactor SOLID/Clean Arch do core (constantes + lock_api + split modular)"
 }

@@ -182,6 +182,8 @@ verbs:
           .\core\bin\ai.ps1 feature "$ARGUMENTS"
           ```
 
+          Useful flags: `--context "<why>"` (motivacao), `--origin "<source>"` (origem alternativa).
+
           Then read `.ai/current-task.json`, repeat the exact `NOME DO CHAT: ...` line, run `/rename <suggested-title>` if Claude supports it, and continue with the implementation.
 
   issue:
@@ -210,6 +212,8 @@ verbs:
           ```powershell
           .\core\bin\ai.ps1 issue "$ARGUMENTS"
           ```
+
+          Useful flags: `--context "<observed failure>"`, `--origin "<source>"`.
 
           Then read `.ai/current-task.json`, repeat the exact `NOME DO CHAT: ...` line, run `/rename <suggested-title>` if Claude supports it, and continue with the fix.
 
@@ -275,7 +279,9 @@ verbs:
           .\core\bin\ai.ps1 promote B-001 --kind feature --worktree --assessment "..." --plan "..."
           ```
 
-          `finish` removes the created worktree when the task is closed.
+          `--worktree` creates branch `codex/<slug>` in path `.claude/worktrees/<slug>`. Override with `--branch <name>` or `--worktree-path <path>`. `finish` removes the created worktree when the task is closed.
+
+          Then continue using `ai-process`.
       claude_skill:
         body: |
           # Promote
@@ -295,7 +301,7 @@ verbs:
           .\core\bin\ai.ps1 promote B-001 --kind feature --assessment "..." --plan "..."
           ```
 
-          If the developer chose worktree, include `--worktree`.
+          If the developer chose worktree, include `--worktree` — branch fica `codex/<slug>` e path `.claude/worktrees/<slug>` (override com `--branch` ou `--worktree-path`).
 
           Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.
 
@@ -354,7 +360,9 @@ verbs:
           .\core\bin\ai.ps1 finish F-000 --docs-skip "fluxo interno, sem mudanca user-facing"
           ```
 
-          `finish` means the developer already validated the work. It suggests `#FINALIZADO` and commits by default. Use `--no-commit` for dry close. Lock with `--lock --lock-id feature-slug` when asked.
+          `finish` means the developer already validated the work. It suggests `#FINALIZADO` and commits by default. Use `--no-commit` for dry close. Lock with `--lock --lock-id feature-slug --lock-description "..."` when asked.
+
+          Then continue using `ai-process`.
       claude_skill:
         body: |
           # Finish

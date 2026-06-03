@@ -20,6 +20,6 @@ Process:
 .\core\bin\ai.ps1 promote B-001 --kind feature --assessment "..." --plan "..."
 ```
 
-If the developer chose worktree, include `--worktree`.
+If the developer chose worktree, include `--worktree` — branch fica `codex/<slug>` e path `.claude/worktrees/<slug>` (override com `--branch` ou `--worktree-path`).
 
 Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.
