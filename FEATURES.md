@@ -2,6 +2,53 @@
 
 ---
 
+## [F-018] Hardening: doctor estendido, check-lock info/edit/history/--json, dedup hook commit-msg
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-03)
+- **Tipo:** Feature
+- **Contexto:** F-014 achados 2.10 (doctor so checa 4 arquivos), 5.Q2 (check-lock sem info/edit/history), 5.Q3 (sem flag --json) e 6.Q1 (core/hooks/commit-msg e core/templates/.githooks/commit-msg sao byte-identicos sem deduplicacao). Esta feature implementa: (1) doctor estende verificacoes (manifest YAML carregavel, PyYAML disponivel, git no PATH, render --check OK, dist/ alinhado, lock_api importavel); (2) check-lock ganha 3 subcomandos novos (info <id>, edit <id> --add-file ..., history <id>); (3) check-lock list/check/audit/info aceitam --json; (4) core/templates/.githooks/commit-msg vira copia gerada pelo renderer a partir de core/hooks/commit-msg (fonte unica).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_cli_lifecycle.py`
+- `core/src/ai.py`
+- `core/lock/lock_api.py`
+- `core/lock/check-lock.py`
+- `core/build/render-skills.py`
+- `tests/test_check_lock_info_edit_history.py`
+- `tests/test_doctor_extended.py`
+- `CHANGELOG.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+- `dist/bin/_cli_lifecycle.py`
+- `dist/bin/ai.py`
+- `dist/bin/lock_api.py`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- doctor estendido: checa manifest YAML carregavel, PyYAML, git no PATH, render --check, dist/bin/ai.py, lock_api importavel. Flags --strict (warning vira erro) e --skip-render (CI rapido). Detecta layout consumer (sem core/) via _is_dev_repo e degrada para modo 'lite' que so checa .ai/ + git.
+- check-lock ganhou 3 subcomandos: info <id> (detalhes), edit <id> --add-file/--remove-file/--description (preserva id+locked_at), history <id> (git log filtrado por [unlock:<id>]).
+- Flag --json adicionada em list/check/info/audit/history do check-lock. Payload coerente com schema (count, locks, ok, blocked, etc.).
+- lock_api ganhou get_lock(id) e edit_lock(id, add/remove/description) com excecoes proprias (LockNotFound, LockIgnoredPath, LockOutsideRepo) reutilizadas pelo CLI.
+- Dedup commit-msg: core/templates/.githooks/commit-msg apagado. Renderer ganhou PROMOTED_TEMPLATES que copia core/hooks/commit-msg direto para dist/templates/.githooks/commit-msg. Fonte unica em core/hooks/.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- python -m unittest discover -s tests -> Ran 90 tests, OK
+- python core/build/render-skills.py --check -> OK 41 alvo(s)
+- .\core\bin\ai.ps1 doctor -> AI process files OK
+- check-lock info adicoes-exigem-autorizacao -> detalhes do lock global
+- check-lock history adicoes-exigem-autorizacao -> 8 commits encontrados (todos os com unlock no historico)
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [F-017] Subcomandos tasks list/show/filter para navegacao do .ai/tasks.json
 
 - **Status:** Validada

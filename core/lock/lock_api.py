@@ -289,6 +289,14 @@ def _path_inside_repo(path: str) -> bool:
         return False
 
 
+def get_lock(lock_id: str) -> dict | None:
+    """Return the lock dict by id, or None if absent."""
+    for lock in load_locks():
+        if lock.get("id") == lock_id:
+            return lock
+    return None
+
+
 def add_lock(
     spec: LockSpec,
     locked_at: str,
@@ -335,6 +343,49 @@ def remove_lock(lock_id: str) -> None:
         raise LockNotFound(lock_id)
     save_locks(remaining)
     invalidate_caches()
+
+
+def edit_lock(
+    lock_id: str,
+    add_files: Sequence[str] = (),
+    remove_files: Sequence[str] = (),
+    description: str | None = None,
+    allow_missing: bool = False,
+) -> dict:
+    """Edit a lock in place: add/remove files, update description.
+
+    Used by `check-lock edit` (achado 5.Q2). Preserves locked_at and id.
+    Returns the updated lock dict.
+    """
+    locks = load_locks()
+    target: dict | None = None
+    for lock in locks:
+        if lock.get("id") == lock_id:
+            target = lock
+            break
+    if target is None:
+        raise LockNotFound(lock_id)
+
+    files = list(target.get("files", []) or [])
+    for raw in add_files:
+        if raw != "*" and is_ignored_path(raw):
+            raise LockIgnoredPath(raw)
+        if raw != "*" and not _path_inside_repo(raw):
+            raise LockOutsideRepo(raw)
+        if raw != "*" and not (REPO_ROOT / raw).exists() and not allow_missing:
+            raise FileNotFoundError(f"Arquivo nao encontrado: {raw}. Use --allow-missing para travar futuro.")
+        normalized = norm_path(raw)
+        if normalized not in files:
+            files.append(normalized)
+    for raw in remove_files:
+        normalized = norm_path(raw)
+        files = [f for f in files if f != normalized]
+    target["files"] = files
+    if description is not None:
+        target["description"] = description
+    save_locks(locks)
+    invalidate_caches()
+    return target
 
 
 def append_lock_block(
@@ -392,7 +443,9 @@ __all__ = [
     "filter_unlocked",
     "events_from_paths",
     "events_from_name_status",
+    "get_lock",
     "add_lock",
+    "edit_lock",
     "remove_lock",
     "append_lock_block",
 ]

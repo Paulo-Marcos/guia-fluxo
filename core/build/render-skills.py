@@ -95,9 +95,16 @@ WRAPPER_REPLACEMENT = "ai.py"
 # Templates copiados byte-a-byte para dist/templates/. Validacao
 # estrutural por extensao: arquivos .yaml passam por yaml.safe_load.
 TEMPLATE_FILES: list[tuple[str, str]] = [
-    (".githooks/commit-msg", ".githooks/commit-msg"),
     ("features/registry.yaml", "features/registry.yaml"),
     ("features/lock-ignore.txt", "features/lock-ignore.txt"),
+]
+
+# Templates "promovidos" a partir de outros lugares do core/. F-018
+# consolidou `core/hooks/commit-msg` como fonte unica - o renderer
+# replica em `dist/templates/.githooks/commit-msg` para o instalador
+# usar no consumer.
+PROMOTED_TEMPLATES: list[tuple[Path, str]] = [
+    (ROOT / "core" / "hooks" / "commit-msg", ".githooks/commit-msg"),
 ]
 
 TARGET_LABELS = {
@@ -337,6 +344,13 @@ def collect_template_outputs() -> list[Output]:
             sys.stderr.write(f"Erro: template nao encontrado em {src}\n")
             sys.exit(2)
         _validate_template_yaml(src)
+        content = src.read_text(encoding="utf-8")
+        outputs.append(Output(TEMPLATES_DIR / dst_rel, "template", dst_rel, content))
+    # Templates promovidos de fora de core/templates/ (achado 6.Q1).
+    for src, dst_rel in PROMOTED_TEMPLATES:
+        if not src.exists():
+            sys.stderr.write(f"Erro: template promovido nao encontrado em {src}\n")
+            sys.exit(2)
         content = src.read_text(encoding="utf-8")
         outputs.append(Output(TEMPLATES_DIR / dst_rel, "template", dst_rel, content))
     return outputs

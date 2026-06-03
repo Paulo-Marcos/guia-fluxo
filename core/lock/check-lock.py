@@ -6,13 +6,16 @@ logic now lives in `lock_api` (see that module's docstring). This file is
 the user-facing shell: argparse, formatting, exit codes, hook integration.
 
 Uso:
-    python core/lock/check-lock.py list
-    python core/lock/check-lock.py check [--operation add|modify|delete|rename] <arquivo>...
+    python core/lock/check-lock.py list                                       [--json]
+    python core/lock/check-lock.py check [--operation X] <arquivo>...         [--json]
+    python core/lock/check-lock.py info <feature-id>                          [--json]
     python core/lock/check-lock.py lock <feature-id> --description "..." [--operations ...] [--allow-missing] <arquivo>...
+    python core/lock/check-lock.py edit <feature-id> [--add-file F]... [--remove-file F]... [--description "..."] [--allow-missing]
     python core/lock/check-lock.py unlock <feature-id>
-    python core/lock/check-lock.py audit
-    python core/lock/check-lock.py hook <commit-msg-file>             # git hook
-    python core/lock/check-lock.py ci --files F --messages M          # CI
+    python core/lock/check-lock.py audit                                      [--json]
+    python core/lock/check-lock.py history <feature-id>                       [--json]
+    python core/lock/check-lock.py hook <commit-msg-file>                     # git hook
+    python core/lock/check-lock.py ci --files F --messages M                  # CI
 
 Veja features/README.md para o protocolo completo.
 
@@ -21,6 +24,7 @@ Requer Python 3.10+ e PyYAML.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -63,8 +67,15 @@ def print_block(blocked: list[lock_api.LockMatch], stream) -> None:
 # -- Subcommands ------------------------------------------------------------
 
 
-def cmd_list(_args: argparse.Namespace) -> int:
+def _print_json(payload) -> None:
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+
+
+def cmd_list(args: argparse.Namespace) -> int:
     locks = lock_api.load_locks()
+    if args.json:
+        _print_json({"count": len(locks), "locks": locks})
+        return 0
     if not locks:
         print("Nenhuma trava ativa.")
         return 0
@@ -82,11 +93,122 @@ def cmd_list(_args: argparse.Namespace) -> int:
 def cmd_check(args: argparse.Namespace) -> int:
     events = lock_api.events_from_paths(args.files, args.operation)
     blocked = lock_api.find_blocked(events)
+    if args.json:
+        _print_json({
+            "ok": not blocked,
+            "checked": len(args.files),
+            "blocked": [
+                {"path": m.path, "operation": m.operation, "lockId": m.lock["id"]}
+                for m in blocked
+            ],
+        })
+        return 0 if not blocked else 1
     if not blocked:
         print(f"OK: {len(args.files)} arquivo(s), nenhum travado.")
         return 0
     print_block(blocked, sys.stderr)
     return 1
+
+
+def cmd_info(args: argparse.Namespace) -> int:
+    lock = lock_api.get_lock(args.id)
+    if lock is None:
+        if args.json:
+            _print_json({"found": False, "id": args.id})
+        else:
+            print(f"Lock nao encontrado: {args.id}", file=sys.stderr)
+        return 1
+    if args.json:
+        _print_json(lock)
+        return 0
+    print(f"id:          {lock['id']}")
+    if lock.get("description"):
+        print(f"description: {lock['description']}")
+    if lock.get("locked_at"):
+        print(f"locked_at:   {lock['locked_at']}")
+    operations = ", ".join(sorted(lock_api.lock_operations(lock)))
+    print(f"operations:  {operations}")
+    files = lock.get("files", []) or []
+    print(f"files ({len(files)}):")
+    for f in files:
+        print(f"  - {f}")
+    return 0
+
+
+def cmd_edit(args: argparse.Namespace) -> int:
+    try:
+        updated = lock_api.edit_lock(
+            args.id,
+            add_files=args.add_file or [],
+            remove_files=args.remove_file or [],
+            description=args.description,
+            allow_missing=args.allow_missing,
+        )
+    except lock_api.LockNotFound:
+        print(f"Erro: lock '{args.id}' nao encontrado.", file=sys.stderr)
+        return 1
+    except lock_api.LockIgnoredPath as exc:
+        print(
+            f"Erro: arquivo nao pode ser travado (esta em lock-ignore.txt): {exc.args[0]}",
+            file=sys.stderr,
+        )
+        return 1
+    except lock_api.LockOutsideRepo as exc:
+        print(f"Erro: path traversal recusado (fora do repo): {exc.args[0]}", file=sys.stderr)
+        return 1
+    except FileNotFoundError as exc:
+        print(f"Erro: {exc}", file=sys.stderr)
+        return 1
+    if args.json:
+        _print_json(updated)
+    else:
+        print(f"Lock '{args.id}' atualizado. {len(updated.get('files', []))} arquivo(s).")
+    return 0
+
+
+def cmd_history(args: argparse.Namespace) -> int:
+    """Lista commits que tocaram este lock id via [unlock:<id>] no message."""
+    if not (lock_api.REPO_ROOT / ".git").exists():
+        print(
+            "Erro: nao parece um repositorio git (sem .git/). history precisa de git log.",
+            file=sys.stderr,
+        )
+        return 1
+    pattern = f"[unlock:{args.id}]"
+    try:
+        log = subprocess.check_output(
+            [
+                "git",
+                "-c",
+                f"safe.directory={lock_api.REPO_ROOT.as_posix()}",
+                "log",
+                "--fixed-strings",
+                "--grep",
+                pattern,
+                "--pretty=format:%h|%ad|%s",
+                "--date=short",
+            ],
+            text=True,
+            cwd=lock_api.REPO_ROOT,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+        print(f"Erro ao consultar git log: {exc}", file=sys.stderr)
+        return 1
+    entries = []
+    for line in log.strip().splitlines():
+        parts = line.split("|", 2)
+        if len(parts) == 3:
+            entries.append({"sha": parts[0], "date": parts[1], "subject": parts[2]})
+    if args.json:
+        _print_json({"id": args.id, "count": len(entries), "history": entries})
+        return 0
+    if not entries:
+        print(f"Nenhum unlock registrado para '{args.id}' no historico.")
+        return 0
+    print(f"{len(entries)} unlock(s) de '{args.id}' no historico:\n")
+    for entry in entries:
+        print(f"  {entry['date']}  {entry['sha']}  {entry['subject']}")
+    return 0
 
 
 def cmd_lock(args: argparse.Namespace) -> int:
@@ -130,7 +252,7 @@ def cmd_unlock(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_audit(_args: argparse.Namespace) -> int:
+def cmd_audit(args: argparse.Namespace) -> int:
     if not (lock_api.REPO_ROOT / ".git").exists():
         print(
             "Erro: nao parece um repositorio git (sem .git/). audit precisa de git log.",
@@ -156,15 +278,20 @@ def cmd_audit(_args: argparse.Namespace) -> int:
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
         print(f"Erro ao consultar git log: {exc}", file=sys.stderr)
         return 1
-    if not log.strip():
-        print("Nenhum desbloqueio registrado no historico.")
-        return 0
-    print("Desbloqueios registrados:\n")
+    entries = []
     for line in log.strip().splitlines():
         parts = line.split("|", 2)
         if len(parts) == 3:
-            sha, dt, subj = parts
-            print(f"  {dt}  {sha}  {subj}")
+            entries.append({"sha": parts[0], "date": parts[1], "subject": parts[2]})
+    if args.json:
+        _print_json({"count": len(entries), "unlocks": entries})
+        return 0
+    if not entries:
+        print("Nenhum desbloqueio registrado no historico.")
+        return 0
+    print("Desbloqueios registrados:\n")
+    for entry in entries:
+        print(f"  {entry['date']}  {entry['sha']}  {entry['subject']}")
     return 0
 
 
@@ -230,7 +357,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validador e gerenciador de travas de edicao.")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("list", help="Lista travas ativas").set_defaults(func=cmd_list)
+    p_list = sub.add_parser("list", help="Lista travas ativas")
+    p_list.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_list.set_defaults(func=cmd_list)
 
     p_check = sub.add_parser("check", help="Checa arquivos pontuais")
     p_check.add_argument(
@@ -238,8 +367,27 @@ def main(argv: list[str] | None = None) -> int:
         choices=lock_api.ALL_OPERATIONS,
         help="Operacao a checar; default: modify se existe, add se nao existe",
     )
+    p_check.add_argument("--json", action="store_true", help="Saida em JSON.")
     p_check.add_argument("files", nargs="+")
     p_check.set_defaults(func=cmd_check)
+
+    p_info = sub.add_parser("info", help="Mostra detalhes de uma trava por id")
+    p_info.add_argument("id", help="Identificador da trava")
+    p_info.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_info.set_defaults(func=cmd_info)
+
+    p_edit = sub.add_parser("edit", help="Edita uma trava existente (add/remove file, description).")
+    p_edit.add_argument("id", help="Identificador da trava")
+    p_edit.add_argument("--add-file", action="append", default=[], help="Adicionar arquivo (repetir).")
+    p_edit.add_argument("--remove-file", action="append", default=[], help="Remover arquivo (repetir).")
+    p_edit.add_argument("--description", help="Nova descricao (substitui).")
+    p_edit.add_argument(
+        "--allow-missing",
+        action="store_true",
+        help="Aceita arquivos inexistentes em --add-file.",
+    )
+    p_edit.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_edit.set_defaults(func=cmd_edit)
 
     p_lock = sub.add_parser("lock", help="Adiciona trava a uma feature")
     p_lock.add_argument("id", help="Identificador da feature (kebab-case)")
@@ -263,7 +411,14 @@ def main(argv: list[str] | None = None) -> int:
     p_unlock.add_argument("id", help="Identificador da feature")
     p_unlock.set_defaults(func=cmd_unlock)
 
-    sub.add_parser("audit", help="Lista desbloqueios temporarios no git log").set_defaults(func=cmd_audit)
+    p_audit = sub.add_parser("audit", help="Lista desbloqueios temporarios no git log")
+    p_audit.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_audit.set_defaults(func=cmd_audit)
+
+    p_history = sub.add_parser("history", help="Lista commits que liberaram uma trava por id")
+    p_history.add_argument("id", help="Identificador da trava")
+    p_history.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_history.set_defaults(func=cmd_history)
 
     p_hook = sub.add_parser("hook", help="Modo git commit-msg")
     p_hook.add_argument("msg_file")

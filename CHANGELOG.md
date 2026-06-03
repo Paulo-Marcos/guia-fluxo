@@ -7,6 +7,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- **Hardening do CLI: `doctor++` + `check-lock info/edit/history` + `--json` (F-018).** Cobre achados 2.10, 5.Q2, 5.Q3 e 6.Q1 da auditoria F-014. `ai doctor` agora valida tambem `core/manifest/manifest.yaml`, PyYAML, git no PATH, `render --check`, `dist/bin/ai.py`, e import de `lock_api`. Tem flags `--strict` (warning vira erro) e `--skip-render` (CI rapido). Detecta layout consumer (sem `core/`) e degrada para modo "lite" automaticamente. `check-lock` ganhou subcomandos novos: `info <id>` (detalhes de 1 lock), `edit <id> --add-file ... --remove-file ... --description ...` (in-place edit preservando id e locked_at), `history <id>` (commits que liberaram esse lock). Flag `--json` adicionada em `list`, `check`, `info`, `audit`, `history`. `core/templates/.githooks/commit-msg` **deletado** (duplicacao byte-identica): renderer agora promove `core/hooks/commit-msg` direto para `dist/templates/.githooks/commit-msg`. Testes em `tests/test_check_lock_info_edit_history.py` (12 casos) e `tests/test_doctor_extended.py` (2 casos: dev + consumer lite).
+
+### Added
 - **Subcomandos `ai tasks list / show / filter` (F-017).** Navegacao read-only de `.ai/tasks.json` sem mexer em current-task. `list` lista todas (newest first) com `--limit N`; `show <ID>` mostra task completa (exit 1 se nao encontrar); `filter --status X --kind feature|issue --limit N` combina filtros. Todos suportam `--json` para consumo por agente/CI. Implementado em `core/src/_cli_tasks.py` + helpers `list_tasks()` e `format_task_line()` em `_tasks.py`. Tests em `tests/test_tasks_list.py`. Endereca achado 2.11 da auditoria F-014.
 
 ### Changed

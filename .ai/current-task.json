@@ -1,6 +1,6 @@
 {
-  "taskId": "F-017",
+  "taskId": "F-018",
   "status": "Validada",
-  "title": "Subcomandos tasks list/show/filter para navegacao do .ai/tasks.json",
-  "chatTitle": "F-017 - #FINALIZADO - Subcomandos tasks list/show/filter para navegacao do .ai/tasks.json"
+  "title": "Hardening: doctor estendido, check-lock info/edit/history/--json, dedup hook commit-msg",
+  "chatTitle": "F-018 - #FINALIZADO - Hardening: doctor estendido, check-lock info/edit/history/--json, dedup hook commit-msg"
 }

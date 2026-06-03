@@ -177,12 +177,123 @@ def cmd_validate(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_doctor(_args: argparse.Namespace) -> int:
+def _is_dev_repo() -> bool:
+    """True when running from the repo-mae (has core/manifest/).
+
+    In the consumer (.ai-process/bin/ flat layout), core/ does not exist;
+    the extended checks degrade to "lite" mode (just .ai/ files + git).
+    """
+    return (ROOT / "core" / "manifest").is_dir()
+
+
+def cmd_doctor(args: argparse.Namespace) -> int:
+    """Saude do pack. Endereca achado 2.10 da auditoria F-014.
+
+    Modo dev (repo-mae, detectado via core/manifest/):
+      1. .ai/ files existem
+      2. core/manifest/manifest.yaml carrega como YAML valido
+      3. PyYAML disponivel
+      4. git no PATH (warn, nao fatal)
+      5. render --check OK (a menos que --skip-render)
+      6. dist/bin/ai.py existe
+      7. lock_api.py importavel
+
+    Modo consumer (layout flat .ai-process/bin/):
+      1. .ai/ files existem
+      4. git no PATH (warn)
+
+    `--strict` promove warnings a erros tambem.
+    """
+    from _git_ops import has_git
+
+    failures: list[str] = []
+    warnings: list[str] = []
+
+    # 1. .ai/ files (sempre)
     required = [PROCESS_FILE, TASKS_FILE, BACKLOG_FILE, CURRENT_FILE]
-    missing = [path for path in required if not path.exists()]
-    if missing:
-        for path in missing:
-            print(f"missing: {relative(path)}")
+    for path in required:
+        if not path.exists():
+            failures.append(f"missing: {relative(path)}")
+
+    # 4. git (sempre)
+    if not has_git():
+        warnings.append("git nao encontrado no PATH (commit/worktree falharao)")
+
+    if _is_dev_repo():
+        # 2 + 3. manifest + PyYAML
+        manifest = ROOT / "core" / "manifest" / "manifest.yaml"
+        if not manifest.exists():
+            failures.append(f"missing: {relative(manifest)}")
+        else:
+            try:
+                import yaml  # type: ignore
+
+                data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+                if not isinstance(data, dict) or not data.get("verbs"):
+                    failures.append(f"manifest invalido: {relative(manifest)} sem `verbs`")
+            except ImportError:
+                failures.append("PyYAML ausente: pip install pyyaml")
+            except Exception as exc:
+                failures.append(f"manifest YAML invalido: {exc}")
+
+        # 5. render --check
+        if not getattr(args, "skip_render", False):
+            render = ROOT / "core" / "build" / "render-skills.py"
+            if render.exists():
+                import subprocess
+
+                result = subprocess.run(
+                    [sys.executable, str(render), "--check"],
+                    cwd=ROOT,
+                    capture_output=True,
+                    text=True,
+                )
+                if result.returncode != 0:
+                    failures.append(
+                        "render --check falhou: dist/ stale. Rode `python core/build/render-skills.py`"
+                    )
+
+        # 6. dist/bin/ai.py
+        dist_ai = ROOT / "dist" / "bin" / "ai.py"
+        if not dist_ai.exists():
+            warnings.append(f"motor standalone ausente: {relative(dist_ai)}")
+
+        # 7. lock_api importavel
+        lock_api_path = ROOT / "core" / "lock" / "lock_api.py"
+        if not lock_api_path.exists():
+            failures.append(f"missing: {relative(lock_api_path)}")
+        else:
+            try:
+                import importlib.util
+
+                mod_name = "_doctor_lock_api_probe"
+                spec = importlib.util.spec_from_file_location(mod_name, lock_api_path)
+                if spec and spec.loader:
+                    module = importlib.util.module_from_spec(spec)
+                    # Python 3.13 + @dataclass exigem o modulo em sys.modules
+                    # antes de executar (dataclass resolve tipos via
+                    # sys.modules[cls.__module__]).
+                    sys.modules[mod_name] = module
+                    try:
+                        spec.loader.exec_module(module)
+                        for name in ("add_lock", "remove_lock", "find_blocked", "LockSpec"):
+                            if not hasattr(module, name):
+                                failures.append(f"lock_api sem `{name}`")
+                    finally:
+                        sys.modules.pop(mod_name, None)
+            except Exception as exc:
+                failures.append(f"lock_api falhou ao importar: {exc}")
+
+    if getattr(args, "strict", False) and warnings:
+        failures.extend(warnings)
+        warnings = []
+
+    for w in warnings:
+        print(f"warn: {w}", file=sys.stderr)
+    for f in failures:
+        print(f"FAIL: {f}", file=sys.stderr)
+
+    if failures:
         return 1
     print(MSG_PROCESS_FILES_OK)
     return 0

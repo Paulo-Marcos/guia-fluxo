@@ -200,7 +200,9 @@ def build_parser() -> argparse.ArgumentParser:
     _add_promote_args(p_promote)
     p_promote.set_defaults(func=cmd_promote)
 
-    p_doctor = sub.add_parser("doctor", help="Check process files.")
+    p_doctor = sub.add_parser("doctor", help="Check process files + manifest + render + lock_api.")
+    p_doctor.add_argument("--strict", action="store_true", help="Trata warnings como erros.")
+    p_doctor.add_argument("--skip-render", action="store_true", help="Pula `render --check` (uso em CI rapido).")
     p_doctor.set_defaults(func=cmd_doctor)
 
     p_tasks = sub.add_parser("tasks", help="List, show, or filter tasks (F-017).")
