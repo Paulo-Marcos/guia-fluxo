@@ -2,6 +2,45 @@
 
 ---
 
+## [F-017] Subcomandos tasks list/show/filter para navegacao do .ai/tasks.json
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-03)
+- **Tipo:** Feature
+- **Contexto:** F-014 achado 2.11: o CLI hoje so tem 'status' (uma task por vez via current ou ID). Falta forma rapida de listar tudo, filtrar por status/kind, e ver detalhe de uma task arbitraria sem mexer em current. Proposta: subcomando 'tasks' com 'list', 'show <ID>', 'filter --status X --kind Y --limit N'. Saida texto humana + flag --json para consumo por agente. Reaproveita _tasks.find_task, recent_task_ids; adiciona _tasks.list_tasks(filter) e _tasks.format_task_line.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_tasks.py`
+- `core/src/_cli_tasks.py`
+- `core/src/ai.py`
+- `tests/test_tasks_list.py`
+- `CHANGELOG.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+- `dist/bin/_tasks.py`
+- `dist/bin/ai.py`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Subcomando 'tasks' adicionado com 3 acoes: list/show/filter. list aceita --limit N; show <ID> retorna exit 1 se nao encontra; filter combina --status/--kind/--limit. Todos suportam --json. Helpers: _tasks.list_tasks(status,kind,limit) e _tasks.format_task_line(task). Subcomando registrado em ai.py.build_parser usando STATUS_* e KIND_* de _constants (sem strings magicas).
+- Tests novos em test_tasks_list.py: 8 casos (3 list, 2 show, 3 filter) exercitando sandbox completo com init+feature+issue+ready. Total da suite: 77 testes.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- python -m unittest discover -s tests -> Ran 77 tests, OK
+- python core/build/render-skills.py --check -> OK 41 alvo(s)
+- .\core\bin\ai.ps1 tasks list --limit 5 -> lista corretamente as 5 mais recentes
+- .\core\bin\ai.ps1 tasks show F-016 --json -> retorna task completa em JSON
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [F-016] Layout B do manifest: index YAML + bodies markdown em core/manifest/bodies/
 
 - **Status:** Validada

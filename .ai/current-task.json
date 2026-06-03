@@ -1,6 +1,6 @@
 {
-  "taskId": "F-016",
+  "taskId": "F-017",
   "status": "Validada",
-  "title": "Layout B do manifest: index YAML + bodies markdown em core/manifest/bodies/",
-  "chatTitle": "F-016 - #FINALIZADO - Layout B do manifest: index YAML + bodies markdown em core/manifest/bodies/"
+  "title": "Subcomandos tasks list/show/filter para navegacao do .ai/tasks.json",
+  "chatTitle": "F-017 - #FINALIZADO - Subcomandos tasks list/show/filter para navegacao do .ai/tasks.json"
 }

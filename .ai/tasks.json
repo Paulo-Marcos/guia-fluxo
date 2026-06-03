@@ -2,6 +2,114 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "F-017",
+      "kind": "feature",
+      "title": "Subcomandos tasks list/show/filter para navegacao do .ai/tasks.json",
+      "status": "Validada",
+      "origin": "AI process (2026-06-03)",
+      "context": "F-014 achado 2.11: o CLI hoje so tem 'status' (uma task por vez via current ou ID). Falta forma rapida de listar tudo, filtrar por status/kind, e ver detalhe de uma task arbitraria sem mexer em current. Proposta: subcomando 'tasks' com 'list', 'show <ID>', 'filter --status X --kind Y --limit N'. Saida texto humana + flag --json para consumo por agente. Reaproveita _tasks.find_task, recent_task_ids; adiciona _tasks.list_tasks(filter) e _tasks.format_task_line.",
+      "createdAt": "2026-06-03",
+      "updatedAt": "2026-06-03",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "core/src/_tasks.py",
+        "core/src/_cli_tasks.py",
+        "core/src/ai.py",
+        "tests/test_tasks_list.py",
+        "CHANGELOG.md",
+        ".ai/backlog.json",
+        ".ai/current-task.json",
+        ".ai/tasks.json",
+        "dist/bin/_tasks.py",
+        "dist/bin/ai.py"
+      ],
+      "summary": [
+        "Demanda criada via ai-process.",
+        "Subcomando 'tasks' adicionado com 3 acoes: list/show/filter. list aceita --limit N; show <ID> retorna exit 1 se nao encontra; filter combina --status/--kind/--limit. Todos suportam --json. Helpers: _tasks.list_tasks(status,kind,limit) e _tasks.format_task_line(task). Subcomando registrado em ai.py.build_parser usando STATUS_* e KIND_* de _constants (sem strings magicas).",
+        "Tests novos em test_tasks_list.py: 8 casos (3 list, 2 show, 3 filter) exercitando sandbox completo com init+feature+issue+ready. Total da suite: 77 testes.",
+        "Demanda finalizada via ai-process."
+      ],
+      "validations": [
+        "python -m unittest discover -s tests -> Ran 77 tests, OK",
+        "python core/build/render-skills.py --check -> OK 41 alvo(s)",
+        ".\\core\\bin\\ai.ps1 tasks list --limit 5 -> lista corretamente as 5 mais recentes",
+        ".\\core\\bin\\ai.ps1 tasks show F-016 --json -> retorna task completa em JSON"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature F-017",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/ai.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature F-017",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "README.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py",
+            "hint": "Se o fluxo padrao ou os comandos da capa mudaram, atualize.",
+            "purpose": "Porta de entrada do projeto."
+          },
+          {
+            "path": "docs/reference/cli.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py",
+            "hint": "Se voce adicionou/mudou subcomando ou flag, documente aqui.",
+            "purpose": "Referencia completa de subcomandos do core/src/ai.py / core/bin/ai.ps1."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          },
+          {
+            "path": "CONTRIBUTING.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py",
+            "hint": "Se o fluxo humano mudou (novo passo, nova checagem), atualize.",
+            "purpose": "Guia pra humanos contribuirem."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md"
+        ],
+        "checkedAt": "2026-06-03",
+        "skipped": "README/cli.md/visao-geral/CLAUDE/AGENTS/CONTRIBUTING/ADR: nova capacidade pequena (subcomando read-only), nao muda fluxo nem arquitetura. CLI reference (cli.md) pode receber entrada futura se quisermos detalhar exemplos."
+      }
+    },
+    {
       "id": "F-016",
       "kind": "feature",
       "title": "Layout B do manifest: index YAML + bodies markdown em core/manifest/bodies/",

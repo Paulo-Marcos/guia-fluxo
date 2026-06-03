@@ -6,6 +6,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added
+- **Subcomandos `ai tasks list / show / filter` (F-017).** Navegacao read-only de `.ai/tasks.json` sem mexer em current-task. `list` lista todas (newest first) com `--limit N`; `show <ID>` mostra task completa (exit 1 se nao encontrar); `filter --status X --kind feature|issue --limit N` combina filtros. Todos suportam `--json` para consumo por agente/CI. Implementado em `core/src/_cli_tasks.py` + helpers `list_tasks()` e `format_task_line()` em `_tasks.py`. Tests em `tests/test_tasks_list.py`. Endereca achado 2.11 da auditoria F-014.
+
 ### Changed
 - **Manifest em layout B: index YAML + bodies markdown (F-016).** `core/manifest/manifest.yaml` migrou de arquivo unico de 422 linhas (todos os bodies inline em `body: |`) para **index curto + 16 arquivos markdown puros** em `core/manifest/bodies/<verb>.<target>.md`. Schema `version: 2` declara `body_file:` por target; renderer resolve o path (relativo a `core/manifest/`), valida path traversal e cacheia leituras (shared body trivial entre targets). Saida em `dist/` permanece **byte-identica**. ADR em [`docs/adr/0008-layout-b-manifest.md`](docs/adr/0008-layout-b-manifest.md). Testes em `tests/test_manifest_layout_b.py`.
 

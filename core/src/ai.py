@@ -57,7 +57,15 @@ from _cli_lifecycle import (  # noqa: E402
     cmd_validate,
 )
 from _cli_meta import cmd_docs_check, cmd_render  # noqa: E402
-from _constants import KIND_FEATURE, KIND_ISSUE, ROOT  # noqa: E402
+from _cli_tasks import cmd_tasks_filter, cmd_tasks_list, cmd_tasks_show  # noqa: E402
+from _constants import (  # noqa: E402
+    KIND_FEATURE,
+    KIND_ISSUE,
+    ROOT,
+    STATUS_AWAITING_VALIDATION,
+    STATUS_IN_DEVELOPMENT,
+    STATUS_VALIDATED,
+)
 
 
 def _add_task_args(parser: argparse.ArgumentParser) -> None:
@@ -194,6 +202,38 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_doctor = sub.add_parser("doctor", help="Check process files.")
     p_doctor.set_defaults(func=cmd_doctor)
+
+    p_tasks = sub.add_parser("tasks", help="List, show, or filter tasks (F-017).")
+    tasks_sub = p_tasks.add_subparsers(dest="tasks_command", required=True)
+
+    p_tasks_list = tasks_sub.add_parser("list", help="List all tasks (newest first).")
+    p_tasks_list.add_argument("--limit", type=int, default=None, help="Limita aos N mais recentes.")
+    p_tasks_list.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_tasks_list.set_defaults(func=cmd_tasks_list)
+
+    p_tasks_show = tasks_sub.add_parser("show", help="Show full task by ID.")
+    p_tasks_show.add_argument("task_id")
+    p_tasks_show.add_argument("--json", action="store_true", help="Saida em JSON (exit 1 se nao encontrar).")
+    p_tasks_show.set_defaults(func=cmd_tasks_show)
+
+    p_tasks_filter = tasks_sub.add_parser("filter", help="Filter tasks by status/kind/limit.")
+    p_tasks_filter.add_argument(
+        "--status",
+        choices=[
+            STATUS_IN_DEVELOPMENT,
+            STATUS_AWAITING_VALIDATION,
+            STATUS_VALIDATED,
+        ],
+        help="Filtra por status exato.",
+    )
+    p_tasks_filter.add_argument(
+        "--kind",
+        choices=[KIND_FEATURE, KIND_ISSUE],
+        help="Filtra por kind.",
+    )
+    p_tasks_filter.add_argument("--limit", type=int, default=None, help="Limita aos N mais recentes.")
+    p_tasks_filter.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_tasks_filter.set_defaults(func=cmd_tasks_filter)
 
     p_render = sub.add_parser(
         "render",

@@ -102,6 +102,33 @@ def recent_task_ids(limit: int = 5) -> list[str]:
     return [task.get("id", "") for task in data.get("tasks", [])[:limit] if task.get("id")]
 
 
+def list_tasks(
+    status: str | None = None,
+    kind: str | None = None,
+    limit: int | None = None,
+) -> list[dict[str, Any]]:
+    """Return tasks matching the optional filters.
+
+    Filters are exact-match against task['status'] and task['kind'].
+    The list comes ordered as stored in tasks.json (newest first by
+    convention - cmd_create_task inserts at index 0).
+    """
+    data = read_json(TASKS_FILE, {"tasks": []})
+    items = list(data.get("tasks", []))
+    if status:
+        items = [t for t in items if t.get("status") == status]
+    if kind:
+        items = [t for t in items if t.get("kind") == kind]
+    if limit is not None:
+        items = items[:limit]
+    return items
+
+
+def format_task_line(task: dict[str, Any]) -> str:
+    """Compact one-line representation for `tasks list` output."""
+    return f"{task.get('id', '?')} [{task.get('status', '?')}] {task.get('title', '')}"
+
+
 def find_task_or_current(task_id: str | None) -> dict[str, Any]:
     current = read_json(CURRENT_FILE, {})
     chosen_id = task_id or current.get("taskId")
@@ -197,4 +224,6 @@ __all__ = [
     "print_chat_title",
     "print_task_created",
     "recent_task_ids",
+    "list_tasks",
+    "format_task_line",
 ]
