@@ -2,6 +2,40 @@
 
 ---
 
+## [F-019] Render polish: --clean, --output-dir, frontmatter extras, shared_body explicito
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-03)
+- **Tipo:** Feature
+- **Contexto:** F-014 achados 4.Q3 (--clean real para apagar orfaos), 4.5 (--output-dir configuravel), 4.11 (frontmatter extras como allowed-tools/model), 1.5 (shared_body explicito via campo dedicado em vez de body_file duplicado). Tudo no core/build/render-skills.py mantendo backward compat.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/build/render-skills.py`
+- `tests/test_render_polish.py`
+- `CHANGELOG.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Render-skills ganha 4 capacidades: (1) --clean apaga orfaos + diretorios vazios apos render (com filtro para __pycache__/.pytest_cache); (2) --output-dir reaponta DIST_DIR via _retarget_dist em runtime, --check tambem respeita; (3) frontmatter extras: verbs.X.frontmatter aceita allowed-tools/model com sanity check (name/description reservados); (4) shared_body explicito: verbs.X.shared_body aponta body unico aplicado a TODOS targets sem body_file proprio.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- python -m unittest discover -s tests -> Ran 96 tests, OK
+- python core/build/render-skills.py --check -> OK 41 alvos
+- python core/build/render-skills.py --output-dir <tmp> -> 41 arquivos gerados em pasta custom
+- --check-orphans antes listava 18 .pyc; agora ignora __pycache__ e diz 'OK: nenhum orfao'
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [F-018] Hardening: doctor estendido, check-lock info/edit/history/--json, dedup hook commit-msg
 
 - **Status:** Validada

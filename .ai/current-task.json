@@ -1,6 +1,6 @@
 {
-  "taskId": "F-018",
+  "taskId": "F-019",
   "status": "Validada",
-  "title": "Hardening: doctor estendido, check-lock info/edit/history/--json, dedup hook commit-msg",
-  "chatTitle": "F-018 - #FINALIZADO - Hardening: doctor estendido, check-lock info/edit/history/--json, dedup hook commit-msg"
+  "title": "Render polish: --clean, --output-dir, frontmatter extras, shared_body explicito",
+  "chatTitle": "F-019 - #FINALIZADO - Render polish: --clean, --output-dir, frontmatter extras, shared_body explicito"
 }

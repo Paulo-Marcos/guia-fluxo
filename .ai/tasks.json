@@ -2,6 +2,74 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "F-019",
+      "kind": "feature",
+      "title": "Render polish: --clean, --output-dir, frontmatter extras, shared_body explicito",
+      "status": "Validada",
+      "origin": "AI process (2026-06-03)",
+      "context": "F-014 achados 4.Q3 (--clean real para apagar orfaos), 4.5 (--output-dir configuravel), 4.11 (frontmatter extras como allowed-tools/model), 1.5 (shared_body explicito via campo dedicado em vez de body_file duplicado). Tudo no core/build/render-skills.py mantendo backward compat.",
+      "createdAt": "2026-06-03",
+      "updatedAt": "2026-06-03",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "core/build/render-skills.py",
+        "tests/test_render_polish.py",
+        "CHANGELOG.md",
+        ".ai/backlog.json",
+        ".ai/current-task.json",
+        ".ai/tasks.json"
+      ],
+      "summary": [
+        "Demanda criada via ai-process.",
+        "Render-skills ganha 4 capacidades: (1) --clean apaga orfaos + diretorios vazios apos render (com filtro para __pycache__/.pytest_cache); (2) --output-dir reaponta DIST_DIR via _retarget_dist em runtime, --check tambem respeita; (3) frontmatter extras: verbs.X.frontmatter aceita allowed-tools/model com sanity check (name/description reservados); (4) shared_body explicito: verbs.X.shared_body aponta body unico aplicado a TODOS targets sem body_file proprio.",
+        "Demanda finalizada via ai-process."
+      ],
+      "validations": [
+        "python -m unittest discover -s tests -> Ran 96 tests, OK",
+        "python core/build/render-skills.py --check -> OK 41 alvos",
+        "python core/build/render-skills.py --output-dir <tmp> -> 41 arquivos gerados em pasta custom",
+        "--check-orphans antes listava 18 .pyc; agora ignora __pycache__ e diz 'OK: nenhum orfao'"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature F-019",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/ai.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature F-019",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md"
+        ],
+        "checkedAt": "2026-06-03",
+        "skipped": "ADR/visao-geral/CLI ref: novas flags do renderer sao extensoes incrementais sem mudanca arquitetural; testes documentam o comportamento."
+      }
+    },
+    {
       "id": "F-018",
       "kind": "feature",
       "title": "Hardening: doctor estendido, check-lock info/edit/history/--json, dedup hook commit-msg",

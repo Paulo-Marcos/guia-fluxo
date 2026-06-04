@@ -74,11 +74,24 @@ ROOT = Path(__file__).resolve().parents[2]
 MANIFEST_DIR = ROOT / "core" / "manifest"
 MANIFEST = MANIFEST_DIR / "manifest.yaml"
 BODIES_DIR = MANIFEST_DIR / "bodies"
-DIST_DIR = ROOT / "dist"
+DEFAULT_DIST_DIR = ROOT / "dist"
+
+# Mutaveis: ajustados por --output-dir no CLI antes de coletar outputs.
+DIST_DIR = DEFAULT_DIST_DIR
 CLAUDE_SKILL_DIR = DIST_DIR / "skills"
 AGENT_SKILL_DIR = DIST_DIR / ".agents" / "skills"
 BIN_DIR = DIST_DIR / "bin"
 TEMPLATES_DIR = DIST_DIR / "templates"
+
+
+def _retarget_dist(path: Path) -> None:
+    """Aponta DIST_DIR + subpastas para outro destino (achado 4.5)."""
+    global DIST_DIR, CLAUDE_SKILL_DIR, AGENT_SKILL_DIR, BIN_DIR, TEMPLATES_DIR
+    DIST_DIR = path.resolve()
+    CLAUDE_SKILL_DIR = DIST_DIR / "skills"
+    AGENT_SKILL_DIR = DIST_DIR / ".agents" / "skills"
+    BIN_DIR = DIST_DIR / "bin"
+    TEMPLATES_DIR = DIST_DIR / "templates"
 
 CORE_SRC_DIR = ROOT / "core" / "src"
 ENGINE_SRC = CORE_SRC_DIR / "ai.py"
@@ -157,7 +170,36 @@ def target_path(target: str, verb: str) -> Path:
     raise ValueError(f"target desconhecido: {target}")
 
 
-def render_skill_md(name: str, description: str, body: str, verb: str) -> str:
+# Chaves de frontmatter sempre reservadas e geradas pelo renderer.
+# Tentar override aborta (achado 4.11).
+RESERVED_FRONTMATTER_KEYS = frozenset({"name", "description"})
+
+# Frontmatter extras suportados (achado 4.11). Sao copiados verbatim
+# para o frontmatter como `key: value` quando declarados em
+# `verbs.<verb>.frontmatter` no manifest. Listas viram blocos YAML.
+ALLOWED_EXTRA_KEYS = frozenset({"allowed-tools", "model"})
+
+
+def _format_frontmatter_value(value) -> str:
+    """Format a frontmatter value as a YAML scalar / inline list.
+
+    Strings ficam plain; listas viram inline `[a, b, c]`; outros tipos
+    sao convertidos para `yaml.safe_dump` flow style.
+    """
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        return "[" + ", ".join(str(item) for item in value) + "]"
+    return yaml.safe_dump(value, default_flow_style=True).strip().rstrip("...")
+
+
+def render_skill_md(
+    name: str,
+    description: str,
+    body: str,
+    verb: str,
+    extras: dict | None = None,
+) -> str:
     desc = description.strip()
     if not desc:
         sys.stderr.write(
@@ -168,45 +210,66 @@ def render_skill_md(name: str, description: str, body: str, verb: str) -> str:
     body_text = dedent(body).strip("\n")
     if not body_text:
         sys.stderr.write(f"Aviso: body vazio para verbo `{verb}`. SKILL.md sera so frontmatter.\n")
-    return (
-        "---\n"
-        f"name: {name}\n"
-        f"description: {desc}\n"
-        "---\n"
-        "\n"
-        f"{body_text}\n"
-    )
+    lines = ["---", f"name: {name}", f"description: {desc}"]
+    if extras:
+        for key, value in extras.items():
+            if key in RESERVED_FRONTMATTER_KEYS:
+                sys.stderr.write(
+                    f"Erro: frontmatter.{key} (verbo `{verb}`) e reservado pelo renderer.\n"
+                )
+                sys.exit(2)
+            if key not in ALLOWED_EXTRA_KEYS:
+                sys.stderr.write(
+                    f"Aviso: frontmatter.{key} (verbo `{verb}`) nao esta na lista permitida ({sorted(ALLOWED_EXTRA_KEYS)}).\n"
+                )
+            lines.append(f"{key}: {_format_frontmatter_value(value)}")
+    lines.append("---")
+    lines.append("")
+    return "\n".join(lines) + "\n" + body_text + "\n"
 
 
-def render_target(target: str, verb: str, description: str, body: str) -> str:
+def render_target(
+    target: str,
+    verb: str,
+    description: str,
+    body: str,
+    extras: dict | None = None,
+) -> str:
     if target == "agent_skill":
-        return render_skill_md(agent_skill_name(verb), description, body, verb)
+        return render_skill_md(agent_skill_name(verb), description, body, verb, extras)
     if target == "claude_skill":
-        return render_skill_md(verb, description, body, verb)
+        return render_skill_md(verb, description, body, verb, extras)
     raise ValueError(f"target desconhecido: {target}")
 
 
-def _resolve_body(verb: str, target_name: str, target_spec: dict, body_cache: dict[Path, str]) -> str:
-    """Return the body for a target, resolving body_file with caching.
+def _resolve_body(
+    verb: str,
+    target_name: str,
+    target_spec: dict,
+    spec_shared_body: str | None,
+    body_cache: dict[Path, str],
+) -> str:
+    """Return the body for a target.
 
-    Layout B (v2): `body_file: bodies/<verb>.<target>.md` relativo a
-    core/manifest/. Layout A (v1, legacy): `body: |` inline. Suportamos
-    os dois para migracao gradual; abortamos se o arquivo nao existir.
+    Resolution order (v2 Layout B + F-019):
+      1. target_spec['body_file'] explicit (per-target override)
+      2. verb-level `shared_body:` field (covers all targets of the verb)
+      3. legacy target_spec['body'] inline (v1 backward compat)
 
-    `body_cache` permite que dois targets apontando para o MESMO arquivo
-    leiam uma unica vez (shared_body trivial).
+    `body_cache` evita re-leitura quando dois caminhos sao identicos.
     """
-    body_file = target_spec.get("body_file")
-    if body_file:
-        path = (MANIFEST_DIR / body_file).resolve()
+    explicit = target_spec.get("body_file")
+    chosen = explicit or spec_shared_body
+    if chosen:
+        path = (MANIFEST_DIR / chosen).resolve()
         if not path.exists():
             sys.stderr.write(
-                f"Erro: body_file `{body_file}` (de `{verb}.{target_name}`) nao existe em {path}.\n"
+                f"Erro: body_file `{chosen}` (de `{verb}.{target_name}`) nao existe em {path}.\n"
             )
             sys.exit(2)
         if not str(path).startswith(str(MANIFEST_DIR.resolve())):
             sys.stderr.write(
-                f"Erro: body_file `{body_file}` aponta fora de core/manifest/ (path traversal recusado).\n"
+                f"Erro: body_file `{chosen}` aponta fora de core/manifest/ (path traversal recusado).\n"
             )
             sys.exit(2)
         if path not in body_cache:
@@ -226,6 +289,13 @@ def collect_outputs(manifest: dict, only_verb: str | None = None) -> list[Output
             sys.stderr.write(f"Erro: verb `{verb}` no manifest precisa ser um mapping.\n")
             sys.exit(2)
         description = (spec.get("description") or "").strip()
+        shared_body = spec.get("shared_body")
+        extras = spec.get("frontmatter")
+        if extras is not None and not isinstance(extras, dict):
+            sys.stderr.write(
+                f"Erro: verbs.{verb}.frontmatter precisa ser um mapping.\n"
+            )
+            sys.exit(2)
         targets = spec.get("targets") or {}
         if not targets:
             sys.stderr.write(f"Aviso: verbo `{verb}` sem `targets:` declarado.\n")
@@ -235,8 +305,8 @@ def collect_outputs(manifest: dict, only_verb: str | None = None) -> list[Output
                     f"Erro: targets.{target_name} de `{verb}` precisa ser um mapping.\n"
                 )
                 sys.exit(2)
-            body = _resolve_body(verb, target_name, target_spec, body_cache)
-            content = render_target(target_name, verb, description, body)
+            body = _resolve_body(verb, target_name, target_spec, shared_body, body_cache)
+            content = render_target(target_name, verb, description, body, extras)
             outputs.append(Output(target_path(target_name, verb), target_name, verb, content))
     return outputs
 
@@ -382,11 +452,22 @@ def check_outputs(outputs: list[Output]) -> list[Path]:
 # --- Orphan detection (--check-orphans) -----------------------------------
 
 
+# Caches/artefatos transientes que aparecem em dist/ por uso (ex.: rodar
+# o motor standalone gera __pycache__) e nao devem ser tratados como
+# orfaos do renderer.
+ORPHAN_IGNORE_DIR_NAMES = frozenset({"__pycache__", ".pytest_cache", ".mypy_cache"})
+
+
+def _is_ignored_for_orphan(path: Path) -> bool:
+    return any(part in ORPHAN_IGNORE_DIR_NAMES for part in path.parts)
+
+
 def find_orphans(outputs: list[Output]) -> list[Path]:
     """List files in dist/bin/ and dist/skills/ that are not part of outputs.
 
     Useful to detect verb removals or renamed helpers that left stale
-    files in dist/. Renderer itself does not delete; only reports.
+    files in dist/. Renderer itself does not delete unless --clean.
+    Ignora __pycache__/.pytest_cache/.mypy_cache.
     """
     expected = {output.path.resolve() for output in outputs}
     orphans: list[Path] = []
@@ -394,9 +475,44 @@ def find_orphans(outputs: list[Output]) -> list[Path]:
         if not root.exists():
             continue
         for path in root.rglob("*"):
-            if path.is_file() and path.resolve() not in expected:
+            if not path.is_file():
+                continue
+            if _is_ignored_for_orphan(path):
+                continue
+            if path.resolve() not in expected:
                 orphans.append(path)
     return orphans
+
+
+def clean_orphans(outputs: list[Output]) -> list[Path]:
+    """Apaga arquivos orfaos retornados por `find_orphans` (achado 4.Q3).
+
+    Tambem remove diretorios que ficaram vazios apos a limpeza para que
+    `dist/skills/<verbo-removido>/` desapareca quando seu unico SKILL.md
+    e removido.
+
+    Retorna a lista de paths apagados.
+    """
+    orphans = find_orphans(outputs)
+    removed: list[Path] = []
+    for path in orphans:
+        try:
+            path.unlink()
+            removed.append(path)
+        except OSError as exc:
+            sys.stderr.write(f"Aviso: nao consegui apagar {path}: {exc}\n")
+    # Limpeza de diretorios vazios (bottom-up)
+    for root in (CLAUDE_SKILL_DIR, AGENT_SKILL_DIR, TEMPLATES_DIR, BIN_DIR):
+        if not root.exists():
+            continue
+        # Bottom-up: rglob retorna nested-first quando reverse-sort
+        for path in sorted(root.rglob("*"), key=lambda p: -len(p.parts)):
+            if path.is_dir() and not any(path.iterdir()):
+                try:
+                    path.rmdir()
+                except OSError:
+                    pass
+    return removed
 
 
 # --- Entry point ----------------------------------------------------------
@@ -411,7 +527,21 @@ def main() -> int:
         action="store_true",
         help="Lista arquivos em dist/ sem correspondente no manifest/motor (nao apaga).",
     )
+    parser.add_argument(
+        "--clean",
+        action="store_true",
+        help="Apaga arquivos orfaos em dist/ apos renderizar (cuidado).",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Sobrescreve destino dist/ (default: <repo>/dist/).",
+    )
     args = parser.parse_args()
+
+    if args.output_dir is not None:
+        _retarget_dist(args.output_dir)
 
     manifest = load_manifest()
     outputs = collect_outputs(manifest, only_verb=args.verb)
@@ -447,12 +577,26 @@ def main() -> int:
         return 0
 
     written = write_outputs(outputs)
-    if not written:
+    cleaned: list[Path] = []
+    if args.clean:
+        cleaned = clean_orphans(outputs)
+    if not written and not cleaned:
         print(f"OK: {len(outputs)} alvo(s) ja estavam atualizados. Nada gravado.")
         return 0
-    print(f"Renderizados {len(written)} arquivo(s) de {len(outputs)} alvo(s):")
-    for p in written:
-        print(f"  + {p.relative_to(ROOT)}")
+    if written:
+        print(f"Renderizados {len(written)} arquivo(s) de {len(outputs)} alvo(s):")
+        for p in written:
+            try:
+                print(f"  + {p.relative_to(ROOT)}")
+            except ValueError:
+                print(f"  + {p}")
+    if cleaned:
+        print(f"Apagados {len(cleaned)} arquivo(s) orfao(s):")
+        for p in cleaned:
+            try:
+                print(f"  - {p.relative_to(ROOT)}")
+            except ValueError:
+                print(f"  - {p}")
     return 0
 
 
