@@ -218,6 +218,30 @@ def cmd_lock(args: argparse.Namespace) -> int:
         operations=tuple(args.operations),
         files=tuple(args.files),
     )
+    # --dry-run (achado 5.16): preview sem mutar registry. Valida os
+    # mesmos invariantes (id unico, lock-ignore, path traversal) mas
+    # nao grava.
+    if args.dry_run:
+        existing = lock_api.load_locks()
+        if any(lock.get("id") == args.id for lock in existing):
+            print(f"[dry-run] FAIL: lock '{args.id}' ja existe.", file=sys.stderr)
+            return 1
+        try:
+            for raw in args.files:
+                if raw != "*" and lock_api.is_ignored_path(raw):
+                    raise lock_api.LockIgnoredPath(raw)
+        except lock_api.LockIgnoredPath as exc:
+            print(
+                f"[dry-run] FAIL: {exc.args[0]} esta em features/lock-ignore.txt.",
+                file=sys.stderr,
+            )
+            return 1
+        print(f"[dry-run] OK: criaria lock '{args.id}' com {len(args.files)} arquivo(s):")
+        print(f"  description: {spec.description}")
+        print(f"  operations:  {', '.join(spec.operations)}")
+        for f in args.files:
+            print(f"    - {f}")
+        return 0
     try:
         lock_api.add_lock(spec, locked_at=date.today().isoformat(), allow_missing=args.allow_missing)
     except lock_api.LockExists:
@@ -243,10 +267,39 @@ def cmd_lock(args: argparse.Namespace) -> int:
 
 
 def cmd_unlock(args: argparse.Namespace) -> int:
+    """Remove uma trava permanentemente (achado 5.11).
+
+    Operacao destrutiva: exige `--force` para nao perguntar (CI), ou
+    confirmacao interativa quando rodando em TTY.
+    """
+    lock = lock_api.get_lock(args.id)
+    if lock is None:
+        print(f"Erro: feature '{args.id}' nao encontrada no registry.", file=sys.stderr)
+        return 1
+    if not args.force:
+        if not sys.stdin.isatty():
+            print(
+                f"Erro: 'unlock {args.id}' e permanente. Use --force para confirmar em CI/non-TTY.",
+                file=sys.stderr,
+            )
+            return 1
+        files = lock.get("files", []) or []
+        print(f"unlock '{args.id}' vai apagar a trava de {len(files)} arquivo(s).")
+        if lock.get("description"):
+            print(f"  description: {lock['description']}")
+        try:
+            confirm = input("Confirma? Digite o id para confirmar: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nAbortado.", file=sys.stderr)
+            return 1
+        if confirm != args.id:
+            print("Abortado: confirmacao nao bate com o id.", file=sys.stderr)
+            return 1
     try:
         lock_api.remove_lock(args.id)
     except lock_api.LockNotFound:
-        print(f"Erro: feature '{args.id}' nao encontrada no registry.", file=sys.stderr)
+        # Race: alguem removeu entre get_lock e remove_lock.
+        print(f"Erro: feature '{args.id}' nao encontrada (race).", file=sys.stderr)
         return 1
     print(f"Trava removida: {args.id}")
     return 0
@@ -324,14 +377,20 @@ def cmd_hook(args: argparse.Namespace) -> int:
     return 1
 
 
+def _read_input_or_file(value: str) -> str:
+    """Le `-` como stdin, qualquer outra coisa como path (achado 5.12)."""
+    if value == "-":
+        return sys.stdin.read()
+    path = Path(value)
+    if not path.exists():
+        return ""
+    return path.read_text(encoding="utf-8")
+
+
 def cmd_ci(args: argparse.Namespace) -> int:
-    lines = [
-        line.strip()
-        for line in Path(args.files).read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
-    msg_path = Path(args.messages)
-    msg = msg_path.read_text(encoding="utf-8") if msg_path.exists() else ""
+    files_raw = _read_input_or_file(args.files)
+    lines = [line.strip() for line in files_raw.splitlines() if line.strip()]
+    msg = _read_input_or_file(args.messages)
 
     events = lock_api.events_from_name_status(lines)
     blocked = lock_api.find_blocked(events)
@@ -404,11 +463,21 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Aceita arquivos inexistentes (uso valido: travar criacao futura).",
     )
+    p_lock.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Mostra o que seria criado sem gravar no registry.",
+    )
     p_lock.add_argument("files", nargs="+", help="Arquivos a travar (paths relativos ao repo)")
     p_lock.set_defaults(func=cmd_lock)
 
     p_unlock = sub.add_parser("unlock", help="Remove trava de uma feature (permanente)")
     p_unlock.add_argument("id", help="Identificador da feature")
+    p_unlock.add_argument(
+        "--force",
+        action="store_true",
+        help="Pula a confirmacao interativa (necessario em CI/non-TTY).",
+    )
     p_unlock.set_defaults(func=cmd_unlock)
 
     p_audit = sub.add_parser("audit", help="Lista desbloqueios temporarios no git log")
@@ -424,9 +493,9 @@ def main(argv: list[str] | None = None) -> int:
     p_hook.add_argument("msg_file")
     p_hook.set_defaults(func=cmd_hook)
 
-    p_ci = sub.add_parser("ci", help="Modo CI (le arquivos+mensagens de arquivos)")
-    p_ci.add_argument("--files", required=True)
-    p_ci.add_argument("--messages", required=True)
+    p_ci = sub.add_parser("ci", help="Modo CI (le arquivos+mensagens de arquivos; use - para stdin)")
+    p_ci.add_argument("--files", required=True, help="Path do arquivo de lista; use '-' para stdin.")
+    p_ci.add_argument("--messages", required=True, help="Path do commit message; use '-' para stdin.")
     p_ci.set_defaults(func=cmd_ci)
 
     args = parser.parse_args(argv)

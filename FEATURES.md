@@ -2,6 +2,39 @@
 
 ---
 
+## [F-020] Check-lock polish: --dry-run em lock, --force em unlock, stdin em ci
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-03)
+- **Tipo:** Feature
+- **Contexto:** F-014 achados 5.16 (--dry-run em cmd_lock para preview sem gravar), 5.11 (cmd_unlock exige --force ou prompt para confirmar a operacao permanente), 5.12 (cmd_ci aceita stdin via files=- messages=- para pipelines).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/lock/check-lock.py`
+- `tests/test_check_lock_polish.py`
+- `CHANGELOG.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- 3 capacidades novas no check-lock CLI: (1) lock --dry-run valida invariantes (id existente, lock-ignore, path traversal) e imprime previa sem gravar registry; (2) unlock --force pula confirmacao; sem --force em non-TTY aborta antes de mexer, em TTY pede confirmacao digitando o id; (3) ci aceita - como path em --files/--messages -> stdin. Helper _read_input_or_file centraliza a logica.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- python -m unittest discover -s tests -> Ran 101 tests, OK
+- lock --dry-run mostra preview e --check-orphans sai zero (registry intacto)
+- unlock sem --force em subprocess (non-TTY) retorna 1 sem mutar
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [F-019] Render polish: --clean, --output-dir, frontmatter extras, shared_body explicito
 
 - **Status:** Validada

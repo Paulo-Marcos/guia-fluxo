@@ -7,6 +7,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- **check-lock polish: `--dry-run`, `--force`, stdin em `ci` (F-020).** Endereca achados 5.16, 5.11 e 5.12 da auditoria F-014. `check-lock lock <id> --dry-run` valida invariantes (id unico, lock-ignore, path traversal) e imprime o que criaria sem gravar no registry. `check-lock unlock <id>` agora exige `--force` em CI/non-TTY (operacao destrutiva permanente); em TTY pede confirmacao interativa digitando o id. `check-lock ci --files - --messages -` aceita stdin (passe `-` em vez de path) para integrar com pipelines (ex.: `git diff --name-status | check-lock ci --files - --messages msg.txt`). Tests em `tests/test_check_lock_polish.py`.
+
+### Added
 - **Render-skills polish: `--clean`, `--output-dir`, frontmatter extras, `shared_body` explicito (F-019).** Endereca achados 4.Q3, 4.5, 4.11 e 1.5 da auditoria F-014. `--clean` apaga arquivos orfaos em `dist/` (e diretorios vazios) apos renderizar - antes era so `--check-orphans` que listava sem apagar; `__pycache__/.pytest_cache/.mypy_cache` sao ignorados. `--output-dir <PATH>` aponta o destino para qualquer pasta (`--check` tambem respeita). Frontmatter extras: `verbs.<verb>.frontmatter: { allowed-tools: [...], model: opus }` adiciona linhas ao YAML do `SKILL.md` (`name` e `description` continuam reservados; chaves fora de `allowed-tools / model` geram aviso). `shared_body: bodies/foo.md` no nivel do verbo aplica o mesmo body a todos os targets sem `body_file` proprio (target com `body_file` faz override). Tests em `tests/test_render_polish.py` (6 casos: output-dir, --check com output-dir, --clean apaga + remove pasta vazia, extras viram frontmatter, shared_body aplica a 2 targets, body_file override).
 
 ### Added
