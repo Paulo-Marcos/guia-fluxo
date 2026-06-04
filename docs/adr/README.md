@@ -18,6 +18,8 @@ ADR nao se confunde com [`explanation/`](../explanation/): explanation ensina o 
 | [0006](0006-plugin-oficial-claude-code.md) | Adotar layout oficial de plugin Claude Code com namespace `ai` | Aceita |
 | [0007](0007-arquitetura-modular-core-src.md) | Decompor `core/src/ai.py` em modulos com Clean Architecture | Aceita |
 | [0008](0008-layout-b-manifest.md) | Manifest em layout B (index YAML + bodies markdown) | Aceita |
+| [0009](0009-yaml-para-manifest.md) | YAML como formato do manifest (decisao retroativa documentada) | Aceita |
+| [0010](0010-prefixos-trigger-skill-descriptions.md) | Politica de prefixos canonicos nas descriptions das skills | Aceita |
 
 ## Como adicionar um ADR novo
 

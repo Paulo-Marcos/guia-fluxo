@@ -2,6 +2,77 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "F-022",
+      "kind": "feature",
+      "title": "ADRs canonicos: YAML para manifest + prefixos de trigger",
+      "status": "Validada",
+      "origin": "AI process (2026-06-03)",
+      "context": "F-014 achados 1.Q1 (escolha tacita de YAML para o manifest sem ADR justificando; documentar trade-offs vs JSON/TOML/N-arquivos e o caso 'on:->True' do PyYAML 1.1) e 1.6 (prefixos PRIMARY TRIGGER/DEFER-AND-PARK/READ-ONLY/etc. nas descriptions vivem so no commit da F-003 e na PR original; sem ADR proximo editor pode quebrar). Cria ADR-0009 (YAML para manifest) e ADR-0010 (prefixos de trigger).",
+      "createdAt": "2026-06-03",
+      "updatedAt": "2026-06-03",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "docs/adr/0009-yaml-para-manifest.md",
+        "docs/adr/0010-prefixos-trigger-skill-descriptions.md",
+        "docs/adr/README.md",
+        "CHANGELOG.md",
+        ".ai/backlog.json",
+        ".ai/current-task.json",
+        ".ai/tasks.json"
+      ],
+      "summary": [
+        "Demanda criada via ai-process.",
+        "ADR-0009 documenta retroativamente YAML para manifest com tradeoffs vs JSON/TOML/N-arquivos, caso real 'on:->True' do PyYAML 1.1 (com workaround ja em _docs_hook), e quando reconsiderar.",
+        "ADR-0010 formaliza 7 prefixos canonicos (PRIMARY TRIGGER, DEFER-AND-PARK, EVALUATE-AND-CONVERT, HANDOFF, CLOSE, READ-ONLY, REFERENCE/BACKGROUND ONLY) instituidos por F-003 + clausula 'Do NOT use for' linkando skills vizinhas.",
+        "Demanda finalizada via ai-process."
+      ],
+      "validations": [
+        ".\\core\\bin\\ai.ps1 doctor -> AI process files OK",
+        "python -m unittest discover -s tests -> Ran 101 tests, OK"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature F-022",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/ai.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature F-022",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md",
+          "docs/adr/0009-yaml-para-manifest.md",
+          "docs/adr/0010-prefixos-trigger-skill-descriptions.md",
+          "docs/adr/README.md"
+        ],
+        "checkedAt": "2026-06-03",
+        "skipped": "visao-geral/CLAUDE/AGENTS: ADRs novos sao retroativos (documentam decisao ja em uso); briefings nao precisam mencionar."
+      }
+    },
+    {
       "id": "F-021",
       "kind": "feature",
       "title": "Wrappers e bodies polish: Invoke-PythonScript no ai.ps1 + fallback python nos bodies",

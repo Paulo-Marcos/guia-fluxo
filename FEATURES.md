@@ -2,6 +2,40 @@
 
 ---
 
+## [F-022] ADRs canonicos: YAML para manifest + prefixos de trigger
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-03)
+- **Tipo:** Feature
+- **Contexto:** F-014 achados 1.Q1 (escolha tacita de YAML para o manifest sem ADR justificando; documentar trade-offs vs JSON/TOML/N-arquivos e o caso 'on:->True' do PyYAML 1.1) e 1.6 (prefixos PRIMARY TRIGGER/DEFER-AND-PARK/READ-ONLY/etc. nas descriptions vivem so no commit da F-003 e na PR original; sem ADR proximo editor pode quebrar). Cria ADR-0009 (YAML para manifest) e ADR-0010 (prefixos de trigger).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `docs/adr/0009-yaml-para-manifest.md`
+- `docs/adr/0010-prefixos-trigger-skill-descriptions.md`
+- `docs/adr/README.md`
+- `CHANGELOG.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- ADR-0009 documenta retroativamente YAML para manifest com tradeoffs vs JSON/TOML/N-arquivos, caso real 'on:->True' do PyYAML 1.1 (com workaround ja em _docs_hook), e quando reconsiderar.
+- ADR-0010 formaliza 7 prefixos canonicos (PRIMARY TRIGGER, DEFER-AND-PARK, EVALUATE-AND-CONVERT, HANDOFF, CLOSE, READ-ONLY, REFERENCE/BACKGROUND ONLY) instituidos por F-003 + clausula 'Do NOT use for' linkando skills vizinhas.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- .\core\bin\ai.ps1 doctor -> AI process files OK
+- python -m unittest discover -s tests -> Ran 101 tests, OK
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [F-021] Wrappers e bodies polish: Invoke-PythonScript no ai.ps1 + fallback python nos bodies
 
 - **Status:** Validada

@@ -1,6 +1,6 @@
 {
-  "taskId": "F-021",
+  "taskId": "F-022",
   "status": "Validada",
-  "title": "Wrappers e bodies polish: Invoke-PythonScript no ai.ps1 + fallback python nos bodies",
-  "chatTitle": "F-021 - #FINALIZADO - Wrappers e bodies polish: Invoke-PythonScript no ai.ps1 + fallback python nos bodies"
+  "title": "ADRs canonicos: YAML para manifest + prefixos de trigger",
+  "chatTitle": "F-022 - #FINALIZADO - ADRs canonicos: YAML para manifest + prefixos de trigger"
 }

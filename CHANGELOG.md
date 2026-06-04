@@ -6,6 +6,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added
+- **ADR-0009 (YAML para manifest) e ADR-0010 (prefixos de trigger) (F-022).** Endereca achados 1.Q1 e 1.6 da auditoria F-014. ADR-0009 documenta retroativamente a escolha de YAML para o manifest, incluindo o caso do PyYAML 1.1 que parseia `on:` como `True` (ja ha workaround em `_docs_hook._trigger_reason`), e enumera quando reconsiderar. ADR-0010 formaliza os 7 prefixos canonicos das descriptions (`PRIMARY TRIGGER`, `DEFER-AND-PARK`, `EVALUATE-AND-CONVERT`, `HANDOFF`, `CLOSE`, `READ-ONLY`, `REFERENCE/BACKGROUND ONLY`) instituidos por F-003 mas que so viviam em commit log + PR original.
+
 ### Changed
 - **Wrapper `core/bin/ai.ps1` e bodies das claude_skills polidos (F-021).** Endereca achados 3.11 e 1.9 da auditoria F-014. (1) Centralizada a logica especial do launcher `py` em `Get-PythonInvocation` + `Invoke-PythonRaw`: antes a regra "se eh `py` entao chama `py -3`" estava duplicada em `Test-PythonVersion` e no bloco final do script. Agora um helper retorna `{ Exe; Prefix }` e os call sites usam `& $inv.Exe @($inv.Prefix) @Args`. Anti-bug: `Invoke-PythonRaw` nao retorna o exit code via `return` (caller le `$LASTEXITCODE`) para evitar o classico de PowerShell coletar stdout do Python como valor de retorno. (2) Bodies de feature/issue/backlog/promote/ready/finish/status (claude_skill) ganham linha "Portable fallback (Linux/Mac/sem PowerShell): `python core/src/ai.py ...`" - cobre devs sem PowerShell sem perder o destaque do caminho principal.
 
