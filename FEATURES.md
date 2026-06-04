@@ -2,6 +2,54 @@
 
 ---
 
+## [F-021] Wrappers e bodies polish: Invoke-PythonScript no ai.ps1 + fallback python nos bodies
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-03)
+- **Tipo:** Feature
+- **Contexto:** F-014 achados 3.11 (logica especial do launcher py duplicada em ai.ps1 - tem em Test-PythonVersion e na invocacao do script; centralizar em Invoke-PythonScript) e 1.9 (bodies das skills citam apenas .core/bin/ai.ps1 sem mencionar o fallback portavel python core/src/ai.py para Linux/Mac).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/bin/ai.ps1`
+- `core/manifest/bodies/feature.claude.md`
+- `core/manifest/bodies/issue.claude.md`
+- `core/manifest/bodies/backlog.claude.md`
+- `core/manifest/bodies/promote.claude.md`
+- `core/manifest/bodies/ready.claude.md`
+- `core/manifest/bodies/finish.claude.md`
+- `core/manifest/bodies/status.claude.md`
+- `CHANGELOG.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+- `dist/bin/ai.ps1`
+- `dist/skills/backlog/SKILL.md`
+- `dist/skills/feature/SKILL.md`
+- `dist/skills/finish/SKILL.md`
+- `dist/skills/issue/SKILL.md`
+- `dist/skills/promote/SKILL.md`
+- `dist/skills/ready/SKILL.md`
+- `dist/skills/status/SKILL.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- ai.ps1 ganha Get-PythonInvocation (normaliza py -3) e Invoke-PythonRaw (executa sem coletar stdout - bug classico do PowerShell). Aplicado em Test-PythonVersion e no bloco final. Anti-regressao explicita no docstring.
+- 7 bodies de claude_skill (feature/issue/backlog/promote/ready/finish/status) ganham linha 'Portable fallback (Linux/Mac/sem PowerShell): python core/src/ai.py <verbo>...'.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- python -m unittest discover -s tests -> Ran 101 tests, OK
+- .\core\bin\ai.ps1 doctor -> AI process files OK
+- python core/build/render-skills.py -> 7 SKILL.md rerendered
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [F-020] Check-lock polish: --dry-run em lock, --force em unlock, stdin em ci
 
 - **Status:** Validada

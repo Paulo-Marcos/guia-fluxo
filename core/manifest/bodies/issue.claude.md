@@ -10,4 +10,6 @@ Run:
 
 Useful flags: `--context "<observed failure>"`, `--origin "<source>"`.
 
+Portable fallback (Linux/Mac/sem PowerShell): `python core/src/ai.py issue "$ARGUMENTS"`.
+
 Then read `.ai/current-task.json`, repeat the exact `NOME DO CHAT: ...` line, run `/rename <suggested-title>` if Claude supports it, and continue with the fix.

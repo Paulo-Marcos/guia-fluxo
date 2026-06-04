@@ -13,3 +13,5 @@ If the user asks to list backlog, run:
 ```powershell
 .\core\bin\ai.ps1 backlog list
 ```
+
+Portable fallback (Linux/Mac/sem PowerShell): `python core/src/ai.py backlog add|list "$ARGUMENTS"`.

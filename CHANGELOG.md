@@ -6,6 +6,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Changed
+- **Wrapper `core/bin/ai.ps1` e bodies das claude_skills polidos (F-021).** Endereca achados 3.11 e 1.9 da auditoria F-014. (1) Centralizada a logica especial do launcher `py` em `Get-PythonInvocation` + `Invoke-PythonRaw`: antes a regra "se eh `py` entao chama `py -3`" estava duplicada em `Test-PythonVersion` e no bloco final do script. Agora um helper retorna `{ Exe; Prefix }` e os call sites usam `& $inv.Exe @($inv.Prefix) @Args`. Anti-bug: `Invoke-PythonRaw` nao retorna o exit code via `return` (caller le `$LASTEXITCODE`) para evitar o classico de PowerShell coletar stdout do Python como valor de retorno. (2) Bodies de feature/issue/backlog/promote/ready/finish/status (claude_skill) ganham linha "Portable fallback (Linux/Mac/sem PowerShell): `python core/src/ai.py ...`" - cobre devs sem PowerShell sem perder o destaque do caminho principal.
+
 ### Added
 - **check-lock polish: `--dry-run`, `--force`, stdin em `ci` (F-020).** Endereca achados 5.16, 5.11 e 5.12 da auditoria F-014. `check-lock lock <id> --dry-run` valida invariantes (id unico, lock-ignore, path traversal) e imprime o que criaria sem gravar no registry. `check-lock unlock <id>` agora exige `--force` em CI/non-TTY (operacao destrutiva permanente); em TTY pede confirmacao interativa digitando o id. `check-lock ci --files - --messages -` aceita stdin (passe `-` em vez de path) para integrar com pipelines (ex.: `git diff --name-status | check-lock ci --files - --messages msg.txt`). Tests em `tests/test_check_lock_polish.py`.
 

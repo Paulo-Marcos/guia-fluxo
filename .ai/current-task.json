@@ -1,6 +1,6 @@
 {
-  "taskId": "F-020",
+  "taskId": "F-021",
   "status": "Validada",
-  "title": "Check-lock polish: --dry-run em lock, --force em unlock, stdin em ci",
-  "chatTitle": "F-020 - #FINALIZADO - Check-lock polish: --dry-run em lock, --force em unlock, stdin em ci"
+  "title": "Wrappers e bodies polish: Invoke-PythonScript no ai.ps1 + fallback python nos bodies",
+  "chatTitle": "F-021 - #FINALIZADO - Wrappers e bodies polish: Invoke-PythonScript no ai.ps1 + fallback python nos bodies"
 }

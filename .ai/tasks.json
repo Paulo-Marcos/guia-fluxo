@@ -2,6 +2,102 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "F-021",
+      "kind": "feature",
+      "title": "Wrappers e bodies polish: Invoke-PythonScript no ai.ps1 + fallback python nos bodies",
+      "status": "Validada",
+      "origin": "AI process (2026-06-03)",
+      "context": "F-014 achados 3.11 (logica especial do launcher py duplicada em ai.ps1 - tem em Test-PythonVersion e na invocacao do script; centralizar em Invoke-PythonScript) e 1.9 (bodies das skills citam apenas .core/bin/ai.ps1 sem mencionar o fallback portavel python core/src/ai.py para Linux/Mac).",
+      "createdAt": "2026-06-03",
+      "updatedAt": "2026-06-03",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "core/bin/ai.ps1",
+        "core/manifest/bodies/feature.claude.md",
+        "core/manifest/bodies/issue.claude.md",
+        "core/manifest/bodies/backlog.claude.md",
+        "core/manifest/bodies/promote.claude.md",
+        "core/manifest/bodies/ready.claude.md",
+        "core/manifest/bodies/finish.claude.md",
+        "core/manifest/bodies/status.claude.md",
+        "CHANGELOG.md",
+        ".ai/backlog.json",
+        ".ai/current-task.json",
+        ".ai/tasks.json",
+        "dist/bin/ai.ps1",
+        "dist/skills/backlog/SKILL.md",
+        "dist/skills/feature/SKILL.md",
+        "dist/skills/finish/SKILL.md",
+        "dist/skills/issue/SKILL.md",
+        "dist/skills/promote/SKILL.md",
+        "dist/skills/ready/SKILL.md",
+        "dist/skills/status/SKILL.md"
+      ],
+      "summary": [
+        "Demanda criada via ai-process.",
+        "ai.ps1 ganha Get-PythonInvocation (normaliza py -3) e Invoke-PythonRaw (executa sem coletar stdout - bug classico do PowerShell). Aplicado em Test-PythonVersion e no bloco final. Anti-regressao explicita no docstring.",
+        "7 bodies de claude_skill (feature/issue/backlog/promote/ready/finish/status) ganham linha 'Portable fallback (Linux/Mac/sem PowerShell): python core/src/ai.py <verbo>...'.",
+        "Demanda finalizada via ai-process."
+      ],
+      "validations": [
+        "python -m unittest discover -s tests -> Ran 101 tests, OK",
+        ".\\core\\bin\\ai.ps1 doctor -> AI process files OK",
+        "python core/build/render-skills.py -> 7 SKILL.md rerendered"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature F-021",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/ai.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature F-021",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "README.md",
+            "trigger": "touched",
+            "reason": "touched: core/bin/ai.ps1",
+            "hint": "Se o fluxo padrao ou os comandos da capa mudaram, atualize.",
+            "purpose": "Porta de entrada do projeto."
+          },
+          {
+            "path": "docs/reference/cli.md",
+            "trigger": "touched",
+            "reason": "touched: core/bin/ai.ps1",
+            "hint": "Se voce adicionou/mudou subcomando ou flag, documente aqui.",
+            "purpose": "Referencia completa de subcomandos do core/src/ai.py / core/bin/ai.ps1."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md"
+        ],
+        "checkedAt": "2026-06-03",
+        "skipped": "Mudancas internas no wrapper PS (refactor sem mudanca de comportamento) e linha extra nos bodies; doc principal nao precisa atualizacao."
+      }
+    },
+    {
       "id": "F-020",
       "kind": "feature",
       "title": "Check-lock polish: --dry-run em lock, --force em unlock, stdin em ci",

@@ -11,6 +11,40 @@ $MinPythonMajor = 3
 $MinPythonMinor = 10
 
 
+function Get-PythonInvocation {
+    <#
+    .SYNOPSIS
+    Normaliza a invocacao de Python (achado 3.11): retorna executavel e
+    prefixo. Centraliza o tratamento do launcher `py` em vez de duplicar
+    a logica em Test-PythonVersion + bloco final do script.
+    #>
+    param([string] $Command)
+    if ($Command -eq "py") {
+        return [PSCustomObject]@{ Exe = "py"; Prefix = @("-3") }
+    }
+    return [PSCustomObject]@{ Exe = $Command; Prefix = @() }
+}
+
+
+function Invoke-PythonRaw {
+    <#
+    .SYNOPSIS
+    Invoca um Python normalizado com argumentos arbitrarios. Saida vai
+    direto para os streams nativos (stdout/stderr) - nao retorna nada
+    pra evitar que PowerShell colete o output do Python e o transforme
+    em valor de retorno (bug classico que mascara o stdout em `$x = ...`).
+
+    Quem chama deve ler `$LASTEXITCODE` apos a chamada para o exit code.
+    #>
+    param(
+        [string] $Command,
+        [string[]] $Arguments
+    )
+    $inv = Get-PythonInvocation -Command $Command
+    & $inv.Exe @($inv.Prefix) @Arguments
+}
+
+
 function Test-PythonVersion {
     param([string] $Command)
 
@@ -20,12 +54,8 @@ function Test-PythonVersion {
 
     try {
         $versionScript = "import sys; sys.stdout.write('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
-        if ($Command -eq "py") {
-            $version = & py -3 -c $versionScript 2>$null
-        }
-        else {
-            $version = & $Command -c $versionScript 2>$null
-        }
+        $inv = Get-PythonInvocation -Command $Command
+        $version = & $inv.Exe @($inv.Prefix) -c $versionScript 2>$null
         if (-not $version) { return $false }
         $parts = $version.Trim().Split('.')
         if ($parts.Count -lt 2) { return $false }
@@ -116,11 +146,5 @@ if (-not (Test-Path $script)) {
     throw "Motor nao encontrado em $script. Confirme que core/src/ai.py existe."
 }
 
-if ($python -eq "py") {
-    & py -3 $script @CliArgs
-}
-else {
-    & $python $script @CliArgs
-}
-
+Invoke-PythonRaw -Command $python -Arguments (@($script) + $CliArgs)
 exit $LASTEXITCODE

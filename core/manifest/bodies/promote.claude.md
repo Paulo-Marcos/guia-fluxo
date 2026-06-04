@@ -17,4 +17,6 @@ Process:
 
 If the developer chose worktree, include `--worktree` — branch fica `codex/<slug>` e path `.claude/worktrees/<slug>` (override com `--branch` ou `--worktree-path`).
 
+Portable fallback (Linux/Mac/sem PowerShell): `python core/src/ai.py promote B-001 --kind feature ...`.
+
 Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.

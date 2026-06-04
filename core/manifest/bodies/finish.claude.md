@@ -32,4 +32,6 @@ Or, when no doc needed to change:
 
 Pass changed files with `--file`, implementation notes with `--summary`, validation commands with `--validation`, and use `--lock --lock-id <slug>` only when the developer asks to lock the finalized files. Use `--no-commit` for dry close.
 
+Portable fallback (Linux/Mac/sem PowerShell): `python core/src/ai.py finish $ARGUMENTS --docs-skip "..."`.
+
 Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.
