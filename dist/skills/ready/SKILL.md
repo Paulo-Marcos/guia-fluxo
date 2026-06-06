@@ -1,9 +1,11 @@
 ---
 name: ready
-description: HANDOFF to developer validation — does NOT close the task. Triggered by /ready or "$ready" / "pronto para validar / enviar para teste". Marks the in-progress F-NNN/I-NNN as awaiting manual validation and records changed files, summary, and pending checks. Do NOT use for: closing an already-validated task (use $finish), or just inspecting the current task without changing its state (use $status).
+description: HANDOFF to developer validation — does NOT close the task. THE AGENT runs this when implementation is finished, NOT the human; it is the gate that forces human-in-the-loop before $finish. Triggered by /ready or "$ready" / "pronto para validar / enviar para teste". Marks the in-progress F-NNN/I-NNN as awaiting manual validation and records changed files, summary, and pending checks. Do NOT use for: closing an already-validated task (use $finish), or just inspecting the current task without changing its state (use $status).
 ---
 
 # Ready
+
+**Quem dispara este verbo: a IA, ao terminar de codar.** Nao e o humano avisando que vai validar. `ready` e o handoff que sinaliza "implementacao concluida, aguardando validacao humana em uso real". O proprio nome do estado e `Aguardando validacao`. Fluxo: IA implementa -> IA roda `ready` -> humano valida -> IA roda `finish`. Nao pule o `ready` indo direto pro `finish`: ele e o gate que forca human-in-the-loop (`validate` foi depreciado em F-003 justamente por isso).
 
 Move the current task to developer validation without finalizing it.
 

@@ -1,5 +1,7 @@
 # Ready Shim
 
+**You (the agent) call this when implementation ends** — not the human. `ready` is the handoff to human validation; the human then validates in real use, and you call `finish` afterward. Do not skip `ready` and go straight to `finish`.
+
 Call the core process script:
 
 ```powershell
