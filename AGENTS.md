@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Briefing para agentes de IA (Codex, Cursor, Antigravity e demais) que abrirem este repo. Claude Code tem brief proprio em [`CLAUDE.md`](CLAUDE.md) - o conteudo se sobrepoe muito; leia este se o seu agente seguir a convencao `AGENTS.md`.
+Briefing canonico para qualquer agente de IA (Codex, Cursor, Antigravity, Claude Code e demais) que abrir este repo. **Este e o documento fonte;** [`CLAUDE.md`](CLAUDE.md) e um pointer fino com so o que e especifico do Claude Code (plugin, namespace `ai`, `/rename`). Toda regra geral mora aqui.
 
 ## O que e este projeto
 
@@ -62,6 +62,26 @@ Reference completa: [`docs/reference/cli.md`](docs/reference/cli.md).
 - **Docs:** estrutura Diataxis em `docs/{tutorials,how-to,reference,explanation}/`. Antes de criar arquivo de doc, leia [`docs/explanation/por-que-diataxis.md`](docs/explanation/por-que-diataxis.md).
 - **Plataforma alvo:** comandos no README/docs usam PowerShell (`.\core\bin\ai.ps1`). Em Linux/Mac use `python core/src/ai.py <sub>` - o resultado e identico.
 
+## Verificacao antes de entregar
+
+Rode os dois comandos abaixo e cole a saida em `--validation` ao chamar `ready`:
+
+```powershell
+.\core\bin\ai.ps1 doctor
+python core/build/render-skills.py --check
+```
+
+Ambos precisam sair com codigo 0. Se `render-skills.py --check` falhar, voce esqueceu de regerar - rode sem `--check` (ou `.\core\bin\ai.ps1 render`) e tente de novo.
+
+Em Linux/Mac: `python core/src/ai.py doctor` e o mesmo `render-skills.py --check`.
+
+## Quando o pedido nao se encaixa
+
+- **Pedido vago** ("limpa esse codigo aqui") - abra `/issue` ou `/feature` com contexto curto antes de comecar.
+- **Pedido enorme** ("reestrutura tudo") - proponha quebrar em demandas menores. Cada demanda = um chat. Backlog absorve as ideias paralelas.
+- **Pedido que toca arquivo travado** - pare e mostre o que `features/registry.yaml` declara antes de tentar editar.
+- **Pedido para mexer em `.ai/*.json` direto** - recuse e pergunte o que ele quer alcancar. Provavelmente existe subcomando.
+
 ## O que nao fazer
 
 - Nao "limpe" arquivos `.ai/*.json` "para reorganizar". O script trata serializacao; mudanca manual quebra o schema.
@@ -69,6 +89,7 @@ Reference completa: [`docs/reference/cli.md`](docs/reference/cli.md).
 - Nao introduza dependencias novas em Python sem demanda explicita. Hoje o pack roda com stdlib + `pyyaml`.
 - Nao crie LICENSE/CONTRIBUTING/SECURITY/CODE_OF_CONDUCT novos - ja existem na raiz. Edite os existentes.
 - Nao sugira `validate` - foi deprecado. Use `ready` -> humano testa -> `finish`.
+- Nao commite sem o usuario pedir. Nunca `--no-verify`, `--no-gpg-sign`, nem amend de commit publicado.
 
 ## Onde aprender mais
 
