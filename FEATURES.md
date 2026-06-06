@@ -2,6 +2,308 @@
 
 ---
 
+## [F-029] Verbos block/unblock <id> --reason: pausar e retomar task
+
+- **Status:** Validada
+- **Origem:** Backlog B-013 (2026-06-06)
+- **Tipo:** Feature
+- **Contexto:** Backlog B-013: Estado on-hold: task comecada, WIP preservado, fora de acao, vai voltar. Distinto de backlog (nunca comecou), cancelada (terminal) e ready (esperando validacao). STATUS_BLOCKED='Bloqueada' + tag #BLOQUEADA ja existem em _constants.py sem comando. block <id> --reason registra o motivo; unblock <id> volta pra Em desenvolvimento. Funciona com tasks.json multi-task. Custo baixo.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_cli_lifecycle.py`
+- `core/src/ai.py`
+- `core/manifest/manifest.yaml`
+- `core/manifest/bodies/block.claude.md`
+- `core/manifest/bodies/block.agent.md`
+- `core/manifest/bodies/unblock.claude.md`
+- `core/manifest/bodies/unblock.agent.md`
+- `dist/skills/block/SKILL.md`
+- `dist/.agents/skills/ai-block/SKILL.md`
+- `dist/skills/unblock/SKILL.md`
+- `dist/.agents/skills/ai-unblock/SKILL.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Backlog promovido via ai-process.
+- Avaliacao IA: STATUS_BLOCKED e tag BLOQUEADA ja existem em _constants.py sem caminho de transicao no CLI. Distinto de cancel (terminal) e ready (entrega para validacao). Custo baixo: vocabulario ja existe.
+- Subcomandos 'block <id> --reason' e 'unblock <id> [--note]' implementados em _cli_lifecycle.py no mesmo lote que cancel (F-027) - compartilham _TERMINAL_STATUSES, find_task_or_current, save_task, set_current_task, write_report, upsert_features_entry. block muda status para Bloqueada, registra em task.blocks[] (reason+at); falha se ja bloqueada ou terminal. unblock muda para Em desenvolvimento, fecha task.blocks[-1].unblockedAt; --note opcional; falha se nao estava bloqueada. Parsers registrados em ai.py com --reason required em block. Novos verbos no manifest.yaml com prefixos 'PAUSE in-flight task' e 'RESUME a paused task' + bodies bodies/{block,unblock}.{claude,agent}.md.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- Smoke test manual completo no caminho feliz: criada F-028 -> block --reason -> tag #BLOQUEADA + task.blocks[0]={reason,at} -> tentativa double-block bloqueada ('ja esta bloqueada') -> unblock --note -> tag #DEV + task.blocks[0].unblockedAt -> cancel --reason -> tag #CANCELADA + current-task limpa. Doctor OK; render-skills check OK (47 alvos).
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [F-028] SMOKE: validar block/unblock/cancel
+
+- **Status:** Cancelada
+- **Origem:** AI process (2026-06-06)
+- **Tipo:** Feature
+- **Contexto:** Demanda descartavel criada para smoke test do ciclo block/unblock/cancel. Sera cancelada no fim.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Bloqueada em 2026-06-06: smoke test bloqueio
+- Desbloqueada em 2026-06-06: smoke test unlock
+- Cancelada em 2026-06-06: encerrar smoke test
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [F-027] Verbo cancel <id> --reason: encerrar task como Cancelada
+
+- **Status:** Validada
+- **Origem:** Backlog B-012 (2026-06-06)
+- **Tipo:** Feature
+- **Contexto:** Backlog B-012: Hoje nao ha como encerrar uma task como 'nao vou fazer'; ela fica pendurada em Em desenvolvimento. STATUS_CANCELLED='Cancelada' e a tag #CANCELADA ja existem em _constants.py sem comando que transite pra eles. Adicionar handler cmd_cancel exigindo --reason (justificativa obrigatoria), limpando current-task/worktree e liberando locks. Custo baixo: vocabulario ja existe.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_cli_lifecycle.py`
+- `core/src/ai.py`
+- `core/manifest/manifest.yaml`
+- `core/manifest/bodies/cancel.claude.md`
+- `core/manifest/bodies/cancel.agent.md`
+- `dist/skills/cancel/SKILL.md`
+- `dist/.agents/skills/ai-cancel/SKILL.md`
+- `dist/bin/_cli_lifecycle.py`
+- `dist/bin/ai.py`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+- `docs/reference/cli.md`
+- `CLAUDE.md`
+
+### O que foi feito
+
+- Backlog promovido via ai-process.
+- Avaliacao IA: STATUS_CANCELLED e tag CANCELADA ja existem em _constants.py sem caminho de transicao no CLI. Adicionar handler cmd_cancel no _cli_lifecycle.py + entrada no manifest.yaml + bodies + render. Custo baixo: vocabulario ja existe.
+- Novo subcomando 'cancel <id> --reason <razao>' implementado em _cli_lifecycle.py: muda status para Cancelada, registra em task.cancellations[], grava summary, limpa pending. Guarda contra cancelar task em estado terminal (Validada/Finalizada/Cancelada). Flag --keep-worktree (default: remove worktree associada se existir). Flag --set-current (default: limpa current-task se a task cancelada era a current). Parser registrado em ai.py com --reason required. Novo verbo no manifest.yaml com prefixo 'TERMINAL CANCEL' + bodies bodies/cancel.{claude,agent}.md. Render-skills regerou 8 alvos (3 SKILL.md pares + 2 .py copies, contando juntos com block/unblock que sairam no mesmo lote).
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- .\core\bin\ai.ps1 doctor OK; render-skills check OK (47 alvos); smoke test manual: cancel I-006 (Validada) -> erro esperado 'em estado terminal'; cancel F-028 (recem-criada para teste) -> status Cancelada, cancellations[] registrado, current-task limpa via _clear_current_if_matches.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [F-026] Atualizar docs Diataxis pos-refactor para plugin Claude oficial
+
+- **Status:** Validada
+- **Origem:** Backlog B-006 (2026-06-06)
+- **Tipo:** Feature
+- **Contexto:** Backlog B-006: Apos F-009 + backlog acima estarem mergeados: (1) atualizar docs/tutorials/primeiro-uso.md com '/plugin install' como rota primaria; (2) novo docs/how-to/migrar-do-copy-paste-para-plugin.md; (3) revisar docs/reference/cli.md (operacoes agora tambem como MCP tools); (4) revisar docs/explanation/visao-geral.md (Plugin vs repo agora resolvido - virou plugin); (5) atualizar README.md secao Instalacao; (6) atualizar docs/ROADMAP.md (v0.2 Instalador foi superado por plugin format).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `docs/ROADMAP.md`
+- `README.md`
+- `docs/tutorials/primeiro-uso.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Backlog promovido via ai-process.
+- Avaliacao IA: Apos F-009 (refactor pra plugin) e itens correlatos mergeados, alguns docs ainda refletem mundo pre-plugin. Itens identificados em B-006 plano original: (1) tutorials/primeiro-uso.md - rota /plugin install; (2) novo how-to migrar-do-copy-paste-para-plugin.md; (3) reference/cli.md - mencionar marketplace+namespace; (4) explanation/visao-geral.md - 'Plugin vs repo' agora resolvido; (5) README.md - instalacao; (6) ROADMAP.md - v0.2 Instalador superada por plugin format. Vou auditar cada um e ajustar onde necessario.
+- Tres edicoes focadas: (1) docs/ROADMAP.md reescrito com secao 'Entregue' (F-009, F-011, F-012, F-013 marcados) + 'A caminho' (B-009 marketplace remoto, ai --version, smoke tests) - v0.2 nao aparece mais como pendente porque F-013 substituiu. (2) README.md secao Instalacao - linha falsa 'ainda nao ha instalador automatico' substituida por menção a install.ps1/install.sh como rota oficial cross-agent (Claude/Codex/Antigravity); marketplace remoto vira passo 3 com label '(B-009, planejado)'. (3) docs/tutorials/primeiro-uso.md - adicionada 'Convencao deste tutorial' explicando comando 'ai <sub>' (consumidor) vs '.\core\bin\ai.ps1 <sub>' (dogfood); bootstrap agora aponta hooksPath correto por contexto (.githooks consumidor vs core/hooks dogfood); proximos passos incluem how-to/instalar-em-outro-projeto.md. Demais docs auditados (reference/cli.md, explanation/visao-geral.md, how-to/instalar-em-outro-projeto.md) ja estavam atualizados pos-F-013.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- .\core\bin\ai.ps1 doctor OK; python core/build/render-skills.py --check OK (41 alvos).
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [F-025] Consolidar AGENTS.md como fonte unica cross-agent; CLAUDE.md vira pointer fino
+
+- **Status:** Validada
+- **Origem:** Backlog B-005 (2026-06-06)
+- **Tipo:** Feature
+- **Contexto:** Backlog B-005: AGENTS.md e padrao Linux Foundation (60k+ repos) adotado por Antigravity nativo + Codex + Claude. Hoje temos CLAUDE.md (briefing Claude) + AGENTS.md (briefing outros) com ~80% duplicado. Consolidar tudo em AGENTS.md e deixar CLAUDE.md como pointer fino com so as especificidades Claude (como /rename, comandos Claude-only). Reduz manutencao e segue o padrao de mercado.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `AGENTS.md`
+- `CLAUDE.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Backlog promovido via ai-process.
+- Avaliacao IA: AGENTS.md e padrao Linux Foundation (60k+ repos), Antigravity v1.20.3 le nativo. Hoje CLAUDE.md + AGENTS.md tem ~80% duplicado, gerando drift. Plano: enriquecer AGENTS.md com o que falta (verificacao dupla doctor+render --check, secao 'Quando o usuario pedir algo que nao se encaixa', mencao a docs-check) e reduzir CLAUDE.md a pointer + so o que e Claude-especifico (namespace ai, marketplace dist/, /rename, edit/write tool naming).
+- AGENTS.md agora explicito como fonte canonica cross-agent + absorveu 'Verificacao antes de entregar' (doctor + render --check) e secao 'Quando o pedido nao se encaixa' que estavam so no CLAUDE.md. CLAUDE.md reescrito como pointer fino: plataforma, plugin/namespace ai, descoberta automatica, especificidades Claude (Edit/Write, /rename, NOME DO CHAT). Conteudo geral (regras, fluxo, commits, comandos, doctor/render check) so vive em AGENTS.md.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- .\core\bin\ai.ps1 doctor OK; python core/build/render-skills.py --check OK (41 alvos em sincronia).
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [F-024] ADR-0011: repensar modelo de demanda (tipo x status)
+
+- **Status:** Validada
+- **Origem:** Backlog B-016 (2026-06-06)
+- **Tipo:** Feature
+- **Contexto:** Backlog B-016: Pack mistura tipo e status na identidade: F/I=tipo, B=status disfarcado de tipo em arquivo separado. Motor JA modela como entidade unica: cada task tem kind e status em tasks.json. Decidir em ADR: (a) backlog vira status=backlog dentro de tasks.json em vez de backlog.json/B-NNN; (b) unificar feature/issue numa entidade demanda com tipo feature/bug/chore - issue como nome de tipo deixa de existir (colisao com o sentido guarda-chuva de issue na industria), mantendo a distincao feature-vs-bug (CHANGELOG Added/Fixed, relatorios). Decisao-raiz: Planejada e current-task dependem dela. ADR primeiro, refactor depois.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `docs/adr/0011-modelo-de-demanda-tipo-x-status.md`
+- `docs/adr/README.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Backlog promovido via ai-process.
+- Avaliacao IA: Pack hoje mistura tipo e status: F/I prefixo carrega tipo, B-NNN e status (backlog) disfarcado de tipo em arquivo separado, e o nome 'issue' colide com o sentido guarda-chuva da industria. Motor ja modela kind+status em tasks.json. Precisamos da decisao escrita ANTES de refatorar - B-017 (Planejada) e B-018 (current-task) dependem dela.
+- ADR-0011 (status Proposta) escrito: kind+status como eixos ortogonais, backlog vira status dentro de tasks.json, issue (tipo restrito) substituido por bug, ID neutro D-NNN. Indice em docs/adr/README.md atualizado. Sem mudanca de codigo ou comportamento - refactor concreto fica para uma feature posterior que herda decisao deste ADR.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- ADR segue template (Contexto/Decisao/Consequencias/Alternativas/Links); indice da README.md inclui linha 0011.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [F-023] Doc: deixar explicito que ready e disparado pela IA, nao pelo humano
+
+- **Status:** Validada
+- **Origem:** Backlog B-015 (2026-06-06)
+- **Tipo:** Feature
+- **Contexto:** Backlog B-015: Mal-entendido recorrente: ready parece o humano avisando que vai validar, mas e a IA que roda ao terminar de codar, sinalizando handoff. ready e o gate antes do finish (forca humano-no-loop; validate foi depreciado em F-003 por isso). Documentar nos bodies/docs pra nao induzir a remover o verbo. So doc, sem codigo.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/manifest/manifest.yaml`
+- `core/manifest/bodies/ready.claude.md`
+- `core/manifest/bodies/ready.agent.md`
+- `dist/skills/ready/SKILL.md`
+- `dist/.agents/skills/ai-ready/SKILL.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+- `AGENTS.md`
+- `CLAUDE.md`
+- `README.md`
+- `core/src/_cli_lifecycle.py`
+- `core/src/ai.py`
+- `dist/bin/_cli_lifecycle.py`
+- `dist/bin/ai.py`
+- `docs/ROADMAP.md`
+- `docs/adr/README.md`
+- `docs/tutorials/primeiro-uso.md`
+
+### O que foi feito
+
+- Backlog promovido via ai-process.
+- Avaliacao IA: Verbo ready confunde porque parece o humano avisando que vai validar. Na verdade a IA roda ready ao terminar de codar - e o handoff que forca human-in-the-loop antes de finish. Aclarar bodies (ready.claude.md/ready.agent.md) e descriptions ja ajuda muito; impacto minimo, so doc.
+- Adicionado paragrafo inicial nos dois bodies do ready deixando explicito que a IA dispara o verbo ao terminar de codar (nao o humano), e que ready e o gate antes do finish. Reforco no description do ready em manifest.yaml. Render-skills regerou os dois SKILL.md.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- .\core\bin\ai.ps1 render OK; .\core\bin\ai.ps1 doctor OK.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [I-007] Encerrar B-001: marketplace.json ja existe no repo
+
+- **Status:** Validada
+- **Origem:** Backlog B-001 (2026-06-06)
+- **Tipo:** Issue / regressao
+- **Contexto:** Backlog B-001: Pos F-009. Cria marketplace proprio (pmarcos/ai-process-pack) para usuarios instalarem via '/plugin marketplace add pmarcosa/ai-process-pack' + '/plugin install ai-process@pmarcos'. Define name, version, owner, plugins[]. Atualizar docs/how-to/instalar-em-outro-projeto.md e README com a nova rota oficial.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Backlog promovido via ai-process.
+- Avaliacao IA: dist/.claude-plugin/marketplace.json ja foi criado em F-009. Parte de documentacao remanescente foi absorvida por B-006 (atualizar docs Diataxis pos refactor). Item duplicado/superseded.
+- Sem implementacao: marketplace.json ja em dist/.claude-plugin/; docs delegadas para B-006.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- Test-Path dist/.claude-plugin/marketplace.json confirma existencia.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [I-006] Encerrar investigacao do gap de slash commands /ai:*
+
+- **Status:** Validada
+- **Origem:** Backlog B-010 (2026-06-06)
+- **Tipo:** Issue / regressao
+- **Contexto:** Backlog B-010: Validacao parcial de F-009 detectou que apos instalar o plugin ai@ai-process-pack via marketplace local, a system-reminder de skills disponiveis no Claude listou APENAS ai:ai-process. As 7 shims (feature, issue, backlog, promote, ready, finish, status) - presentes em skills/<verbo>/SKILL.md gerados pelo render - nao apareceram. Resultado pratico: /ai:finish retorna 'Unknown command'. Hipoteses a investigar: (a) reload de plugin faltando, (b) cache do Claude Code corrompido, (c) frontmatter dos shims requer flag explicito (disable-model-invocation, ou outro campo), (d) versao do Claude Code (verificar se 2.1.142+), (e) limitacao do plugin de descobrir multiplas skills em pasta skills/ vs single-skill. Reproduzir e propor fix.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `.ai/backlog.json`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Backlog promovido via ai-process.
+- Avaliacao IA: Sintoma original (plugin so listava ai:ai-process) nao se reproduz mais: instalacao via marketplace local ./dist com extraKnownMarketplaces ja expoe /ai:feature, /ai:issue, /ai:backlog, /ai:promote, /ai:ready, /ai:finish, /ai:status corretamente. Provavelmente foi cache/reload na primeira tentativa. Sem ganho em manter item aberto.
+- Sem implementacao: gap nao reproduz mais; plugin local-marketplace lista todas as shims.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- Sessao atual confirma: skills ai:feature/issue/backlog/promote/ready/finish/status disponiveis.
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [F-022] ADRs canonicos: YAML para manifest + prefixos de trigger
 
 - **Status:** Validada

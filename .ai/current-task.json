@@ -1,6 +1,6 @@
 {
-  "taskId": "F-022",
+  "taskId": "F-029",
   "status": "Validada",
-  "title": "ADRs canonicos: YAML para manifest + prefixos de trigger",
-  "chatTitle": "F-022 - #FINALIZADO - ADRs canonicos: YAML para manifest + prefixos de trigger"
+  "title": "Verbos block/unblock <id> --reason: pausar e retomar task",
+  "chatTitle": "F-029 - #FINALIZADO - Verbos block/unblock <id> --reason: pausar e retomar task"
 }

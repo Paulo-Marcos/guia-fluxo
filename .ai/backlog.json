@@ -2,12 +2,44 @@
   "schemaVersion": 1,
   "items": [
     {
-      "id": "B-010",
-      "title": "Investigar gap: /ai:feature, /ai:issue, etc. nao apareceram como slash commands na sessao Claude apos instalar plugin (so ai:ai-process foi listada)",
-      "context": "Validacao parcial de F-009 detectou que apos instalar o plugin ai@ai-process-pack via marketplace local, a system-reminder de skills disponiveis no Claude listou APENAS ai:ai-process. As 7 shims (feature, issue, backlog, promote, ready, finish, status) - presentes em skills/<verbo>/SKILL.md gerados pelo render - nao apareceram. Resultado pratico: /ai:finish retorna 'Unknown command'. Hipoteses a investigar: (a) reload de plugin faltando, (b) cache do Claude Code corrompido, (c) frontmatter dos shims requer flag explicito (disable-model-invocation, ou outro campo), (d) versao do Claude Code (verificar se 2.1.142+), (e) limitacao do plugin de descobrir multiplas skills em pasta skills/ vs single-skill. Reproduzir e propor fix.",
+      "id": "B-019",
+      "title": "Formalizar padrao de commits (Conventional Commits + id da task)",
+      "context": "Ja existe padrao parcial no CLAUDE.md (tipo: desc, tag [unlock:id]) + hook commit-msg + _commit.commit_task(). Formalizar e ampliar: possivelmente Conventional Commits inteiro, auto-incluir id da task no commit (ex feature(F-023): ...), template de corpo. RECORTE A DEFINIR pelo dev no futuro.",
       "status": "Backlog",
-      "createdAt": "2026-06-01",
-      "updatedAt": "2026-06-01"
+      "createdAt": "2026-06-06",
+      "updatedAt": "2026-06-06"
+    },
+    {
+      "id": "B-018",
+      "title": "Tornar current task robusto sob chats concorrentes (hoje e arquivo global, nao por-chat)",
+      "context": "Investigado: .ai/current-task.json e UNICO arquivo global por copia de trabalho, escrito por set_current_task() em toda criacao/transicao. Um chat = uma task e convencao, NAO imposto pelo codigo. Dois chats na MESMA pasta sobrescrevem current-task; comando sem id explicito (find_task_or_current(None)) pode pegar a task errada: origem dos conflitos observados. Worktree por task ja e o workaround (cada worktree tem seu .ai/, pois .ai/ e versionado). Decidir: escopar current-task por sessao/worktree, ou exigir id explicito em ready/finish/status com warning no fallback. Ligado ao ADR de modelo de demanda.",
+      "status": "Backlog",
+      "createdAt": "2026-06-06",
+      "updatedAt": "2026-06-06"
+    },
+    {
+      "id": "B-017",
+      "title": "Permitir criar demanda em estado Planejada (cadastrar sem iniciar)",
+      "context": "Hoje feature/issue entram em Em desenvolvimento na criacao (new_task carimba STATUS_IN_DEVELOPMENT). STATUS_PLANNED='Planejada' + tag #PLANEJADA existem sem caminho. Permitir criar demanda ja triada (sabe-se feature/bug, tem numero) mas nao iniciada - diferente do backlog (ideia nao triada, sem decisao feature-vs-bug). DEPENDE do ADR de modelo de demanda (tipo x status).",
+      "status": "Backlog",
+      "createdAt": "2026-06-06",
+      "updatedAt": "2026-06-06"
+    },
+    {
+      "id": "B-014",
+      "title": "Visao de quadro: status --all listando todas as tasks em andamento",
+      "context": "status hoje mostra UMA task (current ou por id). Listar varias ja existe via tasks list --status Em desenvolvimento (F-017), mas falta porta de entrada obvia. Adicionar status --all reusando _tasks.list_tasks e format_task_line. Custo baixo.",
+      "status": "Backlog",
+      "createdAt": "2026-06-06",
+      "updatedAt": "2026-06-06"
+    },
+    {
+      "id": "B-011",
+      "title": "Adicionar subcomando cancel/abandon ao CLI para reverter promote/feature/issue criados por engano",
+      "context": "Quando um item de backlog e promovido (ou feature/issue e criado) por engano e o usuario quer reverter, hoje nao ha caminho oficial: nao existe subcomando 'cancel' nem 'abandon'. Resultado: ou (a) deixa task zumbi em tasks.json com status 'Em desenvolvimento' poluindo status/historico; ou (b) re-adiciona conteudo ao backlog com novo ID (perde rastreio); ou (c) edita .ai/tasks.json + .ai/backlog.json + .ai/current-task.json + FEATURES.md na mao - violando a regra nao-negociavel 1 do CLAUDE.md. Caso real: 2026-06-02, promote de B-009 -> F-014 revertido manualmente porque user decidiu adiar a feature. Proposta: subcomando 'ai cancel <ID> [--reason ...]' que (1) muda status da task pra 'Cancelada' (novo estado) ou remove de tasks.json; (2) se a task veio de backlog (backlogId presente), devolve item ao backlog.json preservando ID original e content; (3) limpa current-task.json se aponta pra ela; (4) remove entrada de FEATURES.md ou marca como cancelada; (5) registra motivo. Considerar tambem soft-delete (status Cancelada visivel no historico) vs hard-delete (some de tudo). Decisao de UX: cancelar feature/issue diretamente criada (sem backlog origin) vs promovida - comportamentos podem diferir.",
+      "status": "Backlog",
+      "createdAt": "2026-06-02",
+      "updatedAt": "2026-06-02"
     },
     {
       "id": "B-009",
@@ -16,22 +48,6 @@
       "status": "Backlog",
       "createdAt": "2026-06-01",
       "updatedAt": "2026-06-01"
-    },
-    {
-      "id": "B-006",
-      "title": "Atualizar docs Diataxis pos refactor: tutorial install via plugin, how-to migracao, README, ROADMAP",
-      "context": "Apos F-009 + backlog acima estarem mergeados: (1) atualizar docs/tutorials/primeiro-uso.md com '/plugin install' como rota primaria; (2) novo docs/how-to/migrar-do-copy-paste-para-plugin.md; (3) revisar docs/reference/cli.md (operacoes agora tambem como MCP tools); (4) revisar docs/explanation/visao-geral.md (Plugin vs repo agora resolvido - virou plugin); (5) atualizar README.md secao Instalacao; (6) atualizar docs/ROADMAP.md (v0.2 Instalador foi superado por plugin format).",
-      "status": "Backlog",
-      "createdAt": "2026-05-31",
-      "updatedAt": "2026-05-31"
-    },
-    {
-      "id": "B-005",
-      "title": "Consolidar AGENTS.md como fonte unica cross-agent, CLAUDE.md vira pointer",
-      "context": "AGENTS.md e padrao Linux Foundation (60k+ repos) adotado por Antigravity nativo + Codex + Claude. Hoje temos CLAUDE.md (briefing Claude) + AGENTS.md (briefing outros) com ~80% duplicado. Consolidar tudo em AGENTS.md e deixar CLAUDE.md como pointer fino com so as especificidades Claude (como /rename, comandos Claude-only). Reduz manutencao e segue o padrao de mercado.",
-      "status": "Backlog",
-      "createdAt": "2026-05-31",
-      "updatedAt": "2026-05-31"
     },
     {
       "id": "B-004",
@@ -53,14 +69,6 @@
       "id": "B-002",
       "title": "Criar MCP server Python expondo feature/issue/ready/finish/status/backlog/promote como tools",
       "context": "Etapa B do plano arquitetural. Adiciona .mcp.json na raiz apontando para um MCP server local (Python, mesmo motor scripts/ai.py). Cada subcomando do ai.py vira uma tool MCP que retorna JSON estruturado {id, title, status, chatTitle, ...}. Elimina o parsing fragil de 'NOME DO CHAT:' do stdout. Agente chama feature(title, context) e recebe o resultado direto. Avaliar usar mcp-python-sdk ou implementacao stdlib pura para manter zero-deps.",
-      "status": "Backlog",
-      "createdAt": "2026-05-31",
-      "updatedAt": "2026-05-31"
-    },
-    {
-      "id": "B-001",
-      "title": "Adicionar .claude-plugin/marketplace.json + documentar distribuicao via /plugin marketplace add",
-      "context": "Pos F-009. Cria marketplace proprio (pmarcos/ai-process-pack) para usuarios instalarem via '/plugin marketplace add pmarcosa/ai-process-pack' + '/plugin install ai-process@pmarcos'. Define name, version, owner, plugins[]. Atualizar docs/how-to/instalar-em-outro-projeto.md e README com a nova rota oficial.",
       "status": "Backlog",
       "createdAt": "2026-05-31",
       "updatedAt": "2026-05-31"
