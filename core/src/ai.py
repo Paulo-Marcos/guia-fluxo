@@ -49,11 +49,14 @@ from _cli_creation import (  # noqa: E402
     cmd_promote,
 )
 from _cli_lifecycle import (  # noqa: E402
+    cmd_block,
+    cmd_cancel,
     cmd_doctor,
     cmd_finish,
     cmd_init,
     cmd_ready,
     cmd_status,
+    cmd_unblock,
     cmd_validate,
 )
 from _cli_meta import cmd_docs_check, cmd_render  # noqa: E402
@@ -167,6 +170,51 @@ def build_parser() -> argparse.ArgumentParser:
         help="Saida em JSON para consumo por agente.",
     )
     p_docs_check.set_defaults(func=cmd_docs_check)
+
+    p_cancel = sub.add_parser(
+        "cancel",
+        help="Cancel a task with a mandatory reason (status -> Cancelada).",
+    )
+    p_cancel.add_argument("task_id", nargs="?")
+    p_cancel.add_argument(
+        "--reason",
+        required=True,
+        help="Motivo do cancelamento (obrigatorio).",
+    )
+    p_cancel.add_argument(
+        "--keep-worktree",
+        action="store_true",
+        help="Nao remove worktree associada (default: remove).",
+    )
+    p_cancel.add_argument(
+        "--set-current",
+        action="store_true",
+        help="Mantem a task como current apos cancelar (default: limpa current).",
+    )
+    p_cancel.set_defaults(func=cmd_cancel)
+
+    p_block = sub.add_parser(
+        "block",
+        help="Pause a task with a mandatory reason (status -> Bloqueada).",
+    )
+    p_block.add_argument("task_id", nargs="?")
+    p_block.add_argument(
+        "--reason",
+        required=True,
+        help="Motivo do bloqueio (obrigatorio).",
+    )
+    p_block.set_defaults(func=cmd_block)
+
+    p_unblock = sub.add_parser(
+        "unblock",
+        help="Resume a blocked task (status Bloqueada -> Em desenvolvimento).",
+    )
+    p_unblock.add_argument("task_id", nargs="?")
+    p_unblock.add_argument(
+        "--note",
+        help="Anotacao opcional sobre o desbloqueio.",
+    )
+    p_unblock.set_defaults(func=cmd_unblock)
 
     p_validate = sub.add_parser(
         "validate",

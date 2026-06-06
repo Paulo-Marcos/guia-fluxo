@@ -11,6 +11,7 @@ import argparse
 import sys
 from typing import Any
 
+from _clock import today
 from _commit import commit_task
 from _constants import (
     AI_DIR,
@@ -27,6 +28,10 @@ from _constants import (
     PROCESS_FILE,
     ROOT,
     STATUS_AWAITING_VALIDATION,
+    STATUS_BLOCKED,
+    STATUS_CANCELLED,
+    STATUS_FINISHED,
+    STATUS_IN_DEVELOPMENT,
     STATUS_VALIDATED,
     TASKS_FILE,
 )
@@ -151,6 +156,97 @@ def cmd_finish(args: argparse.Namespace) -> int:
     cleanup_task_worktree(task, commit_requested)
 
     print(f"{task['id']} finished as {task['status']}.")
+    print_chat_title(task)
+    return 0
+
+
+_TERMINAL_STATUSES = frozenset({STATUS_VALIDATED, STATUS_FINISHED, STATUS_CANCELLED})
+
+
+def _clear_current_if_matches(task_id: str) -> None:
+    current = read_json(CURRENT_FILE, {})
+    if current.get("taskId") == task_id:
+        write_json(CURRENT_FILE, {})
+        CHAT_TITLE_FILE.write_text("", encoding="utf-8")
+
+
+def cmd_cancel(args: argparse.Namespace) -> int:
+    task = find_task_or_current(args.task_id)
+    if task["status"] in _TERMINAL_STATUSES:
+        raise SystemExit(
+            f"Task {task['id']} ja esta em estado terminal ({task['status']}); nao pode ser cancelada."
+        )
+
+    task["status"] = STATUS_CANCELLED
+    cancellation = {"reason": args.reason, "at": today()}
+    task.setdefault("cancellations", []).append(cancellation)
+    merge_list(task, "summary", [f"Cancelada em {today()}: {args.reason}"])
+    task["pending"] = []
+
+    save_task(task)
+    upsert_features_entry(task)
+    write_report(task, "cancel")
+
+    if not args.keep_worktree:
+        cleanup_task_worktree(task, commit_requested=True)
+        save_task(task)
+
+    if args.set_current:
+        set_current_task(task)
+    else:
+        _clear_current_if_matches(task["id"])
+
+    print(f"{task['id']} cancelled: {args.reason}")
+    print_chat_title(task)
+    return 0
+
+
+def cmd_block(args: argparse.Namespace) -> int:
+    task = find_task_or_current(args.task_id)
+    if task["status"] in _TERMINAL_STATUSES:
+        raise SystemExit(
+            f"Task {task['id']} em estado terminal ({task['status']}); nao pode ser bloqueada."
+        )
+    if task["status"] == STATUS_BLOCKED:
+        raise SystemExit(f"Task {task['id']} ja esta bloqueada.")
+
+    task["status"] = STATUS_BLOCKED
+    block_record = {"reason": args.reason, "at": today()}
+    task.setdefault("blocks", []).append(block_record)
+    merge_list(task, "summary", [f"Bloqueada em {today()}: {args.reason}"])
+
+    save_task(task)
+    set_current_task(task)
+    upsert_features_entry(task)
+    write_report(task, "block")
+
+    print(f"{task['id']} blocked: {args.reason}")
+    print_chat_title(task)
+    return 0
+
+
+def cmd_unblock(args: argparse.Namespace) -> int:
+    task = find_task_or_current(args.task_id)
+    if task["status"] != STATUS_BLOCKED:
+        raise SystemExit(
+            f"Task {task['id']} nao esta bloqueada (status atual: {task['status']})."
+        )
+
+    task["status"] = STATUS_IN_DEVELOPMENT
+    blocks = task.get("blocks") or []
+    if blocks and "unblockedAt" not in blocks[-1]:
+        blocks[-1]["unblockedAt"] = today()
+    note = f"Desbloqueada em {today()}."
+    if args.note:
+        note = f"Desbloqueada em {today()}: {args.note}"
+    merge_list(task, "summary", [note])
+
+    save_task(task)
+    set_current_task(task)
+    upsert_features_entry(task)
+    write_report(task, "unblock")
+
+    print(f"{task['id']} unblocked.")
     print_chat_title(task)
     return 0
 
@@ -304,6 +400,9 @@ __all__ = [
     "cmd_status",
     "cmd_ready",
     "cmd_finish",
+    "cmd_cancel",
+    "cmd_block",
+    "cmd_unblock",
     "cmd_validate",
     "cmd_doctor",
 ]

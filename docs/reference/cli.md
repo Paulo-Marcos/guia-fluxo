@@ -109,6 +109,41 @@ Lista docs candidatos a atualizacao para a task indicada (ou a task corrente, se
 
 Quando o mapa nao existe, retorna `{"hasMap": false, "candidates": []}` (JSON) ou aviso curto (texto).
 
+### `cancel`
+
+```powershell
+.\core\bin\ai.ps1 cancel F-NNN --reason "Motivo curto" `
+    [--keep-worktree] `
+    [--set-current]
+```
+
+Encerra a task como `Cancelada` (estado terminal). `--reason` e **obrigatorio** (fica em `task.cancellations[]` e no historico em `FEATURES.md`).
+
+- `--keep-worktree`: nao remove a worktree associada. Default: remove se a task tinha worktree.
+- `--set-current`: mantem a task como current apos cancelar. Default: limpa `.ai/current-task.json` se a task cancelada era a current.
+
+Bloqueia se a task ja esta em estado terminal (`Validada`, `Finalizada`, `Cancelada`). Imprime `NOME DO CHAT: F-NNN - #CANCELADA - ...`.
+
+### `block`
+
+```powershell
+.\core\bin\ai.ps1 block F-NNN --reason "Por que esta pausando"
+```
+
+Pausa a task: status -> `Bloqueada`, preserva WIP, registra `task.blocks[] = [{reason, at}, ...]`. `--reason` e **obrigatorio**. Para retomar, use `unblock`.
+
+Bloqueia se a task ja esta em estado terminal ou ja em `Bloqueada`. Imprime `NOME DO CHAT: F-NNN - #BLOQUEADA - ...`.
+
+### `unblock`
+
+```powershell
+.\core\bin\ai.ps1 unblock F-NNN [--note "O que destravou"]
+```
+
+Retoma uma task pausada: status `Bloqueada` -> `Em desenvolvimento`. Fecha `task.blocks[-1].unblockedAt`. `--note` e opcional.
+
+Falha se a task nao estava em `Bloqueada`. Imprime `NOME DO CHAT: F-NNN - #DEV - ...`.
+
 ### `validate` (deprecado)
 
 Ainda existe como subcomando do CLI por compatibilidade. Nao ha mais skill para `/validate`. O fluxo recomendado e `/ready` -> humano testa -> `/finish`.

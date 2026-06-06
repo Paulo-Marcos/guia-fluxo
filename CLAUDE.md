@@ -19,6 +19,9 @@ Este repo **e um plugin Claude Code oficial**: `dist/.claude-plugin/plugin.json`
 | `/ai:ready` | `ready` | Implementacao pronta para validacao humana. **A IA dispara, nao o humano.** |
 | `/ai:finish` | `finish` | Validacao confirmada, fechar e (opcional) travar. |
 | `/ai:status` | `status` | Inspecao da task atual. |
+| `/ai:cancel` | `cancel` | Encerrar task como Cancelada (terminal). Exige `--reason`. |
+| `/ai:block` | `block` | Pausar task preservando WIP. Exige `--reason`. |
+| `/ai:unblock` | `unblock` | Retomar task pausada. |
 
 A skill mae `ai-process` em `dist/skills/ai-process/SKILL.md` carrega contexto compartilhado. Descriptions foram diferenciadas em F-003 para evitar trigger collision - confie no roteador e nao force uma skill diferente da que o usuario invocou.
 

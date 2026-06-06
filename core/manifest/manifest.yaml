@@ -93,3 +93,12 @@ verbs:
         body_file: bodies/status.agent.md
       claude_skill:
         body_file: bodies/status.claude.md
+
+  cancel:
+    description: |
+      TERMINAL CANCEL — encerra a task com `status: Cancelada` (terminal, nao volta). Triggered by /cancel or "$cancel" / "cancelar tarefa / nao vou fazer / criada por engano". Exige `--reason` obrigatorio. Use para: demanda criada por engano, promote errado, escopo desfeito. Do NOT use for: pausa temporaria que vai voltar (use $block), tarefa concluida e validada (use $finish), ou re-triagem (cancele e abra nova).
+    targets:
+      agent_skill:
+        body_file: bodies/cancel.agent.md
+      claude_skill:
+        body_file: bodies/cancel.claude.md
