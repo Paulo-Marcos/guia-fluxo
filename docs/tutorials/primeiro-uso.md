@@ -6,15 +6,37 @@ Voce vai sair do zero ate ter uma feature criada, implementada e finalizada usan
 
 - Python 3.10+
 - Git
-- Repositorio clonado
+- Pack instalado no seu projeto via `install.ps1`/`install.sh` (rota recomendada) **ou** sessao aberta neste repo-mae (dogfood). Detalhes em [how-to/instalar-em-outro-projeto.md](../how-to/instalar-em-outro-projeto.md).
+
+## Convencao deste tutorial
+
+Em projeto consumidor (apos rodar `install.ps1` ou `install.sh`), os comandos saem assim:
+
+```powershell
+ai <subcomando>            # se .ai-process/bin estiver no PATH (Claude faz auto)
+# ou
+python .ai-process/bin/ai.py <subcomando>
+```
+
+No repo-mae (este repo, dogfood), use o wrapper de fontes:
+
+```powershell
+.\core\bin\ai.ps1 <subcomando>
+```
+
+A semantica e identica. Os exemplos abaixo usam a forma `.\core\bin\ai.ps1` por default; ajuste para `ai` se voce esta em projeto consumidor.
 
 ## 1. Bootstrap do processo
 
-No diretorio do projeto consumidor:
+**Em projeto consumidor:** `install.ps1` ja roda `ai init` no final, entao este passo e automatico - pule para o `doctor` no fim desta secao.
+
+**Dogfood (este repo):** o `.ai/` ja existe; tambem pule.
+
+**Se precisar rodar manualmente** (ex.: instalacao copia-manual sem usar o instalador):
 
 ```powershell
 .\core\bin\ai.ps1 init --project-name "meu-projeto"
-git config core.hooksPath core/hooks
+git config core.hooksPath .githooks
 ```
 
 O `init` cria:
@@ -22,7 +44,7 @@ O `init` cria:
 - `.ai/tasks.json`, `.ai/backlog.json`, `.ai/current-task.json` vazios.
 - `.ai/chat-title.txt` zerado.
 
-O `core.hooksPath` ativa o hook `commit-msg` que valida marcas `[unlock:<id>]` em commits que tocam arquivos travados.
+O `core.hooksPath` ativa o hook `commit-msg` que valida marcas `[unlock:<id>]` em commits que tocam arquivos travados. Em projeto consumidor o caminho e `.githooks` (output do instalador); no repo-mae e `core/hooks`.
 
 Confira:
 
@@ -87,6 +109,7 @@ Para travar a feature contra refactor futuro (opcional):
 
 ## Proximos passos
 
-- [How-to: registrar bug em vez de feature](../how-to/promover-backlog.md) - quando voce ja tem uma ideia rascunhada no backlog.
+- [How-to: instalar em outro projeto](../how-to/instalar-em-outro-projeto.md) - rota oficial via `install.ps1`/`install.sh` para projetos consumidores.
+- [How-to: promover backlog para feature/issue](../how-to/promover-backlog.md) - quando voce ja tem uma ideia rascunhada no backlog.
 - [Reference: CLI completo](../reference/cli.md) - todas as flags de cada subcomando.
 - [Explanation: visao geral do processo](../explanation/visao-geral.md) - entender o papel de cada peca.

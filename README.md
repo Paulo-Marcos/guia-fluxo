@@ -16,18 +16,13 @@ suportados.
 
 ## Instalacao
 
-O pack agora segue o **layout oficial de plugin Claude Code**, com fontes em `core/` e build em `dist/` (`dist/.claude-plugin/plugin.json` + `dist/skills/`). O marketplace local (`dist/.claude-plugin/marketplace.json`) e registrado pelo proprio repo via `.claude/settings.json` (path `./dist`). Tres caminhos:
+O pack segue o **layout oficial de plugin Claude Code**, com fontes em `core/` e build em `dist/` (`dist/.claude-plugin/plugin.json` + `dist/skills/`). O marketplace local (`dist/.claude-plugin/marketplace.json`) e registrado pelo proprio repo via `.claude/settings.json` (path `./dist`). Tres caminhos:
 
-1. **Dogfood / dev:** abra o repo em Claude Code; ele prompta pra confirmar o marketplace local e instala o plugin `ai`. Atalhos `/ai:feature`, `/ai:issue`, etc. ficam disponiveis automaticamente. (Fallback se nao aparecer o prompt: `/plugin marketplace add ./dist` + `/plugin install ai@ai-process-pack`, ou `claude --plugin-dir ./dist`.)
-2. **Marketplace publico (futuro):** quando publicado em `claude-plugins-community`, `/plugin marketplace add anthropics/claude-plugins-community` + `/plugin install ai@claude-community` instala direto.
-3. **Copia manual (qualquer agente, sem Claude Code):** ainda nao ha instalador automatico para o caso multi-agente. Copie os arquivos do pack para o projeto consumidor e inicialize:
+1. **Dogfood / dev (este repo aberto em Claude Code):** ele prompta pra confirmar o marketplace local e instala o plugin `ai`. Atalhos `/ai:feature`, `/ai:issue`, etc. ficam disponiveis automaticamente. (Fallback se nao aparecer o prompt: `/plugin marketplace add ./dist` + `/plugin install ai@ai-process-pack`, ou `claude --plugin-dir ./dist`.)
+2. **Instalador oficial em qualquer projeto consumidor (Claude Code, Codex CLI ou Antigravity):** desde F-013, `install.ps1` (Windows) e `install.sh` (Linux/Mac) copiam `dist/` para `.ai-process/` no projeto consumidor, criam `.agents/skills/` (Codex+Antigravity) e rodam `ai init`. Idempotente, com `--dry-run` e `--force`. Receita: [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md).
+3. **Marketplace remoto (B-009, planejado):** quando o repo for publicado em `github.com/paulosmarcos/ai-process-pack`, `/plugin marketplace add paulosmarcos/ai-process-pack` + `/plugin install ai@ai-process-pack` substituira o passo de clonar.
 
-```powershell
-.\core\bin\ai.ps1 init --project-name "nome-do-projeto"
-git config core.hooksPath core/hooks
-```
-
-Codex e Antigravity descobrem o pack via `dist/.agents/skills/<verbo>/SKILL.md` (convencao AGENTS.md) - basta a pasta existir. Lista completa de arquivos a copiar: [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md).
+Codex e Antigravity descobrem o pack via `.agents/skills/ai-<verbo>/SKILL.md` (convencao AGENTS.md) — o instalador ja deixa a pasta pronta.
 
 ## Uso
 
