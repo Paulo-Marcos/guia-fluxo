@@ -102,3 +102,21 @@ verbs:
         body_file: bodies/cancel.agent.md
       claude_skill:
         body_file: bodies/cancel.claude.md
+
+  block:
+    description: |
+      PAUSE in-flight task — preserva WIP, move status para `Bloqueada`. Triggered by /block or "$block" / "pausar tarefa / bloquear / esperar dependencia". Exige `--reason` obrigatorio (fica em `task.blocks[]`). Use quando a task vai voltar: esperando decisao, dependencia externa, prioridade trocada. Do NOT use for: encerramento definitivo (use $cancel), entrega para validacao (use $ready), ou fechamento (use $finish).
+    targets:
+      agent_skill:
+        body_file: bodies/block.agent.md
+      claude_skill:
+        body_file: bodies/block.claude.md
+
+  unblock:
+    description: |
+      RESUME a paused task — move status de `Bloqueada` para `Em desenvolvimento`. Triggered by /unblock or "$unblock" / "retomar tarefa / desbloquear / dependencia resolvida". Inverso de $block. Falha se a task nao estava em `Bloqueada`. Do NOT use for: criar nova task (use $feature ou $issue), promover backlog (use $promote), ou voltar de cancelamento (cancelamento e terminal - abra nova task).
+    targets:
+      agent_skill:
+        body_file: bodies/unblock.agent.md
+      claude_skill:
+        body_file: bodies/unblock.claude.md
