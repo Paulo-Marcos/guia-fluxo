@@ -20,6 +20,7 @@ ADR nao se confunde com [`explanation/`](../explanation/): explanation ensina o 
 | [0008](0008-layout-b-manifest.md) | Manifest em layout B (index YAML + bodies markdown) | Aceita |
 | [0009](0009-yaml-para-manifest.md) | YAML como formato do manifest (decisao retroativa documentada) | Aceita |
 | [0010](0010-prefixos-trigger-skill-descriptions.md) | Politica de prefixos canonicos nas descriptions das skills | Aceita |
+| [0011](0011-modelo-de-demanda-tipo-x-status.md) | Modelo de demanda: `kind` x `status` ortogonais, backlog vira status, ID neutro `D-NNN` | Proposta |
 
 ## Como adicionar um ADR novo
 
