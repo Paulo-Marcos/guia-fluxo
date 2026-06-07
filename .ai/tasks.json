@@ -2,6 +2,84 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-045",
+      "kind": "chore",
+      "title": "ADR-0011 Fase 5: docs + ADR-0011 -> Aceita",
+      "status": "Validada",
+      "origin": "AI process (2026-06-07)",
+      "context": "Quinta e ultima fase da onda ADR-0011 + B-017. Atualizar todos os docs Diataxis para refletir o novo modelo (kind plural feature/bug/chore, status Backlog/Planejada/Em desenvolvimento, ID neutro D-NNN, emojis \u2728\ud83d\udc1b\ud83e\uddf9, verbos plan/start/cancel/block/unblock/backlog migrate). Mover ADR-0011 de Proposta para Aceita com secao 'Como foi implementado'. Addendum ao ADR-0010 documentando os novos prefixos canonicos. Entrada no CHANGELOG cobrindo as 5 fases. ROADMAP marca onda como entregue. CLAUDE.md/AGENTS.md/cli.md/visao-geral.md sincronizados.",
+      "createdAt": "2026-06-07",
+      "updatedAt": "2026-06-07",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "docs/adr/0011-modelo-de-demanda-tipo-x-status.md",
+        "docs/adr/0010-prefixos-trigger-skill-descriptions.md",
+        "docs/adr/README.md",
+        "docs/explanation/visao-geral.md",
+        "docs/reference/cli.md",
+        "CLAUDE.md",
+        "AGENTS.md",
+        "CHANGELOG.md",
+        "docs/ROADMAP.md",
+        ".ai/current-task.json",
+        ".ai/tasks.json"
+      ],
+      "summary": [
+        "Demanda criada via ai-process.",
+        "Fase 5 (ultima) do ADR-0011 entregue. ADR-0011 movido de Proposta para Aceita com secao 'Como foi implementado' listando as 6 tasks de entrega (F-030, D-033, D-035, D-039, D-042, D-045) e as 3 decisoes operacionais (D1/D2/D3). Indice em docs/adr/README.md atualizado. ADR-0010 ganhou addendum: tabela agora tem 12 prefixos canonicos (5 novos: TERMINAL CANCEL, PAUSE in-flight task, RESUME a paused task, PLAN, START) + nota explicando que PRIMARY TRIGGER cobre feature/bug/chore (issue removido). visao-geral.md: secao 'Modelo de demanda' nova com diagrama de ciclo de vida + fluxo recomendado atualizado (verbos novos, --status, kind plural, emojis). cli.md: sessoes bug/chore/plan/start/backlog migrate adicionadas; sessao issue REMOVIDA; tabela de aliases atualizada (13 linhas + coluna emoji) com aviso de removal. CLAUDE.md: tabela de atalhos ganhou /ai:bug, /ai:chore, /ai:plan, /ai:start + coluna emoji; perdeu /ai:issue. AGENTS.md: regra 2 menciona bug/chore; fluxo padrao lista os 4 verbos criadores com snippet --status; convencoes de commit atualizadas; secao 'Quando o pedido nao se encaixa' usa /bug em vez de /issue. CHANGELOG.md: entrada na [Unreleased] resumindo a onda toda (Added + Changed). ROADMAP.md: secao Entregue ganha linha da onda.",
+        "Demanda finalizada via ai-process."
+      ],
+      "validations": [
+        "doctor OK; render --check OK (53 alvos em sincronia). Docs cruzados manualmente entre si para coerencia (D-045 sendo a task que escreve sobre as outras, foi necessario validar referencias)."
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-045",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/ai.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-045",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "docs/adr/0011-modelo-de-demanda-tipo-x-status.md",
+          "docs/adr/0010-prefixos-trigger-skill-descriptions.md",
+          "docs/adr/README.md",
+          "docs/explanation/visao-geral.md",
+          "docs/reference/cli.md",
+          "CLAUDE.md",
+          "AGENTS.md",
+          "CHANGELOG.md",
+          "docs/ROADMAP.md"
+        ],
+        "checkedAt": "2026-06-07",
+        "skipped": "FEATURES.md auto-atualizada. CONTRIBUTING.md nao precisa entrada (continua relevante; fluxo geral inalterado para humanos)."
+      }
+    },
+    {
       "id": "D-044",
       "kind": "chore",
       "title": "SMOKE: testar verbo chore",

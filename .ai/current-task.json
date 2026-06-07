@@ -1,6 +1,6 @@
 {
-  "taskId": "D-042",
+  "taskId": "D-045",
   "status": "Validada",
-  "title": "ADR-0011 Fase 4: substituir issue por bug + adicionar chore",
-  "chatTitle": "D-042 \u2728 - #FINALIZADO - ADR-0011 Fase 4: substituir issue por bug + adicionar chore"
+  "title": "ADR-0011 Fase 5: docs + ADR-0011 -> Aceita",
+  "chatTitle": "D-045 \ud83e\uddf9 - #FINALIZADO - ADR-0011 Fase 5: docs + ADR-0011 -> Aceita"
 }
