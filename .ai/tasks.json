@@ -2,6 +2,190 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-038",
+      "kind": "feature",
+      "title": "SMOKE: marker backlog default kind",
+      "status": "Cancelada",
+      "origin": "Backlog (2026-06-07)",
+      "context": "x",
+      "createdAt": "2026-06-07",
+      "updatedAt": "2026-06-07",
+      "modifiedFiles": [],
+      "summary": [
+        "Cancelada em 2026-06-07: smoke test markers - validou backlog default kind=feature emoji \u2728"
+      ],
+      "validations": [],
+      "pending": [],
+      "cancellations": [
+        {
+          "reason": "smoke test markers - validou backlog default kind=feature emoji \u2728",
+          "at": "2026-06-07"
+        }
+      ]
+    },
+    {
+      "id": "D-037",
+      "kind": "issue",
+      "title": "SMOKE: marker issue (legacy)",
+      "status": "Cancelada",
+      "origin": "AI process (2026-06-07)",
+      "context": "x",
+      "createdAt": "2026-06-07",
+      "updatedAt": "2026-06-07",
+      "modifiedFiles": [
+        "FEATURES.md"
+      ],
+      "summary": [
+        "Demanda criada via ai-process.",
+        "Cancelada em 2026-06-07: smoke test markers - validou kind=issue (legacy) emoji \ud83d\udc1b"
+      ],
+      "validations": [],
+      "pending": [],
+      "cancellations": [
+        {
+          "reason": "smoke test markers - validou kind=issue (legacy) emoji \ud83d\udc1b",
+          "at": "2026-06-07"
+        }
+      ]
+    },
+    {
+      "id": "D-036",
+      "kind": "feature",
+      "title": "SMOKE: marker feature",
+      "status": "Cancelada",
+      "origin": "AI process (2026-06-07)",
+      "context": "x",
+      "createdAt": "2026-06-07",
+      "updatedAt": "2026-06-07",
+      "modifiedFiles": [
+        "FEATURES.md"
+      ],
+      "summary": [
+        "Demanda criada via ai-process.",
+        "Cancelada em 2026-06-07: smoke test markers - validou kind=feature emoji \u2728"
+      ],
+      "validations": [],
+      "pending": [],
+      "cancellations": [
+        {
+          "reason": "smoke test markers - validou kind=feature emoji \u2728",
+          "at": "2026-06-07"
+        }
+      ]
+    },
+    {
+      "id": "D-035",
+      "kind": "feature",
+      "title": "Marcadores visuais de kind (emoji) nas demandas D-NNN",
+      "status": "Validada",
+      "origin": "AI process (2026-06-07)",
+      "context": "Resposta ao feedback do usuario na sessao do ADR-0011 Fase 2: 'Eu queria que tivesse a implementacao de Feature e Bug. Pq acho que ficaria mais claro ao ver a demanda do que se trata. So D e muito generico.' Decisao: manter ID neutro D-NNN (preserva principio do ADR-0011 - renomear tipo nao muda ID) e ganhar diferenciacao visual via emoji por kind. Aplicar em todas as superficies de display: chat-title, tasks list, backlog list, FEATURES.md heading. KIND_MARKERS: feature=\u2728, bug=\ud83d\udc1b, chore=\ud83e\uddf9, issue=\ud83d\udc1b (legacy).",
+      "createdAt": "2026-06-07",
+      "updatedAt": "2026-06-07",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "core/src/_constants.py",
+        "core/src/_tasks.py",
+        "core/src/_features_md.py",
+        "core/src/_cli_creation.py",
+        "core/src/ai.py",
+        ".ai/process.json",
+        "dist/bin/_constants.py",
+        "dist/bin/_tasks.py",
+        "dist/bin/_features_md.py",
+        "dist/bin/_cli_creation.py",
+        "dist/bin/ai.py",
+        ".ai/current-task.json",
+        ".ai/tasks.json"
+      ],
+      "summary": [
+        "Demanda criada via ai-process.",
+        "Marcadores visuais de kind (emoji) introduzidos em todas as superficies de display. _constants.py: KIND_MARKERS={feature:\u2728, bug:\ud83d\udc1b, chore:\ud83e\uddf9, issue:\ud83d\udc1b (legacy)} + KIND_MARKER_FALLBACK='\u2022' (legacy backlog items sem kind). CHAT_TITLE_FORMAT_DEFAULT atualizado para '{id} {kindMarker} - #{statusTag} - {title}'. _tasks.py: helper kind_marker(kind) que resolve via KIND_MARKERS com fallback; chat_title injeta kindMarker no template.format; format_task_line ('tasks list') inclui marker entre id e status. _features_md.py: render_features_block adiciona marker antes do title no heading H2 - tasks criadas/atualizadas apos esta fase renderizam '## [D-NNN] \u2728 Title'. _cli_creation.py: cmd_backlog_list mostra marker para entradas em tasks.json e para items legacy de backlog.json (fallback '\u2022' nos legacy sem kind). ai.py: novo _bootstrap_utf8_io() forca stdout/stderr para UTF-8 - sem isso, console Windows cp1252 quebrava em UnicodeEncodeError ao imprimir \u2728 (\\\\u2728). .ai/process.json atualizado para o novo CHAT_TITLE_FORMAT (config local; default_process ja apontava para o novo via CHAT_TITLE_FORMAT_DEFAULT, mas process.json existente nao se atualiza sozinho).",
+        "Demanda finalizada via ai-process."
+      ],
+      "validations": [
+        "doctor OK; render OK (5 alvos dist/bin sincronizados). Smoke manual: ai feature 'X' -> D-036 chat-title '\u2728 - #DEV'; ai issue 'Y' -> D-037 chat-title '\ud83d\udc1b - #DEV'; ai backlog add 'Z' -> D-038 chat-title '\u2728 - #BACKLOG'; ai backlog list -> D-038 \u2728 + B-019/B-018/... com fallback '\u2022'; ai tasks list -> mistura de \u2728/\ud83d\udc1b/\u2022 corretos; FEATURES.md headings de D-036/D-037 com emoji embutido (D-035 ainda sem - ganhara no finish desta task). Todos os smokes (D-036, D-037, D-038) cancelados."
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-035",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/ai.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-035",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "README.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py, .ai/process.json",
+            "hint": "Se o fluxo padrao ou os comandos da capa mudaram, atualize.",
+            "purpose": "Porta de entrada do projeto."
+          },
+          {
+            "path": "docs/reference/cli.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py",
+            "hint": "Se voce adicionou/mudou subcomando ou flag, documente aqui.",
+            "purpose": "Referencia completa de subcomandos do core/src/ai.py / core/bin/ai.ps1."
+          },
+          {
+            "path": "docs/reference/files.md",
+            "trigger": "touched",
+            "reason": "touched: .ai/process.json",
+            "hint": "Atualize se criou novo arquivo de estado/config.",
+            "purpose": "Mapa dos arquivos de estado (.ai/*, FEATURES.md, registry.yaml)."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py, .ai/process.json",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py, .ai/process.json",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          },
+          {
+            "path": "CONTRIBUTING.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py, .ai/process.json",
+            "hint": "Se o fluxo humano mudou (novo passo, nova checagem), atualize.",
+            "purpose": "Guia pra humanos contribuirem."
+          }
+        ],
+        "touched": [],
+        "checkedAt": "2026-06-07",
+        "skipped": "FEATURES.md auto. CHANGELOG sera atualizado na Fase 5 (entrada cobrindo todas as fases). CLAUDE/AGENTS/cli.md nao precisam atualizacao (mudanca de display interno, sem novo subcomando ou flag). visao-geral.md sera revista na Fase 5 quando ADR-0011 virar Aceita."
+      }
+    },
+    {
       "id": "D-034",
       "kind": "feature",
       "title": "SMOKE: promote D-NNN backlog preserva ID",

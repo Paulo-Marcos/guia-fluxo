@@ -2,6 +2,116 @@
 
 ---
 
+## [D-038] ✨ SMOKE: marker backlog default kind
+
+- **Status:** Cancelada
+- **Origem:** Backlog (2026-06-07)
+- **Tipo:** Feature
+- **Contexto:** x
+
+### Arquivos modificados/criados
+
+- Nenhuma.
+
+### O que foi feito
+
+- Cancelada em 2026-06-07: smoke test markers - validou backlog default kind=feature emoji ✨
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+
+## [D-037] 🐛 SMOKE: marker issue (legacy)
+
+- **Status:** Cancelada
+- **Origem:** AI process (2026-06-07)
+- **Tipo:** Bug (legacy)
+- **Contexto:** x
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Cancelada em 2026-06-07: smoke test markers - validou kind=issue (legacy) emoji 🐛
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-036] ✨ SMOKE: marker feature
+
+- **Status:** Cancelada
+- **Origem:** AI process (2026-06-07)
+- **Tipo:** Feature
+- **Contexto:** x
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Cancelada em 2026-06-07: smoke test markers - validou kind=feature emoji ✨
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-035] ✨ Marcadores visuais de kind (emoji) nas demandas D-NNN
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-07)
+- **Tipo:** Feature
+- **Contexto:** Resposta ao feedback do usuario na sessao do ADR-0011 Fase 2: 'Eu queria que tivesse a implementacao de Feature e Bug. Pq acho que ficaria mais claro ao ver a demanda do que se trata. So D e muito generico.' Decisao: manter ID neutro D-NNN (preserva principio do ADR-0011 - renomear tipo nao muda ID) e ganhar diferenciacao visual via emoji por kind. Aplicar em todas as superficies de display: chat-title, tasks list, backlog list, FEATURES.md heading. KIND_MARKERS: feature=✨, bug=🐛, chore=🧹, issue=🐛 (legacy).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_constants.py`
+- `core/src/_tasks.py`
+- `core/src/_features_md.py`
+- `core/src/_cli_creation.py`
+- `core/src/ai.py`
+- `.ai/process.json`
+- `dist/bin/_constants.py`
+- `dist/bin/_tasks.py`
+- `dist/bin/_features_md.py`
+- `dist/bin/_cli_creation.py`
+- `dist/bin/ai.py`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Marcadores visuais de kind (emoji) introduzidos em todas as superficies de display. _constants.py: KIND_MARKERS={feature:✨, bug:🐛, chore:🧹, issue:🐛 (legacy)} + KIND_MARKER_FALLBACK='•' (legacy backlog items sem kind). CHAT_TITLE_FORMAT_DEFAULT atualizado para '{id} {kindMarker} - #{statusTag} - {title}'. _tasks.py: helper kind_marker(kind) que resolve via KIND_MARKERS com fallback; chat_title injeta kindMarker no template.format; format_task_line ('tasks list') inclui marker entre id e status. _features_md.py: render_features_block adiciona marker antes do title no heading H2 - tasks criadas/atualizadas apos esta fase renderizam '## [D-NNN] ✨ Title'. _cli_creation.py: cmd_backlog_list mostra marker para entradas em tasks.json e para items legacy de backlog.json (fallback '•' nos legacy sem kind). ai.py: novo _bootstrap_utf8_io() forca stdout/stderr para UTF-8 - sem isso, console Windows cp1252 quebrava em UnicodeEncodeError ao imprimir ✨ (\\u2728). .ai/process.json atualizado para o novo CHAT_TITLE_FORMAT (config local; default_process ja apontava para o novo via CHAT_TITLE_FORMAT_DEFAULT, mas process.json existente nao se atualiza sozinho).
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- doctor OK; render OK (5 alvos dist/bin sincronizados). Smoke manual: ai feature 'X' -> D-036 chat-title '✨ - #DEV'; ai issue 'Y' -> D-037 chat-title '🐛 - #DEV'; ai backlog add 'Z' -> D-038 chat-title '✨ - #BACKLOG'; ai backlog list -> D-038 ✨ + B-019/B-018/... com fallback '•'; ai tasks list -> mistura de ✨/🐛/• corretos; FEATURES.md headings de D-036/D-037 com emoji embutido (D-035 ainda sem - ganhara no finish desta task). Todos os smokes (D-036, D-037, D-038) cancelados.
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-034] SMOKE: promote D-NNN backlog preserva ID
 
 - **Status:** Cancelada
