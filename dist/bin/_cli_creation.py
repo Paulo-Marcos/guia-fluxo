@@ -1,12 +1,16 @@
 """CLI handlers: feature / issue / backlog / promote.
 
-Handles task creation and backlog -> task promotion.
+Handles task creation and backlog -> task promotion. ADR-0011 Fase 2:
+`backlog add` agora cria a entrada em `tasks.json` com `status=Backlog`
+(ID neutro `D-NNN`). `backlog.json` legacy permanece read-only - itens
+antigos (`B-NNN`) continuam visiveis em `backlog list` e promoveis via
+`promote`, mas nenhuma escrita nova vai pra ele. `backlog migrate` copia
+B-NNN legacy para tasks.json preservando ID.
 
-Fix vs the previous monolithic ai.py:
-- cmd_promote (achado 2.2): build the task FIRST, only persist the
-  backlog pop AFTER the task and worktree succeed. The old code
-  popped+wrote the backlog before creating the task; a failure in
-  create_promoted_task / attach_worktree would silently lose the item.
+Fix vs o monolitico ai.py:
+- cmd_promote (achado 2.2): build the task FIRST, only persist disk
+  mutation AFTER. Old code popped+wrote backlog before creating task;
+  failure mid-way silently lost the item.
 """
 
 from __future__ import annotations
@@ -15,13 +19,20 @@ import argparse
 from typing import Any
 
 from _clock import today
-from _constants import KIND_FEATURE, MSG_BACKLOG_ITEM_NOT_FOUND, BACKLOG_FILE, TASKS_FILE
+from _constants import (
+    BACKLOG_FILE,
+    KIND_FEATURE,
+    MSG_BACKLOG_ITEM_NOT_FOUND,
+    STATUS_BACKLOG,
+    STATUS_IN_DEVELOPMENT,
+    TASKS_FILE,
+)
 from _features_md import upsert_features_entry
 from _state import read_json, write_json
 from _tasks import (
+    list_tasks,
     merge_list,
     new_task,
-    next_backlog_id,
     next_task_id,
     pop_item,
     print_task_created,
@@ -43,67 +54,210 @@ def cmd_create_task(args: argparse.Namespace, kind: str) -> int:
 
 
 def cmd_backlog_add(args: argparse.Namespace) -> int:
-    data = read_json(BACKLOG_FILE, {"schemaVersion": 1, "items": []})
-    item_id = next_backlog_id(data.get("items", []))
-    item = {
-        "id": item_id,
-        "title": args.title,
-        "context": args.context,
-        "status": "Backlog",
-        "createdAt": today(),
-        "updatedAt": today(),
-    }
-    data.setdefault("items", []).insert(0, item)
-    write_json(BACKLOG_FILE, data)
-    print(f"{item_id} added to backlog: {args.title}")
+    """Cria uma task com `status=Backlog` em tasks.json (ADR-0011 Fase 2).
+
+    Nao escreve em backlog.json. Nao chama upsert_features_entry - itens
+    em backlog ficam de fora do catalogo de FEATURES.md ate serem
+    promovidos (cmd_promote ou ai start).
+    """
+    data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
+    task_id = next_task_id(KIND_FEATURE, data.get("tasks", []))
+    task = new_task(
+        task_id,
+        KIND_FEATURE,
+        args.title,
+        args.context,
+        f"Backlog ({today()})",
+        status=STATUS_BACKLOG,
+    )
+    data.setdefault("tasks", []).insert(0, task)
+    write_json(TASKS_FILE, data)
+    print(f"{task_id} added to backlog: {args.title}")
     return 0
 
 
 def cmd_backlog_list(_args: argparse.Namespace) -> int:
-    data = read_json(BACKLOG_FILE, {"schemaVersion": 1, "items": []})
-    for item in data.get("items", []):
+    """Lista todo o backlog: tasks com status=Backlog em tasks.json +
+    itens legacy em backlog.json (B-NNN)."""
+    # Novas entradas (ADR-0011 Fase 2): tasks.json com status=Backlog.
+    backlog_tasks = list_tasks(status=STATUS_BACKLOG)
+    for task in backlog_tasks:
+        print(f"{task['id']} [Backlog] {task['title']}")
+
+    # Legacy: backlog.json (B-NNN). Permanece read-only ate `backlog migrate`.
+    legacy = read_json(BACKLOG_FILE, {"schemaVersion": 1, "items": []})
+    for item in legacy.get("items", []):
         print(f"{item['id']} [{item['status']}] {item['title']}")
     return 0
 
 
-def _create_promoted_task(args: argparse.Namespace, item: dict[str, Any]) -> dict[str, Any]:
+def cmd_backlog_migrate(args: argparse.Namespace) -> int:
+    """Move itens legacy de backlog.json para tasks.json preservando ID.
+
+    Por default e dry-run: lista o que seria migrado sem escrever. Com
+    `--force` aplica: cada item B-NNN vira uma task com mesmo id,
+    `status=Backlog`, `kind=feature`. backlog.json e esvaziado apos
+    migracao com sucesso. Idempotente: se um id ja existe em tasks.json,
+    pula (avisa no stderr).
+    """
+    legacy = read_json(BACKLOG_FILE, {"schemaVersion": 1, "items": []})
+    items = legacy.get("items", [])
+    if not items:
+        print("Nenhum item legacy em backlog.json para migrar.")
+        return 0
+
+    tasks_data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
+    existing_ids = {task.get("id") for task in tasks_data.get("tasks", [])}
+
+    to_migrate: list[dict[str, Any]] = []
+    skipped: list[str] = []
+    for item in items:
+        if item.get("id") in existing_ids:
+            skipped.append(item["id"])
+            continue
+        to_migrate.append(item)
+
+    if args.dry_run or not args.force:
+        print(
+            f"dry-run: {len(to_migrate)} item(s) seriam migrados; "
+            f"{len(skipped)} ja em tasks.json (pulariam)."
+        )
+        for item in to_migrate:
+            print(f"  + {item['id']} -> tasks.json (status=Backlog, kind={KIND_FEATURE})")
+        for sid in skipped:
+            print(f"  ~ {sid} ja presente em tasks.json, pulado")
+        print("\nUse --force para aplicar.")
+        return 0
+
+    for item in to_migrate:
+        task = new_task(
+            item["id"],
+            KIND_FEATURE,
+            item.get("title", ""),
+            item.get("context", ""),
+            f"Backlog legacy migrado ({today()})",
+            status=STATUS_BACKLOG,
+        )
+        # Preservar createdAt original do backlog item, se houver.
+        if item.get("createdAt"):
+            task["createdAt"] = item["createdAt"]
+        tasks_data.setdefault("tasks", []).insert(0, task)
+
+    write_json(TASKS_FILE, tasks_data)
+    legacy["items"] = []
+    write_json(BACKLOG_FILE, legacy)
+
+    print(
+        f"Migrados {len(to_migrate)} item(s) para tasks.json (status=Backlog). "
+        f"{len(skipped)} pulado(s) (id ja em tasks.json). "
+        f"backlog.json esvaziado."
+    )
+    return 0
+
+
+def _find_backlog_source(
+    backlog_id: str,
+) -> tuple[str, dict[str, Any]] | None:
+    """Localiza um item de backlog em tasks.json (status=Backlog) ou
+    backlog.json legacy. Retorna (source, item) onde source e 'tasks' ou
+    'legacy', ou None se nao achar.
+    """
+    for task in list_tasks(status=STATUS_BACKLOG):
+        if task.get("id") == backlog_id:
+            return ("tasks", task)
+    legacy = read_json(BACKLOG_FILE, {"schemaVersion": 1, "items": []})
+    for item in legacy.get("items", []):
+        if item.get("id") == backlog_id:
+            return ("legacy", item)
+    return None
+
+
+def _promoted_summary(args: argparse.Namespace, source_id: str) -> list[str]:
+    summary: list[str] = [f"Backlog {source_id} promovido via ai-process."]
+    if args.assessment:
+        summary.append(f"Avaliacao IA: {args.assessment[0]}")
+    return summary
+
+
+def _new_promoted_task(
+    args: argparse.Namespace, item: dict[str, Any]
+) -> dict[str, Any]:
+    """Cria uma task em desenvolvimento a partir de um item de backlog
+    legacy (backlog.json). ID novo D-NNN; preserva backlogId original."""
     data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
     task_id = next_task_id(args.kind, data.get("tasks", []))
     title = args.title or f"{item['id']}: {item['title']}"
     context = args.context or f"Backlog {item['id']}: {item.get('context') or item['title']}"
-    task = new_task(task_id, args.kind, title, context, f"Backlog {item['id']} ({today()})")
+    task = new_task(
+        task_id,
+        args.kind,
+        title,
+        context,
+        f"Backlog {item['id']} ({today()})",
+    )
     task["backlogId"] = item["id"]
     task["assessment"] = args.assessment
     task["executionPlan"] = args.plan
-    task["summary"] = ["Backlog promovido via ai-process."]
-    if args.assessment:
-        merge_list(task, "summary", [f"Avaliacao IA: {args.assessment[0]}"])
+    task["summary"] = _promoted_summary(args, item["id"])
+    if args.plan:
+        merge_list(task, "pending", ["Executar plano aprovado antes da implementacao."])
+    return task
+
+
+def _promote_existing_task(
+    args: argparse.Namespace, task: dict[str, Any]
+) -> dict[str, Any]:
+    """Promove uma task ja em tasks.json (status=Backlog) para
+    Em desenvolvimento (ADR-0011 Fase 2). Preserva o id."""
+    task["status"] = STATUS_IN_DEVELOPMENT
+    task["kind"] = args.kind
+    task["updatedAt"] = today()
+    if args.title:
+        task["title"] = args.title
+    if args.context:
+        task["context"] = args.context
+    task["origin"] = f"Backlog {task['id']} promovido ({today()})"
+    task["assessment"] = args.assessment
+    task["executionPlan"] = args.plan
+    task["modifiedFiles"] = list(set(task.get("modifiedFiles", []) + ["FEATURES.md"]))
+    merge_list(task, "summary", _promoted_summary(args, task["id"]))
     if args.plan:
         merge_list(task, "pending", ["Executar plano aprovado antes da implementacao."])
     return task
 
 
 def cmd_promote(args: argparse.Namespace) -> int:
-    backlog = read_json(BACKLOG_FILE, {"schemaVersion": 1, "items": []})
-    items = backlog.get("items", [])
-    item = next((it for it in items if it.get("id") == args.backlog_id), None)
-    if item is None:
+    found = _find_backlog_source(args.backlog_id)
+    if found is None:
         raise SystemExit(MSG_BACKLOG_ITEM_NOT_FOUND.format(id=args.backlog_id))
 
-    # Build everything BEFORE mutating disk. Only the worktree command
-    # actually touches the filesystem early; if it fails, we abort here
-    # without having popped the backlog item.
-    task = _create_promoted_task(args, item)
-    if args.worktree:
-        attach_worktree(task, args, item)
+    source, item = found
+    if source == "tasks":
+        # Build task in-place no tasks.json (preserva ID original).
+        task = _promote_existing_task(args, item)
+        if args.worktree:
+            attach_worktree(task, args, item)
 
-    # Now persist: pop backlog, append task, set current, upsert MD.
-    pop_item(items, args.backlog_id)
-    write_json(BACKLOG_FILE, backlog)
+        # Re-escreve tasks.json com a task mutada.
+        tasks_data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
+        for idx, existing in enumerate(tasks_data.get("tasks", [])):
+            if existing.get("id") == task["id"]:
+                tasks_data["tasks"][idx] = task
+                break
+        write_json(TASKS_FILE, tasks_data)
+    else:
+        # Legacy: cria task nova com D-NNN e remove de backlog.json.
+        task = _new_promoted_task(args, item)
+        if args.worktree:
+            attach_worktree(task, args, item)
 
-    tasks_data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
-    tasks_data.setdefault("tasks", []).insert(0, task)
-    write_json(TASKS_FILE, tasks_data)
+        legacy = read_json(BACKLOG_FILE, {"schemaVersion": 1, "items": []})
+        pop_item(legacy.get("items", []), args.backlog_id)
+        write_json(BACKLOG_FILE, legacy)
+
+        tasks_data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
+        tasks_data.setdefault("tasks", []).insert(0, task)
+        write_json(TASKS_FILE, tasks_data)
 
     set_current_task(task)
     upsert_features_entry(task)
@@ -117,5 +271,6 @@ __all__ = [
     "cmd_create_task",
     "cmd_backlog_add",
     "cmd_backlog_list",
+    "cmd_backlog_migrate",
     "cmd_promote",
 ]

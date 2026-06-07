@@ -32,11 +32,11 @@ from _constants import (
     MSG_DEFAULT_TASK_PENDING,
     MSG_NO_CURRENT_TASK,
     MSG_TASK_NOT_FOUND,
-    PREFIX_BACKLOG,
     PREFIX_DEMANDA,
     PREFIX_FEATURE,
     PREFIX_ISSUE,
     PROCESS_FILE,
+    STATUS_BACKLOG,
     STATUS_IN_DEVELOPMENT,
     STATUS_TAGS,
     TASK_HEADING_RE,
@@ -46,21 +46,38 @@ from _constants import (
 from _state import read_json, read_text, write_json
 
 
-def new_task(task_id: str, kind: str, title: str, context: str, origin: str) -> dict[str, Any]:
-    return {
+def new_task(
+    task_id: str,
+    kind: str,
+    title: str,
+    context: str,
+    origin: str,
+    status: str = STATUS_IN_DEVELOPMENT,
+) -> dict[str, Any]:
+    """Build a fresh task dict.
+
+    `status` defaults to `STATUS_IN_DEVELOPMENT` (preserva comportamento de
+    feature/issue/promote). Backlog (ADR-0011 Fase 2) cria a task ja com
+    `status=STATUS_BACKLOG` - nao houve implementacao ainda, entao tambem
+    nao listamos `modifiedFiles` nem semeamos `summary`/`pending` com
+    defaults de implementacao.
+    """
+    is_backlog = status == STATUS_BACKLOG
+    task: dict[str, Any] = {
         "id": task_id,
         "kind": kind,
         "title": title,
-        "status": STATUS_IN_DEVELOPMENT,
+        "status": status,
         "origin": origin,
         "context": context or title,
         "createdAt": today(),
         "updatedAt": today(),
-        "modifiedFiles": [FEATURES_FILE.name],
-        "summary": [MSG_DEFAULT_TASK_CREATED],
+        "modifiedFiles": [] if is_backlog else [FEATURES_FILE.name],
+        "summary": [] if is_backlog else [MSG_DEFAULT_TASK_CREATED],
         "validations": [],
-        "pending": [MSG_DEFAULT_TASK_PENDING],
+        "pending": [] if is_backlog else [MSG_DEFAULT_TASK_PENDING],
     }
+    return task
 
 
 def _number_from_id(value: str, prefix: str) -> int | None:
@@ -97,13 +114,6 @@ def next_task_id(_kind: str, tasks: list[dict[str, Any]]) -> str:
         numbers.extend(_numbers_from_features(prefix))
     next_number = max(numbers, default=0) + 1
     return f"{PREFIX_DEMANDA}-{next_number:03d}"
-
-
-def next_backlog_id(items: list[dict[str, Any]]) -> str:
-    numbers = [_number_from_id(item.get("id", ""), PREFIX_BACKLOG) for item in items]
-    valid = [n for n in numbers if n is not None]
-    next_number = max(valid, default=0) + 1
-    return f"{PREFIX_BACKLOG}-{next_number:03d}"
 
 
 def find_task(task_id: str) -> dict[str, Any] | None:
@@ -225,7 +235,6 @@ def print_task_created(task: dict[str, Any]) -> None:
 __all__ = [
     "new_task",
     "next_task_id",
-    "next_backlog_id",
     "find_task",
     "find_task_or_current",
     "save_task",

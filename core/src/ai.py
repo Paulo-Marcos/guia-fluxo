@@ -45,6 +45,7 @@ from _clock import today  # noqa: E402
 from _cli_creation import (  # noqa: E402
     cmd_backlog_add,
     cmd_backlog_list,
+    cmd_backlog_migrate,
     cmd_create_task,
     cmd_promote,
 )
@@ -236,6 +237,21 @@ def build_parser() -> argparse.ArgumentParser:
     p_backlog_add.set_defaults(func=cmd_backlog_add)
     p_backlog_list = backlog_sub.add_parser("list", help="List backlog items.")
     p_backlog_list.set_defaults(func=cmd_backlog_list)
+    p_backlog_migrate = backlog_sub.add_parser(
+        "migrate",
+        help="Move legacy B-NNN de backlog.json para tasks.json (ADR-0011 Fase 2).",
+    )
+    p_backlog_migrate.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Lista o que seria migrado sem escrever. Default.",
+    )
+    p_backlog_migrate.add_argument(
+        "--force",
+        action="store_true",
+        help="Aplica a migracao (move B-NNN para tasks.json e esvazia backlog.json).",
+    )
+    p_backlog_migrate.set_defaults(func=cmd_backlog_migrate)
     p_backlog_promote = backlog_sub.add_parser("promote", help="Promote backlog item.")
     p_backlog_promote.add_argument("backlog_id")
     p_backlog_promote.add_argument("--kind", choices=[KIND_FEATURE, KIND_ISSUE], default=KIND_FEATURE)
