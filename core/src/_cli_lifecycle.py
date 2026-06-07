@@ -28,10 +28,12 @@ from _constants import (
     PROCESS_FILE,
     ROOT,
     STATUS_AWAITING_VALIDATION,
+    STATUS_BACKLOG,
     STATUS_BLOCKED,
     STATUS_CANCELLED,
     STATUS_FINISHED,
     STATUS_IN_DEVELOPMENT,
+    STATUS_PLANNED,
     STATUS_VALIDATED,
     TASKS_FILE,
 )
@@ -197,6 +199,88 @@ def cmd_cancel(args: argparse.Namespace) -> int:
         _clear_current_if_matches(task["id"])
 
     print(f"{task['id']} cancelled: {args.reason}")
+    print_chat_title(task)
+    return 0
+
+
+_PLAN_VALID_FROM = frozenset({STATUS_BACKLOG, STATUS_IN_DEVELOPMENT})
+_START_VALID_FROM = frozenset({STATUS_BACKLOG, STATUS_PLANNED})
+
+
+def _attach_features_md(task: dict[str, Any]) -> None:
+    """Inclui FEATURES.md em modifiedFiles quando a task sai do backlog
+    e passa a aparecer no catalogo (idempotente)."""
+    files = list(task.get("modifiedFiles", []))
+    if "FEATURES.md" not in files:
+        files.append("FEATURES.md")
+    task["modifiedFiles"] = files
+
+
+def cmd_plan(args: argparse.Namespace) -> int:
+    """Move task para `Planejada` (B-017). Aceita Backlog ou
+    Em desenvolvimento como ponto de partida. Rejeita estados terminais
+    e Aguardando validacao (use cancel/finish em vez disso)."""
+    task = find_task_or_current(args.task_id)
+    if task["status"] == STATUS_PLANNED:
+        raise SystemExit(f"Task {task['id']} ja esta Planejada.")
+    if task["status"] not in _PLAN_VALID_FROM:
+        valid = ", ".join(sorted(_PLAN_VALID_FROM))
+        raise SystemExit(
+            f"Task {task['id']} esta em '{task['status']}' - "
+            f"plan so aceita transicao de [{valid}]."
+        )
+
+    coming_from_backlog = task["status"] == STATUS_BACKLOG
+    task["status"] = STATUS_PLANNED
+    note = f"Planejada em {today()}"
+    if args.note:
+        note = f"{note}: {args.note}"
+    note += "."
+    merge_list(task, "summary", [note])
+    if coming_from_backlog:
+        _attach_features_md(task)
+
+    save_task(task)
+    set_current_task(task)
+    upsert_features_entry(task)
+    write_report(task, "plan")
+
+    print(f"{task['id']} planned.")
+    print_chat_title(task)
+    return 0
+
+
+def cmd_start(args: argparse.Namespace) -> int:
+    """Move task para `Em desenvolvimento`. Aceita Backlog (atalho que
+    pula Planejada) ou Planejada. Diferente de `promote`: aqui nao
+    avalia kind nem ajusta backlogId - assume que a triagem ja foi feita.
+    Use `promote` quando ainda precisa decidir feature/bug/chore."""
+    task = find_task_or_current(args.task_id)
+    if task["status"] == STATUS_IN_DEVELOPMENT:
+        raise SystemExit(f"Task {task['id']} ja esta Em desenvolvimento.")
+    if task["status"] not in _START_VALID_FROM:
+        valid = ", ".join(sorted(_START_VALID_FROM))
+        raise SystemExit(
+            f"Task {task['id']} esta em '{task['status']}' - "
+            f"start so aceita transicao de [{valid}]."
+        )
+
+    coming_from_backlog = task["status"] == STATUS_BACKLOG
+    task["status"] = STATUS_IN_DEVELOPMENT
+    note = f"Em desenvolvimento desde {today()}"
+    if args.note:
+        note = f"{note}: {args.note}"
+    note += "."
+    merge_list(task, "summary", [note])
+    if coming_from_backlog:
+        _attach_features_md(task)
+
+    save_task(task)
+    set_current_task(task)
+    upsert_features_entry(task)
+    write_report(task, "start")
+
+    print(f"{task['id']} started.")
     print_chat_title(task)
     return 0
 
@@ -403,6 +487,8 @@ __all__ = [
     "cmd_cancel",
     "cmd_block",
     "cmd_unblock",
+    "cmd_plan",
+    "cmd_start",
     "cmd_validate",
     "cmd_doctor",
 ]

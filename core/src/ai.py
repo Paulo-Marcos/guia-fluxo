@@ -59,6 +59,7 @@ _bootstrap_utf8_io()
 
 from _clock import today  # noqa: E402
 from _cli_creation import (  # noqa: E402
+    STATUS_CLI_CHOICES,
     cmd_backlog_add,
     cmd_backlog_list,
     cmd_backlog_migrate,
@@ -71,7 +72,9 @@ from _cli_lifecycle import (  # noqa: E402
     cmd_doctor,
     cmd_finish,
     cmd_init,
+    cmd_plan,
     cmd_ready,
+    cmd_start,
     cmd_status,
     cmd_unblock,
     cmd_validate,
@@ -92,6 +95,16 @@ def _add_task_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("title")
     parser.add_argument("--context", default="")
     parser.add_argument("--origin", default=f"AI process ({today()})")
+    parser.add_argument(
+        "--status",
+        choices=STATUS_CLI_CHOICES,
+        default="in-development",
+        help=(
+            "Status inicial da demanda (ADR-0011 Fase 3). "
+            "`backlog` = parqueada; `planned` = triada mas nao iniciada; "
+            "`in-development` (default) = comeca a implementacao agora."
+        ),
+    )
 
 
 def _add_promote_args(parser: argparse.ArgumentParser) -> None:
@@ -187,6 +200,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="Saida em JSON para consumo por agente.",
     )
     p_docs_check.set_defaults(func=cmd_docs_check)
+
+    p_plan = sub.add_parser(
+        "plan",
+        help="Mark task as Planejada (triada mas nao iniciada).",
+    )
+    p_plan.add_argument("task_id", nargs="?")
+    p_plan.add_argument(
+        "--note",
+        help="Anotacao opcional sobre o planejamento.",
+    )
+    p_plan.set_defaults(func=cmd_plan)
+
+    p_start = sub.add_parser(
+        "start",
+        help="Iniciar trabalho em uma task Planejada/Backlog (status -> Em desenvolvimento).",
+    )
+    p_start.add_argument("task_id", nargs="?")
+    p_start.add_argument(
+        "--note",
+        help="Anotacao opcional sobre o inicio do trabalho.",
+    )
+    p_start.set_defaults(func=cmd_start)
 
     p_cancel = sub.add_parser(
         "cancel",

@@ -25,8 +25,19 @@ from _constants import (
     MSG_BACKLOG_ITEM_NOT_FOUND,
     STATUS_BACKLOG,
     STATUS_IN_DEVELOPMENT,
+    STATUS_PLANNED,
     TASKS_FILE,
 )
+
+
+# Mapping CLI -> status interno. Mantem o vocabulario do parser amigavel
+# (in-development com hifen, planned sem acento) e isola a constante.
+_STATUS_FROM_CLI = {
+    "backlog": STATUS_BACKLOG,
+    "planned": STATUS_PLANNED,
+    "in-development": STATUS_IN_DEVELOPMENT,
+}
+STATUS_CLI_CHOICES = tuple(_STATUS_FROM_CLI.keys())
 from _features_md import upsert_features_entry
 from _state import read_json, write_json
 from _tasks import (
@@ -43,13 +54,20 @@ from _worktree import attach_worktree
 
 
 def cmd_create_task(args: argparse.Namespace, kind: str) -> int:
+    """Cria uma task. ADR-0011 Fase 3: aceita `--status backlog|planned|
+    in-development` (default in-development). Backlog nao entra em
+    FEATURES.md (consistente com cmd_backlog_add); Planejada e
+    Em desenvolvimento entram."""
+    status_cli = getattr(args, "status", "in-development") or "in-development"
+    status = _STATUS_FROM_CLI.get(status_cli, STATUS_IN_DEVELOPMENT)
     data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
     task_id = next_task_id(kind, data.get("tasks", []))
-    task = new_task(task_id, kind, args.title, args.context, args.origin)
+    task = new_task(task_id, kind, args.title, args.context, args.origin, status=status)
     data.setdefault("tasks", []).insert(0, task)
     write_json(TASKS_FILE, data)
     set_current_task(task)
-    upsert_features_entry(task)
+    if status != STATUS_BACKLOG:
+        upsert_features_entry(task)
     print_task_created(task)
     return 0
 
@@ -277,4 +295,5 @@ __all__ = [
     "cmd_backlog_list",
     "cmd_backlog_migrate",
     "cmd_promote",
+    "STATUS_CLI_CHOICES",
 ]

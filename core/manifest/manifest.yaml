@@ -120,3 +120,21 @@ verbs:
         body_file: bodies/unblock.agent.md
       claude_skill:
         body_file: bodies/unblock.claude.md
+
+  plan:
+    description: |
+      PLAN — marca task como `Planejada` (triada mas nao iniciada). Triggered by /plan or "$plan" / "planejar tarefa / triagem feita / aguardar para comecar". Aceita transicao de Backlog (item parqueado que ganhou prioridade) ou de Em desenvolvimento (despriorizado mas ja conhecido). Do NOT use for: comecar trabalho agora (use $start ou $promote), guardar ideia sem decidir (use $backlog), ou entregar pra validacao (use $ready).
+    targets:
+      agent_skill:
+        body_file: bodies/plan.agent.md
+      claude_skill:
+        body_file: bodies/plan.claude.md
+
+  start:
+    description: |
+      START — comeca trabalho em uma task Planejada ou diretamente Backlog (status -> Em desenvolvimento). Triggered by /start or "$start" / "comecar tarefa / iniciar trabalho / bora codar". Diferente de $promote: assume triagem feita (kind ja decidido). Falha se task ja Em desenvolvimento ou terminal. Do NOT use for: criar nova task do zero (use $feature ou $issue), triar backlog item (use $promote), ou retomar pausa (use $unblock).
+    targets:
+      agent_skill:
+        body_file: bodies/start.agent.md
+      claude_skill:
+        body_file: bodies/start.claude.md
