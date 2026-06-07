@@ -7,6 +7,14 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- **Modelo de demanda redesenhado (ADR-0011, onda F-030 -> D-045, B-017).** Cinco fases consecutivas implementam o ADR-0011 e entregam tambem B-017. **ID neutro `D-NNN`** (kind nao muda ID; legacy `F-NNN`/`I-NNN`/`B-NNN` continuam navegaveis). **`kind` plural**: `feature`, `bug`, `chore` — `issue` foi removido como verbo/skill (tasks antigas com `kind=issue` renderizam como "Bug (legacy)"). **Backlog como `status`** dentro de `tasks.json` (deixou de ser arquivo paralelo); `backlog.json` legacy fica read-only com `backlog migrate` para absorcao opt-in. **Status `Planejada`** com verbos `plan` (Backlog/Em desenvolvimento -> Planejada) e `start` (Backlog/Planejada -> Em desenvolvimento). **`--status backlog|planned|in-development`** em todos os verbos criadores. **Marcadores visuais (emoji)** por kind em chat-title, listings e FEATURES.md headings: ✨ feature, 🐛 bug, 🧹 chore. **UTF-8 forcado** em stdout/stderr para console Windows cp1252. Tasks de entrega: F-030 (fundacao), D-033 (backlog absorvido), D-035 (emojis), D-039 (Planejada + plan/start, entrega B-017), D-042 (bug+chore, remove issue), D-045 (docs + ADR-0011 Aceita).
+
+### Changed
+- **Vocabulario quebrado:** `ai issue` e `/ai:issue` foram removidos limpamente — use `ai bug` e `/ai:bug`. **Quebra de superficie reconhecida e aceita** (decisao D2 da onda). Commit padrao migra: `feature:`/`bug:`/`chore:` em vez de `feature:`/`issue:`. `tasks filter --kind` aceita `issue` como filtro legacy.
+- **ADR-0011 movido de `Proposta` para `Aceita`** com secao "Como foi implementado" listando as 6 tasks de entrega e as 3 decisoes operacionais (D1=sem migracao de IDs antigos, D2=troca limpa de issue por bug, D3=5 fases sequenciais).
+- **ADR-0010 ganhou 5 prefixos canonicos novos** (`TERMINAL CANCEL`, `PAUSE in-flight task`, `RESUME a paused task`, `PLAN`, `START`) introduzidos por F-027 / F-029 / D-039. Tabela agora tem 12 prefixos.
+
+### Added
 - **ADR-0009 (YAML para manifest) e ADR-0010 (prefixos de trigger) (F-022).** Endereca achados 1.Q1 e 1.6 da auditoria F-014. ADR-0009 documenta retroativamente a escolha de YAML para o manifest, incluindo o caso do PyYAML 1.1 que parseia `on:` como `True` (ja ha workaround em `_docs_hook._trigger_reason`), e enumera quando reconsiderar. ADR-0010 formaliza os 7 prefixos canonicos das descriptions (`PRIMARY TRIGGER`, `DEFER-AND-PARK`, `EVALUATE-AND-CONVERT`, `HANDOFF`, `CLOSE`, `READ-ONLY`, `REFERENCE/BACKGROUND ONLY`) instituidos por F-003 mas que so viviam em commit log + PR original.
 
 ### Changed

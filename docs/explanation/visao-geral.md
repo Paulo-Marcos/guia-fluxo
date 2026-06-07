@@ -15,20 +15,39 @@ O ai-process-pack transforma pedidos soltos em demandas rastreaveis usando scrip
 
 Cada uma tem responsabilidade distinta e nenhuma sobrepoe a outra. A skill nunca escreve no JSON diretamente - ela chama o script. O JSON nunca e editado a mao - quem altera e o script.
 
+## Modelo de demanda (ADR-0011, entregue em 2026-06-07)
+
+Toda demanda tem dois eixos ortogonais:
+
+- **`kind`**: o tipo. `feature` (capacidade nova), `bug` (defeito ou regressao), `chore` (manutencao sem mudanca de comportamento). Cada um tem emoji proprio em todas as superficies de display: ✨ feature, 🐛 bug, 🧹 chore.
+- **`status`**: onde a demanda esta no ciclo de vida. `Backlog` (parqueada), `Planejada` (triada mas nao iniciada), `Em desenvolvimento`, `Aguardando validacao`, `Validada`/`Finalizada`. Estados auxiliares: `Bloqueada` (pausada com WIP) e `Cancelada` (terminal, nao volta).
+
+IDs sao neutros (`D-NNN`) — renomear o `kind` de uma demanda nao muda o ID. IDs legacy (`F-NNN`, `I-NNN`, `B-NNN`) continuam navegaveis. Tasks com `kind=issue` (do mundo pre-Fase-4) sao renderizadas como "Bug (legacy)" com emoji 🐛.
+
+```
+Backlog ──┬──> Planejada ──> Em desenvolvimento ──> Aguardando validacao ──> Validada
+          │                          ▲    │
+          └────── start ────────────>┘    ├──> Bloqueada ──> (volta com unblock)
+                                          └──> Cancelada (terminal)
+```
+
 ## Fluxo recomendado
 
-1. Comece com `/feature`, `/issue` ou `/backlog add`.
-2. O script cria o ID, atualiza `.ai/tasks.json`, `.ai/current-task.json` e `FEATURES.md`.
-3. O script sempre imprime `NOME DO CHAT: ...` e grava `.ai/chat-title.txt`.
+1. Comece com `/feature`, `/bug`, `/chore` ou `/backlog add`. Use `--status backlog|planned|in-development` para criar ja parqueado/triado.
+2. O script cria o ID `D-NNN`, atualiza `.ai/tasks.json`, `.ai/current-task.json` e `FEATURES.md` (exceto se `status=Backlog`, que fica fora do catalogo ate ser promovido).
+3. O script sempre imprime `NOME DO CHAT: D-NNN <emoji> - #<statusTag> - <title>` e grava `.ai/chat-title.txt`.
 4. O agente repete esse nome no chat e executa a renomeacao real quando a ferramenta expuser API ou comando de sessao.
-5. Durante a implementacao, o agente registra arquivos e validacoes.
-6. `/ready <ID>` move para `Aguardando validacao`.
-7. Humano testa em uso real.
-8. Antes de fechar, o agente roda `docs-check`: le `.ai/docs-map.yaml` e lista docs vivos a atualizar. Quando ha mapa, o `finish` bloqueia ate o agente registrar `--docs-touched`/`--docs-skip`. Sem mapa, vira no-op. Veja [`por-que-docs-hook.md`](por-que-docs-hook.md).
-9. `/finish <ID>` marca `Validada`, sugere `#FINALIZADO` e commita por padrao.
-10. Se quiser travar, use `finish --lock --lock-id <slug>`.
+5. Para itens em backlog: `/promote <id> --kind feature|bug|chore` (avalia + comeca) ou `/start <id>` (atalho, pressupoe triagem feita).
+6. Para pausar: `/block <id> --reason "..."` (preserva WIP) ou `/plan <id>` (volta para `Planejada`). Para retomar: `/unblock <id>` ou `/start <id>`.
+7. Para cancelar: `/cancel <id> --reason "..."` (terminal).
+8. Durante a implementacao, o agente registra arquivos e validacoes.
+9. `/ready <ID>` move para `Aguardando validacao` — disparado **pela IA** ao terminar de codar, nao pelo humano (ver [`bodies/ready`](../../core/manifest/bodies/ready.claude.md)).
+10. Humano testa em uso real.
+11. Antes de fechar, o agente roda `docs-check`: le `.ai/docs-map.yaml` e lista docs vivos a atualizar. Quando ha mapa, o `finish` bloqueia ate o agente registrar `--docs-touched`/`--docs-skip`. Sem mapa, vira no-op. Veja [`por-que-docs-hook.md`](por-que-docs-hook.md).
+12. `/finish <ID>` marca `Validada`, sugere `#FINALIZADO` e commita por padrao.
+13. Se quiser travar, use `finish --lock --lock-id <slug>`.
 
-`validate` ainda existe como subcomando do CLI por compatibilidade, mas o fluxo recomendado e `/ready` -> `/finish`.
+`validate` ainda existe como subcomando do CLI por compatibilidade, mas o fluxo recomendado e `/ready` -> `/finish`. O subcomando `issue` foi removido na Fase 4 do ADR-0011 — use `/bug`.
 
 ## Por que essa arquitetura
 

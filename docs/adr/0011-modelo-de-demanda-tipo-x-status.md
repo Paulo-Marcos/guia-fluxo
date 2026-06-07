@@ -1,7 +1,8 @@
 # ADR-0011: Repensar o modelo de demanda (tipo x status)
 
-- **Status:** Proposta
+- **Status:** Aceita
 - **Data:** 2026-06-06
+- **Implementada:** 2026-06-07 (onda de 5 fases)
 
 ## Contexto
 
@@ -91,6 +92,44 @@ como status adicionais sem precisar de tipo novo.
 - - **ADR registra a direcao, nao implementa.** Quem ler isto e abrir
   uma feature precisa ainda projetar a migracao - alarme: ate o
   refactor sair, motor continua misturando os eixos na superficie.
+
+## Como foi implementado
+
+Em 5 fases consecutivas, cada uma com seu proprio commit e validacao
+humana. Decisoes operacionais tomadas durante a execucao:
+
+- **Migracao de IDs legacy (decisao D1 = A):** F-NNN, I-NNN, B-NNN
+  existentes permanecem como estao. So tasks novas geram D-NNN. CLI
+  resolve qualquer prefixo via `find_task` direto no `id` salvo em
+  `tasks.json`. `next_task_id` usa `max(D, F, I) + 1` para evitar
+  colisao visual.
+- **Vocabulario `issue` (decisao D2 = troca limpa):** subcomando
+  `ai issue` e skill `/ai:issue` removidos sem alias. `KIND_ISSUE`
+  permanece em `_constants` apenas para legacy-read (tasks antigas
+  com `kind=issue` renderizam como "Bug (legacy)" com emoji 🐛).
+- **Ondas em sequencia (decisao D3 = 5 fases):** sem branch isolada;
+  cada fase mergeada na main com validacao humana entre elas.
+- **Diferenciacao visual:** alem do refactor, ganhou-se uma fase
+  extra (D-035) introduzindo `KIND_MARKERS` (emojis ✨🐛🧹) em
+  chat-title, listings e FEATURES.md. Preserva o ID neutro mas resolve
+  o "D-NNN e generico demais ao bater o olho".
+
+Tasks de entrega (todas Validadas em 2026-06-07):
+
+| Task | Fase | Cobertura |
+|---|---|---|
+| [F-030](../../FEATURES.md) | 1 | Fundacao: D-NNN + KIND_BUG/CHORE + STATUS_BACKLOG + TASK_HEADING_RE |
+| [D-033](../../FEATURES.md) | 2 | Backlog vira status em tasks.json; backlog.json legacy + migrate |
+| [D-035](../../FEATURES.md) | extra | Marcadores visuais (emoji) por kind |
+| [D-039](../../FEATURES.md) | 3 | Status Planejada + verbos plan/start (entrega tambem B-017) |
+| [D-042](../../FEATURES.md) | 4 | Troca limpa de issue por bug + introducao de chore |
+| [D-045](../../FEATURES.md) | 5 | Esta atualizacao de docs + ADR-0011 -> Aceita |
+
+Backlog items entregues junto: [B-017](../../FEATURES.md) (status
+Planejada). Backlog items que dependiam mas continuam abertos:
+[B-018](../../FEATURES.md) (current-task concorrente, refactor
+ortogonal), [B-011](../../FEATURES.md) ja foi obsoletado por F-027
+(verbo cancel).
 
 ## Alternativas consideradas
 

@@ -51,13 +51,34 @@ mecanica. Auditoria periodica pelo dev confirma aderencia.
 
 | Prefixo | Quando usar | Skills atuais |
 |---|---|---|
-| `PRIMARY TRIGGER for /<verbo>` | Verbo cria/avanca task imediatamente | `feature`, `issue` |
+| `PRIMARY TRIGGER for /<verbo>` | Verbo cria/avanca task imediatamente | `feature`, `bug`, `chore` |
 | `DEFER-AND-PARK skill` | Guarda futuro sem comecar implementacao | `backlog` |
 | `EVALUATE-AND-CONVERT one specific backlog item` | Avalia 1 backlog item especifico | `promote` |
 | `HANDOFF to developer validation` | Entrega para validacao sem fechar | `ready` |
 | `CLOSE an ALREADY-validated task` | Fecha task ja validada | `finish` |
 | `READ-ONLY` | Inspeciona, nao muda estado | `status` |
 | `REFERENCE/BACKGROUND ONLY` | Carrega contexto, nao e gatilho direto | `ai-process` |
+| `TERMINAL CANCEL` | Encerra task como `Cancelada` (terminal) | `cancel` |
+| `PAUSE in-flight task` | Pausa preservando WIP (status `Bloqueada`) | `block` |
+| `RESUME a paused task` | Sai de `Bloqueada` para `Em desenvolvimento` | `unblock` |
+| `PLAN` | Marca como `Planejada` (triada mas nao iniciada) | `plan` |
+| `START` | Comeca trabalho (Backlog/Planejada -> `Em desenvolvimento`) | `start` |
+
+### Addendum (F-027, F-029, D-039, D-042)
+
+5 prefixos novos foram adicionados acima depois do ADR original:
+- `TERMINAL CANCEL` em F-027 ([cancel](../../core/manifest/manifest.yaml)).
+- `PAUSE in-flight task` + `RESUME a paused task` em F-029 ([block/unblock](../../core/manifest/manifest.yaml)).
+- `PLAN` + `START` em D-039 ([plan/start](../../core/manifest/manifest.yaml)), parte da Fase 3 do ADR-0011 e tambem entrega B-017.
+
+Mudanca tambem em D-042 (Fase 4 do ADR-0011): a skill `issue` foi
+removida; o prefixo `PRIMARY TRIGGER for /<verbo>` agora cobre
+`feature`, `bug` (novo) e `chore` (novo) em vez de `feature`+`issue`.
+
+Politica continua a mesma: descricoes comecam com um destes 12 prefixos,
+explicam o gatilho em 2-4 linhas e terminam com `Do NOT use for: ...`
+listando vizinhos confundiveis. Renderer continua sem validacao
+mecanica; convencao social entre editores.
 
 ## Consequencias
 

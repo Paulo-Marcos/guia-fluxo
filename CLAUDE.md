@@ -10,18 +10,23 @@ Windows, PowerShell. Use sintaxe PowerShell nos comandos: `$null`, `$env:VAR`, b
 
 Este repo **e um plugin Claude Code oficial**: `dist/.claude-plugin/plugin.json` expoe as skills sob namespace `ai`. Quando o usuario digitar uma das shims abaixo, dispare a skill correspondente em `dist/skills/<verbo>/SKILL.md`. **Nao reimplemente a logica inline** - cada shim ja chama `core/src/ai.py` corretamente via `core/bin/ai.ps1`.
 
-| Atalho | Skill | Quando usar |
-| --- | --- | --- |
-| `/ai:feature` | `feature` | Nova capacidade pedida explicitamente. |
-| `/ai:issue` | `issue` | Bug, regressao ou divida tecnica curta. |
-| `/ai:backlog` | `backlog` | Ideia futura, sem prazo / sem decisao tomada. |
-| `/ai:promote` | `promote` | Converter item de backlog em feature/issue ja avaliado. |
-| `/ai:ready` | `ready` | Implementacao pronta para validacao humana. **A IA dispara, nao o humano.** |
-| `/ai:finish` | `finish` | Validacao confirmada, fechar e (opcional) travar. |
-| `/ai:status` | `status` | Inspecao da task atual. |
-| `/ai:cancel` | `cancel` | Encerrar task como Cancelada (terminal). Exige `--reason`. |
-| `/ai:block` | `block` | Pausar task preservando WIP. Exige `--reason`. |
-| `/ai:unblock` | `unblock` | Retomar task pausada. |
+| Atalho | Skill | Emoji | Quando usar |
+| --- | --- | --- | --- |
+| `/ai:feature` | `feature` | ✨ | Nova capacidade pedida explicitamente. |
+| `/ai:bug` | `bug` | 🐛 | Defeito, regressao, comportamento incorreto. |
+| `/ai:chore` | `chore` | 🧹 | Manutencao sem mudanca de comportamento (refactor pequeno, deps, build/lint). |
+| `/ai:backlog` | `backlog` | — | Ideia futura. `add` parqueia; `list` une fontes; `migrate` move legacy `B-NNN`. |
+| `/ai:promote` | `promote` | — | Converter item de backlog em demanda triada (avalia kind + plano antes de comecar). |
+| `/ai:plan` | `plan` | — | Marcar task como `Planejada` (triada mas nao iniciada). Aceita transicao de Backlog/Em desenvolvimento. |
+| `/ai:start` | `start` | — | Comecar trabalho em task Planejada/Backlog (status -> Em desenvolvimento). |
+| `/ai:ready` | `ready` | — | Implementacao pronta para validacao humana. **A IA dispara, nao o humano.** |
+| `/ai:finish` | `finish` | — | Validacao confirmada, fechar e (opcional) travar. |
+| `/ai:status` | `status` | — | Inspecao da task atual (read-only). |
+| `/ai:cancel` | `cancel` | — | Encerrar task como Cancelada (terminal). Exige `--reason`. |
+| `/ai:block` | `block` | — | Pausar task preservando WIP. Exige `--reason`. |
+| `/ai:unblock` | `unblock` | — | Retomar task pausada. |
+
+> **Removido na Fase 4 do ADR-0011 (2026-06-07):** `/ai:issue` deixou de existir; use `/ai:bug`. Tasks antigas com `kind=issue` continuam navegaveis (renderizam como "Bug (legacy)" 🐛). IDs novos sao `D-NNN` neutros (ADR-0011); legacy `F-NNN`/`I-NNN`/`B-NNN` continuam aceitos como entrada.
 
 A skill mae `ai-process` em `dist/skills/ai-process/SKILL.md` carrega contexto compartilhado. Descriptions foram diferenciadas em F-003 para evitar trigger collision - confie no roteador e nao force uma skill diferente da que o usuario invocou.
 

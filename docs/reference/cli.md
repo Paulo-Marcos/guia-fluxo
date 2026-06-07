@@ -23,40 +23,79 @@ Sanity check: confirma layout, dependencias e que os arquivos esperados existem.
 ### `feature`
 
 ```powershell
-.\core\bin\ai.ps1 feature "Titulo curto" --context "Motivo e escopo"
+.\core\bin\ai.ps1 feature "Titulo curto" --context "Motivo e escopo" `
+    [--status backlog|planned|in-development]
 ```
 
-Cria `F-NNN`, atualiza `.ai/tasks.json`, `.ai/current-task.json` e `FEATURES.md`. Imprime `NOME DO CHAT: F-NNN - #DEV - ...`.
+Cria `D-NNN` com `kind=feature` (emoji ✨), atualiza `.ai/tasks.json`, `.ai/current-task.json` e `FEATURES.md`. Imprime `NOME DO CHAT: D-NNN ✨ - #DEV - ...`.
 
-### `issue`
+`--status` (ADR-0011 Fase 3) controla o estado inicial: `backlog` parqueia sem catalogar; `planned` triada mas nao iniciada; `in-development` (default) ja em curso.
+
+### `bug`
 
 ```powershell
-.\core\bin\ai.ps1 issue "Bug observado" --context "Sintoma e impacto"
+.\core\bin\ai.ps1 bug "Sintoma curto" --context "Impacto e reproducao" `
+    [--status backlog|planned|in-development]
 ```
 
-Cria `I-NNN`. Demais comportamentos identicos ao `feature`.
+Cria `D-NNN` com `kind=bug` (emoji 🐛). Substitui o antigo `issue`, removido na Fase 4 do ADR-0011 — o nome `issue` colidia com o sentido guarda-chuva da industria.
+
+### `chore`
+
+```powershell
+.\core\bin\ai.ps1 chore "Titulo curto" --context "O que e por que" `
+    [--status backlog|planned|in-development]
+```
+
+Cria `D-NNN` com `kind=chore` (emoji 🧹). Use para manutencao que merece rastro mas nao e feature nem bug: refactor pequeno, atualizar dependencia, ajustar build/lint, organizar pasta.
 
 ### `backlog`
 
 ```powershell
 .\core\bin\ai.ps1 backlog add "Ideia futura" --context "Quando pode ser util"
 .\core\bin\ai.ps1 backlog list
+.\core\bin\ai.ps1 backlog migrate [--dry-run] [--force]
 ```
 
-`add` cria `B-NNN` em `.ai/backlog.json`. `list` enumera o backlog atual.
+`add` cria `D-NNN` com `kind=feature` (default) e `status=Backlog` em `.ai/tasks.json` (ADR-0011 Fase 2: backlog.json deixou de ser source-of-truth para novas entradas). Nao entra em `FEATURES.md` ate ser promovido.
+
+`list` une fontes: `tasks.json` com `status=Backlog` primeiro, depois itens legacy de `backlog.json` (`B-NNN`).
+
+`migrate` (Fase 2): copia itens `B-NNN` legacy de `backlog.json` para `tasks.json` preservando o ID. `--dry-run` (default) so lista o plano; `--force` aplica e esvazia `backlog.json`. Idempotente: pula itens cujo ID ja existe em `tasks.json`.
 
 ### `promote`
 
 ```powershell
-.\core\bin\ai.ps1 promote B-NNN --kind {feature|issue} `
+.\core\bin\ai.ps1 promote <id> --kind {feature|bug|chore} `
     --assessment "Avaliacao curta" `
     --plan "Plano de execucao" `
     [--worktree]
 ```
 
-Promove item do backlog para feature ou issue. Quando `--worktree` e passado, `finish` removera a worktree associada.
+Promove um item de backlog para `Em desenvolvimento`. Aceita `<id>` em dois formatos: `D-NNN` (task em `tasks.json` com `status=Backlog`) ou `B-NNN` legacy (em `backlog.json`).
+
+- **D-NNN**: promote in-place. ID preservado; `status` muda para `Em desenvolvimento`; `kind` atualizado via `--kind`.
+- **B-NNN legacy**: cria task nova `D-NNN` com `backlogId=B-NNN` apontando para o legacy; o B-NNN e removido de `backlog.json`.
+
+Quando `--worktree` e passado, `finish` removera a worktree associada.
 
 **Importante:** o agente nao deve invocar `promote` sem antes seguir o fluxo de avaliacao. Ver [how-to/promover-backlog.md](../how-to/promover-backlog.md).
+
+### `plan`
+
+```powershell
+.\core\bin\ai.ps1 plan <id> [--note "Por que esta planejando"]
+```
+
+Move task para `Planejada` (triada mas nao iniciada — ADR-0011 Fase 3 / B-017). Aceita transicao de `Backlog` ou `Em desenvolvimento`. Falha em estados terminais ou se ja `Planejada`.
+
+### `start`
+
+```powershell
+.\core\bin\ai.ps1 start <id> [--note "Comecando agora porque..."]
+```
+
+Move task para `Em desenvolvimento`. Aceita transicao de `Backlog` (atalho que pula `Planejada`) ou `Planejada`. Pressupoe que a triagem (kind) ja foi feita — para triar avaliando feature/bug/chore, use `promote`.
 
 ### `status`
 
@@ -156,7 +195,7 @@ Ainda existe como subcomando do CLI por compatibilidade. Nao ha mais skill para 
 
 Wrapper de `core/build/render-skills.py`. Regenera as skills a partir de `core/manifest/manifest.yaml` em dois destinos:
 
-- `dist/skills/<verbo>/SKILL.md` - output oficial do plugin Claude Code (`dist/.claude-plugin/plugin.json`, namespace `ai`). Atalhos saem como `/ai:feature`, `/ai:issue`, etc.
+- `dist/skills/<verbo>/SKILL.md` - output oficial do plugin Claude Code (`dist/.claude-plugin/plugin.json`, namespace `ai`). Atalhos saem como `/ai:feature`, `/ai:bug`, `/ai:chore`, etc.
 - `dist/.agents/skills/<verbo>/SKILL.md` - convencao AGENTS.md cross-tool para Codex + Antigravity.
 
 Cada verbo do manifest emite dois arquivos. `--check` sai com codigo != 0 se qualquer um estiver fora de sincronia. `--verb <nome>` limita o render a um verbo especifico.
@@ -167,12 +206,20 @@ Os dois destinos sao distribuiveis: ao instalar o pack em outro projeto, copie `
 
 Os comandos acima sao expostos para agentes via skills/shims. No Claude Code (plugin oficial, namespace `ai`) os atalhos saem namespaced; em Codex/Antigravity (via `dist/.agents/skills/`) o nome curto continua valendo:
 
-| Alias Claude | Alias Codex/Antigravity | Subcomando |
-| --- | --- | --- |
-| `/ai:feature` | `/feature` ou `$feature` | `feature` |
-| `/ai:issue` | `/issue` ou `$issue` | `issue` |
-| `/ai:backlog` | `/backlog` ou `$backlog` | `backlog` |
-| `/ai:promote B-NNN` | `/promote` ou `$promote` | `promote` |
-| `/ai:ready` | `/ready` ou `$ready` | `ready` |
-| `/ai:finish` | `/finish` ou `$finish` | `finish` |
-| `/ai:status` | `/status` ou `$status` | `status` |
+| Alias Claude | Alias Codex/Antigravity | Subcomando | Emoji |
+| --- | --- | --- | --- |
+| `/ai:feature` | `/feature` ou `$feature` | `feature` | ✨ |
+| `/ai:bug` | `/bug` ou `$bug` | `bug` | 🐛 |
+| `/ai:chore` | `/chore` ou `$chore` | `chore` | 🧹 |
+| `/ai:backlog` | `/backlog` ou `$backlog` | `backlog` | — |
+| `/ai:promote <id>` | `/promote` ou `$promote` | `promote` | — |
+| `/ai:plan` | `/plan` ou `$plan` | `plan` | — |
+| `/ai:start` | `/start` ou `$start` | `start` | — |
+| `/ai:ready` | `/ready` ou `$ready` | `ready` | — |
+| `/ai:finish` | `/finish` ou `$finish` | `finish` | — |
+| `/ai:cancel` | `/cancel` ou `$cancel` | `cancel` | — |
+| `/ai:block` | `/block` ou `$block` | `block` | — |
+| `/ai:unblock` | `/unblock` ou `$unblock` | `unblock` | — |
+| `/ai:status` | `/status` ou `$status` | `status` | — |
+
+> **Removido na Fase 4 do ADR-0011 (2026-06-07):** `/ai:issue` e `ai issue` nao existem mais — use `/ai:bug`. Tasks legacy com `kind=issue` (ex.: `I-006`) continuam navegaveis e renderizam como "Bug (legacy)" 🐛 em FEATURES.md.
