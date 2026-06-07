@@ -2,6 +2,145 @@
 
 ---
 
+## [D-034] SMOKE: promote D-NNN backlog preserva ID
+
+- **Status:** Cancelada
+- **Origem:** Backlog D-034 promovido (2026-06-07)
+- **Tipo:** Feature
+- **Contexto:** Smoke test promote nova fonte.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Backlog D-034 promovido via ai-process.
+- Avaliacao IA: Confirma promote in-place.
+- Cancelada em 2026-06-07: smoke test fase 2 - validou backlog add (D-NNN status=Backlog), backlog list (union tasks+legacy), promote in-place preservando ID, migrate --dry-run
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-033] ADR-0011 Fase 2: backlog absorvido em tasks.json (status=Backlog)
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-07)
+- **Tipo:** Feature
+- **Contexto:** Segunda fase do ADR-0011. backlog.json deixa de ser source-of-truth: novas entradas viram task em tasks.json com kind=feature (default) e status=Backlog. backlog.json legacy (B-NNN existentes) permanece read-only e e lido como uniao em 'ai backlog list' e 'ai promote'. Adicionar 'ai backlog migrate' (com --dry-run e --force) para copiar B-NNN antigos para tasks.json preservando id. FEATURES.md NAO recebe entradas com status=Backlog - mantem-se como catalogo de tasks 'em curso' ou validadas. cmd_promote aceita id de qualquer fonte (tasks.json com status=Backlog OU backlog.json legacy).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_cli_creation.py`
+- `core/src/_tasks.py`
+- `core/src/ai.py`
+- `dist/bin/_cli_creation.py`
+- `dist/bin/_tasks.py`
+- `dist/bin/ai.py`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Fase 2 do ADR-0011 implementada. _tasks.new_task agora aceita 'status' opcional (default STATUS_IN_DEVELOPMENT); quando status=Backlog, omite modifiedFiles, summary e pending defaults (nao houve implementacao ainda). _tasks.next_backlog_id removido (PREFIX_BACKLOG nao gera mais IDs novos). _cli_creation.cmd_backlog_add: cria task em tasks.json com kind=feature + status=Backlog + ID D-NNN; nao escreve em backlog.json; nao chama upsert_features_entry (backlog fica fora do catalogo FEATURES.md). _cli_creation.cmd_backlog_list: une fontes - mostra tasks com status=Backlog em tasks.json primeiro + itens legacy de backlog.json em seguida. _cli_creation.cmd_promote: nova logica de dois caminhos via _find_backlog_source - se id existe em tasks.json (status=Backlog), promove in-place preservando ID (status -> Em desenvolvimento, kind atualizado); se id existe em backlog.json (B-NNN legacy), cria nova D-NNN com backlogId apontando para o legacy e remove o item antigo (caminho atual mantido). Novo cmd_backlog_migrate: dry-run por default, --force aplica copia preservando ID original; idempotente (skip se id ja em tasks.json); esvazia backlog.json apos migracao com sucesso. Parser 'backlog migrate' registrado em ai.py.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- doctor OK; render OK (47 alvos, 3 .py em dist/bin sincronizados). Smoke tests: backlog add 'X' -> D-034 (status=Backlog em tasks.json, nao em backlog.json); backlog list -> mostra D-034 + B-019,B-018,...,B-002 (uniao); promote D-034 --kind feature -> D-034 mantem ID, status=Em desenvolvimento, origin='Backlog D-034 promovido'; backlog migrate --dry-run -> lista 9 B-NNN legacy candidatos sem escrever. D-034 cancelada ao final.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-032] SMOKE: validar issue ainda gera D-NNN com kind=issue
+
+- **Status:** Cancelada
+- **Origem:** AI process (2026-06-07)
+- **Tipo:** Bug (legacy)
+- **Contexto:** Descartavel - confirmar que ai issue continua funcional (Fase 4 removera) e gera D-NNN com kind=issue.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Cancelada em 2026-06-07: smoke test fase 1 - validou ai issue ainda funcional + D-NNN gerado para qualquer kind
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-031] SMOKE: validar geracao D-NNN
+
+- **Status:** Cancelada
+- **Origem:** AI process (2026-06-07)
+- **Tipo:** Feature
+- **Contexto:** Descartavel - confirmar prefixo D-NNN, kind=feature, status=Em desenvolvimento.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Cancelada em 2026-06-07: smoke test fase 1 - validou geracao D-NNN
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [F-030] ADR-0011 Fase 1: ID neutro D-NNN + kind plural (bug/chore) + leitura multi-prefixo
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-07)
+- **Tipo:** Feature
+- **Contexto:** Primeira fase da implementacao do ADR-0011 (F-024) e do plano de B-017. Escopo focado: introduzir prefixo D-NNN como gerador unico de IDs (numeracao monotonica considerando max(D,F,I)+1), adicionar constantes KIND_BUG e KIND_CHORE + STATUS_BACKLOG, ampliar KIND_LABELS preservando KIND_ISSUE como legacy-read, atualizar TASK_HEADING_RE e o regex inline em _features_md para aceitar [DFI]. Sem mudancas em manifest/skills/docs nesta fase. Sem remocao de issue (Fase 4 cuida). Sem absorcao de backlog (Fase 2 cuida).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_constants.py`
+- `core/src/_tasks.py`
+- `core/src/_features_md.py`
+- `dist/bin/_constants.py`
+- `dist/bin/_tasks.py`
+- `dist/bin/_features_md.py`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Fase 1 do ADR-0011 implementada. _constants.py: KIND_BUG/KIND_CHORE adicionados, KIND_ISSUE preservado como legacy-read, KIND_LABELS atualizado (bug='Bug / regressao', chore='Chore', issue='Bug (legacy)'). STATUS_BACKLOG='Backlog' adicionado e mapeado em STATUS_TAGS para 'BACKLOG'. PREFIX_DEMANDA='D' + TASK_PREFIXES_FOR_NUMBERING=(D,F,I) introduzidos. TASK_HEADING_RE aceita [DFI]. _tasks.next_task_id: ignora kind e sempre retorna D-NNN com numeracao monotonica considerando max(D,F,I)+1 - garante que D-030 nao colide visualmente com F-029. _features_md.upsert_features_entry: regex de bloco aceita [DFI]. Renderer copiou as 3 mudancas para dist/bin.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- doctor OK; smoke test manual: ai feature 'X' -> D-031 (max(F-030,I-007)+1=31); ai status F-023 (legacy) -> kind=feature resolvido; ai status I-006 (legacy) -> kind=issue resolvido; ai issue 'Y' -> D-032 com kind=issue (sera removido na Fase 4); FEATURES.md renderiza [D-032] com 'Tipo: Bug (legacy)' (KIND_LABELS funcional). Ambos os smoke tests cancelados ao final.
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [F-029] Verbos block/unblock <id> --reason: pausar e retomar task
 
 - **Status:** Validada

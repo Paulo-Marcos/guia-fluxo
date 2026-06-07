@@ -1,6 +1,6 @@
 {
-  "taskId": "F-029",
+  "taskId": "D-033",
   "status": "Validada",
-  "title": "Verbos block/unblock <id> --reason: pausar e retomar task",
-  "chatTitle": "F-029 - #FINALIZADO - Verbos block/unblock <id> --reason: pausar e retomar task"
+  "title": "ADR-0011 Fase 2: backlog absorvido em tasks.json (status=Backlog)",
+  "chatTitle": "D-033 - #FINALIZADO - ADR-0011 Fase 2: backlog absorvido em tasks.json (status=Backlog)"
 }
