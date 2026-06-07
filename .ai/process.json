@@ -8,7 +8,7 @@
     "backlogPrefix": "B",
     "digits": 3
   },
-  "chatTitleFormat": "{id} - #{statusTag} - {title}",
+  "chatTitleFormat": "{id} {kindMarker} - #{statusTag} - {title}",
   "ready": {
     "status": "Aguardando validacao",
     "runValidationByDefault": false,

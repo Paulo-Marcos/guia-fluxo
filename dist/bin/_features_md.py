@@ -16,6 +16,8 @@ from _constants import (
     FEATURES_INSERT_MARKER,
     KIND_FEATURE,
     KIND_LABELS,
+    KIND_MARKER_FALLBACK,
+    KIND_MARKERS,
     MSG_NONE_PLACEHOLDER,
     SECTION_DONE,
     SECTION_FILES,
@@ -36,8 +38,9 @@ def markdown_list(values: list[str], wrap: str = "") -> list[str]:
 
 
 def render_features_block(task: dict[str, Any]) -> str:
+    marker = KIND_MARKERS.get(task.get("kind", ""), KIND_MARKER_FALLBACK)
     lines = [
-        f"## [{task['id']}] {task['title']}",
+        f"## [{task['id']}] {marker} {task['title']}",
         "",
         f"- **Status:** {task['status']}",
         f"- **Origem:** {task.get('origin', 'AI process')}",

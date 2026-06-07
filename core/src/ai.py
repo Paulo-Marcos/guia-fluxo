@@ -38,7 +38,23 @@ def _bootstrap_sys_path() -> None:
             sys.path.insert(0, path_str)
 
 
+def _bootstrap_utf8_io() -> None:
+    """Force stdout/stderr to UTF-8 so chat-title e listas com emoji
+    (KIND_MARKERS, D-035) nao quebrem em consoles Windows cp1252.
+
+    Python 3.7+ expoe `reconfigure` em TextIO streams; quando ausente
+    (stream redirecionado para algo nao-reconfiguravel), engole o erro
+    silenciosamente - o pior caso e voltar ao comportamento anterior.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
+        except (AttributeError, ValueError):
+            pass
+
+
 _bootstrap_sys_path()
+_bootstrap_utf8_io()
 
 
 from _clock import today  # noqa: E402

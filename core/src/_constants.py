@@ -104,7 +104,7 @@ MSG_VALIDATE_DEPRECATED = (
 )
 
 
-CHAT_TITLE_FORMAT_DEFAULT = "{id} - #{statusTag} - {title}"
+CHAT_TITLE_FORMAT_DEFAULT = "{id} {kindMarker} - #{statusTag} - {title}"
 
 
 KIND_LABELS = {
@@ -113,6 +113,21 @@ KIND_LABELS = {
     KIND_CHORE: "Chore",
     KIND_ISSUE: "Bug (legacy)",  # Compat para tasks antigas com kind=issue.
 }
+
+# Marcadores visuais (emoji) que aparecem ao lado do ID em todas as
+# superficies de display (chat-title, tasks list, backlog list, headings
+# de FEATURES.md). ID continua neutro (D-NNN) per ADR-0011; o emoji da
+# o sinal visual de qual kind a demanda e.
+KIND_MARKERS = {
+    KIND_FEATURE: "✨",
+    KIND_BUG: "🐛",
+    KIND_CHORE: "🧹",
+    KIND_ISSUE: "🐛",  # legacy = bug.
+}
+
+# Fallback para tasks sem kind ou kind desconhecido. Quase nunca dispara
+# (cmd_create_task sempre seta kind), mas mantemos para resiliencia.
+KIND_MARKER_FALLBACK = "•"
 
 
 SECTION_FILES = "### Arquivos modificados/criados"
@@ -177,6 +192,8 @@ __all__ = [
     "MSG_VALIDATE_DEPRECATED",
     "CHAT_TITLE_FORMAT_DEFAULT",
     "KIND_LABELS",
+    "KIND_MARKERS",
+    "KIND_MARKER_FALLBACK",
     "SECTION_FILES",
     "SECTION_DONE",
     "SECTION_VALIDATION_DONE",

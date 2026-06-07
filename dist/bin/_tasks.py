@@ -28,6 +28,8 @@ from _constants import (
     CURRENT_FILE,
     FEATURES_FILE,
     KIND_FEATURE,
+    KIND_MARKER_FALLBACK,
+    KIND_MARKERS,
     MSG_DEFAULT_TASK_CREATED,
     MSG_DEFAULT_TASK_PENDING,
     MSG_NO_CURRENT_TASK,
@@ -149,8 +151,16 @@ def list_tasks(
 
 
 def format_task_line(task: dict[str, Any]) -> str:
-    """Compact one-line representation for `tasks list` output."""
-    return f"{task.get('id', '?')} [{task.get('status', '?')}] {task.get('title', '')}"
+    """Compact one-line representation for `tasks list` output.
+
+    Inclui o marcador visual do kind (emoji) entre o ID e o status,
+    permitindo distinguir feature/bug/chore a olho no listing.
+    """
+    marker = kind_marker(task.get("kind", ""))
+    return (
+        f"{task.get('id', '?')} {marker} "
+        f"[{task.get('status', '?')}] {task.get('title', '')}"
+    )
 
 
 def find_task_or_current(task_id: str | None) -> dict[str, Any]:
@@ -196,6 +206,16 @@ def status_tag(status: str) -> str:
     return STATUS_TAGS.get(status, status.upper().replace(" ", "_"))
 
 
+def kind_marker(kind: str) -> str:
+    """Emoji que representa o `kind` da demanda em superficies de display.
+
+    Fallback `•` quando `kind` esta vazio ou e desconhecido (defesa
+    em profundidade: tasks novas sempre tem kind setado por
+    cmd_create_task / cmd_backlog_add / cmd_promote).
+    """
+    return KIND_MARKERS.get(kind or "", KIND_MARKER_FALLBACK)
+
+
 def chat_title(task: dict[str, Any]) -> str:
     template = read_json(PROCESS_FILE, {}).get(
         "chatTitleFormat",
@@ -203,6 +223,7 @@ def chat_title(task: dict[str, Any]) -> str:
     )
     return template.format(
         id=task["id"],
+        kindMarker=kind_marker(task.get("kind", "")),
         statusTag=status_tag(task["status"]),
         title=task["title"],
     )
@@ -241,6 +262,7 @@ __all__ = [
     "pop_item",
     "merge_list",
     "status_tag",
+    "kind_marker",
     "chat_title",
     "current_task_payload",
     "set_current_task",

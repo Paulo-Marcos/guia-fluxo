@@ -30,6 +30,7 @@ from _constants import (
 from _features_md import upsert_features_entry
 from _state import read_json, write_json
 from _tasks import (
+    kind_marker,
     list_tasks,
     merge_list,
     new_task,
@@ -82,12 +83,15 @@ def cmd_backlog_list(_args: argparse.Namespace) -> int:
     # Novas entradas (ADR-0011 Fase 2): tasks.json com status=Backlog.
     backlog_tasks = list_tasks(status=STATUS_BACKLOG)
     for task in backlog_tasks:
-        print(f"{task['id']} [Backlog] {task['title']}")
+        marker = kind_marker(task.get("kind", ""))
+        print(f"{task['id']} {marker} [Backlog] {task['title']}")
 
     # Legacy: backlog.json (B-NNN). Permanece read-only ate `backlog migrate`.
+    # Itens legacy nao tem `kind` salvo - usa fallback do marker.
     legacy = read_json(BACKLOG_FILE, {"schemaVersion": 1, "items": []})
     for item in legacy.get("items", []):
-        print(f"{item['id']} [{item['status']}] {item['title']}")
+        marker = kind_marker(item.get("kind", ""))
+        print(f"{item['id']} {marker} [{item['status']}] {item['title']}")
     return 0
 
 
