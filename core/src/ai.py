@@ -82,6 +82,8 @@ from _cli_lifecycle import (  # noqa: E402
 from _cli_meta import cmd_docs_check, cmd_render  # noqa: E402
 from _cli_tasks import cmd_tasks_filter, cmd_tasks_list, cmd_tasks_show  # noqa: E402
 from _constants import (  # noqa: E402
+    KIND_BUG,
+    KIND_CHORE,
     KIND_FEATURE,
     KIND_ISSUE,
     ROOT,
@@ -89,6 +91,17 @@ from _constants import (  # noqa: E402
     STATUS_IN_DEVELOPMENT,
     STATUS_VALIDATED,
 )
+
+
+# Kinds aceitos para criacao de NOVAS demandas (Fase 4 do ADR-0011).
+# `issue` deixou de ser opcao - tasks legacy com kind=issue continuam
+# renderizando (KIND_LABELS tem entrada "Bug (legacy)") mas nenhum verbo
+# do CLI cria novas com este kind.
+_KIND_CHOICES_NEW = [KIND_FEATURE, KIND_BUG, KIND_CHORE]
+
+# Filtros aceitos por `tasks filter --kind`. Inclui legacy `issue` para
+# que o operador consiga listar tasks antigas com aquele kind.
+_KIND_CHOICES_FILTER = [KIND_FEATURE, KIND_BUG, KIND_CHORE, KIND_ISSUE]
 
 
 def _add_task_args(parser: argparse.ArgumentParser) -> None:
@@ -140,9 +153,19 @@ def build_parser() -> argparse.ArgumentParser:
     _add_task_args(p_feature)
     p_feature.set_defaults(func=lambda args: cmd_create_task(args, KIND_FEATURE))
 
-    p_issue = sub.add_parser("issue", help="Create an issue task.")
-    _add_task_args(p_issue)
-    p_issue.set_defaults(func=lambda args: cmd_create_task(args, KIND_ISSUE))
+    p_bug = sub.add_parser(
+        "bug",
+        help="Create a bug task (substitui o antigo `issue`).",
+    )
+    _add_task_args(p_bug)
+    p_bug.set_defaults(func=lambda args: cmd_create_task(args, KIND_BUG))
+
+    p_chore = sub.add_parser(
+        "chore",
+        help="Create a chore task (manutencao sem mudanca de comportamento).",
+    )
+    _add_task_args(p_chore)
+    p_chore.set_defaults(func=lambda args: cmd_create_task(args, KIND_CHORE))
 
     p_status = sub.add_parser("status", help="Show current task or a given task.")
     p_status.add_argument("task_id", nargs="?")
@@ -305,13 +328,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_backlog_migrate.set_defaults(func=cmd_backlog_migrate)
     p_backlog_promote = backlog_sub.add_parser("promote", help="Promote backlog item.")
     p_backlog_promote.add_argument("backlog_id")
-    p_backlog_promote.add_argument("--kind", choices=[KIND_FEATURE, KIND_ISSUE], default=KIND_FEATURE)
+    p_backlog_promote.add_argument("--kind", choices=_KIND_CHOICES_NEW, default=KIND_FEATURE)
     _add_promote_args(p_backlog_promote)
     p_backlog_promote.set_defaults(func=cmd_promote)
 
     p_promote = sub.add_parser("promote", help="Promote a backlog item to feature or issue.")
     p_promote.add_argument("backlog_id")
-    p_promote.add_argument("--kind", choices=[KIND_FEATURE, KIND_ISSUE], required=True)
+    p_promote.add_argument("--kind", choices=_KIND_CHOICES_NEW, required=True)
     _add_promote_args(p_promote)
     p_promote.set_defaults(func=cmd_promote)
 
@@ -345,8 +368,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_tasks_filter.add_argument(
         "--kind",
-        choices=[KIND_FEATURE, KIND_ISSUE],
-        help="Filtra por kind.",
+        choices=_KIND_CHOICES_FILTER,
+        help="Filtra por kind (inclui `issue` legacy para tasks antigas).",
     )
     p_tasks_filter.add_argument("--limit", type=int, default=None, help="Limita aos N mais recentes.")
     p_tasks_filter.add_argument("--json", action="store_true", help="Saida em JSON.")

@@ -18,7 +18,6 @@ from typing import Any
 from _clock import today
 from _constants import (
     DOCS_MAP_FILE,
-    KIND_FEATURE,
     MSG_NONE_PLACEHOLDER,
 )
 from _paths import relative
@@ -47,7 +46,9 @@ def _trigger_reason(
     task: dict[str, Any],
 ) -> str | None:
     if kind == "task-finished":
-        kind_label = "feature" if task.get("kind") == KIND_FEATURE else "issue"
+        # ADR-0011 Fase 4: usa o kind literal da task. Tasks antigas
+        # com kind=issue caem aqui (legacy-read).
+        kind_label = task.get("kind") or "task"
         return f"task-finished: {kind_label} {task.get('id')}"
     if kind == "touched":
         patterns = [p for p in (trigger.get("paths") or []) if p]
