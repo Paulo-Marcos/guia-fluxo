@@ -2,6 +2,99 @@
 
 ---
 
+## [D-041] ✨ SMOKE start-from-backlog
+
+- **Status:** Cancelada
+- **Origem:** Backlog (2026-06-07)
+- **Tipo:** Feature
+- **Contexto:** x
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-07: atalho direto do backlog.
+- Cancelada em 2026-06-07: smoke fase 3 - validou backlog->start atalho + double-start guard
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-040] ✨ SMOKE plan/start - test1
+
+- **Status:** Cancelada
+- **Origem:** AI process (2026-06-07)
+- **Tipo:** Feature
+- **Contexto:** x
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Em desenvolvimento desde 2026-06-07: smoke kick-off.
+- Planejada em 2026-06-07: smoke replanning.
+- Em desenvolvimento desde 2026-06-07.
+- Cancelada em 2026-06-07: smoke fase 3 - validou --status planned + plan/start cycle
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-039] ✨ ADR-0011 Fase 3 + B-017: status Planejada com verbos plan/start
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-07)
+- **Tipo:** Feature
+- **Contexto:** Terceira fase do ADR-0011 (implementa B-017). Adicionar verbos plan <id> (transita Backlog/Em desenvolvimento -> Planejada) e start <id> (transita Backlog/Planejada -> Em desenvolvimento). Adicionar flag --status backlog|planned|in-development em i feature e i issue (default in-development). Adicionar 2 novos verbos no manifest (plan/start) com bodies + dist outputs. Skills: /ai:plan, /ai:start. Tasks que saem de Backlog passam a aparecer em FEATURES.md (entram no catalogo). Smoke tests cobrem todas as transicoes validas + as guardas (transicao terminal proibida).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_cli_lifecycle.py`
+- `core/src/_cli_creation.py`
+- `core/src/ai.py`
+- `core/manifest/manifest.yaml`
+- `core/manifest/bodies/plan.claude.md`
+- `core/manifest/bodies/plan.agent.md`
+- `core/manifest/bodies/start.claude.md`
+- `core/manifest/bodies/start.agent.md`
+- `dist/skills/plan/SKILL.md`
+- `dist/.agents/skills/ai-plan/SKILL.md`
+- `dist/skills/start/SKILL.md`
+- `dist/.agents/skills/ai-start/SKILL.md`
+- `dist/bin/_cli_lifecycle.py`
+- `dist/bin/_cli_creation.py`
+- `dist/bin/ai.py`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Fase 3 do ADR-0011 (que implementa B-017) entregue. _cli_lifecycle: cmd_plan transita Backlog/Em desenvolvimento -> Planejada com guarda contra estados terminais e Aguardando validacao; cmd_start transita Backlog/Planejada -> Em desenvolvimento com guarda equivalente. Helper _attach_features_md inclui FEATURES.md em modifiedFiles quando a task sai do backlog (idempotente). _cli_creation.cmd_create_task: aceita args.status via novo _STATUS_FROM_CLI map; quando status=Backlog, pula upsert (consistente com cmd_backlog_add); demais status entram no catalogo. ai.py: parsers plan e start com --note opcional; _add_task_args ganha --status backlog|planned|in-development (default in-development), compartilhado entre feature e issue. Manifest: 2 novos verbos plan e start com prefixos novos PLAN e START + bodies bodies/{plan,start}.{claude,agent}.md. Render gerou 7 alvos novos.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- doctor OK; render OK (51 alvos totais; +4 de plan/start, +3 de dist/bin). Smoke completo: ai feature 'X' --status planned -> D-040 status=Planejada com #PLANEJADA no chat-title; ai start D-040 --note 'kick-off' -> #DEV; ai plan D-040 --note 'replanning' -> #PLANEJADA; ai start D-040 -> #DEV (ciclo idempotente). ai backlog add 'Y' -> D-041 Backlog; ai start D-041 -> #DEV (atalho direto, sem precisar de plan). ai start D-041 segunda vez -> erro 'ja Em desenvolvimento' (guarda). FEATURES.md absorveu D-040 e D-041 ao saírem de Backlog/Planejada. Smokes cancelados.
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-038] ✨ SMOKE: marker backlog default kind
 
 - **Status:** Cancelada

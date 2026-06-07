@@ -1,6 +1,6 @@
 {
-  "taskId": "D-035",
+  "taskId": "D-039",
   "status": "Validada",
-  "title": "Marcadores visuais de kind (emoji) nas demandas D-NNN",
-  "chatTitle": "D-035 \u2728 - #FINALIZADO - Marcadores visuais de kind (emoji) nas demandas D-NNN"
+  "title": "ADR-0011 Fase 3 + B-017: status Planejada com verbos plan/start",
+  "chatTitle": "D-039 \u2728 - #FINALIZADO - ADR-0011 Fase 3 + B-017: status Planejada com verbos plan/start"
 }

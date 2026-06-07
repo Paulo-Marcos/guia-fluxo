@@ -2,6 +2,168 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-041",
+      "kind": "feature",
+      "title": "SMOKE start-from-backlog",
+      "status": "Cancelada",
+      "origin": "Backlog (2026-06-07)",
+      "context": "x",
+      "createdAt": "2026-06-07",
+      "updatedAt": "2026-06-07",
+      "modifiedFiles": [
+        "FEATURES.md"
+      ],
+      "summary": [
+        "Em desenvolvimento desde 2026-06-07: atalho direto do backlog.",
+        "Cancelada em 2026-06-07: smoke fase 3 - validou backlog->start atalho + double-start guard"
+      ],
+      "validations": [],
+      "pending": [],
+      "cancellations": [
+        {
+          "reason": "smoke fase 3 - validou backlog->start atalho + double-start guard",
+          "at": "2026-06-07"
+        }
+      ]
+    },
+    {
+      "id": "D-040",
+      "kind": "feature",
+      "title": "SMOKE plan/start - test1",
+      "status": "Cancelada",
+      "origin": "AI process (2026-06-07)",
+      "context": "x",
+      "createdAt": "2026-06-07",
+      "updatedAt": "2026-06-07",
+      "modifiedFiles": [
+        "FEATURES.md"
+      ],
+      "summary": [
+        "Demanda criada via ai-process.",
+        "Em desenvolvimento desde 2026-06-07: smoke kick-off.",
+        "Planejada em 2026-06-07: smoke replanning.",
+        "Em desenvolvimento desde 2026-06-07.",
+        "Cancelada em 2026-06-07: smoke fase 3 - validou --status planned + plan/start cycle"
+      ],
+      "validations": [],
+      "pending": [],
+      "cancellations": [
+        {
+          "reason": "smoke fase 3 - validou --status planned + plan/start cycle",
+          "at": "2026-06-07"
+        }
+      ]
+    },
+    {
+      "id": "D-039",
+      "kind": "feature",
+      "title": "ADR-0011 Fase 3 + B-017: status Planejada com verbos plan/start",
+      "status": "Validada",
+      "origin": "AI process (2026-06-07)",
+      "context": "Terceira fase do ADR-0011 (implementa B-017). Adicionar verbos plan <id> (transita Backlog/Em desenvolvimento -> Planejada) e start <id> (transita Backlog/Planejada -> Em desenvolvimento). Adicionar flag --status backlog|planned|in-development em \u0007i feature e \u0007i issue (default in-development). Adicionar 2 novos verbos no manifest (plan/start) com bodies + dist outputs. Skills: /ai:plan, /ai:start. Tasks que saem de Backlog passam a aparecer em FEATURES.md (entram no catalogo). Smoke tests cobrem todas as transicoes validas + as guardas (transicao terminal proibida).",
+      "createdAt": "2026-06-07",
+      "updatedAt": "2026-06-07",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "core/src/_cli_lifecycle.py",
+        "core/src/_cli_creation.py",
+        "core/src/ai.py",
+        "core/manifest/manifest.yaml",
+        "core/manifest/bodies/plan.claude.md",
+        "core/manifest/bodies/plan.agent.md",
+        "core/manifest/bodies/start.claude.md",
+        "core/manifest/bodies/start.agent.md",
+        "dist/skills/plan/SKILL.md",
+        "dist/.agents/skills/ai-plan/SKILL.md",
+        "dist/skills/start/SKILL.md",
+        "dist/.agents/skills/ai-start/SKILL.md",
+        "dist/bin/_cli_lifecycle.py",
+        "dist/bin/_cli_creation.py",
+        "dist/bin/ai.py",
+        ".ai/current-task.json",
+        ".ai/tasks.json"
+      ],
+      "summary": [
+        "Demanda criada via ai-process.",
+        "Fase 3 do ADR-0011 (que implementa B-017) entregue. _cli_lifecycle: cmd_plan transita Backlog/Em desenvolvimento -> Planejada com guarda contra estados terminais e Aguardando validacao; cmd_start transita Backlog/Planejada -> Em desenvolvimento com guarda equivalente. Helper _attach_features_md inclui FEATURES.md em modifiedFiles quando a task sai do backlog (idempotente). _cli_creation.cmd_create_task: aceita args.status via novo _STATUS_FROM_CLI map; quando status=Backlog, pula upsert (consistente com cmd_backlog_add); demais status entram no catalogo. ai.py: parsers plan e start com --note opcional; _add_task_args ganha --status backlog|planned|in-development (default in-development), compartilhado entre feature e issue. Manifest: 2 novos verbos plan e start com prefixos novos PLAN e START + bodies bodies/{plan,start}.{claude,agent}.md. Render gerou 7 alvos novos.",
+        "Demanda finalizada via ai-process."
+      ],
+      "validations": [
+        "doctor OK; render OK (51 alvos totais; +4 de plan/start, +3 de dist/bin). Smoke completo: ai feature 'X' --status planned -> D-040 status=Planejada com #PLANEJADA no chat-title; ai start D-040 --note 'kick-off' -> #DEV; ai plan D-040 --note 'replanning' -> #PLANEJADA; ai start D-040 -> #DEV (ciclo idempotente). ai backlog add 'Y' -> D-041 Backlog; ai start D-041 -> #DEV (atalho direto, sem precisar de plan). ai start D-041 segunda vez -> erro 'ja Em desenvolvimento' (guarda). FEATURES.md absorveu D-040 e D-041 ao sa\u00edrem de Backlog/Planejada. Smokes cancelados."
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-039",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/ai.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-039",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "README.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py",
+            "hint": "Se o fluxo padrao ou os comandos da capa mudaram, atualize.",
+            "purpose": "Porta de entrada do projeto."
+          },
+          {
+            "path": "docs/reference/cli.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py",
+            "hint": "Se voce adicionou/mudou subcomando ou flag, documente aqui.",
+            "purpose": "Referencia completa de subcomandos do core/src/ai.py / core/bin/ai.ps1."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py, core/manifest/manifest.yaml",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py, core/manifest/manifest.yaml",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          },
+          {
+            "path": "CONTRIBUTING.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/ai.py",
+            "hint": "Se o fluxo humano mudou (novo passo, nova checagem), atualize.",
+            "purpose": "Guia pra humanos contribuirem."
+          }
+        ],
+        "touched": [],
+        "checkedAt": "2026-06-07",
+        "skipped": "FEATURES.md auto. CHANGELOG sera atualizado na Fase 5 (entrada cobrindo todas as fases do ADR-0011 + B-017). cli.md ganhara secao 'plan'/'start' tambem na Fase 5. CLAUDE.md tabela ganhara /ai:plan + /ai:start na Fase 5."
+      }
+    },
+    {
       "id": "D-038",
       "kind": "feature",
       "title": "SMOKE: marker backlog default kind",
