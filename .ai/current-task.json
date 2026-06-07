@@ -1,6 +1,6 @@
 {
-  "taskId": "D-039",
+  "taskId": "D-042",
   "status": "Validada",
-  "title": "ADR-0011 Fase 3 + B-017: status Planejada com verbos plan/start",
-  "chatTitle": "D-039 \u2728 - #FINALIZADO - ADR-0011 Fase 3 + B-017: status Planejada com verbos plan/start"
+  "title": "ADR-0011 Fase 4: substituir issue por bug + adicionar chore",
+  "chatTitle": "D-042 \u2728 - #FINALIZADO - ADR-0011 Fase 4: substituir issue por bug + adicionar chore"
 }

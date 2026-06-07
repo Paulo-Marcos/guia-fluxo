@@ -2,6 +2,98 @@
 
 ---
 
+## [D-044] 🧹 SMOKE: testar verbo chore
+
+- **Status:** Cancelada
+- **Origem:** AI process (2026-06-07)
+- **Tipo:** Chore
+- **Contexto:** x
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Cancelada em 2026-06-07: smoke fase 4 - validou verbo chore + emoji 🧹
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-043] 🐛 SMOKE: testar verbo bug
+
+- **Status:** Cancelada
+- **Origem:** AI process (2026-06-07)
+- **Tipo:** Bug / regressao
+- **Contexto:** x
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Cancelada em 2026-06-07: smoke fase 4 - validou verbo bug + emoji 🐛
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-042] ✨ ADR-0011 Fase 4: substituir issue por bug + adicionar chore
+
+- **Status:** Validada
+- **Origem:** AI process (2026-06-07)
+- **Tipo:** Feature
+- **Contexto:** Quarta fase do ADR-0011 (D2 confirmado pelo usuario): remocao limpa de issue como verbo/skill. ai issue + /ai:issue removidos. Adicionar ai bug + /ai:bug + ai chore + /ai:chore como novos cidadaos de primeira classe. KIND_ISSUE permanece como legacy-read em _constants (preserva renderizacao de I-006/I-007 antigas e D-NNN ja criadas com kind=issue). Atualiza promote --kind e backlog promote --kind para {feature, bug, chore} (issue some). tasks filter --kind aceita {feature, bug, chore, issue} para permitir filtrar legacy. _docs_hook.py: kind_label generico. Render --clean apaga dist/skills/issue + dist/.agents/skills/ai-issue.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/ai.py`
+- `core/src/_docs_hook.py`
+- `core/manifest/manifest.yaml`
+- `core/manifest/bodies/bug.claude.md`
+- `core/manifest/bodies/bug.agent.md`
+- `core/manifest/bodies/chore.claude.md`
+- `core/manifest/bodies/chore.agent.md`
+- `core/manifest/bodies/issue.claude.md`
+- `core/manifest/bodies/issue.agent.md`
+- `dist/skills/bug/SKILL.md`
+- `dist/.agents/skills/ai-bug/SKILL.md`
+- `dist/skills/chore/SKILL.md`
+- `dist/.agents/skills/ai-chore/SKILL.md`
+- `dist/skills/issue/SKILL.md`
+- `dist/.agents/skills/ai-issue/SKILL.md`
+- `dist/bin/_docs_hook.py`
+- `dist/bin/ai.py`
+- `.ai/current-task.json`
+- `.ai/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via ai-process.
+- Fase 4 do ADR-0011 (D2 confirmado): troca limpa de issue por bug + adicao de chore. Subcomando ai issue removido (argparse rejeita 'issue' como choice valida); skill /ai:issue removida; bodies/issue.{claude,agent}.md deletados; dist/skills/issue + dist/.agents/skills/ai-issue removidos via render --clean. Novos cidadaos de primeira classe: ai bug + /ai:bug (kind=bug, emoji 🐛) e ai chore + /ai:chore (kind=chore, emoji 🧹), ambos compartilhando _add_task_args (--status backlog|planned|in-development). promote --kind e backlog promote --kind passam a aceitar feature|bug|chore (issue some). tasks filter --kind aceita feature|bug|chore|issue (issue mantido como filtro legacy para tasks antigas). _docs_hook.kind_label usa task.get('kind') generico em vez de comparacao binaria feature/issue. KIND_ISSUE preservado em _constants para legacy-read (KIND_LABELS mapeia para 'Bug (legacy)', KIND_MARKERS mapeia para 🐛). I-006/I-007 antigas continuam renderizando.
+- Demanda finalizada via ai-process.
+
+### Validacao feita
+
+- doctor OK; render --clean OK (53 alvos; +4 bug/chore skills, -2 issue skills); render --check em sincronia. Smoke: ai bug 'X' -> D-043 com chat-title '🐛 - #DEV'; ai chore 'Y' -> D-044 com chat-title '🧹 - #DEV'; ai issue 'Z' -> erro argparse 'invalid choice: issue' (subcomando removido com sucesso). Smokes cancelados. tasks list renderiza 🐛/🧹/✨/• corretamente.
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-041] ✨ SMOKE start-from-backlog
 
 - **Status:** Cancelada
