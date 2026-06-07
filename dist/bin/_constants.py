@@ -29,7 +29,9 @@ FEATURES_FILE = ROOT / "FEATURES.md"
 REGISTRY_FILE = ROOT / "features" / "registry.yaml"
 
 
-TASK_HEADING_RE = re.compile(r"^## \[([FI])-(\d+)\] (.+)$", re.MULTILINE)
+# Aceita IDs novos (D-NNN per ADR-0011) e legacy (F-NNN, I-NNN).
+# B-NNN entra na Fase 2 quando backlog for absorvido em tasks.json.
+TASK_HEADING_RE = re.compile(r"^## \[([DFI])-(\d+)\] (.+)$", re.MULTILINE)
 
 
 STATUS_IN_DEVELOPMENT = "Em desenvolvimento"
@@ -37,6 +39,7 @@ STATUS_AWAITING_VALIDATION = "Aguardando validacao"
 STATUS_AWAITING_VALIDATION_ACCENTED = "Aguardando validação"
 STATUS_VALIDATED = "Validada"
 STATUS_FINISHED = "Finalizada"
+STATUS_BACKLOG = "Backlog"
 STATUS_PLANNED = "Planejada"
 STATUS_BLOCKED = "Bloqueada"
 STATUS_CANCELLED = "Cancelada"
@@ -48,18 +51,32 @@ STATUS_TAGS: dict[str, str] = {
     STATUS_AWAITING_VALIDATION_ACCENTED: "VALIDACAO",
     STATUS_VALIDATED: "FINALIZADO",
     STATUS_FINISHED: "FINALIZADO",
+    STATUS_BACKLOG: "BACKLOG",
     STATUS_PLANNED: "PLANEJADA",
     STATUS_BLOCKED: "BLOQUEADA",
     STATUS_CANCELLED: "CANCELADA",
 }
 
 
+# Kind novos (ADR-0011). KIND_ISSUE preservado para resolver tasks legacy
+# (I-NNN). Fase 4 remove `issue` como verbo/skill; aqui ele continua
+# legivel para que tasks antigas renderizem em FEATURES.md.
 KIND_FEATURE = "feature"
-KIND_ISSUE = "issue"
+KIND_BUG = "bug"
+KIND_CHORE = "chore"
+KIND_ISSUE = "issue"  # legacy-read only; nao gerar tasks novas com este kind a partir da Fase 4.
 
+# Prefixo neutro do ADR-0011 para todas as tasks novas.
+# PREFIX_FEATURE/ISSUE/BACKLOG permanecem para resolver IDs antigos.
+PREFIX_DEMANDA = "D"
 PREFIX_FEATURE = "F"
 PREFIX_ISSUE = "I"
 PREFIX_BACKLOG = "B"
+
+# Prefixos considerados quando next_task_id calcula o proximo numero.
+# Garante numeracao monotonica unica visualmente (D-030 nao colide com
+# F-029 ja existente).
+TASK_PREFIXES_FOR_NUMBERING = (PREFIX_DEMANDA, PREFIX_FEATURE, PREFIX_ISSUE)
 
 
 MSG_TASK_NOT_FOUND = "Task not found: {id}"
@@ -92,7 +109,9 @@ CHAT_TITLE_FORMAT_DEFAULT = "{id} - #{statusTag} - {title}"
 
 KIND_LABELS = {
     KIND_FEATURE: "Feature",
-    KIND_ISSUE: "Issue / regressao",
+    KIND_BUG: "Bug / regressao",
+    KIND_CHORE: "Chore",
+    KIND_ISSUE: "Bug (legacy)",  # Compat para tasks antigas com kind=issue.
 }
 
 
@@ -124,12 +143,20 @@ __all__ = [
     "STATUS_IN_DEVELOPMENT",
     "STATUS_AWAITING_VALIDATION",
     "STATUS_VALIDATED",
+    "STATUS_BACKLOG",
+    "STATUS_PLANNED",
+    "STATUS_BLOCKED",
+    "STATUS_CANCELLED",
     "STATUS_TAGS",
     "KIND_FEATURE",
+    "KIND_BUG",
+    "KIND_CHORE",
     "KIND_ISSUE",
+    "PREFIX_DEMANDA",
     "PREFIX_FEATURE",
     "PREFIX_ISSUE",
     "PREFIX_BACKLOG",
+    "TASK_PREFIXES_FOR_NUMBERING",
     "MSG_TASK_NOT_FOUND",
     "MSG_NO_CURRENT_TASK",
     "MSG_BACKLOG_ITEM_NOT_FOUND",

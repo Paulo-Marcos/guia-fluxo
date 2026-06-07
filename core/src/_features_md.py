@@ -64,8 +64,9 @@ def upsert_features_entry(task: dict[str, Any]) -> None:
         FEATURES_FILE.write_text(FEATURES_HEADER, encoding="utf-8")
     content = read_text(FEATURES_FILE)
     block = render_features_block(task)
+    # Separador de bloco aceita D-NNN (ADR-0011 Fase 1) + legacy F/I.
     pattern = re.compile(
-        rf"^## \[{re.escape(task['id'])}\].*?(?=^## \[[FI]-\d+\] |\Z)",
+        rf"^## \[{re.escape(task['id'])}\].*?(?=^## \[[DFI]-\d+\] |\Z)",
         re.MULTILINE | re.DOTALL,
     )
     if pattern.search(content):

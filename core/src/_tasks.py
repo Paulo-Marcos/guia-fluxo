@@ -33,12 +33,14 @@ from _constants import (
     MSG_NO_CURRENT_TASK,
     MSG_TASK_NOT_FOUND,
     PREFIX_BACKLOG,
+    PREFIX_DEMANDA,
     PREFIX_FEATURE,
     PREFIX_ISSUE,
     PROCESS_FILE,
     STATUS_IN_DEVELOPMENT,
     STATUS_TAGS,
     TASK_HEADING_RE,
+    TASK_PREFIXES_FOR_NUMBERING,
     TASKS_FILE,
 )
 from _state import read_json, read_text, write_json
@@ -76,13 +78,25 @@ def _numbers_from_features(prefix: str) -> list[int]:
     ]
 
 
-def next_task_id(kind: str, tasks: list[dict[str, Any]]) -> str:
-    prefix = PREFIX_FEATURE if kind == KIND_FEATURE else PREFIX_ISSUE
-    numbers = [_number_from_id(task.get("id", ""), prefix) for task in tasks]
-    numbers.extend(_numbers_from_features(prefix))
-    valid = [n for n in numbers if n is not None]
-    next_number = max(valid, default=0) + 1
-    return f"{prefix}-{next_number:03d}"
+def next_task_id(_kind: str, tasks: list[dict[str, Any]]) -> str:
+    """Gera o proximo ID neutro `D-NNN` (ADR-0011 Fase 1).
+
+    O parametro `kind` e ignorado: ID e independente do tipo da demanda.
+    Numeracao e monotonica considerando todos os prefixos vivos
+    (D, F, I) em `tasks.json` e em `FEATURES.md`, de modo que `D-030`
+    nunca colida visualmente com `F-029` ja existente. `B-NNN` fica de
+    fora desta contagem ate a Fase 2 (backlog absorvido).
+    """
+    numbers: list[int] = []
+    for prefix in TASK_PREFIXES_FOR_NUMBERING:
+        numbers.extend(
+            value
+            for value in (_number_from_id(task.get("id", ""), prefix) for task in tasks)
+            if value is not None
+        )
+        numbers.extend(_numbers_from_features(prefix))
+    next_number = max(numbers, default=0) + 1
+    return f"{PREFIX_DEMANDA}-{next_number:03d}"
 
 
 def next_backlog_id(items: list[dict[str, Any]]) -> str:
