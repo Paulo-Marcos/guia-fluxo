@@ -216,6 +216,105 @@ class GuardTests(unittest.TestCase):
                 sys.modules.pop("render_probe_cycle", None)
 
 
+_DUAL_TARGET_MANIFEST = """\
+version: 2
+verbs:
+  test:
+    description: |
+      Test description.
+    targets:
+      agent_skill:
+        body_file: bodies/test.md
+      claude_skill:
+        body_file: bodies/test.md
+"""
+
+
+class IncludePerTargetTests(unittest.TestCase):
+    """D-050: {{include_per_target: <base>}} resolve para
+    <base>.agent.md ou <base>.claude.md conforme o target sendo
+    renderizado. Permite 1 body por verbo apontando aos 2 targets."""
+
+    def test_resolves_to_agent_partial_for_agent_target(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            mdir, mfile = _sandbox_manifest(
+                Path(tmp),
+                {
+                    "test.md": "Start.\n\n{{include_per_target: _partials/p}}\n\nEnd.\n",
+                    "_partials/p.agent.md": "AGENT-specific.",
+                    "_partials/p.claude.md": "CLAUDE-specific.",
+                },
+                _DUAL_TARGET_MANIFEST,
+            )
+            outputs = _render_in_sandbox(mdir, mfile, "render_probe_pertarget_agent")
+            agent_out = next(o for o in outputs if o.target == "agent_skill")
+            claude_out = next(o for o in outputs if o.target == "claude_skill")
+            self.assertIn("AGENT-specific.", agent_out.content)
+            self.assertNotIn("CLAUDE-specific.", agent_out.content)
+            self.assertIn("CLAUDE-specific.", claude_out.content)
+            self.assertNotIn("AGENT-specific.", claude_out.content)
+
+    def test_same_source_body_produces_host_aware_outputs(self) -> None:
+        """O ponto da feature: um body unico apontado pelos 2 targets
+        produz outputs diferentes onde o include_per_target esta, e
+        outputs identicos no resto."""
+        with tempfile.TemporaryDirectory() as tmp:
+            mdir, mfile = _sandbox_manifest(
+                Path(tmp),
+                {
+                    "test.md": "SHARED-PROSE.\n\n{{include_per_target: _partials/p}}\n",
+                    "_partials/p.agent.md": "A",
+                    "_partials/p.claude.md": "C",
+                },
+                _DUAL_TARGET_MANIFEST,
+            )
+            outputs = _render_in_sandbox(mdir, mfile, "render_probe_pertarget_shared")
+            for output in outputs:
+                self.assertIn("SHARED-PROSE.", output.content)
+            agent_out = next(o for o in outputs if o.target == "agent_skill")
+            claude_out = next(o for o in outputs if o.target == "claude_skill")
+            self.assertNotEqual(agent_out.content, claude_out.content)
+
+    def test_missing_host_specific_partial_aborts(self) -> None:
+        """Se {{include_per_target: foo}} for usado mas o foo.<host>.md
+        nao existir para o target sendo renderizado, abortar com a
+        mesma mensagem que include normal usa."""
+        with tempfile.TemporaryDirectory() as tmp:
+            mdir, mfile = _sandbox_manifest(
+                Path(tmp),
+                {
+                    "test.md": "{{include_per_target: _partials/p}}\n",
+                    # Apenas claude existe; agent vai faltar.
+                    "_partials/p.claude.md": "OK",
+                },
+                _DUAL_TARGET_MANIFEST,
+            )
+            module = _load_render_module("render_probe_pertarget_missing")
+            module.MANIFEST_DIR = mdir
+            module.MANIFEST = mfile
+            try:
+                with self.assertRaises(SystemExit) as ctx:
+                    module.collect_outputs(module.load_manifest())
+                self.assertEqual(ctx.exception.code, 2)
+            finally:
+                sys.modules.pop("render_probe_pertarget_missing", None)
+
+    def test_inline_per_target_in_prose_is_left_alone(self) -> None:
+        """Mesma garantia do INCLUDE_RE: ancoras ^/$ MULTILINE. Mencao
+        em meio de prosa nao dispara substituicao."""
+        with tempfile.TemporaryDirectory() as tmp:
+            mdir, mfile = _sandbox_manifest(
+                Path(tmp),
+                {
+                    "test.md": "Use `{{include_per_target: foo}}` numa linha sozinha.\n",
+                },
+                _DUAL_TARGET_MANIFEST,
+            )
+            outputs = _render_in_sandbox(mdir, mfile, "render_probe_pertarget_prose")
+            for output in outputs:
+                self.assertIn("{{include_per_target: foo}}", output.content)
+
+
 class DistInvariantTests(unittest.TestCase):
     """Invariante de saida: nenhum SKILL.md em dist/ deve conter um
     {{include: literal nao expandido. Garante que toda diretiva escrita

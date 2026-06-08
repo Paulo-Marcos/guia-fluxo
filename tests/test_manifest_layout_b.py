@@ -107,21 +107,40 @@ class RendererErrorPathsTests(unittest.TestCase):
 
 
 class SharedBodyCacheTests(unittest.TestCase):
-    """Se dois targets apontarem para o mesmo body_file, ambos os
-    arquivos SKILL.md gerados terao body identico."""
+    """D-050: cada verbo tem 1 body file apontado pelos 2 targets. O
+    output difere apenas no trecho host-aware (post_cli.<host>.md),
+    selecionado em build-time pelo `{{include_per_target:}}`."""
 
-    def test_pointing_two_targets_to_same_file_produces_same_body(self) -> None:
-        # Pega o feature.agent.md e claude.md (que sao diferentes) e
-        # confirma que sao realmente diferentes - garantia minima de
-        # que o renderer respeita target_spec individual.
-        agent_body = (BODIES_DIR / "feature.agent.md").read_text(encoding="utf-8")
-        claude_body = (BODIES_DIR / "feature.claude.md").read_text(encoding="utf-8")
-        self.assertNotEqual(agent_body, claude_body)
-        # E ambos sao referenciados pelo manifest
+    def test_all_verbs_use_consolidated_single_body(self) -> None:
+        """Para cada verbo, agent_skill.body_file == claude_skill.body_file."""
         manifest = _load_manifest()
-        feature = manifest["verbs"]["feature"]
-        self.assertEqual(feature["targets"]["agent_skill"]["body_file"], "bodies/feature.agent.md")
-        self.assertEqual(feature["targets"]["claude_skill"]["body_file"], "bodies/feature.claude.md")
+        for verb, spec in (manifest.get("verbs") or {}).items():
+            agent_bf = spec["targets"]["agent_skill"]["body_file"]
+            claude_bf = spec["targets"]["claude_skill"]["body_file"]
+            self.assertEqual(
+                agent_bf,
+                claude_bf,
+                msg=f"verbo `{verb}`: targets apontam para bodies diferentes ({agent_bf} vs {claude_bf}) - consolidacao D-050 incompleta",
+            )
+
+    def test_consolidated_body_produces_host_aware_outputs(self) -> None:
+        """O ponto da consolidacao: 1 body source, 2 dist outputs que
+        diferem no trecho host-aware. Pega feature: o dist do agent_skill
+        deve mencionar codex_app; o claude_skill deve mencionar
+        mark_chapter; o resto deve ser identico (ou quase)."""
+        from conftest_paths import REPO_ROOT
+        dist = REPO_ROOT / "dist"
+        agent_out = (dist / ".agents" / "skills" / "guia-feature" / "SKILL.md").read_text(encoding="utf-8")
+        claude_out = (dist / "skills" / "feature" / "SKILL.md").read_text(encoding="utf-8")
+        # Ambos compostos a partir do mesmo source (bodies/feature.md):
+        # garantia minima de que o comando principal aparece nos dois.
+        for output in (agent_out, claude_out):
+            self.assertIn("guia.ps1 feature", output)
+        # E divergem no trecho host-aware:
+        self.assertIn("codex_app", agent_out)
+        self.assertNotIn("codex_app", claude_out)
+        self.assertIn("mark_chapter", claude_out)
+        self.assertNotIn("mark_chapter", agent_out)
 
 
 if __name__ == "__main__":

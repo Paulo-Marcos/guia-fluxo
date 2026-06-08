@@ -5,7 +5,7 @@ description: DEFER-AND-PARK skill: never starts implementation. Triggered ONLY b
 
 # Backlog
 
-Manage future work without starting implementation.
+Manage parked work without starting implementation. `backlog add` creates a `D-NNN` task with `status=Backlog`. `backlog list` shows all parked items (new D-NNN + legacy B-NNN). `backlog promote` delegates to the `/promote` flow.
 
 ## Title vs Context
 
@@ -26,16 +26,22 @@ If the human-provided phrasing already reads as an imperative under 60 chars, us
 If the user provided a title, run:
 
 ```powershell
-.\core\bin\guia.ps1 backlog add "$ARGUMENTS"
+.\core\bin\guia.ps1 backlog add "<title>" --context "<context>"
 ```
 
-If the user asks to list backlog, run:
+To list parked work:
 
 ```powershell
 .\core\bin\guia.ps1 backlog list
 ```
 
-Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py backlog add|list "$ARGUMENTS"`.
+To promote a backlog item:
+
+```powershell
+.\core\bin\guia.ps1 backlog promote B-001
+```
+
+Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py backlog add|list|promote ...`.
 
 ## After running the script
 

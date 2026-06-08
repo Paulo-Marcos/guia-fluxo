@@ -248,6 +248,46 @@ def render_target(
 # self-contained (nenhuma indirecao em runtime do agente).
 INCLUDE_RE = re.compile(r"^\{\{include:\s*([^}\s][^}]*?)\s*\}\}$", re.MULTILINE)
 
+# Match `{{include_per_target: path/to/base}}` on its own line. Resolvido
+# em pre-processamento (antes do INCLUDE_RE) para um `{{include: ...}}`
+# concreto baseado no target sendo renderizado:
+#   agent_skill  -> base.agent.md
+#   claude_skill -> base.claude.md
+# Permite consolidar bodies de verbo em um arquivo so quando o unico
+# bit host-specific e qual partial de rename incluir (D-050).
+INCLUDE_PER_TARGET_RE = re.compile(
+    r"^\{\{include_per_target:\s*([^}\s][^}]*?)\s*\}\}$", re.MULTILINE
+)
+
+# Mapa target_name -> sufixo usado por {{include_per_target:}} ao montar
+# o caminho final do partial. Adicionar host novo? Estenda este mapa.
+TARGET_HOST_SUFFIX = {
+    "agent_skill": "agent",
+    "claude_skill": "claude",
+}
+
+
+def _expand_per_target(text: str, target_name: str, origin: Path) -> str:
+    """Pre-processa {{include_per_target: <base>}} em {{include: <base>.<host>.md}}.
+
+    Roda **antes** de _expand_includes, entao o caminho gerado segue a
+    semantica padrao do include (relativo ao arquivo que inclui).
+    target_name desconhecido aborta com mensagem clara.
+    """
+    suffix = TARGET_HOST_SUFFIX.get(target_name)
+    if suffix is None and INCLUDE_PER_TARGET_RE.search(text):
+        sys.stderr.write(
+            f"Erro: target `{target_name}` (em {origin}) nao tem mapping em "
+            f"TARGET_HOST_SUFFIX, mas o body usa {{{{include_per_target:}}}}.\n"
+        )
+        sys.exit(2)
+
+    def replace(match: re.Match[str]) -> str:
+        base = match.group(1).strip()
+        return f"{{{{include: {base}.{suffix}.md}}}}"
+
+    return INCLUDE_PER_TARGET_RE.sub(replace, text)
+
 
 def _expand_includes(
     text: str,
@@ -311,7 +351,9 @@ def _resolve_body(
       3. legacy target_spec['body'] inline (v1 backward compat)
 
     `body_cache` evita re-leitura quando dois caminhos sao identicos.
-    Includes `{{include: ...}}` sao expandidos antes de retornar.
+    Includes `{{include: ...}}` e `{{include_per_target: ...}}` sao
+    expandidos antes de retornar (o segundo vira o primeiro no
+    pre-processamento, baseado em target_name).
     """
     explicit = target_spec.get("body_file")
     chosen = explicit or spec_shared_body
@@ -329,10 +371,13 @@ def _resolve_body(
             sys.exit(2)
         if path not in body_cache:
             body_cache[path] = path.read_text(encoding="utf-8")
-        return _expand_includes(body_cache[path], path, body_cache)
+        pre = _expand_per_target(body_cache[path], target_name, path)
+        return _expand_includes(pre, path, body_cache)
     body_inline = target_spec.get("body") or ""
     # Inline bodies tambem suportam includes; origin sintetica.
-    return _expand_includes(body_inline, MANIFEST_DIR / f"<inline:{verb}.{target_name}>", body_cache)
+    origin = MANIFEST_DIR / f"<inline:{verb}.{target_name}>"
+    pre = _expand_per_target(body_inline, target_name, origin)
+    return _expand_includes(pre, origin, body_cache)
 
 
 def collect_outputs(manifest: dict, only_verb: str | None = None) -> list[Output]:

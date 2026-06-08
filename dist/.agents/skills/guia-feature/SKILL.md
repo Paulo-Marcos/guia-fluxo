@@ -3,9 +3,9 @@ name: guia-feature
 description: PRIMARY TRIGGER for /feature or "$feature". Creates a NEW D-NNN feature task and starts implementation immediately. Do NOT use for: bugs/regressions (use $bug), maintenance without behavior change (use $chore), deferred ideas without starting work (use $backlog), or evaluating an existing B-NNN (use $promote).
 ---
 
-# Feature Shim
+# Feature
 
-Use when the human asks for a NEW capability (not a bug fix, not maintenance). Creates a `D-NNN` feature task and starts implementation.
+Create a new feature task before editing code. Use when the human asks for a NEW capability (not a bug fix, not maintenance).
 
 ## Title vs Context
 
@@ -23,13 +23,18 @@ Example:
 
 If the human-provided phrasing already reads as an imperative under 60 chars, use it as-is. Synthesis is for loose/long phrasings, not a mandatory rewrite.
 
-Call the core process script:
+Run:
 
 ```powershell
 .\core\bin\guia.ps1 feature "<title>" --context "<context>"
 ```
 
-Optional flags: `--status backlog|planned|in-development` (default `in-development`), `--origin "<source>"`.
+Useful flags:
+- `--context "<why>"` — motivation (synthesize per the rules above).
+- `--origin "<source>"` — alternate origin (default: "Guia Fluxo (date)").
+- `--status backlog|planned|in-development` — default `in-development`.
+
+Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py feature "<title>"`.
 
 ## After running the script
 
@@ -55,4 +60,4 @@ Before editing files, honor `features/registry.yaml`. If a target file is locked
 
 Never bypass a lock silently. The hook at commit time will reject the commit anyway, and the developer loses trust if the agent treats locks as advisory.
 
-Then continue with the implementation, following `guia-fluxo` for cross-cutting protocol.
+Then continue with the implementation.

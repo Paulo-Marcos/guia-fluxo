@@ -5,7 +5,7 @@ description: PRIMARY TRIGGER for /bug or "$bug". Creates a NEW D-NNN bug/regress
 
 # Bug
 
-Cria uma task de bug (regressao, defeito, comportamento incorreto) antes de editar codigo. Substitui o antigo `/issue` (removido na Fase 4 do ADR-0011 — `issue` colidia com o sentido guarda-chuva do termo em GitHub/Jira/Linear).
+Create a bug task (regression, defect, incorrect behavior) before editing code. Replaces the old `/issue` (removed in ADR-0011 Phase 4 — `issue` collided with the umbrella sense of the term in GitHub/Jira/Linear).
 
 ## Title vs Context
 
@@ -26,15 +26,15 @@ If the human-provided phrasing already reads as an imperative under 60 chars, us
 Run:
 
 ```powershell
-.\core\bin\guia.ps1 bug "$ARGUMENTS"
+.\core\bin\guia.ps1 bug "<title>" --context "<observed symptom + impact>"
 ```
 
-Flags uteis:
-- `--context "<sintoma + impacto>"` — comportamento observado vs esperado, quem foi atingido.
-- `--status backlog|planned|in-development` (default `in-development`) — `backlog` se ainda nao triado, `planned` se ja sabe que vai mexer mas nao agora.
-- `--origin "<source>"` — origem alternativa.
+Useful flags:
+- `--context "<symptom + impact>"` — observed behavior vs expected, who is affected.
+- `--status backlog|planned|in-development` (default `in-development`) — `backlog` if not triaged, `planned` if planned but not now.
+- `--origin "<source>"` — alternate origin.
 
-Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py bug "$ARGUMENTS"`.
+Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py bug "<title>"`.
 
 ## After running the script
 

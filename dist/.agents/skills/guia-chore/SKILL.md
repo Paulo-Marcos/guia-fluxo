@@ -3,9 +3,9 @@ name: guia-chore
 description: PRIMARY TRIGGER for /chore or "$chore". Creates a NEW D-NNN chore task com kind=chore. Use para manutencao que merece rastro mas nao e feature/bug: refactor pequeno, atualizar dependencia, ajustar build/lint, organizar pasta, melhorar config. Do NOT use for: capacidade nova (use $feature), regressao/defeito (use $bug), ideia parqueada (use $backlog).
 ---
 
-# Chore Shim
+# Chore
 
-Cria uma task de manutencao (refactor pequeno, build/lint, deps, config, docs sem mudanca de comportamento). Introduzido na Fase 4 do ADR-0011.
+Create a chore task (maintenance, small refactor, build/lint, docs or config adjustments — anything that is not a new feature nor a bug, but deserves a trace). Introduced in ADR-0011 Phase 4.
 
 ## Title vs Context
 
@@ -23,13 +23,23 @@ Example:
 
 If the human-provided phrasing already reads as an imperative under 60 chars, use it as-is. Synthesis is for loose/long phrasings, not a mandatory rewrite.
 
-Call the core process script:
+Run:
 
 ```powershell
-.\core\bin\guia.ps1 chore "<title>" --context "<o que + por que>"
+.\core\bin\guia.ps1 chore "<title>" --context "<what + why>"
 ```
 
-Optional flags: `--status backlog|planned|in-development`, `--origin "<source>"`.
+Useful flags:
+- `--context "<what/why>"` — describes the maintenance and its motivation.
+- `--status backlog|planned|in-development` (default `in-development`).
+- `--origin "<source>"`.
+
+When to use `chore` vs alternatives:
+- **New feature** (user-visible capability) → use `/feature`.
+- **Bug** (broken/regression) → use `/bug`.
+- **Chore** → everything else: cleanup, dep upgrade, folder organization, config tweak, improving an error message without changing behavior.
+
+Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py chore "<title>"`.
 
 ## After running the script
 
@@ -55,4 +65,4 @@ Before editing files, honor `features/registry.yaml`. If a target file is locked
 
 Never bypass a lock silently. The hook at commit time will reject the commit anyway, and the developer loses trust if the agent treats locks as advisory.
 
-Then continue with the maintenance work, following `guia-fluxo` for cross-cutting protocol.
+Then continue with the maintenance work.

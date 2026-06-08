@@ -3,17 +3,28 @@ name: guia-block
 description: PAUSE in-flight task — preserva WIP, move status para `Bloqueada`. Triggered by /block or "$block" / "pausar tarefa / bloquear / esperar dependencia". Exige `--reason` obrigatorio (fica em `task.blocks[]`). Use quando a task vai voltar: esperando decisao, dependencia externa, prioridade trocada. Do NOT use for: encerramento definitivo (use $cancel), entrega para validacao (use $ready), ou fechamento (use $finish).
 ---
 
-# Block Shim
+# Block
 
-Pausa uma task com motivo obrigatorio. Move status para `Bloqueada` preservando WIP. Para retomar, use `unblock`. Para encerrar definitivo, use `cancel`.
+**Pause the current task with a mandatory reason.** Moves status to `Bloqueada`, preserves the WIP, and keeps the entry in `FEATURES.md`. Use to stop temporarily: external dependency, waiting on a decision, priority swap. Distinct from `cancel` (terminal, does not return) and `finish` (validated and closed).
 
-Call the core process script:
+Run:
 
 ```powershell
-.\core\bin\guia.ps1 block F-000 --reason "Motivo curto"
+.\core\bin\guia.ps1 block <D-NNN> --reason "Why pausing"
 ```
 
-- `--reason` e obrigatorio (fica em `task.blocks[]`).
-- Bloqueia se a task ja esta em estado terminal ou ja em `Bloqueada`.
+`--reason` is **required** (recorded in `task.blocks[]` for blocked-time auditing).
 
-Depois continue usando `guia-fluxo`.
+Fails if the task is already in a terminal state (`Validada`, `Finalizada`, `Cancelada`) or already in `Bloqueada`.
+
+To resume: `.\core\bin\guia.ps1 unblock <D-NNN>`.
+
+Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py block <D-NNN> --reason "..."`.
+
+## After running the script
+
+1. Read `.guia/current-task.json` to confirm the new state.
+2. Repeat the exact `NOME DO CHAT: ...` line printed by the script — do not paraphrase or translate it.
+3. **Codex App:** if the thread tools are loaded, call `codex_app.list_threads` to find the current thread id, then call `codex_app.set_thread_title` with the title printed after `NOME DO CHAT:`. If the tools are not loaded, search for thread tools first.
+4. **Antigravity (no thread API):** print the title prominently as best-effort — the host has no programmatic rename today.
+5. If shell access fails, surface the exact command the developer can run by hand instead of silently failing.

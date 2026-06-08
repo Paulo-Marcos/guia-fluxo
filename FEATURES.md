@@ -2,6 +2,89 @@
 
 ---
 
+## [D-050] 🧹 Consolidate per-verb bodies via host-aware include
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-08)
+- **Tipo:** Chore
+- **Contexto:** After D-047, the only truly host-specific bit in each verb body is the post_cli include (codex_app vs mark_chapter). Everything else (intro text, command examples, flag explanations, fallback line) is gratuitous textual variation between *.agent.md and *.claude.md. Introduce {{include_per_target: <path-without-host-suffix>}} directive in the renderer that resolves to <path>.agent.md or <path>.claude.md based on which target is being generated. Consolidate 28 per-host body files (14 verbs x 2 targets) into 14 single bodies plus the existing 4 partials. dist/ output must stay equivalent.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/build/render-skills.py`
+- `core/manifest/manifest.yaml`
+- `core/manifest/bodies/feature.md`
+- `core/manifest/bodies/bug.md`
+- `core/manifest/bodies/chore.md`
+- `core/manifest/bodies/backlog.md`
+- `core/manifest/bodies/promote.md`
+- `core/manifest/bodies/ready.md`
+- `core/manifest/bodies/finish.md`
+- `core/manifest/bodies/status.md`
+- `core/manifest/bodies/cancel.md`
+- `core/manifest/bodies/block.md`
+- `core/manifest/bodies/unblock.md`
+- `core/manifest/bodies/plan.md`
+- `core/manifest/bodies/start.md`
+- `core/manifest/bodies/guia-fluxo.md`
+- `tests/test_render_includes.py`
+- `tests/test_manifest_layout_b.py`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CHANGELOG.md`
+- `dist/.agents/skills/guia-backlog/SKILL.md`
+- `dist/.agents/skills/guia-block/SKILL.md`
+- `dist/.agents/skills/guia-bug/SKILL.md`
+- `dist/.agents/skills/guia-cancel/SKILL.md`
+- `dist/.agents/skills/guia-chore/SKILL.md`
+- `dist/.agents/skills/guia-feature/SKILL.md`
+- `dist/.agents/skills/guia-finish/SKILL.md`
+- `dist/.agents/skills/guia-fluxo/SKILL.md`
+- `dist/.agents/skills/guia-plan/SKILL.md`
+- `dist/.agents/skills/guia-promote/SKILL.md`
+- `dist/.agents/skills/guia-ready/SKILL.md`
+- `dist/.agents/skills/guia-start/SKILL.md`
+- `dist/.agents/skills/guia-status/SKILL.md`
+- `dist/.agents/skills/guia-unblock/SKILL.md`
+- `dist/skills/backlog/SKILL.md`
+- `dist/skills/block/SKILL.md`
+- `dist/skills/bug/SKILL.md`
+- `dist/skills/cancel/SKILL.md`
+- `dist/skills/chore/SKILL.md`
+- `dist/skills/feature/SKILL.md`
+- `dist/skills/finish/SKILL.md`
+- `dist/skills/guia-fluxo/SKILL.md`
+- `dist/skills/plan/SKILL.md`
+- `dist/skills/promote/SKILL.md`
+- `dist/skills/ready/SKILL.md`
+- `dist/skills/start/SKILL.md`
+- `dist/skills/status/SKILL.md`
+- `dist/skills/unblock/SKILL.md`
+- `docs/adr/0013-consolidacao-bodies-por-verbo.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Phase 1: added {{include_per_target: <base>}} directive to render-skills.py. Pre-processed BEFORE the regular {{include:}} expansion - substitutes the directive with {{include: <base>.<host>.md}} based on which target (agent_skill or claude_skill) is being rendered. Aborts if a body uses the directive but the target_name has no mapping in TARGET_HOST_SUFFIX.
+- Phase 2: audited all 14 verbs (feature/bug/chore/backlog/promote/ready/finish/status/cancel/block/unblock/plan/start/guia-fluxo). Confirmed the only truly host-specific bit in 13 of them is the rename mechanism (already in post_cli.<host>.md). For guia-fluxo, kept the host differences readable inline (Codex /feature vs Claude /guia:feature, Tool Notes per host section) since it is a reference doc - readers benefit from seeing the full host picture.
+- Phase 3: created 14 consolidated bodies/<verb>.md replacing 28 *.agent.md + *.claude.md pairs. Lifecycle verbs (status/cancel/block/unblock/plan/start) were also migrated to partials (they had not been in D-047). Updated manifest.yaml so both targets of each verb point body_file to the consolidated file (preserves test_every_target_has_body_file). Total bodies/: from 32 files (28 per-host + 4 partials + README) down to 19 (14 consolidated + 4 partials + README).
+- Phase 4: rewrote test_manifest_layout_b.SharedBodyCacheTests to assert (a) every verb has agent_skill.body_file == claude_skill.body_file in the manifest, and (b) the dist outputs of feature differ only in the host-aware section (codex_app in agent target, mark_chapter in claude target). Deleted the 28 legacy per-host body files.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- python core/build/render-skills.py --check (53 targets in sync)
+- python core/build/render-skills.py --check-orphans (zero orphans)
+- render+manifest+include+partial test suite: 42/42 pass
+- Full suite: 128 tests (vs 123 before), 14 pre-existing failures + 2 pre-existing errors unchanged (zero regression from D-050)
+- Spot-checked dist/skills/block/SKILL.md - composition uses post_cli.claude.md (mark_chapter) and no {{include literal survives
+- Cross-contamination check: grep for mark_chapter in agent skills returns empty; grep for codex_app in claude skills returns empty
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-047] ✨ Add partial includes to skill bodies
 
 - **Status:** Validada

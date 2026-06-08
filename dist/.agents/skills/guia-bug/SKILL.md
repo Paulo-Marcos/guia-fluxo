@@ -3,9 +3,9 @@ name: guia-bug
 description: PRIMARY TRIGGER for /bug or "$bug". Creates a NEW D-NNN bug/regression task with kind=bug (substitui o antigo /issue removido na Fase 4 do ADR-0011). Use para defeitos, regressoes e comportamento incorreto. Do NOT use for: nova capacidade (use $feature), manutencao sem mudanca de comportamento (use $chore), ideia parqueada (use $backlog) ou avaliar um B-NNN existente (use $promote).
 ---
 
-# Bug Shim
+# Bug
 
-Cria uma task de bug (regressao, defeito, comportamento incorreto). Substitui o antigo `issue` (removido na Fase 4 do ADR-0011).
+Create a bug task (regression, defect, incorrect behavior) before editing code. Replaces the old `/issue` (removed in ADR-0011 Phase 4 — `issue` collided with the umbrella sense of the term in GitHub/Jira/Linear).
 
 ## Title vs Context
 
@@ -23,13 +23,18 @@ Example:
 
 If the human-provided phrasing already reads as an imperative under 60 chars, use it as-is. Synthesis is for loose/long phrasings, not a mandatory rewrite.
 
-Call the core process script:
+Run:
 
 ```powershell
-.\core\bin\guia.ps1 bug "<title>" --context "<sintoma + impacto>"
+.\core\bin\guia.ps1 bug "<title>" --context "<observed symptom + impact>"
 ```
 
-Optional flags: `--status backlog|planned|in-development` (default `in-development`), `--origin "<source>"`.
+Useful flags:
+- `--context "<symptom + impact>"` — observed behavior vs expected, who is affected.
+- `--status backlog|planned|in-development` (default `in-development`) — `backlog` if not triaged, `planned` if planned but not now.
+- `--origin "<source>"` — alternate origin.
+
+Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py bug "<title>"`.
 
 ## After running the script
 
@@ -55,4 +60,4 @@ Before editing files, honor `features/registry.yaml`. If a target file is locked
 
 Never bypass a lock silently. The hook at commit time will reject the commit anyway, and the developer loses trust if the agent treats locks as advisory.
 
-Then continue with investigation and fix, following `guia-fluxo` for cross-cutting protocol.
+Then continue with the investigation and fix.

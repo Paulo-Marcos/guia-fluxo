@@ -5,7 +5,7 @@ description: PRIMARY TRIGGER for /chore or "$chore". Creates a NEW D-NNN chore t
 
 # Chore
 
-Cria uma task de chore (manutencao, refactor pequeno, build/lint, ajuste de docs ou config — coisa que nao e feature nova nem bug, mas merece rastro). Introduzido na Fase 4 do ADR-0011.
+Create a chore task (maintenance, small refactor, build/lint, docs or config adjustments — anything that is not a new feature nor a bug, but deserves a trace). Introduced in ADR-0011 Phase 4.
 
 ## Title vs Context
 
@@ -26,20 +26,20 @@ If the human-provided phrasing already reads as an imperative under 60 chars, us
 Run:
 
 ```powershell
-.\core\bin\guia.ps1 chore "$ARGUMENTS"
+.\core\bin\guia.ps1 chore "<title>" --context "<what + why>"
 ```
 
-Flags uteis:
-- `--context "<o que/por que>"` — descreve a manutencao e a motivacao.
+Useful flags:
+- `--context "<what/why>"` — describes the maintenance and its motivation.
 - `--status backlog|planned|in-development` (default `in-development`).
 - `--origin "<source>"`.
 
-Quando usar `chore` vs alternativas:
-- **Feature nova** (capacidade visivel para o usuario) → use `/feature`.
-- **Bug** (algo quebrado ou regressao) → use `/bug`.
-- **Chore** → tudo que sobra: cleanup, atualizar dependencia, organizar pasta, ajustar config, melhorar mensagem de erro sem mudar comportamento.
+When to use `chore` vs alternatives:
+- **New feature** (user-visible capability) → use `/feature`.
+- **Bug** (broken/regression) → use `/bug`.
+- **Chore** → everything else: cleanup, dep upgrade, folder organization, config tweak, improving an error message without changing behavior.
 
-Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py chore "$ARGUMENTS"`.
+Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py chore "<title>"`.
 
 ## After running the script
 

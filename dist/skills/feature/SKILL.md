@@ -5,7 +5,7 @@ description: PRIMARY TRIGGER for /feature or "$feature". Creates a NEW D-NNN fea
 
 # Feature
 
-Create a new feature task before editing code.
+Create a new feature task before editing code. Use when the human asks for a NEW capability (not a bug fix, not maintenance).
 
 ## Title vs Context
 
@@ -26,15 +26,15 @@ If the human-provided phrasing already reads as an imperative under 60 chars, us
 Run:
 
 ```powershell
-.\core\bin\guia.ps1 feature "$ARGUMENTS"
+.\core\bin\guia.ps1 feature "<title>" --context "<context>"
 ```
 
-Flags uteis:
-- `--context "<why>"` — motivacao (sintetize como descrito acima).
-- `--origin "<source>"` — origem alternativa (default: "Guia Fluxo (data)").
+Useful flags:
+- `--context "<why>"` — motivation (synthesize per the rules above).
+- `--origin "<source>"` — alternate origin (default: "Guia Fluxo (date)").
 - `--status backlog|planned|in-development` — default `in-development`.
 
-Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py feature "$ARGUMENTS"`.
+Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py feature "<title>"`.
 
 ## After running the script
 

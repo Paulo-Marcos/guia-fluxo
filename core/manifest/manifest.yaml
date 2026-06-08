@@ -1,13 +1,15 @@
 # Fonte unica de verdade para os skills do Guia Fluxo.
 #
-# Como funciona (Layout B - F-016):
+# Como funciona (Layout B + D-050 consolidacao):
 #   - Este arquivo declara os verbos, suas `description`s e referencia o
-#     body markdown em `core/manifest/bodies/<verb>.<target>.md`.
+#     body markdown em `core/manifest/bodies/<verb>.md`.
+#   - Cada verbo tem **um unico body file** apontado pelos dois targets
+#     (agent_skill e claude_skill). O bit host-especifico fica em
+#     `core/manifest/bodies/_partials/post_cli.<host>.md` e e selecionado
+#     pelo renderer via `{{include_per_target: _partials/post_cli}}` no
+#     body do verbo (D-050).
 #   - `core/build/render-skills.py` resolve `body_file` (le do disco) e
 #     gera `dist/skills/<verb>/SKILL.md` + `dist/.agents/skills/guia-<verb>/SKILL.md`.
-#   - Para usar o mesmo body em dois targets, aponte ambos para o mesmo
-#     arquivo (shared_body explicito) ou use o campo `shared_body:` no
-#     verbo declarando body_file unico.
 #
 # `description` continua inline porque e o gatilho que cada host (Claude,
 # Codex, Antigravity) usa pra escolher a skill - manter junto reduz a
@@ -17,7 +19,8 @@
 # rode `python core/build/render-skills.py`. Bodies sao markdown puro, sem
 # YAML wrap-around - preview e diff limpos.
 #
-# Detalhes em docs/adr/0008-layout-b-manifest.md.
+# Detalhes em docs/adr/0008-layout-b-manifest.md (Layout B) e
+# docs/adr/0012-partials-em-bodies.md + ADR de D-050 (consolidacao).
 
 version: 2
 
@@ -27,123 +30,123 @@ verbs:
       REFERENCE/BACKGROUND ONLY for the Guia Fluxo task-process pipeline (D-NNN/B-NNN, locks, chat-rename, worktree). Loaded as context by the dedicated shims, not as a trigger competitor. Do NOT auto-fire on /feature, /bug, /chore, /backlog, /promote, /ready, /finish, /status — those route to their own shims first. Use guia-fluxo directly ONLY when the user asks for the full process overview ("explain Guia Fluxo", "how does this pipeline work", "como funciona o guia-fluxo") or needs the installation/portability guide.
     targets:
       agent_skill:
-        body_file: bodies/guia-fluxo.agent.md
+        body_file: bodies/guia-fluxo.md
       claude_skill:
-        body_file: bodies/guia-fluxo.claude.md
+        body_file: bodies/guia-fluxo.md
 
   feature:
     description: |
       PRIMARY TRIGGER for /feature or "$feature". Creates a NEW D-NNN feature task and starts implementation immediately. Do NOT use for: bugs/regressions (use $bug), maintenance without behavior change (use $chore), deferred ideas without starting work (use $backlog), or evaluating an existing B-NNN (use $promote).
     targets:
       agent_skill:
-        body_file: bodies/feature.agent.md
+        body_file: bodies/feature.md
       claude_skill:
-        body_file: bodies/feature.claude.md
+        body_file: bodies/feature.md
 
   bug:
     description: |
       PRIMARY TRIGGER for /bug or "$bug". Creates a NEW D-NNN bug/regression task with kind=bug (substitui o antigo /issue removido na Fase 4 do ADR-0011). Use para defeitos, regressoes e comportamento incorreto. Do NOT use for: nova capacidade (use $feature), manutencao sem mudanca de comportamento (use $chore), ideia parqueada (use $backlog) ou avaliar um B-NNN existente (use $promote).
     targets:
       agent_skill:
-        body_file: bodies/bug.agent.md
+        body_file: bodies/bug.md
       claude_skill:
-        body_file: bodies/bug.claude.md
+        body_file: bodies/bug.md
 
   chore:
     description: |
       PRIMARY TRIGGER for /chore or "$chore". Creates a NEW D-NNN chore task com kind=chore. Use para manutencao que merece rastro mas nao e feature/bug: refactor pequeno, atualizar dependencia, ajustar build/lint, organizar pasta, melhorar config. Do NOT use for: capacidade nova (use $feature), regressao/defeito (use $bug), ideia parqueada (use $backlog).
     targets:
       agent_skill:
-        body_file: bodies/chore.agent.md
+        body_file: bodies/chore.md
       claude_skill:
-        body_file: bodies/chore.claude.md
+        body_file: bodies/chore.md
 
   backlog:
     description: |
       DEFER-AND-PARK skill: never starts implementation. Triggered ONLY by /backlog or "$backlog" with a subcommand (add / list). Saves future ideas to .guia/backlog.json (B-NNN) or lists them. Do NOT use for: starting work now (use $feature for new functionality, $bug for regressions, or $chore for maintenance), or evaluating one specific B-NNN to convert it (use $promote).
     targets:
       agent_skill:
-        body_file: bodies/backlog.agent.md
+        body_file: bodies/backlog.md
       claude_skill:
-        body_file: bodies/backlog.claude.md
+        body_file: bodies/backlog.md
 
   promote:
     description: |
       EVALUATE-AND-CONVERT one specific backlog item. Triggered ONLY by /promote <B-NNN> or "$promote B-NNN" with an explicit backlog ID. AI reads the item, asks missing questions, proposes a plan, confronts locks/risks, asks worktree y/n, then converts the B-NNN into a D-NNN task (kind feature/bug/chore). Do NOT use for: adding or listing backlog items (use $backlog), or creating a task without going through backlog first (use $feature, $bug or $chore).
     targets:
       agent_skill:
-        body_file: bodies/promote.agent.md
+        body_file: bodies/promote.md
       claude_skill:
-        body_file: bodies/promote.claude.md
+        body_file: bodies/promote.md
 
   ready:
     description: |
       HANDOFF to developer validation — does NOT close the task. THE AGENT runs this when implementation is finished, NOT the human; it is the gate that forces human-in-the-loop before $finish. Triggered by /ready or "$ready" / "pronto para validar / enviar para teste". Marks the in-progress D-NNN as awaiting manual validation and records changed files, summary, and pending checks. Do NOT use for: closing an already-validated task (use $finish), or just inspecting the current task without changing its state (use $status).
     targets:
       agent_skill:
-        body_file: bodies/ready.agent.md
+        body_file: bodies/ready.md
       claude_skill:
-        body_file: bodies/ready.claude.md
+        body_file: bodies/ready.md
 
   finish:
     description: |
       CLOSE an ALREADY-validated task; runs the docs-check hook, commits by default and optionally creates a lock. Triggered by /finish or "$finish" / "finalizar / fechar / concluir tarefa validada". Use ONLY after the developer explicitly confirms the work is final — never as a shortcut to skip validation. Do NOT use for: sending the task to validation first (use $ready), or showing current state without closing (use $status).
     targets:
       agent_skill:
-        body_file: bodies/finish.agent.md
+        body_file: bodies/finish.md
       claude_skill:
-        body_file: bodies/finish.claude.md
+        body_file: bodies/finish.md
 
   status:
     description: |
       READ-ONLY: show the current active task and the suggested chat title. Triggered by /status or "$status" / "qual a tarefa atual / status do processo". Never creates, modifies, advances, or closes a task. Do NOT use for: creating tasks (use $feature, $bug or $chore), handoff to validation (use $ready), or closing a validated task (use $finish).
     targets:
       agent_skill:
-        body_file: bodies/status.agent.md
+        body_file: bodies/status.md
       claude_skill:
-        body_file: bodies/status.claude.md
+        body_file: bodies/status.md
 
   cancel:
     description: |
       TERMINAL CANCEL — encerra a task com `status: Cancelada` (terminal, nao volta). Triggered by /cancel or "$cancel" / "cancelar tarefa / nao vou fazer / criada por engano". Exige `--reason` obrigatorio. Use para: demanda criada por engano, promote errado, escopo desfeito. Do NOT use for: pausa temporaria que vai voltar (use $block), tarefa concluida e validada (use $finish), ou re-triagem (cancele e abra nova).
     targets:
       agent_skill:
-        body_file: bodies/cancel.agent.md
+        body_file: bodies/cancel.md
       claude_skill:
-        body_file: bodies/cancel.claude.md
+        body_file: bodies/cancel.md
 
   block:
     description: |
       PAUSE in-flight task — preserva WIP, move status para `Bloqueada`. Triggered by /block or "$block" / "pausar tarefa / bloquear / esperar dependencia". Exige `--reason` obrigatorio (fica em `task.blocks[]`). Use quando a task vai voltar: esperando decisao, dependencia externa, prioridade trocada. Do NOT use for: encerramento definitivo (use $cancel), entrega para validacao (use $ready), ou fechamento (use $finish).
     targets:
       agent_skill:
-        body_file: bodies/block.agent.md
+        body_file: bodies/block.md
       claude_skill:
-        body_file: bodies/block.claude.md
+        body_file: bodies/block.md
 
   unblock:
     description: |
       RESUME a paused task — move status de `Bloqueada` para `Em desenvolvimento`. Triggered by /unblock or "$unblock" / "retomar tarefa / desbloquear / dependencia resolvida". Inverso de $block. Falha se a task nao estava em `Bloqueada`. Do NOT use for: criar nova task (use $feature, $bug ou $chore), promover backlog (use $promote), ou voltar de cancelamento (cancelamento e terminal - abra nova task).
     targets:
       agent_skill:
-        body_file: bodies/unblock.agent.md
+        body_file: bodies/unblock.md
       claude_skill:
-        body_file: bodies/unblock.claude.md
+        body_file: bodies/unblock.md
 
   plan:
     description: |
       PLAN — marca task como `Planejada` (triada mas nao iniciada). Triggered by /plan or "$plan" / "planejar tarefa / triagem feita / aguardar para comecar". Aceita transicao de Backlog (item parqueado que ganhou prioridade) ou de Em desenvolvimento (despriorizado mas ja conhecido). Do NOT use for: comecar trabalho agora (use $start ou $promote), guardar ideia sem decidir (use $backlog), ou entregar pra validacao (use $ready).
     targets:
       agent_skill:
-        body_file: bodies/plan.agent.md
+        body_file: bodies/plan.md
       claude_skill:
-        body_file: bodies/plan.claude.md
+        body_file: bodies/plan.md
 
   start:
     description: |
       START — comeca trabalho em uma task Planejada ou diretamente Backlog (status -> Em desenvolvimento). Triggered by /start or "$start" / "comecar tarefa / iniciar trabalho / bora codar". Diferente de $promote: assume triagem feita (kind ja decidido). Falha se task ja Em desenvolvimento ou terminal. Do NOT use for: criar nova task do zero (use $feature, $bug ou $chore), triar backlog item (use $promote), ou retomar pausa (use $unblock).
     targets:
       agent_skill:
-        body_file: bodies/start.agent.md
+        body_file: bodies/start.md
       claude_skill:
-        body_file: bodies/start.claude.md
+        body_file: bodies/start.md

@@ -5,18 +5,24 @@ description: RESUME a paused task — move status de `Bloqueada` para `Em desenv
 
 # Unblock
 
-**Retoma uma task pausada.** Move o status de `Bloqueada` para `Em desenvolvimento`. Use depois de `block` quando a dependencia/decisao que travava saiu do caminho.
+**Resume a paused task.** Moves status from `Bloqueada` back to `Em desenvolvimento`. Use after `block` once the dependency/decision blocking the work has been resolved.
 
 Run:
 
 ```powershell
-.\core\bin\guia.ps1 unblock $ARGUMENTS [--note "O que destravou"]
+.\core\bin\guia.ps1 unblock <D-NNN> [--note "What unblocked it"]
 ```
 
-`--note` e opcional - usado quando vale registrar o que destravou (decisao tomada, dependencia resolvida).
+`--note` is optional — useful when it is worth recording what unblocked it (decision made, dependency resolved).
 
-Falha se a task nao estava em `Bloqueada` (preserva estados de fluxo).
+Fails if the task was not in `Bloqueada` (preserves the flow states).
 
-Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py unblock $ARGUMENTS`.
+Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py unblock <D-NNN>`.
 
-Depois repita a linha `NOME DO CHAT: ...` (volta para `#DEV`) e rode `/rename <suggested-title>` se a sessao expor essa API.
+## After running the script
+
+1. Read `.guia/current-task.json` to confirm the new state.
+2. Repeat the exact `NOME DO CHAT: ...` line printed by the script — do not paraphrase or translate it.
+3. **Always call `mark_chapter`** (`mcp__ccd_session__mark_chapter`) with that title — this is the reliable rename surrogate in Claude Code: it places a visible divider in the transcript and a ToC entry the developer can jump to. Works on every Claude Code build that has the `ccd_session` MCP loaded.
+4. **Also try `/rename <suggested-title>`** if this Claude Code build exposes the slash command. No harm if it doesn't — `mark_chapter` already covers the navigation need; this is bonus sidebar rename when supported.
+5. If neither path works, print the title prominently as a final fallback.

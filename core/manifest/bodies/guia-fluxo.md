@@ -1,8 +1,3 @@
----
-name: guia-fluxo
-description: REFERENCE/BACKGROUND ONLY for the Guia Fluxo task-process pipeline (D-NNN/B-NNN, locks, chat-rename, worktree). Loaded as context by the dedicated shims, not as a trigger competitor. Do NOT auto-fire on /feature, /bug, /chore, /backlog, /promote, /ready, /finish, /status — those route to their own shims first. Use guia-fluxo directly ONLY when the user asks for the full process overview ("explain Guia Fluxo", "how does this pipeline work", "como funciona o guia-fluxo") or needs the installation/portability guide.
----
-
 # Guia Fluxo
 
 Reference for the repository's task-process pipeline. Use this skill when the developer wants the **process overview** — what verbs exist, who triggers what, how the moving parts fit. The action playbook for each verb lives in the verb's own shim plus shared partials in `core/manifest/bodies/_partials/`.

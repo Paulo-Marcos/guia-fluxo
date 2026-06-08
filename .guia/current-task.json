@@ -1,6 +1,6 @@
 {
-  "taskId": "D-047",
+  "taskId": "D-050",
   "status": "Validada",
-  "title": "Add partial includes to skill bodies",
-  "chatTitle": "D-047 \u2728 - #FINALIZADO - Add partial includes to skill bodies"
+  "title": "Consolidate per-verb bodies via host-aware include",
+  "chatTitle": "D-050 \ud83e\uddf9 - #FINALIZADO - Consolidate per-verb bodies via host-aware include"
 }

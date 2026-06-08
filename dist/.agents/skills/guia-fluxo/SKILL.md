@@ -5,28 +5,27 @@ description: REFERENCE/BACKGROUND ONLY for the Guia Fluxo task-process pipeline 
 
 # Guia Fluxo
 
-Reference for the repository's task-process pipeline. Use this skill when the developer wants the **process overview** — what verbs exist, who triggers what, how hosts differ. The action playbook for each verb lives in the verb's own shim (`feature`, `bug`, `chore`, `backlog`, `promote`, `ready`, `finish`, `status`) plus shared partials.
+Reference for the repository's task-process pipeline. Use this skill when the developer wants the **process overview** — what verbs exist, who triggers what, how the moving parts fit. The action playbook for each verb lives in the verb's own shim plus shared partials in `core/manifest/bodies/_partials/`.
 
 ## Trigger Commands
 
 Legend: 👤 human triggers | 🤖 agent triggers | 👤→🤖 human authorizes, agent executes.
 
-- 👤 `/feature <title>`: create a new `D-NNN` feature task.
-- 👤 `/bug <title>`: create a new `D-NNN` bug task.
-- 👤 `/chore <title>`: create a new `D-NNN` chore task.
-- 👤 `/backlog add <title>`: save future work without starting implementation.
-- 👤 `/backlog list`: show future work.
-- 👤 `/backlog promote <B-NNN>`: convert backlog item into a task.
-- 👤 `/promote <B-NNN>`: AI evaluates backlog item, asks for missing information, proposes plan, asks worktree yes/no, then promotes it.
-- 👤 `/status [D-NNN]`: show active task and suggested chat title.
-- 🤖 `/ready [D-NNN]`: mark implementation as waiting for developer validation. The agent always triggers this — never the human.
-- 👤→🤖 `/finish [D-NNN]`: close an already validated task, suggest `#FINALIZADO`, and commit by default. The human confirms validation; the agent runs the command.
+Slash-command prefix differs by host: Claude Code exposes the plugin namespace (`/guia:feature`), Codex/Antigravity use bare verbs (`/feature` or `$feature`). The verb semantics are identical.
+
+- 👤 `feature <title>`: create a new `D-NNN` feature task.
+- 👤 `bug <title>`: create a new `D-NNN` bug task.
+- 👤 `chore <title>`: create a new `D-NNN` chore task.
+- 👤 `backlog add <title>`: park future work without starting implementation.
+- 👤 `backlog list`: show parked work.
+- 👤 `promote <B-NNN>`: agent evaluates the backlog item, proposes a plan, asks worktree yes/no, then promotes after developer OK.
+- 👤 `status [<D-NNN>]`: show active task and suggested chat title.
+- 🤖 `ready [<D-NNN>]`: handoff to validation. **The agent itself runs this when implementation ends** — never the human, never as a shortcut to skip ahead to `finish`.
+- 👤→🤖 `finish [<D-NNN>]`: close an already-validated task. The human confirms validation in real use; the agent runs the command.
 
 ## Core Rule
 
-Run `core/bin/guia.ps1` or `python core/src/guia.py`. Do not manually create IDs, status blocks, backlog records, or current-task records when the script can do it.
-
-Preferred Windows commands:
+Use repository scripts as the source of truth:
 
 ```powershell
 .\core\bin\guia.ps1 feature "Short title" --context "Why this matters"
@@ -38,35 +37,37 @@ Preferred Windows commands:
 .\core\bin\guia.ps1 finish D-016 --lock --lock-id guia-fluxo
 ```
 
-Portable fallback:
+Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py <command> ...`.
 
-```bash
-python core/src/guia.py feature "Short title" --context "Why this matters"
-```
+Do not hand-generate IDs, status blocks, backlog records, or current-task records when `core/bin/guia.ps1` can do it.
 
 ## Where Behavior Lives
 
-The per-verb action playbook is in each verb's shim body, which composes shared partials in `core/manifest/bodies/_partials/`:
+The per-verb action playbook is in each verb's shim body, which composes shared partials:
 
-- `title_context_rules.md` — how to synthesize `<title>` vs `<context>` (used by feature, bug, chore, backlog).
-- `post_cli.agent.md` / `post_cli.claude.md` — post-CLI flow: read `current-task.json`, repeat `NOME DO CHAT`, rename chat (host-specific).
-- `lock_protocol.md` — `features/registry.yaml` enforcement, unlock request flow (used by any verb that edits files).
+- `_partials/title_context_rules.md` — how to synthesize `<title>` vs `<context>` (feature, bug, chore, backlog).
+- `_partials/post_cli.agent.md` / `_partials/post_cli.claude.md` — post-CLI flow per host (read `.guia/current-task.json`, repeat `NOME DO CHAT`, rename chat). The host-aware include `{{include_per_target: _partials/post_cli}}` in each verb body picks the right one at build time.
+- `_partials/lock_protocol.md` — `features/registry.yaml` enforcement and unlock request flow (used by any verb that edits files).
 
 Editing a partial changes every shim that uses it. This skill (`guia-fluxo`) is intentionally **not** part of that action chain — it stays as reference.
 
-## Tool Notes
+## Tool Notes per Host
 
-- Codex does not treat arbitrary `/feature` or `/finish` as custom slash commands in every surface. Reliable Codex calls are direct script commands, `/use guia-fluxo`, or shim skills such as `$finish` after skills reload.
-- Antigravity reads skills from the same `dist/.agents/skills/` tree as Codex. The shim skills in this pack work for both surfaces; treat any verb listed above as a callable workflow.
-- Claude Code reads this pack as an official plugin: `dist/.claude-plugin/plugin.json` (name `guia`) exposes the skills in `dist/skills/<verb>/SKILL.md` under namespace `guia`. Atalhos no Claude saem `/guia:feature`, `/guia:bug`, `/guia:chore`, `/guia:backlog`, `/guia:promote`, `/guia:ready`, `/guia:finish`, `/guia:status`. Claude also loads skills automatically by description. All bodies are generated from `core/manifest/manifest.yaml`.
-- Codex App chat rename: print `NOME DO CHAT: ...` AND call `codex_app.list_threads` + `codex_app.set_thread_title` with the exact suggested title. The print alone does not rename the UI.
-- Claude Code chat rename: call `mark_chapter` (`mcp__ccd_session__mark_chapter`) with the suggested title — reliable surrogate that places a divider + ToC entry. Also try `/rename <suggested-title>` if the slash command is exposed. `claude -n <title>` works only when starting a new session.
-- If a host cannot rename from the agent turn, print the suggested title and keep working.
-- If shell access fails, explain the exact command the developer can run.
+- **Codex** does not treat arbitrary `/feature` or `/finish` as custom slash commands in every surface. Reliable Codex calls are direct script commands, `/use guia-fluxo`, or shim skills such as `$finish` after skills reload.
+- **Antigravity** reads skills from the same `dist/.agents/skills/` tree as Codex. The shim skills in this pack work for both surfaces; treat any verb listed above as a callable workflow. No thread-rename API available — chat title falls back to printed text.
+- **Claude Code** reads this pack as an official plugin: `dist/.claude-plugin/plugin.json` (name `guia`) exposes the skills in `dist/skills/<verb>/SKILL.md` under namespace `guia`. Shortcuts in Claude become `/guia:feature`, `/guia:bug`, `/guia:chore`, `/guia:backlog`, `/guia:promote`, `/guia:ready`, `/guia:finish`, `/guia:status`. Claude also auto-loads skills by description. All bodies are generated from `core/manifest/manifest.yaml`.
 
-## Portability
+## Chat Rename per Host
 
-This skill is intentionally project-neutral. To reuse it elsewhere, copy:
+- **Codex App:** call `codex_app.list_threads` to find the current thread id, then `codex_app.set_thread_title` with the exact title printed after `NOME DO CHAT:`. The print alone does not rename the UI.
+- **Claude Code:** call `mark_chapter` (`mcp__ccd_session__mark_chapter`) with the suggested title — reliable surrogate that places a divider + ToC entry in the transcript. Also try `/rename <suggested-title>` if the slash command is exposed in this build. `claude -n <title>` only works when starting a new session. Do not use Codex App `codex_app.*` tools in Claude.
+- **Any host without a rename API:** print the suggested title and keep working.
+
+If shell access fails, surface the exact command the developer can run by hand.
+
+## Portable install
+
+To reuse the pack in another project, copy:
 
 - `.guia/process.json`
 - `core/src/guia.py`
@@ -76,7 +77,7 @@ This skill is intentionally project-neutral. To reuse it elsewhere, copy:
 - `core/build/render-skills.py`
 - `core/lock/check-lock.py`
 - `core/hooks/commit-msg`
-- `dist/.claude-plugin/plugin.json` (plugin manifest) + `dist/.claude-plugin/marketplace.json`
+- `dist/.claude-plugin/plugin.json` + `dist/.claude-plugin/marketplace.json`
 - the generated `dist/.agents/skills/*` and `dist/skills/*` trees
 
 Then run:

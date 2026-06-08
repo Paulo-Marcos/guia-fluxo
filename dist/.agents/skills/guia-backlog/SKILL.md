@@ -3,9 +3,9 @@ name: guia-backlog
 description: DEFER-AND-PARK skill: never starts implementation. Triggered ONLY by /backlog or "$backlog" with a subcommand (add / list). Saves future ideas to .guia/backlog.json (B-NNN) or lists them. Do NOT use for: starting work now (use $feature for new functionality, $bug for regressions, or $chore for maintenance), or evaluating one specific B-NNN to convert it (use $promote).
 ---
 
-# Backlog Shim
+# Backlog
 
-Manage parked work. `backlog add` creates a `D-NNN` task with `status=Backlog` (not started). `backlog list` shows all parked items (new D-NNN + legacy B-NNN). `backlog promote` delegates to the `/promote` flow.
+Manage parked work without starting implementation. `backlog add` creates a `D-NNN` task with `status=Backlog`. `backlog list` shows all parked items (new D-NNN + legacy B-NNN). `backlog promote` delegates to the `/promote` flow.
 
 ## Title vs Context
 
@@ -23,13 +23,25 @@ Example:
 
 If the human-provided phrasing already reads as an imperative under 60 chars, use it as-is. Synthesis is for loose/long phrasings, not a mandatory rewrite.
 
-Call the core process script:
+If the user provided a title, run:
 
 ```powershell
 .\core\bin\guia.ps1 backlog add "<title>" --context "<context>"
+```
+
+To list parked work:
+
+```powershell
 .\core\bin\guia.ps1 backlog list
+```
+
+To promote a backlog item:
+
+```powershell
 .\core\bin\guia.ps1 backlog promote B-001
 ```
+
+Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py backlog add|list|promote ...`.
 
 ## After running the script
 
@@ -39,4 +51,4 @@ Call the core process script:
 4. **Antigravity (no thread API):** print the title prominently as best-effort — the host has no programmatic rename today.
 5. If shell access fails, surface the exact command the developer can run by hand instead of silently failing.
 
-**Do not start implementation.** Backlog is the defer-and-park surface. To begin work on a parked item later, use `/promote <B-NNN>` (evaluation + plan) or `/start <D-NNN>` (already triaged).
+**Do not start implementation.** Backlog parks work for later. To begin work on a parked item, use `/promote <B-NNN>` (evaluation + plan) or `/start <D-NNN>` (already triaged).
