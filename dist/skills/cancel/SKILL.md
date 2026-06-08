@@ -15,7 +15,7 @@ Casos tipicos:
 Run:
 
 ```powershell
-.\core\bin\ai.ps1 cancel $ARGUMENTS --reason "Motivo curto"
+.\core\bin\guia.ps1 cancel $ARGUMENTS --reason "Motivo curto"
 ```
 
 O `--reason` e **obrigatorio** (justificativa fica no historico em `task.cancellations[]` e em `FEATURES.md`).
@@ -23,10 +23,10 @@ O `--reason` e **obrigatorio** (justificativa fica no historico em `task.cancell
 Flags uteis:
 
 - `--keep-worktree`: nao remove a worktree associada (default: remove se existir e o cancel for explicito).
-- `--set-current`: mantem a task como current apos cancelar (default: limpa `.ai/current-task.json` se a task cancelada era a current).
+- `--set-current`: mantem a task como current apos cancelar (default: limpa `.guia/current-task.json` se a task cancelada era a current).
 
 Bloqueia se a task ja esta em estado terminal (`Validada`, `Finalizada`, `Cancelada`).
 
-Portable fallback (Linux/Mac/sem PowerShell): `python core/src/ai.py cancel $ARGUMENTS --reason "..."`.
+Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py cancel $ARGUMENTS --reason "..."`.
 
 Depois repita a linha `NOME DO CHAT: ...` e rode `/rename <suggested-title>` se a sessao expor essa API.

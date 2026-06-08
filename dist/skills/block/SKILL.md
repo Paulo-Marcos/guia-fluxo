@@ -10,15 +10,15 @@ description: PAUSE in-flight task — preserva WIP, move status para `Bloqueada`
 Run:
 
 ```powershell
-.\core\bin\ai.ps1 block $ARGUMENTS --reason "Por que esta pausando"
+.\core\bin\guia.ps1 block $ARGUMENTS --reason "Por que esta pausando"
 ```
 
 O `--reason` e **obrigatorio** (fica registrado em `task.blocks[]` para auditoria de tempo bloqueado).
 
 Bloqueia se a task ja esta em estado terminal (`Validada`, `Finalizada`, `Cancelada`) ou ja em `Bloqueada`.
 
-Para retomar: `.\core\bin\ai.ps1 unblock <id>`.
+Para retomar: `.\core\bin\guia.ps1 unblock <id>`.
 
-Portable fallback (Linux/Mac/sem PowerShell): `python core/src/ai.py block $ARGUMENTS --reason "..."`.
+Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py block $ARGUMENTS --reason "..."`.
 
 Depois repita a linha `NOME DO CHAT: ...` (vira `#BLOQUEADA`) e rode `/rename <suggested-title>` se a sessao expor essa API.

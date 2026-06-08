@@ -1,6 +1,6 @@
 """Smoke test: exercita o caminho feliz da CLI ai num diretorio temporario.
 
-A partir do split modular (F-015), `core/src/ai.py` depende de
+A partir do split modular (F-015), `core/src/guia.py` depende de
 `_constants.py`, `_state.py`, `_tasks.py`, etc. e `core/lock/lock_api.py`.
 O teste copia tudo para o sandbox preservando o layout do repo-mae para
 que o `_bootstrap_sys_path` da CLI ache os modulos.
@@ -40,7 +40,7 @@ class SmokeTest(unittest.TestCase):
 
             def run(*args: str) -> subprocess.CompletedProcess[str]:
                 return subprocess.run(
-                    [sys.executable, "core/src/ai.py", *args],
+                    [sys.executable, "core/src/guia.py", *args],
                     cwd=sandbox,
                     check=True,
                     capture_output=True,
@@ -52,7 +52,7 @@ class SmokeTest(unittest.TestCase):
             run("ready", "F-001", "--summary", "smoke entregue")
             run("finish", "F-001", "--no-commit", "--summary", "smoke fechado")
 
-            tasks = json.loads((sandbox / ".ai" / "tasks.json").read_text(encoding="utf-8"))
+            tasks = json.loads((sandbox / ".guia" / "tasks.json").read_text(encoding="utf-8"))
             task = next(t for t in tasks["tasks"] if t["id"] == "F-001")
             self.assertEqual(task["status"], "Validada")
 

@@ -5,9 +5,9 @@ Inicia trabalho em uma task `Planejada` ou `Backlog` (status -> `Em desenvolvime
 Call the core process script:
 
 ```powershell
-.\core\bin\ai.ps1 start D-NNN [--note "..."]
+.\core\bin\guia.ps1 start D-NNN [--note "..."]
 ```
 
 Falha se a task ja esta `Em desenvolvimento`, terminal ou `Bloqueada` (use `$unblock`).
 
-Depois continue usando `ai-process`.
+Depois continue usando `guia-fluxo`.

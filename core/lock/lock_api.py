@@ -3,7 +3,7 @@
 Single source of truth for lock matching, registry I/O and unlock parsing.
 Consumed by:
     core/lock/check-lock.py    (thin CLI wrapper)
-    core/src/ai.py             (lock_task_files in finish --lock)
+    core/src/guia.py             (lock_task_files in finish --lock)
 
 DESIGN
 ------
@@ -394,7 +394,7 @@ def append_lock_block(
     description: str,
     locked_at: str,
 ) -> None:
-    """Used by core/src/ai.py:lock_task_files to grow the registry.
+    """Used by core/src/guia.py:lock_task_files to grow the registry.
 
     Goes through the API so behavior is consistent with the standalone
     CLI: lock-ignore is respected, paths are normalized, ignored paths

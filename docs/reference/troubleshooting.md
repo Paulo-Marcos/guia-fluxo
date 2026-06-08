@@ -40,20 +40,20 @@ git commit --amend
 
 Se ja tinha pushed em PR, faca um novo commit com a marca (ou amend + force-push se for branch privado seu).
 
-## "ai.ps1 nao encontrado" no PowerShell
+## "guia.ps1 nao encontrado" no PowerShell
 
 Voce esta em outro diretorio. Use caminho absoluto ou:
 
 ```powershell
 cd C:\caminho\do\projeto
-.\core\bin\ai.ps1 status
+.\core\bin\guia.ps1 status
 ```
 
-## "Python not found" ao invocar `ai.ps1`
+## "Python not found" ao invocar `guia.ps1`
 
 ```powershell
-$env:AI_PROCESS_PYTHON = "C:\caminho\para\python.exe"
-.\core\bin\ai.ps1 doctor
+$env:GUIA_PYTHON = "C:\caminho\para\python.exe"
+.\core\bin\guia.ps1 doctor
 ```
 
 Ou instale Python 3.10+ em local conhecido (o wrapper tenta `python`, `python3`, `py`, `%LOCALAPPDATA%\Programs\Python\Python313\python.exe` e a venv do repo).

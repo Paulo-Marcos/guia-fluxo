@@ -10,7 +10,7 @@ moveu os bodies para markdown) sempre foi YAML, mas a decisao nunca foi
 documentada. A auditoria [`F-014`](../auditorias/F-014-core.md) na Etapa
 1 Q1 levantou o ponto: o ADR-0003 explicitamente rejeita YAML como
 fonte de estado de tasks ("whitespace-sensitive, diff ruidoso em
-arrays"), porem aquele contexto eram dados de processo (`.ai/*.json`).
+arrays"), porem aquele contexto eram dados de processo (`.guia/*.json`).
 O manifest e outra coisa - geracao de skill files em build-time.
 
 Restricoes/forces no momento da decisao tacita:
@@ -91,7 +91,7 @@ formato traz custo sem ganho real.
 
 - [Auditoria F-014, Etapa 1 Q1](../auditorias/F-014-core.md)
 - [ADR-0003](0003-json-maquina-markdown-humano.md) - JSON para dados de
-  processo (.ai/*); este ADR e seu complemento para fonte de geracao.
+  processo (.guia/*); este ADR e seu complemento para fonte de geracao.
 - [ADR-0008](0008-layout-b-manifest.md) - layout B (index + bodies
   markdown) que resolve o pior caso de YAML.
 - Workaround `on:->True` em `core/src/_docs_hook.py:_trigger_reason`.

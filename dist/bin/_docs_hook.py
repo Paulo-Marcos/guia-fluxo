@@ -1,4 +1,4 @@
-"""F-010 docs hook: load .ai/docs-map.yaml, compute candidates, gate finish.
+"""F-010 docs hook: load .guia/docs-map.yaml, compute candidates, gate finish.
 
 Triggers supported:
     task-finished           always fires for finish events

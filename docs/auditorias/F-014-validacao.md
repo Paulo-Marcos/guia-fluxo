@@ -23,7 +23,7 @@ Numeros chave:
 
 | Aspecto | Antes | Depois |
 |---|---:|---:|
-| `core/src/ai.py` (linhas) | **965** | **~205** (so wiring/parser) |
+| `core/src/guia.py` (linhas) | **965** | **~205** (so wiring/parser) |
 | Modulos em `core/src/` | 1 | **18** (1 entry + 17 helpers `_*.py`) |
 | `core/lock/check-lock.py` (linhas) | 372 | **~210** (CLI fino) |
 | Modulo de lock reutilizavel | NAO | `core/lock/lock_api.py` (440 linhas) |
@@ -35,7 +35,7 @@ Numeros chave:
 E os tres comandos de saude continuam **verdes** apos refactor:
 
 ```text
-.\core\bin\ai.ps1 doctor               -> AI process files OK
+.\core\bin\guia.ps1 doctor               -> Guia Fluxo files OK
 python core\build\render-skills.py --check -> OK: 40 alvo(s) em sincronia
 python -m unittest discover -s tests   -> Ran 63 tests in 6.345s, OK
 ```
@@ -48,7 +48,7 @@ python -m unittest discover -s tests   -> Ran 63 tests in 6.345s, OK
 core/
   bin/
     ai                            # NOVO: shim POSIX simetrico (3.Q1)
-    ai.ps1                        # MELHORADO: Resolve-Python em camadas
+    guia.ps1                        # MELHORADO: Resolve-Python em camadas
   build/
     render-skills.py              # HARDENED: dataclass, --check-orphans, marker abort
   hooks/
@@ -59,7 +59,7 @@ core/
   manifest/
     manifest.yaml                 # bodies ajustados (--context, worktree, rodape)
   src/
-    ai.py                         # ENTRY POINT (~205 linhas: parser + dispatch)
+    guia.py                         # ENTRY POINT (~205 linhas: parser + dispatch)
     _constants.py                 # NOVO: paths, status, regex, msgs (fonte unica)
     _state.py                     # NOVO: read_json / write_json / write_if_missing
     _paths.py                     # NOVO: relative, normalize_path, slugify
@@ -69,7 +69,7 @@ core/
     _features_md.py               # NOVO: render + upsert do FEATURES.md
     _process_config.py            # NOVO: default_process()
     _docs_hook.py                 # NOVO: F-010 docs hook
-    _locks.py                     # NOVO: bridge ai.py -> lock_api
+    _locks.py                     # NOVO: bridge guia.py -> lock_api
     _worktree.py                  # NOVO: attach + cleanup com pre-checks
     _commit.py                    # NOVO: commit_task com path normalization
     _reports.py                   # NOVO: write_report
@@ -84,8 +84,8 @@ E o renderer agora **empacota tudo flat em `dist/bin/`**:
 
 ```
 dist/bin/
-  ai.py                # entry point (copia exata de core/src/ai.py)
-  ai.ps1               # wrapper com path adaptado (..\src\ai.py -> ai.py)
+  guia.py                # entry point (copia exata de core/src/guia.py)
+  guia.ps1               # wrapper com path adaptado (..\src\guia.py -> guia.py)
   ai                   # shim POSIX (POSIX_SHIM gerado)
   _constants.py        # COPIA de core/src/_constants.py
   _state.py            # COPIA de core/src/_state.py
@@ -93,7 +93,7 @@ dist/bin/
   lock_api.py          # COPIA de core/lock/lock_api.py
 ```
 
-Como o `bootstrap` do `ai.py` adiciona `core/lock/` ao `sys.path` em dev e
+Como o `bootstrap` do `guia.py` adiciona `core/lock/` ao `sys.path` em dev e
 no `dist/` tudo vive lado a lado, os `import _constants`, `import lock_api`
 etc. funcionam nos dois ambientes sem mudanca.
 
@@ -106,7 +106,7 @@ etc. funcionam nos dois ambientes sem mudanca.
 ```
 +-----------------------------------------------+
 |         CLI / Wrappers (apresentacao)         |
-|   core/bin/ai{ps1, _posix}  +  ai.py main()   |
+|   core/bin/ai{ps1, _posix}  +  guia.py main()   |
 +-----------------------------------------------+
                        |
                        v
@@ -139,12 +139,12 @@ Regra de dependencia: setas **so apontam pra baixo** (CLI -> handlers ->
 dominio -> infra -> constantes). Constantes nao importa nada. Cada
 camada pode ser testada isoladamente.
 
-### 3.2. Fluxo de um comando (`/ai:finish F-015`)
+### 3.2. Fluxo de um comando (`/guia:finish F-015`)
 
 ```
-ai.ps1
+guia.ps1
   -> resolve Python 3.10+ via Resolve-Python (camadas)
-  -> chama core/src/ai.py finish F-015 --docs-skip "..."
+  -> chama core/src/guia.py finish F-015 --docs-skip "..."
        -> bootstrap sys.path (core/src + core/lock)
        -> argparse -> dispatch para _cli_lifecycle.cmd_finish
             -> find_task_or_current  (dominio _tasks)
@@ -169,7 +169,7 @@ nada disperso pelo codigo.
 Antes:
 
 - `check-lock.py` continha tudo (load/save registry, matching, unlock parsing).
-- `ai.py:lock_task_files` escrevia `features/registry.yaml` **a mao**, via
+- `guia.py:lock_task_files` escrevia `features/registry.yaml` **a mao**, via
   concat de strings. Nao chamava nem reusava check-lock.py.
 - **Bugs latentes:** lock_task_files nao respeitava `lock-ignore.txt`, nao
   normalizava paths, sempre travava 4 operacoes.
@@ -180,7 +180,7 @@ Agora:
   `LockSpec`, `LockMatch`, `FileEvent`, `add_lock`, `remove_lock`,
   `find_blocked`, `filter_unlocked`, `unlocked_ids`, `events_from_*`.
 - `core/lock/check-lock.py` e CLI fino que delega 100% pra lock_api.
-- `core/src/_locks.py` em `ai.py` chama `lock_api.append_lock_block` com
+- `core/src/_locks.py` em `guia.py` chama `lock_api.append_lock_block` com
   os mesmos validations (lock-ignore wins, normalizacao, path traversal).
 - Bug latente **corrigido**: travar `.gitignore` agora e impossivel mesmo
   com lock blanket `files: ['*']`.
@@ -228,9 +228,9 @@ Agora:
   `LockSpec`, `Output` (renderer) usam `@dataclass(frozen=True)`.
 - **Aggregate root:** a "task" e o aggregate; toda mutacao passa por
   `_tasks.save_task` ou `_tasks.set_current_task`. Nenhum handler
-  escreve em `.ai/tasks.json` diretamente.
+  escreve em `.guia/tasks.json` diretamente.
 - **Domain events implicit:** `write_report` materializa eventos em
-  `.ai/reports/<task>-<event>-<timestamp>.md` para auditoria.
+  `.guia/reports/<task>-<event>-<timestamp>.md` para auditoria.
 
 ### 4.4. Testes
 
@@ -259,13 +259,13 @@ Cada item da auditoria com status apos esta entrega:
 
 | # | Status | Onde |
 |---|---|---|
-| 2.Q3 + 5.Q1 | **Feito** | `core/lock/lock_api.py` substitui implementacao a mao em `ai.py`. Bug latente (lock_task_files ignorava lock-ignore) corrigido. |
+| 2.Q3 + 5.Q1 | **Feito** | `core/lock/lock_api.py` substitui implementacao a mao em `guia.py`. Bug latente (lock_task_files ignorava lock-ignore) corrigido. |
 
-### Cluster C - Split de `ai.py` (2.Q1)
+### Cluster C - Split de `guia.py` (2.Q1)
 
 | # | Status | Onde |
 |---|---|---|
-| 2.Q1 | **Feito** | 17 modulos `_*.py`. ai.py virou ~205 linhas. |
+| 2.Q1 | **Feito** | 17 modulos `_*.py`. guia.py virou ~205 linhas. |
 
 ### Cluster D - Issues do CLI
 
@@ -289,13 +289,13 @@ Cada item da auditoria com status apos esta entrega:
 | # | Resumo | Status | Onde |
 |---|---|---|---|
 | 3.Q1 | shim POSIX | **Feito** | `core/bin/ai` novo |
-| 3.Q2 | Resolve-Python em camadas | **Feito** | `core/bin/ai.ps1` com 6 camadas |
-| 3.4 | erro lista paths tentados | **Feito** | throw enriquecido em ai.ps1 + ai |
+| 3.Q2 | Resolve-Python em camadas | **Feito** | `core/bin/guia.ps1` com 6 camadas |
+| 3.4 | erro lista paths tentados | **Feito** | throw enriquecido em guia.ps1 + ai |
 | 3.5 | valida 3.10+ | **Feito** | `Test-PythonVersion` + `minimum_ok` em ai |
 | 3.6 | renomear `$Args` | **Feito** | `$CliArgs` |
 | 3.7 | flag `-Verbose` | **Pendente** | nao implementado |
-| 3.8 | pre-checa ai.py existe | **Feito** | em ai.ps1 e no shim POSIX |
-| 3.11 | logica `py` duplicada | **Pendente** | uma das duplicacoes restou em ai.ps1 |
+| 3.8 | pre-checa guia.py existe | **Feito** | em guia.ps1 e no shim POSIX |
+| 3.11 | logica `py` duplicada | **Pendente** | uma das duplicacoes restou em guia.ps1 |
 | 3.12 | comentario `$ErrorActionPreference` | **Feito** | comentario inline adicionado |
 
 ### Cluster F - Render-skills
@@ -317,7 +317,7 @@ Cada item da auditoria com status apos esta entrega:
 | # | Resumo | Status |
 |---|---|---|
 | 1.1 | flags do CLI nos bodies | **Parcial** | `--context` adicionado em feature/issue; ready/finish/promote ja documentavam. |
-| 1.3 | rodape `ai-process` em promote/finish | **Feito** |
+| 1.3 | rodape `guia-fluxo` em promote/finish | **Feito** |
 | 1.8 | promote menciona `codex/<slug>` + path | **Feito** |
 | 1.2 | shims faltando (doctor/render/audit) | **Pendente** | suporte ja existe via subcomando, nao virou shim. |
 | 1.5 | shared_body | **Pendente** | depende do Layout B. |
@@ -358,8 +358,8 @@ Cada item da auditoria com status apos esta entrega:
 ## 6. Validacao executada
 
 ```text
-> .\core\bin\ai.ps1 doctor
-AI process files OK.
+> .\core\bin\guia.ps1 doctor
+Guia Fluxo files OK.
 
 > python core\build\render-skills.py --check
 OK: 40 alvo(s) em sincronia com o manifest.
@@ -377,7 +377,7 @@ qualquer entrega).
 
 | Arquivo | Testes | Cobre |
 |---|---:|---|
-| `test_constants.py` | 4 | mapas de status, prefixos, paths sob `.ai/` |
+| `test_constants.py` | 4 | mapas de status, prefixos, paths sob `.guia/` |
 | `test_paths.py` | 8 | normalize_path, slugify (max-len, empty), relative |
 | `test_tasks_domain.py` | 9 | new_task, next_*_id, merge_list, status_tag |
 | `test_features_md.py` | 4 | secoes, "Nenhuma.", kind label, markdown_list |
@@ -426,7 +426,7 @@ Sim. Justificativa item a item:
 14. **`_validation_runner.py`** - tambem simples mas autonomo.
 15. **`_cli_*.py`** - handlers thinly orquestram dominio. Adicionar
     handler novo nao toca outros handlers (OCP).
-16. **`ai.py`** - so wiring. Le bem de cima a baixo.
+16. **`guia.py`** - so wiring. Le bem de cima a baixo.
 17. **`lock_api.py`** - dominio puro reusavel. Tem `LockSpec`,
     `LockMatch`, excecoes proprias (`LockExists`, `LockNotFound`,
     `LockIgnoredPath`, `LockOutsideRepo`).
@@ -436,9 +436,9 @@ Sim. Justificativa item a item:
 **Wrappers:**
 
 - **`core/bin/ai`** (POSIX) - falta historica (3.Q1). Sem ele, dev em
-  Mac/Linux contribuindo no pack precisa de `python core/src/ai.py`.
-  Agora `./core/bin/ai status` funciona.
-- **`core/bin/ai.ps1`** - estrategia em camadas (override, venv ativo,
+  Mac/Linux contribuindo no pack precisa de `python core/src/guia.py`.
+  Agora `./core/bin/guia status` funciona.
+- **`core/bin/guia.ps1`** - estrategia em camadas (override, venv ativo,
   venv local, py launcher, PATH, globbed install, Codex bundle) +
   validacao 3.10+ + mensagem rica.
 
@@ -471,13 +471,13 @@ Sim. Justificativa item a item:
 
 **Arquivos modificados:**
 
-- `core/src/ai.py` (reescrito, agora ~205 linhas)
+- `core/src/guia.py` (reescrito, agora ~205 linhas)
 - `core/lock/check-lock.py` (reescrito como CLI fino)
-- `core/bin/ai.ps1` (Resolve-Python em camadas + validacao 3.10+)
+- `core/bin/guia.ps1` (Resolve-Python em camadas + validacao 3.10+)
 - `core/build/render-skills.py` (hardening + dataclass + check-orphans)
 - `core/manifest/manifest.yaml` (bodies feature/issue/promote/finish)
 - `tests/test_smoke.py` (copia o pacote inteiro pro sandbox)
-- `dist/bin/ai.py` + `dist/bin/ai.ps1` + skills (rerenderizados)
+- `dist/bin/guia.py` + `dist/bin/guia.ps1` + skills (rerenderizados)
 
 ---
 
@@ -514,8 +514,8 @@ Categorizado por prioridade:
 - `--clean` real no renderer (4.Q3) - hoje so `--check-orphans` lista.
 - `--output-dir` no renderer (4.5).
 - Frontmatter extras suportado (4.11).
-- Centralizar logica especial de `py` em uma funcao em ai.ps1 (3.11).
-- Body cita fallback `python core/src/ai.py` em cada skill (1.9).
+- Centralizar logica especial de `py` em uma funcao em guia.ps1 (3.11).
+- Body cita fallback `python core/src/guia.py` em cada skill (1.9).
 - Comentarios inline em concorrencia de `_save_locks` (5.8).
 - `cmd_unlock` exigir confirmacao ou `--force` (5.11).
 - `cmd_ci` aceitar stdin (5.12).
@@ -559,7 +559,7 @@ Arch/DDD**, **63 testes em 5.7s** verdes, e **mantem 100% do plugin/dist
 funcional** (doctor, render --check, install, smoke - todos verdes).
 
 As funcionalidades fazem sentido porque cada modulo respeita uma unica
-responsabilidade testavel isoladamente. O codigo ficou **menor** (ai.py
+responsabilidade testavel isoladamente. O codigo ficou **menor** (guia.py
 965 -> 205 linhas) e **mais facil de modificar** (palavra-chave nova em
 `_constants`, comando novo em `_cli_*`, regra de lock nova em `lock_api`,
 trigger de docs novo em `_docs_hook._trigger_reason`).

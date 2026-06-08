@@ -8,7 +8,7 @@
 A F-003 introduziu marcadores em CAPS no inicio de cada description do
 manifest para evitar trigger collision entre as skills do pack
 (`feature`, `issue`, `backlog`, `promote`, `ready`, `finish`, `status`,
-`ai-process`). Cada prefixo sinaliza ao roteador do agente (Claude
+`guia-fluxo`). Cada prefixo sinaliza ao roteador do agente (Claude
 Code, Codex, Antigravity) quando NAO disparar a skill.
 
 A auditoria [`F-014`](../auditorias/F-014-core.md) na Etapa 1 achado 6
@@ -57,7 +57,7 @@ mecanica. Auditoria periodica pelo dev confirma aderencia.
 | `HANDOFF to developer validation` | Entrega para validacao sem fechar | `ready` |
 | `CLOSE an ALREADY-validated task` | Fecha task ja validada | `finish` |
 | `READ-ONLY` | Inspeciona, nao muda estado | `status` |
-| `REFERENCE/BACKGROUND ONLY` | Carrega contexto, nao e gatilho direto | `ai-process` |
+| `REFERENCE/BACKGROUND ONLY` | Carrega contexto, nao e gatilho direto | `guia-fluxo` |
 | `TERMINAL CANCEL` | Encerra task como `Cancelada` (terminal) | `cancel` |
 | `PAUSE in-flight task` | Pausa preservando WIP (status `Bloqueada`) | `block` |
 | `RESUME a paused task` | Sai de `Bloqueada` para `Em desenvolvimento` | `unblock` |

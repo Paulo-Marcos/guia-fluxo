@@ -1,6 +1,6 @@
-# Reference: `.ai/docs-map.yaml`
+# Reference: `.guia/docs-map.yaml`
 
-Mapa dos documentos vivos do projeto. Lido por `ai.py docs-check` e pelo hook do `ai.py finish` (F-010). Quando ausente, o projeto e tratado como "sem controle de docs" e o hook vira no-op com aviso amigavel.
+Mapa dos documentos vivos do projeto. Lido por `guia.py docs-check` e pelo hook do `guia.py finish` (F-010). Quando ausente, o projeto e tratado como "sem controle de docs" e o hook vira no-op com aviso amigavel.
 
 ## Estrutura
 
@@ -57,8 +57,8 @@ Sempre dispara quando uma F-NNN ou I-NNN entra em `finish`. Use para docs cumula
 ```yaml
 - event: touched
   paths:
-    - "core/src/ai.py"
-    - "core/bin/ai.ps1"
+    - "core/src/guia.py"
+    - "core/bin/guia.ps1"
   hint: "Se voce adicionou/mudou subcomando, documente aqui."
 ```
 
@@ -90,9 +90,9 @@ Informativo. O hook nao bloqueia nada com base nelas, mas o agente pode usar com
 
 ## Onde encaixa no fluxo
 
-- `ai.py docs-check [task-id]` - imprime candidatos (texto ou `--json`). Nao muda estado.
-- `ai.py finish` - chama o mesmo computador de candidatos; bloqueia se houver candidatos e o agente nao passou `--docs-touched`, `--docs-skip` ou `--docs-checked`.
-- Resultado fica gravado em `.ai/tasks.json` no campo `docsReview`.
+- `guia.py docs-check [task-id]` - imprime candidatos (texto ou `--json`). Nao muda estado.
+- `guia.py finish` - chama o mesmo computador de candidatos; bloqueia se houver candidatos e o agente nao passou `--docs-touched`, `--docs-skip` ou `--docs-checked`.
+- Resultado fica gravado em `.guia/tasks.json` no campo `docsReview`.
 
 Veja tambem:
 - How-to: [`docs/how-to/manter-docs-atualizados.md`](../how-to/manter-docs-atualizados.md)

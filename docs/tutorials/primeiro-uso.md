@@ -1,6 +1,6 @@
 # Primeiro uso
 
-Voce vai sair do zero ate ter uma feature criada, implementada e finalizada usando o ai-process-pack.
+Voce vai sair do zero ate ter uma feature criada, implementada e finalizada usando o guia-fluxo.
 
 ## Pre-requisito
 
@@ -13,49 +13,49 @@ Voce vai sair do zero ate ter uma feature criada, implementada e finalizada usan
 Em projeto consumidor (apos rodar `install.ps1` ou `install.sh`), os comandos saem assim:
 
 ```powershell
-ai <subcomando>            # se .ai-process/bin estiver no PATH (Claude faz auto)
+ai <subcomando>            # se .guia-fluxo/bin estiver no PATH (Claude faz auto)
 # ou
-python .ai-process/bin/ai.py <subcomando>
+python .guia-fluxo/bin/guia.py <subcomando>
 ```
 
 No repo-mae (este repo, dogfood), use o wrapper de fontes:
 
 ```powershell
-.\core\bin\ai.ps1 <subcomando>
+.\core\bin\guia.ps1 <subcomando>
 ```
 
-A semantica e identica. Os exemplos abaixo usam a forma `.\core\bin\ai.ps1` por default; ajuste para `ai` se voce esta em projeto consumidor.
+A semantica e identica. Os exemplos abaixo usam a forma `.\core\bin\guia.ps1` por default; ajuste para `ai` se voce esta em projeto consumidor.
 
 ## 1. Bootstrap do processo
 
 **Em projeto consumidor:** `install.ps1` ja roda `ai init` no final, entao este passo e automatico - pule para o `doctor` no fim desta secao.
 
-**Dogfood (este repo):** o `.ai/` ja existe; tambem pule.
+**Dogfood (este repo):** o `.guia/` ja existe; tambem pule.
 
 **Se precisar rodar manualmente** (ex.: instalacao copia-manual sem usar o instalador):
 
 ```powershell
-.\core\bin\ai.ps1 init --project-name "meu-projeto"
+.\core\bin\guia.ps1 init --project-name "meu-projeto"
 git config core.hooksPath .githooks
 ```
 
 O `init` cria:
-- `.ai/process.json` com o nome do projeto.
-- `.ai/tasks.json`, `.ai/backlog.json`, `.ai/current-task.json` vazios.
-- `.ai/chat-title.txt` zerado.
+- `.guia/process.json` com o nome do projeto.
+- `.guia/tasks.json`, `.guia/backlog.json`, `.guia/current-task.json` vazios.
+- `.guia/chat-title.txt` zerado.
 
 O `core.hooksPath` ativa o hook `commit-msg` que valida marcas `[unlock:<id>]` em commits que tocam arquivos travados. Em projeto consumidor o caminho e `.githooks` (output do instalador); no repo-mae e `core/hooks`.
 
 Confira:
 
 ```powershell
-.\core\bin\ai.ps1 doctor
+.\core\bin\guia.ps1 doctor
 ```
 
 ## 2. Crie sua primeira feature
 
 ```powershell
-.\core\bin\ai.ps1 feature "Adicionar comando de export" --context "Cliente pediu CSV"
+.\core\bin\guia.ps1 feature "Adicionar comando de export" --context "Cliente pediu CSV"
 ```
 
 Saida tipica:
@@ -69,9 +69,9 @@ CHAT_TITLE=F-001 - #DEV - Adicionar comando de export
 
 O script:
 - Gera o ID `F-001`.
-- Atualiza `.ai/tasks.json` e `.ai/current-task.json`.
+- Atualiza `.guia/tasks.json` e `.guia/current-task.json`.
 - Acrescenta a entrada em `FEATURES.md`.
-- Imprime e grava em `.ai/chat-title.txt` o titulo sugerido para o chat.
+- Imprime e grava em `.guia/chat-title.txt` o titulo sugerido para o chat.
 
 Voce (ou o agente) deve **repetir a linha `NOME DO CHAT: ...` no chat**. Se a ferramenta expor `/rename`, aplique-o. Detalhes por ferramenta: [reference/chat-rename-suporte.md](../reference/chat-rename-suporte.md).
 
@@ -84,10 +84,10 @@ Edite os arquivos do projeto normalmente.
 ## 4. Marque como pronta para validacao
 
 ```powershell
-.\core\bin\ai.ps1 ready F-001 --file scripts/export.py --summary "CLI export criado" --validation "python scripts/export.py --help"
+.\core\bin\guia.ps1 ready F-001 --file scripts/export.py --summary "CLI export criado" --validation "python scripts/export.py --help"
 ```
 
-Isso move a task para `Aguardando validacao` e gera um relatorio em `.ai/reports/`.
+Isso move a task para `Aguardando validacao` e gera um relatorio em `.guia/reports/`.
 
 ## 5. Valide na pratica
 
@@ -96,7 +96,7 @@ Voce (humano) testa a feature em uso real.
 ## 6. Finalize
 
 ```powershell
-.\core\bin\ai.ps1 finish F-001
+.\core\bin\guia.ps1 finish F-001
 ```
 
 Saida inclui `NOME DO CHAT: F-001 - #FINALIZADO - ...`. Por padrao, `finish` commita as mudancas.
@@ -104,7 +104,7 @@ Saida inclui `NOME DO CHAT: F-001 - #FINALIZADO - ...`. Por padrao, `finish` com
 Para travar a feature contra refactor futuro (opcional):
 
 ```powershell
-.\core\bin\ai.ps1 finish F-001 --lock --lock-id meu-projeto-export
+.\core\bin\guia.ps1 finish F-001 --lock --lock-id meu-projeto-export
 ```
 
 ## Proximos passos

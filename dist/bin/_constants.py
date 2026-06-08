@@ -1,8 +1,8 @@
-"""Centralized constants for the AI-process CLI.
+"""Centralized constants for the Guia Fluxo CLI.
 
 Single source of truth for paths, status labels, regexes, default messages
 and status-to-tag mapping. Touching a label here propagates to every
-consumer (ai.py, render-skills.py, tests, future modules).
+consumer (guia.py, render-skills.py, tests, future modules).
 
 Keep this module dependency-free (stdlib only) so any module can import it
 without cycles.
@@ -17,14 +17,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 
-AI_DIR = ROOT / ".ai"
-PROCESS_FILE = AI_DIR / "process.json"
-TASKS_FILE = AI_DIR / "tasks.json"
-BACKLOG_FILE = AI_DIR / "backlog.json"
-CURRENT_FILE = AI_DIR / "current-task.json"
-CHAT_TITLE_FILE = AI_DIR / "chat-title.txt"
-DOCS_MAP_FILE = AI_DIR / "docs-map.yaml"
-REPORTS_DIR = AI_DIR / "reports"
+GUIA_DIR = ROOT / ".guia"
+PROCESS_FILE = GUIA_DIR / "process.json"
+TASKS_FILE = GUIA_DIR / "tasks.json"
+BACKLOG_FILE = GUIA_DIR / "backlog.json"
+CURRENT_FILE = GUIA_DIR / "current-task.json"
+CHAT_TITLE_FILE = GUIA_DIR / "chat-title.txt"
+DOCS_MAP_FILE = GUIA_DIR / "docs-map.yaml"
+REPORTS_DIR = GUIA_DIR / "reports"
 FEATURES_FILE = ROOT / "FEATURES.md"
 REGISTRY_FILE = ROOT / "features" / "registry.yaml"
 
@@ -87,13 +87,13 @@ MSG_NO_FILES_TO_LOCK = "No files to lock. Add files with --file."
 MSG_LOCK_ALREADY_EXISTS = "Lock already exists: {id}"
 MSG_NO_FILES_FOR_COMMIT = "No files registered for commit."
 MSG_UNRELATED_STAGED = "Unrelated staged files would be committed: {names}"
-MSG_PROCESS_FILES_OK = "AI process files OK."
+MSG_PROCESS_FILES_OK = "Guia Fluxo files OK."
 MSG_GIT_NOT_FOUND = (
     "git nao encontrado no PATH. Instale Git ou ajuste PATH antes de rodar este comando."
 )
-MSG_DEFAULT_TASK_CREATED = "Demanda criada via ai-process."
-MSG_DEFAULT_READY_SUMMARY = "Implementacao entregue para validacao via ai-process."
-MSG_DEFAULT_FINISH_SUMMARY = "Demanda finalizada via ai-process."
+MSG_DEFAULT_TASK_CREATED = "Demanda criada via Guia Fluxo."
+MSG_DEFAULT_READY_SUMMARY = "Implementacao entregue para validacao via Guia Fluxo."
+MSG_DEFAULT_FINISH_SUMMARY = "Demanda finalizada via Guia Fluxo."
 MSG_DEFAULT_VALIDATE_SUMMARY = "Validacao confirmada pelo desenvolvedor."
 MSG_DEFAULT_VALIDATION_PENDING = "Validacao manual do desenvolvedor."
 MSG_DEFAULT_TASK_PENDING = "Executar implementacao e validacoes."
@@ -144,7 +144,7 @@ MIN_PYTHON_MINOR = 10
 
 __all__ = [
     "ROOT",
-    "AI_DIR",
+    "GUIA_DIR",
     "PROCESS_FILE",
     "TASKS_FILE",
     "BACKLOG_FILE",

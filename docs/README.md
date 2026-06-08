@@ -29,8 +29,8 @@ Esta separacao nao se confunde com [`../README.md`](../README.md) (porta de entr
 
 ## Reference
 
-- [CLI (`ai.py` / `ai.ps1`)](reference/cli.md) - todos os subcomandos e flags.
-- [Arquivos do processo](reference/files.md) - layout de `.ai/`, `FEATURES.md`, skills.
+- [CLI (`guia.py` / `guia.ps1`)](reference/cli.md) - todos os subcomandos e flags.
+- [Arquivos do processo](reference/files.md) - layout de `.guia/`, `FEATURES.md`, skills.
 - [Schema do `registry.yaml`](reference/registry-yaml.md) - locks, operacoes, lock-ignore.
 - [Hooks git](reference/hooks-git.md) - hooks disponiveis, bypass, dependencias.
 - [Renomear chat por ferramenta](reference/chat-rename-suporte.md) - Codex, Claude, Antigravity.

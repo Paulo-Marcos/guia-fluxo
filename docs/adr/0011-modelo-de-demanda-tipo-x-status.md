@@ -11,7 +11,7 @@ O pack carrega tres deformacoes no modo como representa uma demanda:
 1. **Tipo embutido no prefixo de ID.** `F-NNN`, `I-NNN` e `B-NNN` carregam
    o tipo no proprio identificador. Renomear o tipo de uma demanda exige
    trocar o ID, perdendo rastreio.
-2. **Backlog disfarcado de tipo.** `B-NNN` mora em `.ai/backlog.json` e
+2. **Backlog disfarcado de tipo.** `B-NNN` mora em `.guia/backlog.json` e
    tem prefixo proprio - mas conceitualmente backlog e **status**
    ("ideia parqueada, ainda nao triada"), nao um tipo distinto de
    feature/bug. Hoje o pack usa dois arquivos (`backlog.json` e
@@ -47,7 +47,7 @@ demanda, com prefixo de ID neutro.**
 Especificamente:
 
 1. **Backlog passa a ser status**, nao tipo nem arquivo separado.
-   `.ai/backlog.json` e absorvido por `.ai/tasks.json`; itens em backlog
+   `.guia/backlog.json` e absorvido por `.guia/tasks.json`; itens em backlog
    sao tasks com `status: "Backlog"` e sem implementacao iniciada.
 2. **`kind` aceita `feature`, `bug`, `chore`.** O nome `issue` deixa de
    existir como tipo (colisao com sentido guarda-chuva). `bug` cobre o
@@ -72,7 +72,7 @@ como status adicionais sem precisar de tipo novo.
 
 ## Consequencias
 
-- + **Um arquivo, uma identidade.** `.ai/tasks.json` vira fonte unica;
+- + **Um arquivo, uma identidade.** `.guia/tasks.json` vira fonte unica;
   backlog deixa de ser universo paralelo. Diff/inspecao ficam triviais.
 - + **Renomear tipo nao quebra rastreio.** ID estavel, `kind` mutavel.
 - + **Vocabulario alinhado com a industria.** `bug` substitui `issue`
@@ -81,7 +81,7 @@ como status adicionais sem precisar de tipo novo.
   vira transicao de status.
 - - **Quebra de superficie.** Skills `feature`/`issue`/`backlog` precisam
   ser repensadas (renomear `issue` -> `bug`?). Compat de gatilhos
-  precisa de plano (provavelmente manter `/ai:issue` como alias de
+  precisa de plano (provavelmente manter `/guia:issue` como alias de
   transicao por uma versao).
 - - **Migracao one-shot dos repos consumidores.** `init` precisa rodar
   conversor (`F-NNN` -> `D-NNN-feature`, `I-NNN` -> `D-NNN-bug`,
@@ -104,7 +104,7 @@ humana. Decisoes operacionais tomadas durante a execucao:
   `tasks.json`. `next_task_id` usa `max(D, F, I) + 1` para evitar
   colisao visual.
 - **Vocabulario `issue` (decisao D2 = troca limpa):** subcomando
-  `ai issue` e skill `/ai:issue` removidos sem alias. `KIND_ISSUE`
+  `ai issue` e skill `/guia:issue` removidos sem alias. `KIND_ISSUE`
   permanece em `_constants` apenas para legacy-read (tasks antigas
   com `kind=issue` renderizam como "Bug (legacy)" com emoji 🐛).
 - **Ondas em sequencia (decisao D3 = 5 fases):** sem branch isolada;
@@ -147,10 +147,10 @@ ortogonal), [B-011](../../FEATURES.md) ja foi obsoletado por F-027
 
 ## Links
 
-- [B-017](../../.ai/backlog.json) - estado Planejada (depende deste ADR).
-- [B-018](../../.ai/backlog.json) - current-task concorrente (depende deste ADR).
-- [B-011](../../.ai/backlog.json) - cancel/abandon (depende deste ADR).
-- [B-012](../../.ai/backlog.json) - verbo cancel (depende deste ADR).
-- [B-013](../../.ai/backlog.json) - block/unblock (depende deste ADR).
+- [B-017](../../.guia/backlog.json) - estado Planejada (depende deste ADR).
+- [B-018](../../.guia/backlog.json) - current-task concorrente (depende deste ADR).
+- [B-011](../../.guia/backlog.json) - cancel/abandon (depende deste ADR).
+- [B-012](../../.guia/backlog.json) - verbo cancel (depende deste ADR).
+- [B-013](../../.guia/backlog.json) - block/unblock (depende deste ADR).
 - [ADR-0001](0001-script-fonte-da-verdade.md) - motor centralizado e o que viabiliza migracao one-shot.
 - [ADR-0003](0003-json-maquina-markdown-humano.md) - JSON como fonte; `tasks.json` ja modela `kind`+`status`.

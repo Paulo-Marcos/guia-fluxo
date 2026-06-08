@@ -14,7 +14,7 @@ from typing import Any
 from _clock import today
 from _commit import commit_task
 from _constants import (
-    AI_DIR,
+    GUIA_DIR,
     CHAT_TITLE_FILE,
     DOCS_MAP_FILE,
     MSG_DEFAULT_FINISH_SUMMARY,
@@ -61,7 +61,7 @@ from _worktree import cleanup_task_worktree
 
 
 def cmd_init(args: argparse.Namespace) -> int:
-    AI_DIR.mkdir(exist_ok=True)
+    GUIA_DIR.mkdir(exist_ok=True)
     write_if_missing(
         PROCESS_FILE,
         default_process(args.project_name),
@@ -72,7 +72,7 @@ def cmd_init(args: argparse.Namespace) -> int:
     write_if_missing(CURRENT_FILE, {}, force=args.force)
     if args.force or not CHAT_TITLE_FILE.exists():
         CHAT_TITLE_FILE.write_text("", encoding="utf-8")
-    print(f"AI process initialized for {args.project_name}.")
+    print(f"Guia Fluxo initialized for {args.project_name}.")
     return 0
 
 
@@ -118,7 +118,7 @@ def cmd_finish(args: argparse.Namespace) -> int:
         ensure_docs_review_ok(task, changed_files, docs_map, args)
     else:
         print(
-            "docs-check: .ai/docs-map.yaml nao encontrado. "
+            "docs-check: .guia/docs-map.yaml nao encontrado. "
             "Pulando hook de docs. "
             "Crie o mapa para ativar o controle de docs (docs/reference/docs-map.md).",
             file=sys.stderr,
@@ -360,8 +360,8 @@ def cmd_validate(args: argparse.Namespace) -> int:
 def _is_dev_repo() -> bool:
     """True when running from the repo-mae (has core/manifest/).
 
-    In the consumer (.ai-process/bin/ flat layout), core/ does not exist;
-    the extended checks degrade to "lite" mode (just .ai/ files + git).
+    In the consumer (.guia-fluxo/bin/ flat layout), core/ does not exist;
+    the extended checks degrade to "lite" mode (just .guia/ files + git).
     """
     return (ROOT / "core" / "manifest").is_dir()
 
@@ -370,16 +370,16 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     """Saude do pack. Endereca achado 2.10 da auditoria F-014.
 
     Modo dev (repo-mae, detectado via core/manifest/):
-      1. .ai/ files existem
+      1. .guia/ files existem
       2. core/manifest/manifest.yaml carrega como YAML valido
       3. PyYAML disponivel
       4. git no PATH (warn, nao fatal)
       5. render --check OK (a menos que --skip-render)
-      6. dist/bin/ai.py existe
+      6. dist/bin/guia.py existe
       7. lock_api.py importavel
 
-    Modo consumer (layout flat .ai-process/bin/):
-      1. .ai/ files existem
+    Modo consumer (layout flat .guia-fluxo/bin/):
+      1. .guia/ files existem
       4. git no PATH (warn)
 
     `--strict` promove warnings a erros tambem.
@@ -389,7 +389,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     failures: list[str] = []
     warnings: list[str] = []
 
-    # 1. .ai/ files (sempre)
+    # 1. .guia/ files (sempre)
     required = [PROCESS_FILE, TASKS_FILE, BACKLOG_FILE, CURRENT_FILE]
     for path in required:
         if not path.exists():
@@ -433,10 +433,10 @@ def cmd_doctor(args: argparse.Namespace) -> int:
                         "render --check falhou: dist/ stale. Rode `python core/build/render-skills.py`"
                     )
 
-        # 6. dist/bin/ai.py
-        dist_ai = ROOT / "dist" / "bin" / "ai.py"
-        if not dist_ai.exists():
-            warnings.append(f"motor standalone ausente: {relative(dist_ai)}")
+        # 6. dist/bin/guia.py
+        dist_guia = ROOT / "dist" / "bin" / "guia.py"
+        if not dist_guia.exists():
+            warnings.append(f"motor standalone ausente: {relative(dist_guia)}")
 
         # 7. lock_api importavel
         lock_api_path = ROOT / "core" / "lock" / "lock_api.py"

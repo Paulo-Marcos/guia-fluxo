@@ -11,7 +11,7 @@ Public surface:
     pop_item(items, id)         find+remove from backlog list
     set_current_task(task)      write current-task.json + chat-title
 
-No I/O outside the .ai/ files defined in _constants.
+No I/O outside the .guia/ files defined in _constants.
 """
 
 from __future__ import annotations

@@ -6,13 +6,13 @@
 
 Reporte em canal privado por uma das vias abaixo:
 
-- **Email:** paulolinhodboa@gmail.com - assunto: `[security] ai-process-pack: <resumo>`
+- **Email:** paulolinhodboa@gmail.com - assunto: `[security] guia-fluxo: <resumo>`
 - **GitHub Security Advisory:** botao "Report a vulnerability" na aba *Security* do repositorio (privado por padrao, cria advisory rascunho).
 
 Inclua, se possivel:
 
 - Descricao da falha e impacto observado.
-- Passos para reproduzir (comando, input, estado do `.ai/` ou `features/registry.yaml`).
+- Passos para reproduzir (comando, input, estado do `.guia/` ou `features/registry.yaml`).
 - Versao do pack (`VERSION` ou commit hash).
 - Sistema (Windows/Linux/Mac), versao do Python e do Git.
 - Sugestao de fix, se tiver.
@@ -30,7 +30,7 @@ Se nao houver resposta em 10 dias uteis, voce esta liberado para escalar (issue 
 
 Em escopo (reporte privado):
 
-- Falhas no `core/src/ai.py` / `core/bin/ai.ps1` que permitem corromper `.ai/*.json`, `FEATURES.md` ou `features/registry.yaml` de fora do fluxo previsto.
+- Falhas no `core/src/guia.py` / `core/bin/guia.ps1` que permitem corromper `.guia/*.json`, `FEATURES.md` ou `features/registry.yaml` de fora do fluxo previsto.
 - Bypass do hook `commit-msg` / `core/lock/check-lock.py` (commitar em arquivo travado sem marca `[unlock:...]`).
 - Falhas no `core/build/render-skills.py` que permitem injetar conteudo em `dist/skills/<verbo>/SKILL.md` ou `dist/.agents/skills/<verbo>/SKILL.md` divergente do manifest (`core/manifest/manifest.yaml`).
 - Injecao em mensagens de commit, paths, ou inputs de CLI que escapem para shell/Python.

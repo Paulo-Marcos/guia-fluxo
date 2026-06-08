@@ -1,21 +1,21 @@
-# Reference: CLI `core/src/ai.py` / `core/bin/ai.ps1`
+# Reference: CLI `core/src/guia.py` / `core/bin/guia.ps1`
 
-Wrapper PowerShell `core/bin/ai.ps1` localiza o Python adequado e invoca `core/src/ai.py`. Tudo aqui vale para ambos.
+Wrapper PowerShell `core/bin/guia.ps1` localiza o Python adequado e invoca `core/src/guia.py`. Tudo aqui vale para ambos.
 
 ## Subcomandos
 
 ### `init`
 
 ```powershell
-.\core\bin\ai.ps1 init --project-name "nome-do-projeto"
+.\core\bin\guia.ps1 init --project-name "nome-do-projeto"
 ```
 
-Cria os JSONs vazios em `.ai/`, escreve `process.json` com o nome do projeto e zera `chat-title.txt`.
+Cria os JSONs vazios em `.guia/`, escreve `process.json` com o nome do projeto e zera `chat-title.txt`.
 
 ### `doctor`
 
 ```powershell
-.\core\bin\ai.ps1 doctor
+.\core\bin\guia.ps1 doctor
 ```
 
 Sanity check: confirma layout, dependencias e que os arquivos esperados existem.
@@ -23,18 +23,18 @@ Sanity check: confirma layout, dependencias e que os arquivos esperados existem.
 ### `feature`
 
 ```powershell
-.\core\bin\ai.ps1 feature "Titulo curto" --context "Motivo e escopo" `
+.\core\bin\guia.ps1 feature "Titulo curto" --context "Motivo e escopo" `
     [--status backlog|planned|in-development]
 ```
 
-Cria `D-NNN` com `kind=feature` (emoji ✨), atualiza `.ai/tasks.json`, `.ai/current-task.json` e `FEATURES.md`. Imprime `NOME DO CHAT: D-NNN ✨ - #DEV - ...`.
+Cria `D-NNN` com `kind=feature` (emoji ✨), atualiza `.guia/tasks.json`, `.guia/current-task.json` e `FEATURES.md`. Imprime `NOME DO CHAT: D-NNN ✨ - #DEV - ...`.
 
 `--status` (ADR-0011 Fase 3) controla o estado inicial: `backlog` parqueia sem catalogar; `planned` triada mas nao iniciada; `in-development` (default) ja em curso.
 
 ### `bug`
 
 ```powershell
-.\core\bin\ai.ps1 bug "Sintoma curto" --context "Impacto e reproducao" `
+.\core\bin\guia.ps1 bug "Sintoma curto" --context "Impacto e reproducao" `
     [--status backlog|planned|in-development]
 ```
 
@@ -43,7 +43,7 @@ Cria `D-NNN` com `kind=bug` (emoji 🐛). Substitui o antigo `issue`, removido n
 ### `chore`
 
 ```powershell
-.\core\bin\ai.ps1 chore "Titulo curto" --context "O que e por que" `
+.\core\bin\guia.ps1 chore "Titulo curto" --context "O que e por que" `
     [--status backlog|planned|in-development]
 ```
 
@@ -52,12 +52,12 @@ Cria `D-NNN` com `kind=chore` (emoji 🧹). Use para manutencao que merece rastr
 ### `backlog`
 
 ```powershell
-.\core\bin\ai.ps1 backlog add "Ideia futura" --context "Quando pode ser util"
-.\core\bin\ai.ps1 backlog list
-.\core\bin\ai.ps1 backlog migrate [--dry-run] [--force]
+.\core\bin\guia.ps1 backlog add "Ideia futura" --context "Quando pode ser util"
+.\core\bin\guia.ps1 backlog list
+.\core\bin\guia.ps1 backlog migrate [--dry-run] [--force]
 ```
 
-`add` cria `D-NNN` com `kind=feature` (default) e `status=Backlog` em `.ai/tasks.json` (ADR-0011 Fase 2: backlog.json deixou de ser source-of-truth para novas entradas). Nao entra em `FEATURES.md` ate ser promovido.
+`add` cria `D-NNN` com `kind=feature` (default) e `status=Backlog` em `.guia/tasks.json` (ADR-0011 Fase 2: backlog.json deixou de ser source-of-truth para novas entradas). Nao entra em `FEATURES.md` ate ser promovido.
 
 `list` une fontes: `tasks.json` com `status=Backlog` primeiro, depois itens legacy de `backlog.json` (`B-NNN`).
 
@@ -66,7 +66,7 @@ Cria `D-NNN` com `kind=chore` (emoji 🧹). Use para manutencao que merece rastr
 ### `promote`
 
 ```powershell
-.\core\bin\ai.ps1 promote <id> --kind {feature|bug|chore} `
+.\core\bin\guia.ps1 promote <id> --kind {feature|bug|chore} `
     --assessment "Avaliacao curta" `
     --plan "Plano de execucao" `
     [--worktree]
@@ -84,7 +84,7 @@ Quando `--worktree` e passado, `finish` removera a worktree associada.
 ### `plan`
 
 ```powershell
-.\core\bin\ai.ps1 plan <id> [--note "Por que esta planejando"]
+.\core\bin\guia.ps1 plan <id> [--note "Por que esta planejando"]
 ```
 
 Move task para `Planejada` (triada mas nao iniciada — ADR-0011 Fase 3 / B-017). Aceita transicao de `Backlog` ou `Em desenvolvimento`. Falha em estados terminais ou se ja `Planejada`.
@@ -92,7 +92,7 @@ Move task para `Planejada` (triada mas nao iniciada — ADR-0011 Fase 3 / B-017)
 ### `start`
 
 ```powershell
-.\core\bin\ai.ps1 start <id> [--note "Comecando agora porque..."]
+.\core\bin\guia.ps1 start <id> [--note "Comecando agora porque..."]
 ```
 
 Move task para `Em desenvolvimento`. Aceita transicao de `Backlog` (atalho que pula `Planejada`) ou `Planejada`. Pressupoe que a triagem (kind) ja foi feita — para triar avaliando feature/bug/chore, use `promote`.
@@ -100,7 +100,7 @@ Move task para `Em desenvolvimento`. Aceita transicao de `Backlog` (atalho que p
 ### `status`
 
 ```powershell
-.\core\bin\ai.ps1 status
+.\core\bin\guia.ps1 status
 ```
 
 Mostra a tarefa atual e o titulo sugerido para o chat.
@@ -108,18 +108,18 @@ Mostra a tarefa atual e o titulo sugerido para o chat.
 ### `ready`
 
 ```powershell
-.\core\bin\ai.ps1 ready F-NNN `
+.\core\bin\guia.ps1 ready F-NNN `
     --file <caminho> [--file <outro>] `
     --summary "Resumo do que foi feito" `
     --validation "Comando ou check feito"
 ```
 
-Move a task para `Aguardando validacao`. Gera relatorio em `.ai/reports/`. Imprime `NOME DO CHAT: F-NNN - #VALIDACAO - ...`.
+Move a task para `Aguardando validacao`. Gera relatorio em `.guia/reports/`. Imprime `NOME DO CHAT: F-NNN - #VALIDACAO - ...`.
 
 ### `finish`
 
 ```powershell
-.\core\bin\ai.ps1 finish F-NNN `
+.\core\bin\guia.ps1 finish F-NNN `
     [--lock --lock-id <slug>] `
     [--docs-touched <path> ...] `
     [--docs-skip "<motivo>"]
@@ -127,21 +127,21 @@ Move a task para `Aguardando validacao`. Gera relatorio em `.ai/reports/`. Impri
 
 Marca como `Validada`, sugere `#FINALIZADO` e commita por padrao. Com `--lock`, registra os arquivos da task em `features/registry.yaml` sob o slug informado.
 
-**Hook de docs (F-010).** Antes do fechamento, `finish` consulta `.ai/docs-map.yaml` (se existir) e computa candidatos de doc a atualizar. Quando ha candidatos, voce precisa registrar um dos flags abaixo, senao o comando aborta:
+**Hook de docs (F-010).** Antes do fechamento, `finish` consulta `.guia/docs-map.yaml` (se existir) e computa candidatos de doc a atualizar. Quando ha candidatos, voce precisa registrar um dos flags abaixo, senao o comando aborta:
 
 - `--docs-touched <path>` (repetivel): docs que voce atualizou nesta task.
 - `--docs-skip "<motivo>"`: avaliou os candidatos e nada precisou mudar - escreva o motivo curto.
 - `--docs-checked`: confirmacao explicita de que revisou (use em ultimo caso, ou junto com `--docs-touched`/`--docs-skip`).
 
-O resultado fica em `task.docsReview` no `.ai/tasks.json`. Quando `.ai/docs-map.yaml` nao existe, o hook vira no-op com aviso no stderr. Detalhes em [`docs-map.md`](docs-map.md) e [`docs/how-to/manter-docs-atualizados.md`](../how-to/manter-docs-atualizados.md).
+O resultado fica em `task.docsReview` no `.guia/tasks.json`. Quando `.guia/docs-map.yaml` nao existe, o hook vira no-op com aviso no stderr. Detalhes em [`docs-map.md`](docs-map.md) e [`docs/how-to/manter-docs-atualizados.md`](../how-to/manter-docs-atualizados.md).
 
 ### `docs-check`
 
 ```powershell
-.\core\bin\ai.ps1 docs-check [F-NNN] [--json]
+.\core\bin\guia.ps1 docs-check [F-NNN] [--json]
 ```
 
-Lista docs candidatos a atualizacao para a task indicada (ou a task corrente, se omitida). Le `.ai/docs-map.yaml` e aplica triggers contra `task.modifiedFiles` + `git diff --name-only HEAD`. Nao muda estado, e seguro de rodar a qualquer momento.
+Lista docs candidatos a atualizacao para a task indicada (ou a task corrente, se omitida). Le `.guia/docs-map.yaml` e aplica triggers contra `task.modifiedFiles` + `git diff --name-only HEAD`. Nao muda estado, e seguro de rodar a qualquer momento.
 
 - Sem `--json`: imprime em texto com `purpose`, `motivo` e `hint` por candidato.
 - Com `--json`: retorna `{hasMap, taskId, candidates: [...]}` para consumo por agente.
@@ -151,7 +151,7 @@ Quando o mapa nao existe, retorna `{"hasMap": false, "candidates": []}` (JSON) o
 ### `cancel`
 
 ```powershell
-.\core\bin\ai.ps1 cancel F-NNN --reason "Motivo curto" `
+.\core\bin\guia.ps1 cancel F-NNN --reason "Motivo curto" `
     [--keep-worktree] `
     [--set-current]
 ```
@@ -159,14 +159,14 @@ Quando o mapa nao existe, retorna `{"hasMap": false, "candidates": []}` (JSON) o
 Encerra a task como `Cancelada` (estado terminal). `--reason` e **obrigatorio** (fica em `task.cancellations[]` e no historico em `FEATURES.md`).
 
 - `--keep-worktree`: nao remove a worktree associada. Default: remove se a task tinha worktree.
-- `--set-current`: mantem a task como current apos cancelar. Default: limpa `.ai/current-task.json` se a task cancelada era a current.
+- `--set-current`: mantem a task como current apos cancelar. Default: limpa `.guia/current-task.json` se a task cancelada era a current.
 
 Bloqueia se a task ja esta em estado terminal (`Validada`, `Finalizada`, `Cancelada`). Imprime `NOME DO CHAT: F-NNN - #CANCELADA - ...`.
 
 ### `block`
 
 ```powershell
-.\core\bin\ai.ps1 block F-NNN --reason "Por que esta pausando"
+.\core\bin\guia.ps1 block F-NNN --reason "Por que esta pausando"
 ```
 
 Pausa a task: status -> `Bloqueada`, preserva WIP, registra `task.blocks[] = [{reason, at}, ...]`. `--reason` e **obrigatorio**. Para retomar, use `unblock`.
@@ -176,7 +176,7 @@ Bloqueia se a task ja esta em estado terminal ou ja em `Bloqueada`. Imprime `NOM
 ### `unblock`
 
 ```powershell
-.\core\bin\ai.ps1 unblock F-NNN [--note "O que destravou"]
+.\core\bin\guia.ps1 unblock F-NNN [--note "O que destravou"]
 ```
 
 Retoma uma task pausada: status `Bloqueada` -> `Em desenvolvimento`. Fecha `task.blocks[-1].unblockedAt`. `--note` e opcional.
@@ -190,17 +190,17 @@ Ainda existe como subcomando do CLI por compatibilidade. Nao ha mais skill para 
 ### `render`
 
 ```powershell
-.\core\bin\ai.ps1 render [--check] [--verb <nome>]
+.\core\bin\guia.ps1 render [--check] [--verb <nome>]
 ```
 
 Wrapper de `core/build/render-skills.py`. Regenera as skills a partir de `core/manifest/manifest.yaml` em dois destinos:
 
-- `dist/skills/<verbo>/SKILL.md` - output oficial do plugin Claude Code (`dist/.claude-plugin/plugin.json`, namespace `ai`). Atalhos saem como `/ai:feature`, `/ai:bug`, `/ai:chore`, etc.
+- `dist/skills/<verbo>/SKILL.md` - output oficial do plugin Claude Code (`dist/.claude-plugin/plugin.json`, namespace `ai`). Atalhos saem como `/guia:feature`, `/guia:bug`, `/guia:chore`, etc.
 - `dist/.agents/skills/<verbo>/SKILL.md` - convencao AGENTS.md cross-tool para Codex + Antigravity.
 
 Cada verbo do manifest emite dois arquivos. `--check` sai com codigo != 0 se qualquer um estiver fora de sincronia. `--verb <nome>` limita o render a um verbo especifico.
 
-Os dois destinos sao distribuiveis: ao instalar o pack em outro projeto, copie `dist/skills/` (Claude) e/ou `dist/.agents/skills/` (Codex/Antigravity) junto com `dist/.claude-plugin/plugin.json`, `core/manifest/manifest.yaml`, `core/src/ai.py`, `core/bin/ai.ps1` e `.ai/`. Decisao arquitetural em [`docs/adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md).
+Os dois destinos sao distribuiveis: ao instalar o pack em outro projeto, copie `dist/skills/` (Claude) e/ou `dist/.agents/skills/` (Codex/Antigravity) junto com `dist/.claude-plugin/plugin.json`, `core/manifest/manifest.yaml`, `core/src/guia.py`, `core/bin/guia.ps1` e `.guia/`. Decisao arquitetural em [`docs/adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md).
 
 ## Aliases conversacionais
 
@@ -208,18 +208,18 @@ Os comandos acima sao expostos para agentes via skills/shims. No Claude Code (pl
 
 | Alias Claude | Alias Codex/Antigravity | Subcomando | Emoji |
 | --- | --- | --- | --- |
-| `/ai:feature` | `/feature` ou `$feature` | `feature` | ✨ |
-| `/ai:bug` | `/bug` ou `$bug` | `bug` | 🐛 |
-| `/ai:chore` | `/chore` ou `$chore` | `chore` | 🧹 |
-| `/ai:backlog` | `/backlog` ou `$backlog` | `backlog` | — |
-| `/ai:promote <id>` | `/promote` ou `$promote` | `promote` | — |
-| `/ai:plan` | `/plan` ou `$plan` | `plan` | — |
-| `/ai:start` | `/start` ou `$start` | `start` | — |
-| `/ai:ready` | `/ready` ou `$ready` | `ready` | — |
-| `/ai:finish` | `/finish` ou `$finish` | `finish` | — |
-| `/ai:cancel` | `/cancel` ou `$cancel` | `cancel` | — |
-| `/ai:block` | `/block` ou `$block` | `block` | — |
-| `/ai:unblock` | `/unblock` ou `$unblock` | `unblock` | — |
-| `/ai:status` | `/status` ou `$status` | `status` | — |
+| `/guia:feature` | `/feature` ou `$feature` | `feature` | ✨ |
+| `/guia:bug` | `/bug` ou `$bug` | `bug` | 🐛 |
+| `/guia:chore` | `/chore` ou `$chore` | `chore` | 🧹 |
+| `/guia:backlog` | `/backlog` ou `$backlog` | `backlog` | — |
+| `/guia:promote <id>` | `/promote` ou `$promote` | `promote` | — |
+| `/guia:plan` | `/plan` ou `$plan` | `plan` | — |
+| `/guia:start` | `/start` ou `$start` | `start` | — |
+| `/guia:ready` | `/ready` ou `$ready` | `ready` | — |
+| `/guia:finish` | `/finish` ou `$finish` | `finish` | — |
+| `/guia:cancel` | `/cancel` ou `$cancel` | `cancel` | — |
+| `/guia:block` | `/block` ou `$block` | `block` | — |
+| `/guia:unblock` | `/unblock` ou `$unblock` | `unblock` | — |
+| `/guia:status` | `/status` ou `$status` | `status` | — |
 
-> **Removido na Fase 4 do ADR-0011 (2026-06-07):** `/ai:issue` e `ai issue` nao existem mais — use `/ai:bug`. Tasks legacy com `kind=issue` (ex.: `I-006`) continuam navegaveis e renderizam como "Bug (legacy)" 🐛 em FEATURES.md.
+> **Removido na Fase 4 do ADR-0011 (2026-06-07):** `/guia:issue` e `ai issue` nao existem mais — use `/guia:bug`. Tasks legacy com `kind=issue` (ex.: `I-006`) continuam navegaveis e renderizam como "Bug (legacy)" 🐛 em FEATURES.md.

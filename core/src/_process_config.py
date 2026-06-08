@@ -1,4 +1,4 @@
-"""Default .ai/process.json schema.
+"""Default .guia/process.json schema.
 
 Isolated so the schema can evolve independently and tests can compare
 against a single canonical fixture.
@@ -22,7 +22,7 @@ from _constants import (
 def default_process(project_name: str) -> dict[str, Any]:
     return {
         "schemaVersion": 1,
-        "name": "ai-process",
+        "name": "guia-fluxo",
         "projectName": project_name,
         "ids": {
             "featurePrefix": PREFIX_FEATURE,

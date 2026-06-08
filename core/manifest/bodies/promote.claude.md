@@ -4,7 +4,7 @@ Evaluate and promote a backlog item into a feature or issue.
 
 Process:
 
-1. Read `.ai/backlog.json` and find `$ARGUMENTS`.
+1. Read `.guia/backlog.json` and find `$ARGUMENTS`.
 2. Decide whether the item is issue or feature.
 3. Check if it is actionable. If information is missing, ask the developer before creating a task.
 4. Present a short execution plan, impacted areas, lock risks, and tradeoffs.
@@ -12,11 +12,11 @@ Process:
 6. After the developer approves, run:
 
 ```powershell
-.\core\bin\ai.ps1 promote B-001 --kind feature --assessment "..." --plan "..."
+.\core\bin\guia.ps1 promote B-001 --kind feature --assessment "..." --plan "..."
 ```
 
 If the developer chose worktree, include `--worktree` — branch fica `codex/<slug>` e path `.claude/worktrees/<slug>` (override com `--branch` ou `--worktree-path`).
 
-Portable fallback (Linux/Mac/sem PowerShell): `python core/src/ai.py promote B-001 --kind feature ...`.
+Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py promote B-001 --kind feature ...`.
 
 Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.

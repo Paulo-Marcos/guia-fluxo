@@ -27,7 +27,7 @@ Veja docs/how-to/ antes de abrir o PR.
 <!-- Comandos que voce rodou e o que esperava ver. Cole saidas relevantes. -->
 
 ```
-python core/src/ai.py doctor
+python core/src/guia.py doctor
 python core/build/render-skills.py --check
 ```
 
@@ -45,7 +45,7 @@ Liste aqui quais features foram desbloqueadas e por que.
 
 ## Checklist final
 
-- [ ] `python core/src/ai.py doctor` passa.
+- [ ] `python core/src/guia.py doctor` passa.
 - [ ] `python core/build/render-skills.py --check` passa (se mexeu em skills).
 - [ ] Demanda no `FEATURES.md` atualizada via `ai ready`/`ai finish`.
 - [ ] Documentacao atualizada (se mudou comportamento).

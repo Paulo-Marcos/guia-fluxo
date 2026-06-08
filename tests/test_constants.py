@@ -23,7 +23,7 @@ class PrefixTests(unittest.TestCase):
 
 
 class PathsTests(unittest.TestCase):
-    def test_all_ai_paths_under_ai_dir(self) -> None:
+    def test_all_state_paths_under_guia_dir(self) -> None:
         for path in (
             _constants.PROCESS_FILE,
             _constants.TASKS_FILE,
@@ -33,7 +33,7 @@ class PathsTests(unittest.TestCase):
             _constants.DOCS_MAP_FILE,
             _constants.REPORTS_DIR,
         ):
-            self.assertEqual(path.parent, _constants.AI_DIR, f"{path} not under .ai/")
+            self.assertEqual(path.parent, _constants.GUIA_DIR, f"{path} not under .guia/")
 
 
 class MinPythonTests(unittest.TestCase):

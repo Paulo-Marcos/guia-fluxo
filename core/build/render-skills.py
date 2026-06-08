@@ -6,7 +6,7 @@ Source of truth:
     core/manifest/bodies/*.md     (skill bodies - Layout B, F-016)
     core/src/*.py                 (motor + helpers - todos copiados para dist/bin/)
     core/lock/lock_api.py         (modulo de locks reutilizavel - tambem em dist/bin/)
-    core/bin/ai.ps1               (wrapper PowerShell copiado para dist/bin/)
+    core/bin/guia.ps1             (wrapper PowerShell copiado para dist/bin/)
     core/templates/...            (templates copiados para dist/templates/)
 
 Manifest schema:
@@ -26,15 +26,15 @@ Manifest schema:
     Para shared body entre targets, aponte ambos para o mesmo arquivo.
 
 Generated targets (por verbo):
-    dist/skills/<verb>/SKILL.md             (Claude Code - layout oficial de plugin)
-    dist/.agents/skills/ai-<verb>/SKILL.md  (Codex + Antigravity - prefixo `ai-`)
+    dist/skills/<verb>/SKILL.md                 (Claude Code - layout oficial de plugin)
+    dist/.agents/skills/guia-<verb>/SKILL.md    (Codex + Antigravity - prefixo `guia-`)
 
 Generated bin/ (motor standalone do plugin):
-    dist/bin/ai.py        (entry point, copia exata de core/src/ai.py)
+    dist/bin/guia.py      (entry point, copia exata de core/src/guia.py)
     dist/bin/_*.py        (modulos sibling: _constants, _state, _tasks, etc.)
     dist/bin/lock_api.py  (lock domain - copiado de core/lock/lock_api.py)
-    dist/bin/ai.ps1       (copia de core/bin/ai.ps1 com path adaptado para layout flat)
-    dist/bin/ai           (shim POSIX que chama python3 ai.py "$@")
+    dist/bin/guia.ps1     (copia de core/bin/guia.ps1 com path adaptado para layout flat)
+    dist/bin/guia         (shim POSIX que chama python3 guia.py "$@")
 
 Generated templates/:
     dist/templates/.githooks/commit-msg
@@ -43,7 +43,7 @@ Generated templates/:
 
 Hardening (F-015):
 - TEMPLATE_FILES validado: --check detecta arquivos em core/templates/ nao listados.
-- Renderer aborta (sys.exit 2) se o marcador `..\\src\\ai.py` sumir do wrapper.
+- Renderer aborta (sys.exit 2) se o marcador `..\\src\\guia.py` sumir do wrapper.
 - YAML dos templates e validado via yaml.safe_load antes de copiar.
 - dataclass Output substitui a tupla de 4 elementos.
 - --check-orphans lista arquivos em dist/bin/ ou dist/skills/ sem correspondente.
@@ -94,16 +94,16 @@ def _retarget_dist(path: Path) -> None:
     TEMPLATES_DIR = DIST_DIR / "templates"
 
 CORE_SRC_DIR = ROOT / "core" / "src"
-ENGINE_SRC = CORE_SRC_DIR / "ai.py"
+ENGINE_SRC = CORE_SRC_DIR / "guia.py"
 LOCK_API_SRC = ROOT / "core" / "lock" / "lock_api.py"
-WRAPPER_SRC = ROOT / "core" / "bin" / "ai.ps1"
+WRAPPER_SRC = ROOT / "core" / "bin" / "guia.ps1"
 TEMPLATES_SRC = ROOT / "core" / "templates"
 
-# Marcador usado por core/bin/ai.ps1 para resolver o motor. No dist/, o
-# layout vira flat (ai.py vizinho do wrapper), entao o marcador e
+# Marcador usado por core/bin/guia.ps1 para resolver o motor. No dist/, o
+# layout vira flat (guia.py vizinho do wrapper), entao o marcador e
 # reescrito. Aborta se ausente: o renderer presume invariante.
-WRAPPER_MARKER = "..\\src\\ai.py"
-WRAPPER_REPLACEMENT = "ai.py"
+WRAPPER_MARKER = "..\\src\\guia.py"
+WRAPPER_REPLACEMENT = "guia.py"
 
 # Templates copiados byte-a-byte para dist/templates/. Validacao
 # estrutural por extensao: arquivos .yaml passam por yaml.safe_load.
@@ -121,7 +121,7 @@ PROMOTED_TEMPLATES: list[tuple[Path, str]] = [
 ]
 
 TARGET_LABELS = {
-    "agent_skill": "dist/.agents/skills/ai-<verb>/SKILL.md",
+    "agent_skill": "dist/.agents/skills/guia-<verb>/SKILL.md",
     "claude_skill": "dist/skills/<verb>/SKILL.md",
     "bin": "dist/bin/<file>",
     "template": "dist/templates/<file>",
@@ -130,7 +130,7 @@ TARGET_LABELS = {
 POSIX_SHIM = (
     "#!/usr/bin/env bash\n"
     "# Auto-gerado por core/build/render-skills.py. Nao edite.\n"
-    'exec python3 "$(dirname "$0")/ai.py" "$@"\n'
+    'exec python3 "$(dirname "$0")/guia.py" "$@"\n'
 )
 
 
@@ -159,7 +159,7 @@ def load_manifest() -> dict:
 
 
 def agent_skill_name(verb: str) -> str:
-    return verb if verb.startswith("ai-") else f"ai-{verb}"
+    return verb if verb.startswith("guia-") else f"guia-{verb}"
 
 
 def target_path(target: str, verb: str) -> Path:
@@ -317,14 +317,14 @@ def collect_outputs(manifest: dict, only_verb: str | None = None) -> list[Output
 def _adapt_wrapper_for_plugin(text: str) -> str:
     """Reescreve o wrapper para o layout flat do plugin.
 
-    No repo-mae, `core/bin/ai.ps1` resolve o motor via `..\\src\\ai.py`.
-    No plugin/consumidor, `dist/bin/ai.ps1` e `dist/bin/ai.py` vivem
-    lado a lado, entao o path vira `ai.py`. ABORTA se o marcador sumir,
+    No repo-mae, `core/bin/guia.ps1` resolve o motor via `..\\src\\guia.py`.
+    No plugin/consumidor, `dist/bin/guia.ps1` e `dist/bin/guia.py` vivem
+    lado a lado, entao o path vira `guia.py`. ABORTA se o marcador sumir,
     em vez do warning silencioso de antes (achado 4.3).
     """
     if WRAPPER_MARKER not in text:
         sys.stderr.write(
-            f"Erro: core/bin/ai.ps1 nao contem o marcador `{WRAPPER_MARKER}`.\n"
+            f"Erro: core/bin/guia.ps1 nao contem o marcador `{WRAPPER_MARKER}`.\n"
             "      O renderer presume esse marker para adaptar o wrapper ao layout flat\n"
             "      do plugin. Se voce reescreveu o wrapper, ajuste WRAPPER_MARKER em\n"
             "      core/build/render-skills.py para o novo marker.\n"
@@ -368,8 +368,8 @@ def collect_bin_outputs() -> list[Output]:
         Output(BIN_DIR / "lock_api.py", "bin", "lock_api.py", LOCK_API_SRC.read_text(encoding="utf-8"))
     )
     wrapper = _adapt_wrapper_for_plugin(WRAPPER_SRC.read_text(encoding="utf-8"))
-    outputs.append(Output(BIN_DIR / "ai.ps1", "bin", "ai.ps1", wrapper))
-    outputs.append(Output(BIN_DIR / "ai", "bin", "ai", POSIX_SHIM))
+    outputs.append(Output(BIN_DIR / "guia.ps1", "bin", "guia.ps1", wrapper))
+    outputs.append(Output(BIN_DIR / "guia", "bin", "guia", POSIX_SHIM))
     return outputs
 
 

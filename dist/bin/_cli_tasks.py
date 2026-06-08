@@ -1,6 +1,6 @@
 """CLI handlers: tasks list / show / filter (F-017).
 
-Navegacao read-only de `.ai/tasks.json`. Reaproveita _tasks.list_tasks
+Navegacao read-only de `.guia/tasks.json`. Reaproveita _tasks.list_tasks
 e _tasks.format_task_line; tudo suporta --json para consumo por agente.
 """
 

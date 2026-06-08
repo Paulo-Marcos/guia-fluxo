@@ -1,10 +1,10 @@
-# Fonte unica de verdade para os skills do pack.
+# Fonte unica de verdade para os skills do Guia Fluxo.
 #
 # Como funciona (Layout B - F-016):
 #   - Este arquivo declara os verbos, suas `description`s e referencia o
 #     body markdown em `core/manifest/bodies/<verb>.<target>.md`.
 #   - `core/build/render-skills.py` resolve `body_file` (le do disco) e
-#     gera `dist/skills/<verb>/SKILL.md` + `dist/.agents/skills/ai-<verb>/SKILL.md`.
+#     gera `dist/skills/<verb>/SKILL.md` + `dist/.agents/skills/guia-<verb>/SKILL.md`.
 #   - Para usar o mesmo body em dois targets, aponte ambos para o mesmo
 #     arquivo (shared_body explicito) ou use o campo `shared_body:` no
 #     verbo declarando body_file unico.
@@ -22,18 +22,18 @@
 version: 2
 
 verbs:
-  ai-process:
+  guia-fluxo:
     description: |
-      REFERENCE/BACKGROUND ONLY for the portable task-process pipeline (F-NNN/I-NNN/B-NNN, locks, chat-rename, worktree). Loaded as context by the dedicated shims, not as a trigger competitor. Do NOT auto-fire on /feature, /issue, /backlog, /promote, /ready, /finish, /status — those route to their own shims first. Use ai-process directly ONLY when the user asks for the full process overview ("explain the AI process", "how does this pipeline work", "como funciona o ai-process") or needs the installation/portability guide.
+      REFERENCE/BACKGROUND ONLY for the Guia Fluxo task-process pipeline (D-NNN/B-NNN, locks, chat-rename, worktree). Loaded as context by the dedicated shims, not as a trigger competitor. Do NOT auto-fire on /feature, /bug, /chore, /backlog, /promote, /ready, /finish, /status — those route to their own shims first. Use guia-fluxo directly ONLY when the user asks for the full process overview ("explain Guia Fluxo", "how does this pipeline work", "como funciona o guia-fluxo") or needs the installation/portability guide.
     targets:
       agent_skill:
-        body_file: bodies/ai-process.agent.md
+        body_file: bodies/guia-fluxo.agent.md
       claude_skill:
-        body_file: bodies/ai-process.claude.md
+        body_file: bodies/guia-fluxo.claude.md
 
   feature:
     description: |
-      PRIMARY TRIGGER for /feature or "$feature". Creates a NEW F-NNN feature task and starts implementation immediately. Do NOT use for: bugs/regressions (use $issue), deferred ideas without starting work (use $backlog), or evaluating an existing B-NNN (use $promote).
+      PRIMARY TRIGGER for /feature or "$feature". Creates a NEW D-NNN feature task and starts implementation immediately. Do NOT use for: bugs/regressions (use $bug), maintenance without behavior change (use $chore), deferred ideas without starting work (use $backlog), or evaluating an existing B-NNN (use $promote).
     targets:
       agent_skill:
         body_file: bodies/feature.agent.md
@@ -60,7 +60,7 @@ verbs:
 
   backlog:
     description: |
-      DEFER-AND-PARK skill: never starts implementation. Triggered ONLY by /backlog or "$backlog" with a subcommand (add / list). Saves future ideas to .ai/backlog.json (B-NNN) or lists them. Do NOT use for: starting work now (use $feature for new functionality or $issue for bugs), or evaluating one specific B-NNN to convert it (use $promote).
+      DEFER-AND-PARK skill: never starts implementation. Triggered ONLY by /backlog or "$backlog" with a subcommand (add / list). Saves future ideas to .guia/backlog.json (B-NNN) or lists them. Do NOT use for: starting work now (use $feature for new functionality, $bug for regressions, or $chore for maintenance), or evaluating one specific B-NNN to convert it (use $promote).
     targets:
       agent_skill:
         body_file: bodies/backlog.agent.md
@@ -69,7 +69,7 @@ verbs:
 
   promote:
     description: |
-      EVALUATE-AND-CONVERT one specific backlog item. Triggered ONLY by /promote <B-NNN> or "$promote B-NNN" with an explicit backlog ID. AI reads the item, asks missing questions, proposes a plan, confronts locks/risks, asks worktree y/n, then converts the B-NNN into F-NNN or I-NNN. Do NOT use for: adding or listing backlog items (use $backlog), or creating a task without going through backlog first (use $feature or $issue).
+      EVALUATE-AND-CONVERT one specific backlog item. Triggered ONLY by /promote <B-NNN> or "$promote B-NNN" with an explicit backlog ID. AI reads the item, asks missing questions, proposes a plan, confronts locks/risks, asks worktree y/n, then converts the B-NNN into a D-NNN task (kind feature/bug/chore). Do NOT use for: adding or listing backlog items (use $backlog), or creating a task without going through backlog first (use $feature, $bug or $chore).
     targets:
       agent_skill:
         body_file: bodies/promote.agent.md
@@ -78,7 +78,7 @@ verbs:
 
   ready:
     description: |
-      HANDOFF to developer validation — does NOT close the task. THE AGENT runs this when implementation is finished, NOT the human; it is the gate that forces human-in-the-loop before $finish. Triggered by /ready or "$ready" / "pronto para validar / enviar para teste". Marks the in-progress F-NNN/I-NNN as awaiting manual validation and records changed files, summary, and pending checks. Do NOT use for: closing an already-validated task (use $finish), or just inspecting the current task without changing its state (use $status).
+      HANDOFF to developer validation — does NOT close the task. THE AGENT runs this when implementation is finished, NOT the human; it is the gate that forces human-in-the-loop before $finish. Triggered by /ready or "$ready" / "pronto para validar / enviar para teste". Marks the in-progress D-NNN as awaiting manual validation and records changed files, summary, and pending checks. Do NOT use for: closing an already-validated task (use $finish), or just inspecting the current task without changing its state (use $status).
     targets:
       agent_skill:
         body_file: bodies/ready.agent.md
@@ -96,7 +96,7 @@ verbs:
 
   status:
     description: |
-      READ-ONLY: show the current active task and the suggested chat title. Triggered by /status or "$status" / "qual a tarefa atual / status do processo". Never creates, modifies, advances, or closes a task. Do NOT use for: creating tasks (use $feature or $issue), handoff to validation (use $ready), or closing a validated task (use $finish).
+      READ-ONLY: show the current active task and the suggested chat title. Triggered by /status or "$status" / "qual a tarefa atual / status do processo". Never creates, modifies, advances, or closes a task. Do NOT use for: creating tasks (use $feature, $bug or $chore), handoff to validation (use $ready), or closing a validated task (use $finish).
     targets:
       agent_skill:
         body_file: bodies/status.agent.md
@@ -123,7 +123,7 @@ verbs:
 
   unblock:
     description: |
-      RESUME a paused task — move status de `Bloqueada` para `Em desenvolvimento`. Triggered by /unblock or "$unblock" / "retomar tarefa / desbloquear / dependencia resolvida". Inverso de $block. Falha se a task nao estava em `Bloqueada`. Do NOT use for: criar nova task (use $feature ou $issue), promover backlog (use $promote), ou voltar de cancelamento (cancelamento e terminal - abra nova task).
+      RESUME a paused task — move status de `Bloqueada` para `Em desenvolvimento`. Triggered by /unblock or "$unblock" / "retomar tarefa / desbloquear / dependencia resolvida". Inverso de $block. Falha se a task nao estava em `Bloqueada`. Do NOT use for: criar nova task (use $feature, $bug ou $chore), promover backlog (use $promote), ou voltar de cancelamento (cancelamento e terminal - abra nova task).
     targets:
       agent_skill:
         body_file: bodies/unblock.agent.md
@@ -141,7 +141,7 @@ verbs:
 
   start:
     description: |
-      START — comeca trabalho em uma task Planejada ou diretamente Backlog (status -> Em desenvolvimento). Triggered by /start or "$start" / "comecar tarefa / iniciar trabalho / bora codar". Diferente de $promote: assume triagem feita (kind ja decidido). Falha se task ja Em desenvolvimento ou terminal. Do NOT use for: criar nova task do zero (use $feature ou $issue), triar backlog item (use $promote), ou retomar pausa (use $unblock).
+      START — comeca trabalho em uma task Planejada ou diretamente Backlog (status -> Em desenvolvimento). Triggered by /start or "$start" / "comecar tarefa / iniciar trabalho / bora codar". Diferente de $promote: assume triagem feita (kind ja decidido). Falha se task ja Em desenvolvimento ou terminal. Do NOT use for: criar nova task do zero (use $feature, $bug ou $chore), triar backlog item (use $promote), ou retomar pausa (use $unblock).
     targets:
       agent_skill:
         body_file: bodies/start.agent.md

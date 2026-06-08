@@ -21,7 +21,7 @@ Toda operacao do script que muda a task corrente (`feature`, `issue`, `ready`, `
 NOME DO CHAT: F-016 - #DEV - Titulo curto da task
 ```
 
-e grava o mesmo titulo em `.ai/chat-title.txt`. Convencoes:
+e grava o mesmo titulo em `.guia/chat-title.txt`. Convencoes:
 
 - Prefixo do ID (`F-016`, `I-003`).
 - Tag de fase (`#DEV` em desenvolvimento, `#VAL` em validacao, `#FINALIZADO` validado/lockado).
@@ -32,11 +32,11 @@ O agente repete essa linha no chat (visivel ao humano) e tenta aplicar via API/c
 ## Consequencias
 
 - + Funciona em **qualquer agente**, com ou sem API de rename. Degrada graciosamente.
-- + Convergencia: troca de ferramenta no meio da task nao perde o titulo - `.ai/chat-title.txt` carrega a verdade.
+- + Convergencia: troca de ferramenta no meio da task nao perde o titulo - `.guia/chat-title.txt` carrega a verdade.
 - + Sinal visual no chat: cada vez que voce roda `/status` ou `/ready`, o nome reaparece no historico, reforcando contexto.
 - + Tag de fase muda automaticamente: `#DEV` -> `#VAL` -> `#FINALIZADO` sinaliza progresso sem precisar abrir nada.
 - - Convencao **convivencial**: depende do agente honrar o protocolo. Mitigado pela skill, que treina o agente.
-- - Linha extra no stdout polui scripts terceiros que parseiam saida do `ai.py` (resolvido: a linha tem prefixo estavel `NOME DO CHAT:` e pode ser filtrada).
+- - Linha extra no stdout polui scripts terceiros que parseiam saida do `guia.py` (resolvido: a linha tem prefixo estavel `NOME DO CHAT:` e pode ser filtrada).
 - - Ferramentas sem API de rename: humano ainda tem que renomear manualmente se quiser (mas a sugestao esta a um copy-paste de distancia).
 
 ## Alternativas consideradas

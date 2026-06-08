@@ -31,10 +31,10 @@ class OutputDirTests(unittest.TestCase):
             out = Path(tmp) / "out"
             result = _run("--output-dir", str(out))
             self.assertEqual(result.returncode, 0, msg=result.stderr)
-            # Pelo menos 1 SKILL.md + ai.py em bin/
-            self.assertTrue((out / "bin" / "ai.py").is_file())
+            # Pelo menos 1 SKILL.md + guia.py em bin/
+            self.assertTrue((out / "bin" / "guia.py").is_file())
             self.assertTrue((out / "skills" / "feature" / "SKILL.md").is_file())
-            self.assertTrue((out / ".agents" / "skills" / "ai-feature" / "SKILL.md").is_file())
+            self.assertTrue((out / ".agents" / "skills" / "guia-feature" / "SKILL.md").is_file())
 
     def test_check_with_custom_output_dir_compares_against_that_dir(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -69,7 +69,7 @@ class FrontmatterExtrasTests(unittest.TestCase):
     def _sandbox_manifest(self, sandbox: Path) -> None:
         """Setup minimo: manifest + 1 body + render-skills.py copiado.
         Mas usa o manifest real do repo via --output-dir em vez de
-        sandbox completo (renderer depende de core/src/ai.py, etc.)."""
+        sandbox completo (renderer depende de core/src/guia.py, etc.)."""
         pass  # nao usado; teste roda contra repo real
 
     def test_extras_appear_in_frontmatter(self) -> None:
@@ -97,7 +97,7 @@ class FrontmatterExtrasTests(unittest.TestCase):
                 encoding="utf-8",
             )
             # Carrega manifest direto sem rodar o CLI (que esperaria
-            # core/src/ai.py existir relativo a um repo)
+            # core/src/guia.py existir relativo a um repo)
             from conftest_paths import ensure_core_importable
 
             ensure_core_importable()

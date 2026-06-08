@@ -1,30 +1,30 @@
 #!/usr/bin/env bash
-# ai-process-pack installer (POSIX paridade do install.ps1).
+# guia-fluxo installer (POSIX paridade do install.ps1).
 #
 # Copia o build (dist/) deste repo-mae para o layout final do consumidor:
 #
 #   <target>/
-#     .ai-process/
+#     .guia-fluxo/
 #       .claude-plugin/         <- dist/.claude-plugin/
 #       bin/                    <- dist/bin/
 #       skills/                 <- dist/skills/
-#     .agents/skills/ai-*/      <- dist/.agents/skills/ai-*/
+#     .agents/skills/guia-*/      <- dist/.agents/skills/guia-*/
 #     .githooks/commit-msg      <- dist/templates/.githooks/commit-msg     (preserva se existe)
 #     features/registry.yaml    <- dist/templates/features/registry.yaml   (preserva se existe)
 #     features/lock-ignore.txt  <- dist/templates/features/lock-ignore.txt (preserva se existe)
 #
-# Depois roda `ai init` para semear .ai/ e FEATURES.md.
+# Depois roda `guia init` para semear .guia/ e FEATURES.md.
 #
-# Idempotente: re-rodar substitui .ai-process/ e .agents/skills/ pelo build atual,
+# Idempotente: re-rodar substitui .guia-fluxo/ e .agents/skills/ pelo build atual,
 # preserva templates ja customizados (use --force pra sobrescrever) e nao toca
-# em .ai/ ja inicializada.
+# em .guia/ ja inicializada.
 #
 # Uso:
 #   ./install.sh                      # instala no diretorio atual
 #   ./install.sh --target /path       # instala num projeto especifico
 #   ./install.sh --dry-run            # previa sem escrever
 #   ./install.sh --force              # sobrescreve templates do consumidor
-#   ./install.sh --skip-init          # nao chamar `ai init` no final
+#   ./install.sh --skip-init          # nao chamar `guia init` no final
 
 set -euo pipefail
 
@@ -79,7 +79,7 @@ mkdir -p "$TARGET"
 TARGET_ROOT="$( cd "$TARGET" && pwd )"
 
 echo ""
-echo "ai-process-pack installer"
+echo "guia-fluxo installer"
 echo "  origem:  $DIST_ROOT"
 echo "  destino: $TARGET_ROOT"
 if [[ $DRY_RUN -eq 1 ]]; then
@@ -146,16 +146,16 @@ copy_template_file() {
     esac
 }
 
-echo "1) Plugin Claude (.ai-process/)"
-plugin_root="$TARGET_ROOT/.ai-process"
+echo "1) Plugin Claude (.guia-fluxo/)"
+plugin_root="$TARGET_ROOT/.guia-fluxo"
 copy_plugin_tree "$DIST_ROOT/.claude-plugin" "$plugin_root/.claude-plugin" ".claude-plugin"
 copy_plugin_tree "$DIST_ROOT/skills"          "$plugin_root/skills"          "skills"
 copy_plugin_tree "$DIST_ROOT/bin"             "$plugin_root/bin"             "bin"
 
 # Bit executavel para o shim POSIX e o motor.
 if [[ $DRY_RUN -eq 0 ]]; then
-    [[ -f "$plugin_root/bin/ai" ]]    && chmod +x "$plugin_root/bin/ai"
-    [[ -f "$plugin_root/bin/ai.py" ]] && chmod +x "$plugin_root/bin/ai.py"
+    [[ -f "$plugin_root/bin/guia" ]]    && chmod +x "$plugin_root/bin/guia"
+    [[ -f "$plugin_root/bin/guia.py" ]] && chmod +x "$plugin_root/bin/guia.py"
 fi
 
 echo ""
@@ -170,18 +170,18 @@ copy_template_file "$DIST_ROOT/templates/features/lock-ignore.txt" "$TARGET_ROOT
 
 if [[ $SKIP_INIT -eq 1 ]]; then
     echo ""
-    echo "4) ai init: SKIPPED (use sem --skip-init ou rode manualmente)"
+    echo "4) guia init: SKIPPED (use sem --skip-init ou rode manualmente)"
 else
     echo ""
-    echo "4) ai init (semeia .ai/ e FEATURES.md)"
-    engine_path="$plugin_root/bin/ai.py"
+    echo "4) guia init (semeia .guia/ e FEATURES.md)"
+    engine_path="$plugin_root/bin/guia.py"
     if [[ ! -f "$engine_path" ]]; then
         echo "  skip (motor nao encontrado em $engine_path; rode manualmente apos investigar)"
     elif [[ $DRY_RUN -eq 1 ]]; then
         echo "  would run: python3 $engine_path init (cwd=$TARGET_ROOT)"
     else
         (cd "$TARGET_ROOT" && python3 "$engine_path" init) || \
-            echo "  ai init retornou erro - investigue manualmente"
+            echo "  guia init retornou erro - investigue manualmente"
     fi
 fi
 
@@ -191,7 +191,7 @@ if [[ $DRY_RUN -eq 1 ]]; then
     echo "Nada foi escrito. Re-rode sem --dry-run para aplicar."
 else
     echo "Proximos passos no consumidor:"
-    echo "  - Abrir o projeto em Claude Code: o plugin em .ai-process/.claude-plugin/ sera detectado."
+    echo "  - Abrir o projeto em Claude Code: o plugin em .guia-fluxo/.claude-plugin/ sera detectado."
     echo "  - Configurar githooks: git config core.hooksPath .githooks"
-    echo "  - Rodar 'python3 .ai-process/bin/ai.py doctor' para verificar."
+    echo "  - Rodar 'python3 .guia-fluxo/bin/guia.py doctor' para verificar."
 fi

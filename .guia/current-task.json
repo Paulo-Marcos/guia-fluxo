@@ -1,0 +1,6 @@
+{
+  "taskId": "D-046",
+  "status": "Validada",
+  "title": "Rename guia-fluxo -> Guia Fluxo (slug: guia). Escopo total sem compat: renomear shims /guia:* -> /guia:*, namespace plugin ai -> guia, binario guia.ps1 -> guia.ps1, diretorio .guia/ -> .guia/, package guia-fluxo -> guia-fluxo, todas referencias em docs/ADRs/scripts/CLAUDE.md/AGENTS.md. Pasta raiz do repo tambem sera renomeada no final (manual, com Claude fechado). Sem aliases de transicao. Decisoes confirmadas pelo usuario em chat.",
+  "chatTitle": "D-046 \u2728 - #FINALIZADO - Rename guia-fluxo -> Guia Fluxo (slug: guia). Escopo total sem compat: renomear shims /guia:* -> /guia:*, namespace plugin ai -> guia, binario guia.ps1 -> guia.ps1, diretorio .guia/ -> .guia/, package guia-fluxo -> guia-fluxo, todas referencias em docs/ADRs/scripts/CLAUDE.md/AGENTS.md. Pasta raiz do repo tambem sera renomeada no final (manual, com Claude fechado). Sem aliases de transicao. Decisoes confirmadas pelo usuario em chat."
+}

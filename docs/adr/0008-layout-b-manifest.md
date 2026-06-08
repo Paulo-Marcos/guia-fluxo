@@ -32,8 +32,8 @@ Migrar para layout B:
 core/manifest/
   manifest.yaml          # index: ~80 linhas (versao + descriptions + body refs)
   bodies/
-    ai-process.agent.md
-    ai-process.claude.md
+    guia-fluxo.agent.md
+    guia-fluxo.claude.md
     feature.agent.md
     feature.claude.md
     ... (16 arquivos no total, 1 por verbo x target)

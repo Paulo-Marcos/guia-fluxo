@@ -5,7 +5,7 @@
 Run:
 
 ```powershell
-.\core\bin\ai.ps1 plan $ARGUMENTS [--note "Por que esta planejando agora"]
+.\core\bin\guia.ps1 plan $ARGUMENTS [--note "Por que esta planejando agora"]
 ```
 
 Distinto de:
@@ -15,6 +15,6 @@ Distinto de:
 
 Falha se a task esta em estado terminal (`Validada`, `Finalizada`, `Cancelada`) ou ja esta `Planejada`. Tasks que sobem de `Backlog` para `Planejada` aparecem em `FEATURES.md` (entram no catalogo).
 
-Portable fallback (Linux/Mac/sem PowerShell): `python core/src/ai.py plan $ARGUMENTS`.
+Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py plan $ARGUMENTS`.
 
 Depois repita o `NOME DO CHAT: ...` (vira `#PLANEJADA`) e rode `/rename <suggested-title>` se a sessao expor.

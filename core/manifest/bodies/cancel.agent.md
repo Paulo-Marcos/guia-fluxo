@@ -5,13 +5,13 @@ Encerra uma task como `Cancelada` (terminal) com motivo obrigatorio. Use quando 
 Call the core process script:
 
 ```powershell
-.\core\bin\ai.ps1 cancel F-000 --reason "Motivo curto" [--keep-worktree] [--set-current]
+.\core\bin\guia.ps1 cancel F-000 --reason "Motivo curto" [--keep-worktree] [--set-current]
 ```
 
 - `--reason` e obrigatorio.
 - Sem `--keep-worktree`, a worktree associada (se houver) e removida.
-- Sem `--set-current`, o `.ai/current-task.json` e limpo se apontava para a task cancelada.
+- Sem `--set-current`, o `.guia/current-task.json` e limpo se apontava para a task cancelada.
 
 Bloqueia se a task ja esta em estado terminal (`Validada`, `Finalizada`, `Cancelada`).
 
-Depois continue usando `ai-process`.
+Depois continue usando `guia-fluxo`.

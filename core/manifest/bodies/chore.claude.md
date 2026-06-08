@@ -5,7 +5,7 @@ Cria uma task de chore (manutencao, refactor pequeno, build/lint, ajuste de docs
 Run:
 
 ```powershell
-.\core\bin\ai.ps1 chore "$ARGUMENTS"
+.\core\bin\guia.ps1 chore "$ARGUMENTS"
 ```
 
 Flags uteis:
@@ -18,6 +18,6 @@ Quando usar `chore` vs alternativas:
 - **Bug** (algo quebrado ou regressao) → use `/bug`.
 - **Chore** → tudo que sobra: cleanup, atualizar dependencia, organizar pasta, ajustar config, melhorar mensagem de erro sem mudar comportamento.
 
-Portable fallback (Linux/Mac/sem PowerShell): `python core/src/ai.py chore "$ARGUMENTS"`.
+Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py chore "$ARGUMENTS"`.
 
-Depois leia `.ai/current-task.json`, repita o `NOME DO CHAT: ...` (vira `D-NNN 🧹 - #DEV - ...`), rode `/rename <suggested-title>` se a sessao suportar.
+Depois leia `.guia/current-task.json`, repita o `NOME DO CHAT: ...` (vira `D-NNN 🧹 - #DEV - ...`), rode `/rename <suggested-title>` se a sessao suportar.

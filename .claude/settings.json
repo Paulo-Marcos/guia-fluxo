@@ -1,13 +1,11 @@
 {
+  "enabledPlugins": {},
   "extraKnownMarketplaces": {
-    "ai-process-pack": {
+    "guia-fluxo": {
       "source": {
         "source": "directory",
         "path": "./dist"
       }
     }
-  },
-  "enabledPlugins": {
-    "ai@ai-process-pack": true
   }
 }

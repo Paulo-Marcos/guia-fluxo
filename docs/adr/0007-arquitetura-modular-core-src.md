@@ -1,11 +1,11 @@
-# ADR-0007: Decompor `core/src/ai.py` em modulos com Clean Architecture
+# ADR-0007: Decompor `core/src/guia.py` em modulos com Clean Architecture
 
 - **Status:** Aceita
 - **Data:** 2026-06-03
 
 ## Contexto
 
-`core/src/ai.py` cresceu para **965 linhas em um arquivo unico**: parser
+`core/src/guia.py` cresceu para **965 linhas em um arquivo unico**: parser
 argparse, 13 handlers de subcomando, dominio (task + backlog + features
 md + docs hook + worktree + commit + lock), infraestrutura (json, git,
 subprocess) e constantes (status PT, paths, regex, mensagens), tudo
@@ -24,8 +24,8 @@ Dores observadas e medidas na auditoria [`F-014`](../auditorias/F-014-core.md):
 
 Decisao precisava preservar:
 - API publica do CLI (todos os subcomandos + flags atuais).
-- `dist/bin/ai.py` standalone que o consumidor recebe via instalador (o
-  renderer hoje copia `core/src/ai.py` byte-a-byte).
+- `dist/bin/guia.py` standalone que o consumidor recebe via instalador (o
+  renderer hoje copia `core/src/guia.py` byte-a-byte).
 - Smoke test atual + install test.
 
 ## Decisao
@@ -44,12 +44,12 @@ Architecture com 4 camadas:
 4. **Application/CLI** (`_cli_lifecycle.py`, `_cli_creation.py`,
    `_cli_meta.py`): handlers de subcomando. Depende de dominio.
 
-`ai.py` vira **entry point fino** (~205 linhas: bootstrap do sys.path +
+`guia.py` vira **entry point fino** (~205 linhas: bootstrap do sys.path +
 argparse builder + `main()` que delega via `args.func(args)`).
 
 `lock_api.py` mora em `core/lock/` porque ja era o lugar do
 `check-lock.py`; e o reuso entre `check-lock.py` (CLI standalone) e
-`ai.py` (`lock_task_files`).
+`guia.py` (`lock_task_files`).
 
 Renderer copia **todos** os `core/src/*.py` + `core/lock/lock_api.py`
 para `dist/bin/` num layout flat. Como o sys.path do entry point inclui
@@ -80,7 +80,7 @@ sem mudanca em dev e no plugin.
   resolve nenhuma das dores. Rejeitada.
 - **B) Pacote Python real (`core/src/ai_process/`) com `__init__.py`.**
   Tornaria o entry-point `python -m ai_process`. Quebraria o jeito
-  documentado `python core/src/ai.py` e exigiria renomear referencias
+  documentado `python core/src/guia.py` e exigiria renomear referencias
   em dezenas de docs. Rejeitada por custo de migracao.
 - **C) Split parcial (so extrair docs_hook e lock_task_files).**
   Reduziria pra ~750 linhas. Resolveria 2 problemas de 5. Rejeitada por

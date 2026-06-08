@@ -11,21 +11,21 @@ A boa pratica conhecida (Diataxis, ja em uso) descreve **onde** colocar cada tip
 
 ## Decisao
 
-Adicionar um hook de docs ao `ai.py finish` que:
+Adicionar um hook de docs ao `guia.py finish` que:
 
-1. Le `.ai/docs-map.yaml` (declaracao curada do humano: quais docs sao vivos e quando devem ser considerados);
+1. Le `.guia/docs-map.yaml` (declaracao curada do humano: quais docs sao vivos e quando devem ser considerados);
 2. Computa candidatos a partir dos triggers (`task-finished`, `touched`, `architectural-decision`);
 3. Bloqueia o fechamento ate o agente registrar `--docs-touched <path>` (atualizou) e/ou `--docs-skip "<motivo>"` (avaliou e nao precisava);
 4. Grava o resultado em `task.docsReview` para auditoria futura;
 5. Vira no-op com aviso amigavel quando o projeto nao tem mapa (continua portavel para projetos que nao adotam controle de docs).
 
-Tambem foi exposto `ai.py docs-check [task]` como subcomando standalone (texto ou `--json`) para o agente poder consultar a qualquer momento, nao so no fim.
+Tambem foi exposto `guia.py docs-check [task]` como subcomando standalone (texto ou `--json`) para o agente poder consultar a qualquer momento, nao so no fim.
 
 ## Consequencias
 
 - + Cria pressao positiva pra docs ficarem vivos: o agente precisa **decidir** sobre cada candidato a cada `finish`.
 - + Repete a decisao do humano (mapa em YAML) em vez de depender de memoria do agente.
-- + O proprio pack dogfooda: este repo tem `.ai/docs-map.yaml` listando seus 9 docs vivos.
+- + O proprio pack dogfooda: este repo tem `.guia/docs-map.yaml` listando seus 9 docs vivos.
 - + Mantem portabilidade: projeto sem mapa nao paga custo nenhum.
 - - Aumenta a area de manutencao: doc novo so vira "vivo" se entrar no mapa.
 - - Curva de aprendizado nova para o humano (campos do YAML, novas flags do finish).

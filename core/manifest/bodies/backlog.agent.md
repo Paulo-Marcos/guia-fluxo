@@ -3,9 +3,9 @@
 Call the core process script:
 
 ```powershell
-.\core\bin\ai.ps1 backlog add "<title>" --context "<context>"
-.\core\bin\ai.ps1 backlog list
-.\core\bin\ai.ps1 backlog promote B-001
+.\core\bin\guia.ps1 backlog add "<title>" --context "<context>"
+.\core\bin\guia.ps1 backlog list
+.\core\bin\guia.ps1 backlog promote B-001
 ```
 
-Then continue using `ai-process`.
+Then continue using `guia-fluxo`.

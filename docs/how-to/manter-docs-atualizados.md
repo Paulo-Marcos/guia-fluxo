@@ -1,6 +1,6 @@
 # How-to: Manter os docs atualizados a cada `/finish`
 
-Este pack tem um hook que evita o sintoma classico de "doc apodrecendo": toda vez que uma demanda fecha, o `ai.py finish` consulta `.ai/docs-map.yaml`, lista os documentos vivos que podem precisar de atualizacao e **bloqueia o fechamento** ate o agente declarar o que fez.
+Este pack tem um hook que evita o sintoma classico de "doc apodrecendo": toda vez que uma demanda fecha, o `guia.py finish` consulta `.guia/docs-map.yaml`, lista os documentos vivos que podem precisar de atualizacao e **bloqueia o fechamento** ate o agente declarar o que fez.
 
 Esta receita cobre o fluxo do dia a dia. Para a referencia de campos, veja [`docs/reference/docs-map.md`](../reference/docs-map.md). Para o racional, veja [`docs/explanation/por-que-docs-hook.md`](../explanation/por-que-docs-hook.md).
 
@@ -9,18 +9,18 @@ Esta receita cobre o fluxo do dia a dia. Para a referencia de campos, veja [`doc
 Verifique:
 
 ```powershell
-Test-Path .ai/docs-map.yaml
+Test-Path .guia/docs-map.yaml
 ```
 
 - Se retornar `True`, o hook esta ativo. Pode pular para a secao 2.
-- Se retornar `False`, o projeto nao tem controle de docs. O `finish` continua funcionando, so emite um aviso no stderr. Para ativar, copie o mapa deste repo (`.ai/docs-map.yaml`) e adapte os paths/triggers para a sua estrutura.
+- Se retornar `False`, o projeto nao tem controle de docs. O `finish` continua funcionando, so emite um aviso no stderr. Para ativar, copie o mapa deste repo (`.guia/docs-map.yaml`) e adapte os paths/triggers para a sua estrutura.
 
 ## 2. Fluxo padrao por `/finish`
 
 1. Quando o desenvolvedor confirmou que a feature/issue esta validada, rode o check antes de fechar:
 
    ```powershell
-   .\core\bin\ai.ps1 docs-check
+   .\core\bin\guia.ps1 docs-check
    ```
 
    A saida lista cada doc candidato com:
@@ -35,28 +35,28 @@ Test-Path .ai/docs-map.yaml
 3. Quando terminar de editar, rode o `finish` declarando o que tocou:
 
    ```powershell
-   .\core\bin\ai.ps1 finish F-010 `
+   .\core\bin\guia.ps1 finish F-010 `
        --docs-touched docs/reference/cli.md `
        --docs-touched CHANGELOG.md `
        --summary "Hook de docs no finish" `
-       --validation ".\core\bin\ai.ps1 doctor"
+       --validation ".\core\bin\guia.ps1 doctor"
    ```
 
 4. Se a avaliacao concluiu que nenhum doc precisava mudar, passe o motivo:
 
    ```powershell
-   .\core\bin\ai.ps1 finish F-010 --docs-skip "feature interna, sem impacto em fluxo, comandos ou arquitetura"
+   .\core\bin\guia.ps1 finish F-010 --docs-skip "feature interna, sem impacto em fluxo, comandos ou arquitetura"
    ```
 
    Tambem da pra misturar:
 
    ```powershell
-   .\core\bin\ai.ps1 finish F-010 `
+   .\core\bin\guia.ps1 finish F-010 `
        --docs-touched CHANGELOG.md `
        --docs-skip "demais candidatos nao se aplicam"
    ```
 
-5. O `finish` registra o resultado em `.ai/tasks.json` no campo `docsReview`:
+5. O `finish` registra o resultado em `.guia/tasks.json` no campo `docsReview`:
 
    ```json
    "docsReview": {
@@ -69,7 +69,7 @@ Test-Path .ai/docs-map.yaml
 
 ## 3. O que faz um doc aparecer na lista
 
-Tres tipos de trigger no `.ai/docs-map.yaml`:
+Tres tipos de trigger no `.guia/docs-map.yaml`:
 
 | Trigger | Quando dispara |
 | --- | --- |
@@ -79,12 +79,12 @@ Tres tipos de trigger no `.ai/docs-map.yaml`:
 
 ## 4. Adicionar um doc novo ao controle
 
-1. Edite `.ai/docs-map.yaml`.
+1. Edite `.guia/docs-map.yaml`.
 2. Adicione uma entrada em `docs:` com `path`, `purpose` e um ou mais `triggers`.
-3. Rode `.\core\bin\ai.ps1 docs-check` para conferir que aparece com a razao certa.
+3. Rode `.\core\bin\guia.ps1 docs-check` para conferir que aparece com a razao certa.
 
-Lembre que o proprio `.ai/docs-map.yaml` esta nos paths dos triggers de CLAUDE.md/AGENTS.md neste repo - mexer no mapa lista esses dois como candidatos no proximo `finish`.
+Lembre que o proprio `.guia/docs-map.yaml` esta nos paths dos triggers de CLAUDE.md/AGENTS.md neste repo - mexer no mapa lista esses dois como candidatos no proximo `finish`.
 
 ## 5. Quando voce decide pular o hook
 
-So existe um caminho legitimo: o projeto nao tem (e nao quer ter) controle de docs. Nesse caso, `.ai/docs-map.yaml` simplesmente nao existe e o hook vira no-op. Nao tente burlar com `--docs-skip "n/a"` sem ler os candidatos - voce ou um agente futuro vai pagar a divida de docs depois.
+So existe um caminho legitimo: o projeto nao tem (e nao quer ter) controle de docs. Nesse caso, `.guia/docs-map.yaml` simplesmente nao existe e o hook vira no-op. Nao tente burlar com `--docs-skip "n/a"` sem ler os candidatos - voce ou um agente futuro vai pagar a divida de docs depois.

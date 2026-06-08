@@ -1,6 +1,6 @@
 ---
 name: start
-description: START — comeca trabalho em uma task Planejada ou diretamente Backlog (status -> Em desenvolvimento). Triggered by /start or "$start" / "comecar tarefa / iniciar trabalho / bora codar". Diferente de $promote: assume triagem feita (kind ja decidido). Falha se task ja Em desenvolvimento ou terminal. Do NOT use for: criar nova task do zero (use $feature ou $issue), triar backlog item (use $promote), ou retomar pausa (use $unblock).
+description: START — comeca trabalho em uma task Planejada ou diretamente Backlog (status -> Em desenvolvimento). Triggered by /start or "$start" / "comecar tarefa / iniciar trabalho / bora codar". Diferente de $promote: assume triagem feita (kind ja decidido). Falha se task ja Em desenvolvimento ou terminal. Do NOT use for: criar nova task do zero (use $feature, $bug ou $chore), triar backlog item (use $promote), ou retomar pausa (use $unblock).
 ---
 
 # Start
@@ -10,7 +10,7 @@ description: START — comeca trabalho em uma task Planejada ou diretamente Back
 Run:
 
 ```powershell
-.\core\bin\ai.ps1 start $ARGUMENTS [--note "Comecando agora porque..."]
+.\core\bin\guia.ps1 start $ARGUMENTS [--note "Comecando agora porque..."]
 ```
 
 Distinto de:
@@ -22,6 +22,6 @@ Aceita transicao de `Backlog` (atalho que pula `Planejada`) ou `Planejada`. Falh
 
 Tasks que sobem de `Backlog` entram em `FEATURES.md`.
 
-Portable fallback (Linux/Mac/sem PowerShell): `python core/src/ai.py start $ARGUMENTS`.
+Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py start $ARGUMENTS`.
 
 Depois repita o `NOME DO CHAT: ...` (vira `#DEV`) e rode `/rename <suggested-title>` se a sessao expor.

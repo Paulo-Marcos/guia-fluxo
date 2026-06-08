@@ -3,5 +3,5 @@
 Call the core process script:
 
 ```powershell
-.\core\bin\ai.ps1 status
+.\core\bin\guia.ps1 status
 ```

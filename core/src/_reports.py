@@ -1,4 +1,4 @@
-"""Write per-event task reports under .ai/reports/."""
+"""Write per-event task reports under .guia/reports/."""
 
 from __future__ import annotations
 

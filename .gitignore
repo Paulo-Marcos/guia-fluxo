@@ -4,6 +4,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# AI process: volateis por execucao, ficam locais
-.ai/chat-title.txt
-.ai/reports/
+# Guia Fluxo: volateis por execucao, ficam locais
+.guia/chat-title.txt
+.guia/reports/

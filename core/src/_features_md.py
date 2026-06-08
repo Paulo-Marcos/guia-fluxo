@@ -43,7 +43,7 @@ def render_features_block(task: dict[str, Any]) -> str:
         f"## [{task['id']}] {marker} {task['title']}",
         "",
         f"- **Status:** {task['status']}",
-        f"- **Origem:** {task.get('origin', 'AI process')}",
+        f"- **Origem:** {task.get('origin', 'Guia Fluxo')}",
         f"- **Tipo:** {task_kind_label(task)}",
         f"- **Contexto:** {task.get('context', task['title'])}",
         "",

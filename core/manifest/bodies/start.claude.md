@@ -5,7 +5,7 @@
 Run:
 
 ```powershell
-.\core\bin\ai.ps1 start $ARGUMENTS [--note "Comecando agora porque..."]
+.\core\bin\guia.ps1 start $ARGUMENTS [--note "Comecando agora porque..."]
 ```
 
 Distinto de:
@@ -17,6 +17,6 @@ Aceita transicao de `Backlog` (atalho que pula `Planejada`) ou `Planejada`. Falh
 
 Tasks que sobem de `Backlog` entram em `FEATURES.md`.
 
-Portable fallback (Linux/Mac/sem PowerShell): `python core/src/ai.py start $ARGUMENTS`.
+Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py start $ARGUMENTS`.
 
 Depois repita o `NOME DO CHAT: ...` (vira `#DEV`) e rode `/rename <suggested-title>` se a sessao expor.

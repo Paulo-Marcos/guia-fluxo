@@ -20,7 +20,7 @@ Tentar um formato unico cobre nenhum dos dois bem:
 
 Dois espelhos com responsabilidades disjuntas:
 
-- `.ai/*.json` (`tasks.json`, `backlog.json`, `current-task.json`, `process.json`) e a **fonte de verdade legivel por maquina**. So o script escreve. Schema versionado.
+- `.guia/*.json` (`tasks.json`, `backlog.json`, `current-task.json`, `process.json`) e a **fonte de verdade legivel por maquina**. So o script escreve. Schema versionado.
 - `FEATURES.md` e o **historico legivel por humano**. So o script escreve. E um espelho do JSON em prosa.
 
 Em caso de divergencia, **JSON ganha**: regenerar `FEATURES.md` a partir do JSON e barato; regenerar JSON a partir de prosa nao e.
@@ -28,7 +28,7 @@ Em caso de divergencia, **JSON ganha**: regenerar `FEATURES.md` a partir do JSON
 ## Consequencias
 
 - + Cada formato otimiza para sua audiencia sem comprometer a outra.
-- + Review em PR ganha: o diff de `FEATURES.md` mostra a narrativa, o diff de `.ai/*.json` mostra o delta exato.
+- + Review em PR ganha: o diff de `FEATURES.md` mostra a narrativa, o diff de `.guia/*.json` mostra o delta exato.
 - + Hooks e CI leem JSON com confianca - nada de regex em markdown.
 - + Contribuidor novo abre `FEATURES.md` e entende o estado sem rodar comando.
 - - **Duas fontes** que precisam ficar em sincronia. Mitigado: so o script escreve - manter sincronia e responsabilidade dele, nao do humano nem do agente.

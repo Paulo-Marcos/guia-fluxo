@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Reporte um comportamento incorreto do ai-process-pack.
+about: Reporte um comportamento incorreto do guia-fluxo.
 title: "[Bug] "
 labels: bug
 ---
@@ -29,7 +29,7 @@ labels: bug
 
 ## Ambiente
 
-- ai-process-pack: <!-- conteudo do arquivo VERSION, ou commit (git rev-parse --short HEAD) -->
+- guia-fluxo: <!-- conteudo do arquivo VERSION, ou commit (git rev-parse --short HEAD) -->
 - Agente: <!-- Claude Code / Codex CLI / Antigravity / nenhum -->
 - Python: <!-- python --version -->
 - Sistema operacional: <!-- Windows 11 / macOS 14 / Ubuntu 24.04 / ... -->
@@ -38,6 +38,6 @@ labels: bug
 ## Contexto adicional
 
 <!--
-Trechos uteis: .ai/current-task.json, mensagem do commit que falhou, conteudo
-relevante de features/registry.yaml, saida de `python core/src/ai.py doctor`.
+Trechos uteis: .guia/current-task.json, mensagem do commit que falhou, conteudo
+relevante de features/registry.yaml, saida de `python core/src/guia.py doctor`.
 -->

@@ -35,8 +35,8 @@ No final, a secao **Consolidado** vira a fonte de verdade pro disparo em lote.
 | # | Area | Status |
 |---|---|---|
 | 1 | `core/manifest/manifest.yaml` | Concluida (13 candidatos levantados; Q2 aprovada, restantes propostos) |
-| 2 | `core/src/ai.py` | Em analise |
-| 3 | `core/bin/ai.ps1` | Concluida (10 candidatos levantados, todos propostos) |
+| 2 | `core/src/guia.py` | Em analise |
+| 3 | `core/bin/guia.ps1` | Concluida (10 candidatos levantados, todos propostos) |
 | 4 | `core/build/render-skills.py` | Concluida (17 candidatos, 6 compostos com etapas 1 e 3) |
 | 5 | `core/lock/check-lock.py` | Concluida (15 candidatos, 1 composto com etapa 2) |
 | 6 | `core/hooks/commit-msg` + `core/templates/.githooks/commit-msg` | Concluida (9 candidatos, 4 compostos) |
@@ -52,7 +52,7 @@ Fonte unica de verdade dos *skills* do pack. **Nao e config runtime** - e **inpu
 
 Declara, por verbo:
 - **description** - string que cada host (Claude Code, Codex, Antigravity) usa pra decidir QUANDO carregar essa skill. Diferenciacao entre descriptions e o que evita trigger collision (F-003).
-- **targets.agent_skill.body** - markdown que vira `dist/.agents/skills/ai-<verbo>/SKILL.md` (Codex + Antigravity).
+- **targets.agent_skill.body** - markdown que vira `dist/.agents/skills/guia-<verbo>/SKILL.md` (Codex + Antigravity).
 - **targets.claude_skill.body** - markdown que vira `dist/skills/<verbo>/SKILL.md` (Claude Code, namespace `ai:`).
 
 Pipeline:
@@ -64,14 +64,14 @@ core/manifest/manifest.yaml          <- FONTE (este arquivo)
         |
    +----+--------------------------+
    v                               v
-dist/skills/<verbo>/SKILL.md   dist/.agents/skills/ai-<verbo>/SKILL.md
+dist/skills/<verbo>/SKILL.md   dist/.agents/skills/guia-<verbo>/SKILL.md
    |                               |
    v                               v
-Claude Code (/ai:feature)      Codex + Antigravity (/use ai-feature)
+Claude Code (/guia:feature)      Codex + Antigravity (/use ai-feature)
 ```
 
 - *Quem le este arquivo em runtime:* ninguem. So `render-skills.py` em build time.
-- *De quem este arquivo depende implicitamente:* contrato das flags do `core/src/ai.py`. Bodies citam `--context`, `--lock`, etc. Se o CLI muda flag, body fica errado sem aviso.
+- *De quem este arquivo depende implicitamente:* contrato das flags do `core/src/guia.py`. Bodies citam `--context`, `--lock`, etc. Se o CLI muda flag, body fica errado sem aviso.
 
 ### Perguntas estruturais
 
@@ -84,12 +84,12 @@ ADRs verificados:
 
 Por que YAML funciona neste caso:
 1. **Multi-line strings via `|` (block literal).** Bodies sao markdown longo (10-30 linhas com code fences). JSON exigiria escape `\n` em toda linha. Inviavel.
-2. **PyYAML ja e dependencia do projeto** (`check-lock.py`, `ai.py docs-check`).
+2. **PyYAML ja e dependencia do projeto** (`check-lock.py`, `guia.py docs-check`).
 3. **Padrao de fato no ecossistema** (frontmatter SKILL.md, GitHub Actions, plugin manifests).
 
 Onde YAML morde - evidencia real no projeto:
 - **Whitespace-sensitive.** Indentacao errada quebra estrutura sem erro obvio.
-- **`on:` vira `True` em PyYAML 1.1.** **Ja virou bug** - ha workaround defensivo em [`core/src/ai.py:716-720`](../../core/src/ai.py).
+- **`on:` vira `True` em PyYAML 1.1.** **Ja virou bug** - ha workaround defensivo em [`core/src/guia.py:716-720`](../../core/src/guia.py).
 - **Sem schema.** `yaml.safe_load` + `dict.get(...)` em runtime. Erros tardios.
 
 Alternativas reais:
@@ -117,7 +117,7 @@ core/manifest/
   feature.yaml      (~40 linhas)
   issue.yaml        (~40)
   ...
-  ai-process.yaml   (~120)
+  guia-fluxo.yaml   (~120)
 ```
 - + Cada arquivo bounded. Diff escopado. Adicionar verbo = criar arquivo.
 - - Perde vista panoramica. Convencao de ordem implicita.
@@ -165,7 +165,7 @@ Comparativo:
 Sim. Resposta principal: **opcao B da Q2.** Mas tem 4 camadas complementares de validacao independentes do split:
 
 1. **Schema do manifest.** Hoje: `yaml.safe_load` + `dict.get` em runtime. Erros so ao tentar gerar. Schema com `jsonschema` ou `pydantic` valida no `--check` antes.
-2. **Body vs CLI introspectado.** O `argparse` em `core/src/ai.py` e introspectavel. Da pra extrair flags reais de cada subcomando e checar se bodies so citam flags que existem. Pega o achado #1 antes de virar drift.
+2. **Body vs CLI introspectado.** O `argparse` em `core/src/guia.py` e introspectavel. Da pra extrair flags reais de cada subcomando e checar se bodies so citam flags que existem. Pega o achado #1 antes de virar drift.
 3. **Manifest <-> `marketplace.json`.** Verbo no manifest deveria aparecer em `dist/.claude-plugin/marketplace.json`. Sem check hoje.
 4. **Limite/similaridade de descriptions.** Reincidencia do trigger collision (F-003) - duas descriptions muito parecidas voltam o problema.
 
@@ -175,17 +175,17 @@ Sim. Resposta principal: **opcao B da Q2.** Mas tem 4 camadas complementares de 
 
 | # | Onde esta hoje (path:linha) | O que esta errado | Onde corrigir |
 |---|---|---|---|
-| 1 | [`manifest.yaml:177-186`](../../core/manifest/manifest.yaml) feature claude_skill: `.\core\bin\ai.ps1 feature "$ARGUMENTS"`. CLI parser [`ai.py:55-58`](../../core/src/ai.py) declara `title`, `--context`, `--origin`. Mesmo padrao em issue (`202-214`), ready (`317-331`), finish (`358-394`), promote (`279-300`). | Body omite flags relevantes; agente esquece de passar `--context`, `--run-tests`, `--lock-description`, `--docs-checked`. | Pontual: atualizar bodies. Duradouro: smoke test (achado #7). |
-| 2 | CLI subcomandos sem shim: `docs-check` ([`ai.py:104-114`](../../core/src/ai.py)), `doctor` ([`ai.py:145-146`](../../core/src/ai.py)), `render` ([`ai.py:148-151`](../../core/src/ai.py)). Lock CLI inteiro ([`check-lock.py`](../../core/lock/check-lock.py)) sem shim. | 6 capacidades do pack sem skill; dev precisa lembrar do path completo. | Adicionar verbos `docs-check`, `doctor`, `render`, `lock`, `unlock`, `audit` em `manifest.yaml`. |
-| 3 | `feature/issue/backlog/ready` agent_skill **tem** "Then continue using `ai-process`." no fim. `promote` (~273-277) e `finish` (~349-357) agent_skill **nao tem**. `status` (~408) tambem nao mas e coerente (read-only). | Justo promote/finish, os 2 fluxos mais complexos, nao recarregam contexto. | Adicionar rodape em promote e finish agent_skill. |
-| 4 | Mistura PT/EN. Bodies do `ai-process` 100% EN; outros bodies misturam EN com nomes de status em PT ("Aguardando validacao"). | Sem politica definida. | Decidir politica, aplicar uniformemente. |
+| 1 | [`manifest.yaml:177-186`](../../core/manifest/manifest.yaml) feature claude_skill: `.\core\bin\guia.ps1 feature "$ARGUMENTS"`. CLI parser [`guia.py:55-58`](../../core/src/guia.py) declara `title`, `--context`, `--origin`. Mesmo padrao em issue (`202-214`), ready (`317-331`), finish (`358-394`), promote (`279-300`). | Body omite flags relevantes; agente esquece de passar `--context`, `--run-tests`, `--lock-description`, `--docs-checked`. | Pontual: atualizar bodies. Duradouro: smoke test (achado #7). |
+| 2 | CLI subcomandos sem shim: `docs-check` ([`guia.py:104-114`](../../core/src/guia.py)), `doctor` ([`guia.py:145-146`](../../core/src/guia.py)), `render` ([`guia.py:148-151`](../../core/src/guia.py)). Lock CLI inteiro ([`check-lock.py`](../../core/lock/check-lock.py)) sem shim. | 6 capacidades do pack sem skill; dev precisa lembrar do path completo. | Adicionar verbos `docs-check`, `doctor`, `render`, `lock`, `unlock`, `audit` em `manifest.yaml`. |
+| 3 | `feature/issue/backlog/ready` agent_skill **tem** "Then continue using `guia-fluxo`." no fim. `promote` (~273-277) e `finish` (~349-357) agent_skill **nao tem**. `status` (~408) tambem nao mas e coerente (read-only). | Justo promote/finish, os 2 fluxos mais complexos, nao recarregam contexto. | Adicionar rodape em promote e finish agent_skill. |
+| 4 | Mistura PT/EN. Bodies do `guia-fluxo` 100% EN; outros bodies misturam EN com nomes de status em PT ("Aguardando validacao"). | Sem politica definida. | Decidir politica, aplicar uniformemente. |
 | 5 | [`manifest.yaml:162-172`](../../core/manifest/manifest.yaml) (feature agent_skill, 7 linhas) vs `173-186` (feature claude_skill, 9 linhas): ~70% conteudo semantico igual. Difere so metodo de rename + sintaxe `$ARGUMENTS`. | Duplicacao multiplica manutencao; flag nova exige editar 14 bodies. | `shared_body` no schema do manifest - viabilizado pela opcao B da Q2. |
-| 6 | `ai-process` description em [`manifest.yaml:23`](../../core/manifest/manifest.yaml) tem ~440 chars com prefixo "REFERENCE/BACKGROUND ONLY". Outros 6 seguem padrao ("PRIMARY TRIGGER", "DEFER-AND-PARK", "EVALUATE-AND-CONVERT", "HANDOFF", "CLOSE", "READ-ONLY") instituido em F-003. | Padrao de prefixo so vive na PR de F-003 e no commit log. Proximo editor pode quebrar. | ADR novo (0007) OU comentario inline no topo de `manifest.yaml`. |
+| 6 | `guia-fluxo` description em [`manifest.yaml:23`](../../core/manifest/manifest.yaml) tem ~440 chars com prefixo "REFERENCE/BACKGROUND ONLY". Outros 6 seguem padrao ("PRIMARY TRIGGER", "DEFER-AND-PARK", "EVALUATE-AND-CONVERT", "HANDOFF", "CLOSE", "READ-ONLY") instituido em F-003. | Padrao de prefixo so vive na PR de F-003 e no commit log. Proximo editor pode quebrar. | ADR novo (0007) OU comentario inline no topo de `manifest.yaml`. |
 | 7 | `render-skills.py --check` ([`render-skills.py:215-221`](../../core/build/render-skills.py)) so compara saida com disco. Nao valida cobertura de targets, flags do body vs CLI real, sincronia com marketplace.json, limite/similaridade de description. | Drift silencioso fica invisivel ate alguem ler o body errado. | Estender `--check` em `render-skills.py` com as 4 validacoes. |
-| 8 | Body do `promote` (`279-300` claude, `254-278` agent) so diz "include `--worktree`". CLI ([`ai.py:369-385`](../../core/src/ai.py) `attach_worktree`) cria branch `codex/<slug>` e path `.claude/worktrees/<slug>`. | Dev nao sabe nome da branch que vai virar. | Adicionar nota no body do promote (ambos targets). |
-| 9 | So o body do `ai-process` cita fallback `python core/src/ai.py`. Os 6 verbos triggers usam apenas `.\core\bin\ai.ps1`. | Dev sem PowerShell fica orfao. | Cada body trigger pode mostrar a forma cross-platform. |
-| 10 | [`ai.py:325-329`](../../core/src/ai.py) `cmd_backlog_list` itera sem ordem nem filtro. | Backlog tem 0 itens - nao e problema hoje. | Esperar crescer. |
-| 11 | Bodies usam `$ARGUMENTS` literal em comandos PowerShell. CC substitui ANTES do PS ver. **Risco real:** argumento com `"` quebra parsing PS. Ex: `/ai:feature "Bug com "aspas""` vira `.\core\bin\ai.ps1 feature "Bug com "aspas""`, que PS le como multiplas strings. | Caso de borda nunca exercitado. Pode falhar silencioso ou explodir feio. | Testar caso de borda; documentar limitacao ou usar single-quotes/call operator. |
+| 8 | Body do `promote` (`279-300` claude, `254-278` agent) so diz "include `--worktree`". CLI ([`guia.py:369-385`](../../core/src/guia.py) `attach_worktree`) cria branch `codex/<slug>` e path `.claude/worktrees/<slug>`. | Dev nao sabe nome da branch que vai virar. | Adicionar nota no body do promote (ambos targets). |
+| 9 | So o body do `guia-fluxo` cita fallback `python core/src/guia.py`. Os 6 verbos triggers usam apenas `.\core\bin\guia.ps1`. | Dev sem PowerShell fica orfao. | Cada body trigger pode mostrar a forma cross-platform. |
+| 10 | [`guia.py:325-329`](../../core/src/guia.py) `cmd_backlog_list` itera sem ordem nem filtro. | Backlog tem 0 itens - nao e problema hoje. | Esperar crescer. |
+| 11 | Bodies usam `$ARGUMENTS` literal em comandos PowerShell. CC substitui ANTES do PS ver. **Risco real:** argumento com `"` quebra parsing PS. Ex: `/guia:feature "Bug com "aspas""` vira `.\core\bin\guia.ps1 feature "Bug com "aspas""`, que PS le como multiplas strings. | Caso de borda nunca exercitado. Pode falhar silencioso ou explodir feio. | Testar caso de borda; documentar limitacao ou usar single-quotes/call operator. |
 
 ### Candidatos
 
@@ -196,44 +196,44 @@ Inclui 3 candidatos derivados das perguntas estruturais (Q1, Q2, Q3) e os 11 ach
 | Q1 | `[BACKLOG]` | ADR 0007 documentando escolha de YAML pra manifest, caso `on:->True`, quando reconsiderar formato. | proposto | - |
 | **Q2** | **`[FEATURE]`** | **Migrar `core/manifest/manifest.yaml` para layout B (index YAML + bodies markdown em `bodies/`). Inclui refactor do renderer.** | **aprovado** | - |
 | 1 | `[ISSUE]` | Bodies do `claude_skill` (feature/issue/ready/finish/promote) omitem flags relevantes do CLI; alinhar com agent_skill. | proposto | - |
-| 2 | `[FEATURE]` | Adicionar 6 verbos shim no manifest: `/ai:doctor`, `/ai:render`, `/ai:docs-check`, `/ai:lock`, `/ai:unlock`, `/ai:audit`. | proposto | - |
-| 3 | `[ISSUE]` | `promote` e `finish` (agent_skill) nao trazem rodape "Then continue using `ai-process`". | proposto | - |
+| 2 | `[FEATURE]` | Adicionar 6 verbos shim no manifest: `/guia:doctor`, `/guia:render`, `/guia:docs-check`, `/guia:lock`, `/guia:unlock`, `/guia:audit`. | proposto | - |
+| 3 | `[ISSUE]` | `promote` e `finish` (agent_skill) nao trazem rodape "Then continue using `guia-fluxo`". | proposto | - |
 | 4 | `[BACKLOG]` | Decidir politica PT vs EN para skill bodies e aplicar uniformemente. | proposto | - |
 | 5 | `[BACKLOG]` | Permitir `shared_body` + overrides por target no manifest. Combina com Q2/B. | proposto | - |
 | 6 | `[BACKLOG]` | Documentar prefixos "PRIMARY TRIGGER / DEFER-AND-PARK / EVALUATE-AND-CONVERT" em ADR ou comentario inline. | proposto | - |
 | 7 | `[FEATURE]` | Smoke tests do manifest no `render-skills.py --check`: cobertura de targets, validacao de flags vs CLI, sincronia com marketplace.json, limite/similaridade de description. | proposto | - |
 | 8 | `[ISSUE]` | Body do `promote` (claude e agent_skill) deve mencionar que `--worktree` cria branch `codex/<slug>` e path `.claude/worktrees/<slug>`. | proposto | - |
-| 9 | `[BACKLOG]` | Documentar fallback `python core/src/ai.py <verbo>` em cada skill body. | proposto | - |
+| 9 | `[BACKLOG]` | Documentar fallback `python core/src/guia.py <verbo>` em cada skill body. | proposto | - |
 | 10 | `[NO-OP]` | "backlog list sem ordem/paginacao" - esperar crescer. | proposto | - |
 | 11 | `[ISSUE]` | Confirmar/testar substituicao de `$ARGUMENTS` em bodies PS com argumentos contendo aspas. | proposto | - |
 
 ---
 
-## Etapa 2 - `core/src/ai.py`
+## Etapa 2 - `core/src/guia.py`
 
 ### Proposito
 
-**O motor portavel da CLI inteira do AI process.** E o coracao funcional do pack - todos os outros arquivos em `core/` ou sao wrappers (`ai.ps1`), geradores que o copiam (`render-skills.py`), ou ferramentas auxiliares com escopo bem mais estreito (`check-lock.py`, hooks).
+**O motor portavel da CLI inteira do Guia Fluxo.** E o coracao funcional do pack - todos os outros arquivos em `core/` ou sao wrappers (`guia.ps1`), geradores que o copiam (`render-skills.py`), ou ferramentas auxiliares com escopo bem mais estreito (`check-lock.py`, hooks).
 
 **O que esse arquivo faz:**
 - Implementa **todos** os subcomandos: `init`, `feature`, `issue`, `status`, `ready`, `finish`, `validate` (deprecated), `backlog (add/list/promote)`, `promote`, `doctor`, `render`, `docs-check`
-- Gerencia estado em `.ai/*.json` (tasks, backlog, current-task, chat-title, process config)
+- Gerencia estado em `.guia/*.json` (tasks, backlog, current-task, chat-title, process config)
 - Mantem `FEATURES.md` (espelho humano agregado) sincronizado
-- Escreve relatorios em `.ai/reports/<task>-<event>-<timestamp>.md`
+- Escreve relatorios em `.guia/reports/<task>-<event>-<timestamp>.md`
 - Escreve `features/registry.yaml` (locks) - **paralelo ao `check-lock.py`** (ver Q3)
 - Roda git: changed files, staged files, commit, worktree create/remove
-- Executa o hook de docs (F-010): carrega `.ai/docs-map.yaml`, lista candidatos, bloqueia `finish` sem revisao
+- Executa o hook de docs (F-010): carrega `.guia/docs-map.yaml`, lista candidatos, bloqueia `finish` sem revisao
 
 **Quem invoca:**
-- [`core/bin/ai.ps1`](../../core/bin/ai.ps1) - wrapper PowerShell (caso primario no Windows)
-- `dist/bin/ai.py` (copia byte-a-byte feita por [`render-skills.py:174-178`](../../core/build/render-skills.py)) - quando o pack roda como plugin no consumidor
-- `python core/src/ai.py <cmd>` direto - fallback documentado
+- [`core/bin/guia.ps1`](../../core/bin/guia.ps1) - wrapper PowerShell (caso primario no Windows)
+- `dist/bin/guia.py` (copia byte-a-byte feita por [`render-skills.py:174-178`](../../core/build/render-skills.py)) - quando o pack roda como plugin no consumidor
+- `python core/src/guia.py <cmd>` direto - fallback documentado
 - Indiretamente: **todos** os bodies do manifest chamam o CLI
 
 **De que depende:**
 - stdlib: `argparse`, `json`, `re`, `subprocess`, `pathlib`, `datetime`, `fnmatch`, `shutil`
 - **Externos opcionais:** `PyYAML` (so pra `docs-check`), `git` no PATH (para varias operacoes)
-- **Implicitamente** do contrato de schema de `.ai/*.json` (sem versionamento), do `FEATURES.md` (regex de parser), e de `.ai/docs-map.yaml`
+- **Implicitamente** do contrato de schema de `.guia/*.json` (sem versionamento), do `FEATURES.md` (regex de parser), e de `.guia/docs-map.yaml`
 
 ### Mapa do arquivo (965 linhas)
 
@@ -267,7 +267,7 @@ Inclui 3 candidatos derivados das perguntas estruturais (Q1, Q2, Q3) e os 11 ach
 **Split sugerido:**
 ```
 core/src/
-  ai.py                         # main() + build_parser() apenas (~150 linhas)
+  guia.py                         # main() + build_parser() apenas (~150 linhas)
   cli/
     feature_issue.py            # cmd_create_task, args helpers
     backlog.py                  # cmd_backlog_*, cmd_promote
@@ -286,13 +286,13 @@ core/src/
 
 **Riscos:**
 - Mexer onde o pack inteiro escora. Precisa de smoke test antes.
-- `dist/bin/ai.py` e copia byte-a-byte de `ai.py` - split exigiria que `render-skills.py` empacote os modulos juntos OU mantenha um `ai.py` flat so para o dist.
+- `dist/bin/guia.py` e copia byte-a-byte de `guia.py` - split exigiria que `render-skills.py` empacote os modulos juntos OU mantenha um `guia.py` flat so para o dist.
 
 **Recomendacao:** `[FEATURE]` se o dev topa o esforco; senao, `[BACKLOG]` para quando a dor doer mais. Sugerido comecar por extrair `docs_hook.py` (174 linhas autonomas) como prova de conceito.
 
 #### Q2 - `validate` deprecated mas exposto: remover ou warning?
 
-CLI ainda aceita `validate` ([linhas 116-123, 287-305](../../core/src/ai.py)). Manifest nao tem skill. CLAUDE.md diz "Nao use validate como skill". Mas o subcomando existe.
+CLI ainda aceita `validate` ([linhas 116-123, 287-305](../../core/src/guia.py)). Manifest nao tem skill. CLAUDE.md diz "Nao use validate como skill". Mas o subcomando existe.
 
 **Opcoes:** A) Remover; B) Warning explicito; C) Manter silencioso (estado atual).
 
@@ -300,7 +300,7 @@ CLI ainda aceita `validate` ([linhas 116-123, 287-305](../../core/src/ai.py)). M
 
 #### Q3 - `lock_task_files` reimplementa `check-lock.py`: extrair lock module compartilhado?
 
-Em [`ai.py:626-658`](../../core/src/ai.py), `lock_task_files` escreve `features/registry.yaml` **a mao** via concat de strings. Enquanto [`check-lock.py:79-101`](../../core/lock/check-lock.py) ja tem `_load_data`, `_save_locks`, `_load_lock_ignore`, `_norm`.
+Em [`guia.py:626-658`](../../core/src/guia.py), `lock_task_files` escreve `features/registry.yaml` **a mao** via concat de strings. Enquanto [`check-lock.py:79-101`](../../core/lock/check-lock.py) ja tem `_load_data`, `_save_locks`, `_load_lock_ignore`, `_norm`.
 
 **Consequencias:**
 - `lock_task_files` **nao respeita `lock-ignore.txt`** - pode travar `.gitignore`
@@ -312,7 +312,7 @@ Em [`ai.py:626-658`](../../core/src/ai.py), `lock_task_files` escreve `features/
 
 #### Q4 - `commit_task` nao pre-valida locks: pre-flight check?
 
-[`commit_task` (591-601)](../../core/src/ai.py) faz `git add` + `git commit -m "..."`. Mensagem fixa. Se task tocou arquivo travado, hook `commit-msg` bloqueia. ai.py nao sabe sugerir `[unlock:<id>]`.
+[`commit_task` (591-601)](../../core/src/guia.py) faz `git add` + `git commit -m "..."`. Mensagem fixa. Se task tocou arquivo travado, hook `commit-msg` bloqueia. guia.py nao sabe sugerir `[unlock:<id>]`.
 
 **Recomendacao:** `[ISSUE]` - `finish` chama `check-lock.py check <files>` antes de commit; aborta com mensagem clara ou aceita flag de unlock.
 
@@ -320,27 +320,27 @@ Em [`ai.py:626-658`](../../core/src/ai.py), `lock_task_files` escreve `features/
 
 | # | Onde esta (path:linha) | O que esta errado | Onde corrigir |
 |---|---|---|---|
-| 1 | [`ai.py:271` + `ai.py:280`](../../core/src/ai.py) - `cleanup_task_worktree` chamado 2x em `cmd_finish` | Primeira chamada antes de `save_task`/commit, segunda apos. Segunda quase sempre vira no-op. Leftover de refactor. | Remover a primeira (linha 271). |
-| 2 | [`ai.py:332-349`](../../core/src/ai.py) `cmd_promote` | `pop_item` grava backlog (337) ANTES de criar task (338). Se `create_promoted_task` ou `attach_worktree` falhar, item se perde. | Gravar backlog so apos task confirmada. |
-| 3 | [`ai.py:591-601`](../../core/src/ai.py) `commit_task` | Mensagem fixa. Sem hook pra enriquecer. | Capturado em Q4. |
-| 4 | [`ai.py:595-598`](../../core/src/ai.py) `commit_task` checa `git_staged_files()` vs `set(files)` | Compara paths literais; Windows pode dar mismatch backslash vs slash. | Normalizar via `Path(...).as_posix()`. |
-| 5 | [`ai.py:484-492`](../../core/src/ai.py) `find_task_or_current` | Falha com "Task not found: X" sem listar IDs validos. | Mostrar 5 tasks recentes. |
-| 6 | [`ai.py:527-528`](../../core/src/ai.py) `upsert_features_entry` | Cria FEATURES.md silenciosamente. Hardcoded estrutura inicial. | Validar contra docs-map ou tornar configuravel. |
-| 7 | [`ai.py:448`](../../core/src/ai.py) `new_task` | Hardcoded `modifiedFiles: ["FEATURES.md"]`. | Mover para config ou injetar dinamicamente. |
-| 8 | [`ai.py:27-35`](../../core/src/ai.py) - constants | Paths fixos. Consumidor nao customiza. | ADR/doc "convention over config" OU configuravel. |
-| 9 | [`ai.py:268-280`](../../core/src/ai.py) `cmd_finish --no-commit` | "Dry close" ainda remove worktree. | Skip cleanup quando `not commit_requested`. |
-| 10 | [`ai.py:388-395`](../../core/src/ai.py) `cmd_doctor` | So checa 4 arquivos `.ai/`. | Estender (manifest, PyYAML, git, render --check, dist). |
-| 11 | [`ai.py:50-153`](../../core/src/ai.py) | NENHUM subcomando `tasks list/show/filter`. | Adicionar subcomandos de query. |
-| 12 | [`ai.py:599`](../../core/src/ai.py) `commit_task` | Se git nao esta no PATH, FileNotFoundError generico. | Try/except com mensagem clara. |
-| 13 | [`ai.py:369-385`](../../core/src/ai.py) `attach_worktree` | Cria branch sem checar existencia; git erro confuso. | `git rev-parse --verify` antes. |
-| 14 | [`ai.py:547-574`](../../core/src/ai.py) | Strings hardcoded PT-BR ("Aguardando validacao", "Nenhuma.", etc.) | Combina com Etapa 1.4 (politica PT/EN). |
+| 1 | [`guia.py:271` + `guia.py:280`](../../core/src/guia.py) - `cleanup_task_worktree` chamado 2x em `cmd_finish` | Primeira chamada antes de `save_task`/commit, segunda apos. Segunda quase sempre vira no-op. Leftover de refactor. | Remover a primeira (linha 271). |
+| 2 | [`guia.py:332-349`](../../core/src/guia.py) `cmd_promote` | `pop_item` grava backlog (337) ANTES de criar task (338). Se `create_promoted_task` ou `attach_worktree` falhar, item se perde. | Gravar backlog so apos task confirmada. |
+| 3 | [`guia.py:591-601`](../../core/src/guia.py) `commit_task` | Mensagem fixa. Sem hook pra enriquecer. | Capturado em Q4. |
+| 4 | [`guia.py:595-598`](../../core/src/guia.py) `commit_task` checa `git_staged_files()` vs `set(files)` | Compara paths literais; Windows pode dar mismatch backslash vs slash. | Normalizar via `Path(...).as_posix()`. |
+| 5 | [`guia.py:484-492`](../../core/src/guia.py) `find_task_or_current` | Falha com "Task not found: X" sem listar IDs validos. | Mostrar 5 tasks recentes. |
+| 6 | [`guia.py:527-528`](../../core/src/guia.py) `upsert_features_entry` | Cria FEATURES.md silenciosamente. Hardcoded estrutura inicial. | Validar contra docs-map ou tornar configuravel. |
+| 7 | [`guia.py:448`](../../core/src/guia.py) `new_task` | Hardcoded `modifiedFiles: ["FEATURES.md"]`. | Mover para config ou injetar dinamicamente. |
+| 8 | [`guia.py:27-35`](../../core/src/guia.py) - constants | Paths fixos. Consumidor nao customiza. | ADR/doc "convention over config" OU configuravel. |
+| 9 | [`guia.py:268-280`](../../core/src/guia.py) `cmd_finish --no-commit` | "Dry close" ainda remove worktree. | Skip cleanup quando `not commit_requested`. |
+| 10 | [`guia.py:388-395`](../../core/src/guia.py) `cmd_doctor` | So checa 4 arquivos `.guia/`. | Estender (manifest, PyYAML, git, render --check, dist). |
+| 11 | [`guia.py:50-153`](../../core/src/guia.py) | NENHUM subcomando `tasks list/show/filter`. | Adicionar subcomandos de query. |
+| 12 | [`guia.py:599`](../../core/src/guia.py) `commit_task` | Se git nao esta no PATH, FileNotFoundError generico. | Try/except com mensagem clara. |
+| 13 | [`guia.py:369-385`](../../core/src/guia.py) `attach_worktree` | Cria branch sem checar existencia; git erro confuso. | `git rev-parse --verify` antes. |
+| 14 | [`guia.py:547-574`](../../core/src/guia.py) | Strings hardcoded PT-BR ("Aguardando validacao", "Nenhuma.", etc.) | Combina com Etapa 1.4 (politica PT/EN). |
 | 15 | Todo o arquivo | NENHUM teste automatizado pro CLI. | Pytest com smoke tests por subcomando. |
 
 ### Candidatos
 
 | # | Classificacao proposta | Resumo | STATUS | ID final |
 |---|---|---|---|---|
-| Q1 | `[FEATURE]` ou `[BACKLOG]` | Split de `core/src/ai.py` em modulos. | proposto | - |
+| Q1 | `[FEATURE]` ou `[BACKLOG]` | Split de `core/src/guia.py` em modulos. | proposto | - |
 | Q2 | `[ISSUE]` | `validate` com warning explicito; remocao em N+2. | proposto | - |
 | Q3 | `[FEATURE]` | Extrair lock logic de `check-lock.py` em modulo importavel. | proposto | - |
 | Q4 | `[ISSUE]` | `finish` pre-valida locks antes de commit. | proposto | - |
@@ -362,22 +362,22 @@ Em [`ai.py:626-658`](../../core/src/ai.py), `lock_task_files` escreve `features/
 
 ---
 
-## Etapa 3 - `core/bin/ai.ps1`
+## Etapa 3 - `core/bin/guia.ps1`
 
 ### Proposito
 
-**Wrapper PowerShell que resolve um interpretador Python valido e chama `core/src/ai.py` repassando os argumentos.** E o "ponto de entrada amigavel" no Windows - em vez de o dev digitar `python core\src\ai.py feature ...`, ele digita `.\core\bin\ai.ps1 feature ...`.
+**Wrapper PowerShell que resolve um interpretador Python valido e chama `core/src/guia.py` repassando os argumentos.** E o "ponto de entrada amigavel" no Windows - em vez de o dev digitar `python core\src\guia.py feature ...`, ele digita `.\core\bin\guia.ps1 feature ...`.
 
 **O que esse arquivo faz:**
 - Recebe argumentos arbitrarios via `[Parameter(ValueFromRemainingArguments = $true)]` (linhas 1-4)
 - Tenta resolver um interpretador Python de uma lista de **7 candidatos em ordem fixa** (linhas 29-50)
 - Filtra o **stub do Microsoft Store** (linhas 8-27): `Test-Python` verifica que `python --version` realmente roda
 - Trata o caso especial do **launcher `py`** (linhas 16-17, 55-57): usa `py -3` para garantir Python 3
-- Invoca `core/src/ai.py` com `& $python $script @Args` (linhas 55-60)
+- Invoca `core/src/guia.py` com `& $python $script @Args` (linhas 55-60)
 - Propaga o exit code com `exit $LASTEXITCODE` (linha 62)
 
 **Ordem de candidatos** (linhas 33-41):
-1. `$env:AI_PROCESS_PYTHON` (env override explicito)
+1. `$env:GUIA_PYTHON` (env override explicito)
 2. `..\..\.venv\Scripts\python.exe` (venv local no root do repo)
 3. `python` (PATH)
 4. `python3` (PATH)
@@ -388,7 +388,7 @@ Em [`ai.py:626-658`](../../core/src/ai.py), `lock_task_files` escreve `features/
 **Quem invoca:**
 - Todos os bodies do manifest (todas as 7 skills de trigger)
 - Dev digitando manualmente no Windows
-- **Adaptado** e copiado para `dist/bin/ai.ps1` por [`render-skills.py:149-161`](../../core/build/render-skills.py) com substituicao `..\src\ai.py` -> `ai.py` (layout flat no plugin)
+- **Adaptado** e copiado para `dist/bin/guia.ps1` por [`render-skills.py:149-161`](../../core/build/render-skills.py) com substituicao `..\src\guia.py` -> `guia.py` (layout flat no plugin)
 
 **De que depende:**
 - PowerShell (versao nao especificada - ver Q1)
@@ -398,7 +398,7 @@ Em [`ai.py:626-658`](../../core/src/ai.py), `lock_task_files` escreve `features/
 
 #### Q1 - Por que so wrapper Windows? Falta `core/bin/ai` (POSIX)?
 
-O pack e distribuido como plugin que roda em qualquer plataforma - `dist/bin/ai` (POSIX shim bash) e **gerado** por [`render-skills.py:80-84`](../../core/build/render-skills.py). Mas no repo-mae nao existe wrapper POSIX. Dev no Mac/Linux contribuindo no `ai-process-pack` precisa rodar `python core/src/ai.py <cmd>` direto OU primeiro gerar `dist/bin/ai`.
+O pack e distribuido como plugin que roda em qualquer plataforma - `dist/bin/ai` (POSIX shim bash) e **gerado** por [`render-skills.py:80-84`](../../core/build/render-skills.py). Mas no repo-mae nao existe wrapper POSIX. Dev no Mac/Linux contribuindo no `guia-fluxo` precisa rodar `python core/src/guia.py <cmd>` direto OU primeiro gerar `dist/bin/ai`.
 
 **Recomendacao:** `[FEATURE]` - criar `core/bin/ai` (shim POSIX simetrico ao `dist/bin/ai`). Custo baixissimo, simetria util pra devs em Mac/Linux do proprio pack.
 
@@ -411,7 +411,7 @@ Problemas concretos na lista de 7 candidatos:
 - **Sem deteccao de venv ativo** - se `$env:VIRTUAL_ENV` setado, deveria ser primeira escolha
 
 **Estrategia alternativa em camadas:**
-1. `$env:AI_PROCESS_PYTHON` (override explicito)
+1. `$env:GUIA_PYTHON` (override explicito)
 2. `$env:VIRTUAL_ENV\Scripts\python.exe` (venv ativo) - novo
 3. `py -3` (Windows launcher universal)
 4. `python3` / `python` (PATH)
@@ -419,13 +419,13 @@ Problemas concretos na lista de 7 candidatos:
 
 **Recomendacao:** `[FEATURE]` - refactor de `Resolve-Python`. Resolve achados 1, 2, 3 de uma vez.
 
-#### Q3 - Por que wrapper PS em vez de `ai.py` executavel direto?
+#### Q3 - Por que wrapper PS em vez de `guia.py` executavel direto?
 
-Wrapper existe porque Windows nao associa `.py` a Python por padrao sem ajuste no PATHEXT, e dev digita `ai.ps1` em vez de `python core\src\ai.py`.
+Wrapper existe porque Windows nao associa `.py` a Python por padrao sem ajuste no PATHEXT, e dev digita `guia.ps1` em vez de `python core\src\guia.py`.
 
 **Alternativa complementar:** `core/bin/ai.cmd` (shim para `cmd.exe`):
 ```cmd
-@py -3 "%~dp0..\src\ai.py" %*
+@py -3 "%~dp0..\src\guia.py" %*
 ```
 Roda em **cmd.exe** e PS sem syntax PS.
 
@@ -442,7 +442,7 @@ Roda em **cmd.exe** e PS sem syntax PS.
 | 5 | linha 22: `return $LASTEXITCODE -eq 0` | Verifica que rodou, mas **nao valida versao >= 3.10**. Python 2.7 passaria. | Parsear `--version` e checar major.minor. |
 | 6 | linha 3: `[string[]] $Args` | Param shadows `$Args` automatico do PS. | Renomear para `$Arguments` ou `$CliArgs`. |
 | 7 | Wrapper inteiro | Sem flag `--debug` / `-Verbose` que imprima qual Python foi escolhido. | Adicionar `-Verbose` que mostra candidato + versao. |
-| 8 | linha 53 | Nao pre-checa que `core/src/ai.py` existe; se sumir, Python da erro generico. | `if (-not (Test-Path $script)) { throw ... }`. |
+| 8 | linha 53 | Nao pre-checa que `core/src/guia.py` existe; se sumir, Python da erro generico. | `if (-not (Test-Path $script)) { throw ... }`. |
 | 9 | Wrapper inteiro | Sem `core/bin/ai` POSIX equivalente. | (Em Q1.) |
 | 10 | Wrapper inteiro | Sem `core/bin/ai.cmd` para cmd.exe. | (Em Q3.) |
 | 11 | linhas 16-17 + 55-57 | Logica especial pra `py` duplicada. | Centralizar em `Invoke-PythonScript`. |
@@ -459,7 +459,7 @@ Roda em **cmd.exe** e PS sem syntax PS.
 | 5 | `[ISSUE]` | `Test-Python` valida versao >= 3.10. | proposto | - |
 | 6 | `[BACKLOG]` | Renomear param `$Args` -> `$Arguments` ou `$CliArgs`. | proposto | - |
 | 7 | `[BACKLOG]` | Flag `-Verbose` que imprime Python selecionado. | proposto | - |
-| 8 | `[ISSUE]` | Pre-checar existencia de `core/src/ai.py`. | proposto | - |
+| 8 | `[ISSUE]` | Pre-checar existencia de `core/src/guia.py`. | proposto | - |
 | 11 | `[BACKLOG]` | Centralizar logica especial de `py` em funcao unica. | proposto | - |
 | 12 | `[BACKLOG]` | Comentario inline explicando `$ErrorActionPreference = "Stop"`. | proposto | - |
 
@@ -473,16 +473,16 @@ Roda em **cmd.exe** e PS sem syntax PS.
 
 **O que produz:**
 - `dist/skills/<verb>/SKILL.md` - Claude Code (sem prefixo `ai-`, namespace `ai:` ja qualifica)
-- `dist/.agents/skills/ai-<verb>/SKILL.md` - Codex + Antigravity (prefixo `ai-` evita colisao)
-- `dist/bin/ai.py` - copia **byte-a-byte** de `core/src/ai.py`
-- `dist/bin/ai.ps1` - `core/bin/ai.ps1` com **substituicao literal** `..\src\ai.py` -> `ai.py`
+- `dist/.agents/skills/guia-<verb>/SKILL.md` - Codex + Antigravity (prefixo `ai-` evita colisao)
+- `dist/bin/guia.py` - copia **byte-a-byte** de `core/src/guia.py`
+- `dist/bin/guia.ps1` - `core/bin/guia.ps1` com **substituicao literal** `..\src\guia.py` -> `guia.py`
 - `dist/bin/ai` - shim POSIX bash (string literal no proprio renderer)
 - `dist/templates/.githooks/commit-msg` + `features/registry.yaml` + `features/lock-ignore.txt` - copias byte-a-byte
 
 **O que le:**
 - `core/manifest/manifest.yaml` (skills)
-- `core/src/ai.py` (engine) -> vira `dist/bin/ai.py`
-- `core/bin/ai.ps1` (wrapper) -> adaptado pra `dist/bin/ai.ps1`
+- `core/src/guia.py` (engine) -> vira `dist/bin/guia.py`
+- `core/bin/guia.ps1` (wrapper) -> adaptado pra `dist/bin/guia.ps1`
 - 3 templates em `core/templates/` (lista estatica)
 
 **CLI:**
@@ -492,8 +492,8 @@ Roda em **cmd.exe** e PS sem syntax PS.
 
 **Quem invoca:**
 - `python core/build/render-skills.py` direto
-- `.\core\bin\ai.ps1 render` (via `cmd_render` em `ai.py:398-408`)
-- `python core/src/ai.py render`
+- `.\core\bin\guia.ps1 render` (via `cmd_render` em `guia.py:398-408`)
+- `python core/src/guia.py render`
 - Documentacao CLAUDE.md exige rodar `--check` antes de entregar mudancas
 - **Sem hook automatico no pre-commit** (o hook `commit-msg` so valida locks)
 
@@ -508,7 +508,7 @@ Roda em **cmd.exe** e PS sem syntax PS.
 | 104-109 | `target_path(target, verb)` | mapeia tipo de target -> path de saida |
 | 112-130 | `render_skill_md` + `render_target` | wrapper de frontmatter YAML + corpo MD |
 | 133-146 | `collect_outputs` | itera verbos+targets, lista de (path, target, verb, content) |
-| 149-161 | `_adapt_wrapper_for_plugin` | substituicao literal `..\src\ai.py` -> `ai.py` |
+| 149-161 | `_adapt_wrapper_for_plugin` | substituicao literal `..\src\guia.py` -> `guia.py` |
 | 164-178 | `collect_bin_outputs` | retorna 3 bin files (engine, wrapper adaptado, shim POSIX) |
 | 181-196 | `collect_template_outputs` | copia templates listados em `TEMPLATE_FILES` |
 | 199-221 | `write_outputs` + `check_outputs` | write se difere; check retorna stale list |
@@ -554,10 +554,10 @@ Se verbo for removido do manifest, `dist/skills/<old-verb>/SKILL.md` fica orfa. 
 | 1 | [`render-skills.py:53`](../../core/build/render-skills.py) `MANIFEST` literal | Acoplado a path unico. | (Em Q1, escopo conjunto com Etapa 1.Q2.) |
 | 2 | [`render-skills.py:66-70`](../../core/build/render-skills.py) `TEMPLATE_FILES` hardcoded | Templates novos viram orfaos silenciosos. | (Em Q2.) |
 | 3 | [`render-skills.py:149-161`](../../core/build/render-skills.py) `_adapt_wrapper_for_plugin` | Substituicao literal de marker unico. Warning vai pra stderr mas **write segue**. | Abortar com `sys.exit(2)` se marker ausente. |
-| 4 | Sem CI/hook automatico rodando `--check` | Quem commitar mudanca em `ai.py` sem rodar render deixa `dist/` stale. | Pre-commit hook ou CI rodando `--check`. |
+| 4 | Sem CI/hook automatico rodando `--check` | Quem commitar mudanca em `guia.py` sem rodar render deixa `dist/` stale. | Pre-commit hook ou CI rodando `--check`. |
 | 5 | [`render-skills.py:54-58`](../../core/build/render-skills.py) `DIST_DIR` hardcoded | Sem `--output-dir`; impossivel gerar em outro lugar. | Flag opcional. |
 | 6 | [`render-skills.py:157-160`](../../core/build/render-skills.py) warning sem abortar | Linha 192 aborta. Linha 157 so warns. Inconsistente. | Padronizar warning critico = abort. |
-| 7 | [`render-skills.py:210`](../../core/build/render-skills.py) `newline="\n"` em ai.ps1 | Convencao .gitattributes e CRLF; renderer escreve LF; checkout re-normaliza. Dev local rodando `--check` pode ver diff fantasma. | Renderer respeita politica de EOL por tipo. |
+| 7 | [`render-skills.py:210`](../../core/build/render-skills.py) `newline="\n"` em guia.ps1 | Convencao .gitattributes e CRLF; renderer escreve LF; checkout re-normaliza. Dev local rodando `--check` pode ver diff fantasma. | Renderer respeita politica de EOL por tipo. |
 | 8 | [`render-skills.py:164-178`](../../core/build/render-skills.py) bin outputs | Nao gera `dist/bin/ai.cmd` (combina com Etapa 3.Q3). | Se 3.Q3 aprovar, incluir. |
 | 9 | [`render-skills.py:137-145`](../../core/build/render-skills.py) `collect_outputs` | `spec=None` -> AttributeError; `targets={}` silencia verbo; `body=""` gera SKILL.md invalido sem warning. | Schema validation. (Combina com Etapa 1.7.) |
 | 10 | [`render-skills.py:232`](../../core/build/render-skills.py) `--verb` pula bin/templates | Trade-off nao documentado. `--check --verb feature` nao detecta drift de engine. | Comentario inline ou flag `--include-bin`. |
@@ -614,7 +614,7 @@ Se verbo for removido do manifest, `dist/skills/<old-verb>/SKILL.md` fica orfa. 
 - [`core/hooks/commit-msg`](../../core/hooks/commit-msg) - git hook (modo `hook`)
 - CI pipelines (modo `ci`)
 - Dev manualmente
-- **`lock_task_files` em [`ai.py:626-658`](../../core/src/ai.py) NAO chama este script** - duplica logica (Etapa 2.Q3)
+- **`lock_task_files` em [`guia.py:626-658`](../../core/src/guia.py) NAO chama este script** - duplica logica (Etapa 2.Q3)
 
 **De que depende:**
 - `PyYAML` (obrigatorio, `sys.exit(2)` no import fail)
@@ -643,7 +643,7 @@ Ja capturado em **Etapa 2.Q3**. Reforco aqui porque a duplicacao tem **efeito re
 - Nao normaliza paths via `_norm()` -> Windows backslash vira mismatch
 - Sempre bloqueia 4 operacoes; ignora `operations: [add]`
 
-**Recomendacao:** quando abrir F-NNN de Etapa 2.Q3, **incluir refactor que exporte modulo `check_lock_api`** reutilizavel por `ai.py`. Nao e so "DRY" - e correcao de bug latente.
+**Recomendacao:** quando abrir F-NNN de Etapa 2.Q3, **incluir refactor que exporte modulo `check_lock_api`** reutilizavel por `guia.py`. Nao e so "DRY" - e correcao de bug latente.
 
 #### Q2 - CLI gestao de locks tem buracos: `info`, `edit`, `history`?
 
@@ -674,7 +674,7 @@ Todas saidas sao prosa PT-BR. CI precisa parsear texto.
 
 | # | Onde esta (linha) | O que esta errado | Onde corrigir |
 |---|---|---|---|
-| 1 | (capturado em 2.Q3) | Duplicacao com `ai.py:lock_task_files`. | (Em 2.Q3 - reforco aqui.) |
+| 1 | (capturado em 2.Q3) | Duplicacao com `guia.py:lock_task_files`. | (Em 2.Q3 - reforco aqui.) |
 | 2 | [`check-lock.py:75-76`](../../core/lock/check-lock.py) `_is_ignored_path` chama `_load_lock_ignore` toda invocacao | Re-le o arquivo a cada path. Hook commit-msg com 50 staged files = 50 reads. | `@functools.cache` em `_load_lock_ignore`. |
 | 3 | [`check-lock.py:249-272`](../../core/lock/check-lock.py) `cmd_audit` | Falha silenciosa fora de repo git ("Erro ao consultar git log"). | Detectar `git rev-parse` primeiro; mensagem clara. |
 | 4 | (em Q2) | Sem `info <id>`. | Novo subcomando. |
@@ -749,7 +749,7 @@ Todas saidas sao prosa PT-BR. CI precisa parsear texto.
 
 #### Q1 - Duplicacao byte-a-byte: fonte unica + copia via renderer?
 
-**Confirmado identico** (via `diff -u`). Padrao exato do que ja existe pra `core/src/ai.py` -> `dist/bin/ai.py` (renderer copia byte-a-byte).
+**Confirmado identico** (via `diff -u`). Padrao exato do que ja existe pra `core/src/guia.py` -> `dist/bin/guia.py` (renderer copia byte-a-byte).
 
 **Plano sugerido:**
 - Manter [`core/hooks/commit-msg`](../../core/hooks/commit-msg) como **fonte unica** (e o que esta ativo no repo-mae)
@@ -851,9 +851,9 @@ Template default ja vem com trava ativa: **qualquer arquivo novo precisa de `[un
 
 | Arquivo | Existe? | Importancia |
 |---|---|---|
-| `.ai/process.json` | Nao | Alta - schema do processo |
-| `.ai/docs-map.yaml` | Nao | Alta - ativa docs-hook |
-| `.ai/backlog.json`, `.ai/tasks.json` | Nao | Media - estado |
+| `.guia/process.json` | Nao | Alta - schema do processo |
+| `.guia/docs-map.yaml` | Nao | Alta - ativa docs-hook |
+| `.guia/backlog.json`, `.guia/tasks.json` | Nao | Media - estado |
 | `CLAUDE.md` | Nao | **Critica** - instrucoes pra IA |
 | `AGENTS.md` | Nao | **Critica** - idem |
 | `features/README.md` | Nao | Media - protocolo lock |
@@ -908,7 +908,7 @@ Vários candidatos sao **compostos** - olham o mesmo escopo de angulos diferente
 |---|---|---|
 | **Layout B do manifest** | 1.Q2 (ja aprovada) + 1.5 + 4.Q1 | "Migrar manifest para layout B (index + bodies markdown + shared_body)" |
 | **Smoke tests / validacao manifest** | 1.7 + 4.Q4 + 4.9 + 4.12 | "Smoke tests + schema validation no render --check" |
-| **Lock module compartilhado** | 2.Q3 + 5.Q1 | "Extrair lock logic em modulo importavel; ai.py consome" |
+| **Lock module compartilhado** | 2.Q3 + 5.Q1 | "Extrair lock logic em modulo importavel; guia.py consome" |
 | **`.cmd` shim** | 3.Q3 + 4.8 | "Criar core/bin/ai.cmd + gerar dist/bin/ai.cmd via renderer" |
 | **Politica PT/EN** | 1.4 + 6.6 + 7.5 + 7.6 | "Definir e aplicar politica PT/EN em bodies/templates/hooks" |
 | **Validacao versao Python** | 3.5 + 6.5 | "Validar versao Python (>= 3.10) em wrappers e hook" |
@@ -933,16 +933,16 @@ Tabela mestre de TODOS os candidatos das 7 etapas. Atualizada conforme o dev ava
 | 1.Q3 | (capturado em 1.7) | - | - | (consolidado no achado 7) |
 | 1.1 | `[ISSUE]` | proposto | - | Alinhar bodies claude_skill com flags reais do CLI |
 | 1.2 | `[FEATURE]` | proposto | - | Shims faltando: doctor, render, docs-check, lock, unlock, audit |
-| 1.3 | `[ISSUE]` | proposto | - | Rodape "Then continue using ai-process" em promote/finish |
+| 1.3 | `[ISSUE]` | proposto | - | Rodape "Then continue using guia-fluxo" em promote/finish |
 | 1.4 | `[BACKLOG]` | proposto | - | Politica PT vs EN para skill bodies |
 | 1.5 | `[BACKLOG]` | proposto | - | shared_body + overrides no manifest (combina com Q2) |
 | 1.6 | `[BACKLOG]` | proposto | - | Documentar prefixos PRIMARY TRIGGER/DEFER-AND-PARK em ADR |
 | 1.7 | `[FEATURE]` | proposto | - | Smoke tests do manifest no `render-skills.py --check` |
 | 1.8 | `[ISSUE]` | proposto | - | Body do promote deve dizer que cria branch `codex/<slug>` |
-| 1.9 | `[BACKLOG]` | proposto | - | Fallback `python core/src/ai.py` em cada skill body |
+| 1.9 | `[BACKLOG]` | proposto | - | Fallback `python core/src/guia.py` em cada skill body |
 | 1.10 | `[NO-OP]` | proposto | - | backlog list sem ordem/paginacao - esperar crescer |
 | 1.11 | `[ISSUE]` | proposto | - | $ARGUMENTS em PS com argumentos contendo aspas |
-| 2.Q1 | `[FEATURE]`/`[BACKLOG]` | proposto | - | Split de `core/src/ai.py` em modulos por responsabilidade |
+| 2.Q1 | `[FEATURE]`/`[BACKLOG]` | proposto | - | Split de `core/src/guia.py` em modulos por responsabilidade |
 | 2.Q2 | `[ISSUE]` | proposto | - | `validate` com warning explicito; remocao em N+2 |
 | 2.Q3 | `[FEATURE]` | proposto | - | Extrair lock logic de check-lock.py em modulo importavel |
 | 2.Q4 | `[ISSUE]` | proposto | - | `finish` pre-valida locks antes de commit |
@@ -966,7 +966,7 @@ Tabela mestre de TODOS os candidatos das 7 etapas. Atualizada conforme o dev ava
 | 3.5 | `[ISSUE]` | proposto | - | `Test-Python` valida versao >= 3.10 |
 | 3.6 | `[BACKLOG]` | proposto | - | Renomear param `$Args` -> `$Arguments` |
 | 3.7 | `[BACKLOG]` | proposto | - | Flag `-Verbose` mostra Python selecionado |
-| 3.8 | `[ISSUE]` | proposto | - | Pre-checar existencia de `core/src/ai.py` |
+| 3.8 | `[ISSUE]` | proposto | - | Pre-checar existencia de `core/src/guia.py` |
 | 3.11 | `[BACKLOG]` | proposto | - | Centralizar logica especial de `py` em funcao unica |
 | 3.12 | `[BACKLOG]` | proposto | - | Comentario inline explicando `$ErrorActionPreference = "Stop"` |
 | 4.Q1 | (composto com 1.Q2) | proposto | - | Refactor renderer ao migrar para layout B (escopo conjunto) |

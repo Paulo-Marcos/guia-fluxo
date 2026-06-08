@@ -35,7 +35,7 @@ def _seed_sandbox(sandbox: Path) -> None:
 
 def _run(sandbox: Path, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "core/src/ai.py", *args],
+        [sys.executable, "core/src/guia.py", *args],
         cwd=sandbox,
         capture_output=True,
         text=True,
@@ -51,8 +51,8 @@ class PromoteOrderTests(unittest.TestCase):
             self.assertEqual(_run(sandbox, "backlog", "add", "Future").returncode, 0)
             result = _run(sandbox, "promote", "B-001", "--kind", "feature")
             self.assertEqual(result.returncode, 0, msg=result.stderr)
-            tasks = json.loads((sandbox / ".ai" / "tasks.json").read_text(encoding="utf-8"))
-            backlog = json.loads((sandbox / ".ai" / "backlog.json").read_text(encoding="utf-8"))
+            tasks = json.loads((sandbox / ".guia" / "tasks.json").read_text(encoding="utf-8"))
+            backlog = json.loads((sandbox / ".guia" / "backlog.json").read_text(encoding="utf-8"))
             self.assertTrue(any(t["id"] == "F-001" for t in tasks["tasks"]))
             self.assertEqual(backlog["items"], [])  # item foi consumido
 
@@ -74,12 +74,12 @@ class PromoteOrderTests(unittest.TestCase):
                 "feature",
                 "--worktree",
                 "--branch",
-                "ai-process/test-branch",
+                "guia-fluxo/test-branch",
             )
             # Pode passar OU falhar dependendo do git no sandbox.
             # O que NAO pode acontecer e: backlog vazio + task ausente.
-            backlog = json.loads((sandbox / ".ai" / "backlog.json").read_text(encoding="utf-8"))
-            tasks = json.loads((sandbox / ".ai" / "tasks.json").read_text(encoding="utf-8"))
+            backlog = json.loads((sandbox / ".guia" / "backlog.json").read_text(encoding="utf-8"))
+            tasks = json.loads((sandbox / ".guia" / "tasks.json").read_text(encoding="utf-8"))
             has_task = any(t["id"] == "F-001" for t in tasks["tasks"])
             has_backlog_item = any(it["id"] == "B-001" for it in backlog["items"])
             # invariante: ou criou a task, ou preservou o backlog. Nunca os dois falhos.

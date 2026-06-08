@@ -3,7 +3,7 @@
 ## Layout
 
 ```text
-.ai/
+.guia/
   process.json       Configuracao do pacote neste projeto.
   tasks.json         Fonte programatica das demandas.
   backlog.json       Itens futuros, ainda nao iniciados.
@@ -15,8 +15,8 @@
 FEATURES.md          Historico legivel por humano. Espelha tasks.json em prosa.
 
 core/
-  src/ai.py                CLI portavel, Python puro.
-  bin/ai.ps1               Wrapper Windows que localiza Python e invoca core/src/ai.py.
+  src/guia.py                CLI portavel, Python puro.
+  bin/guia.ps1               Wrapper Windows que localiza Python e invoca core/src/guia.py.
   build/render-skills.py   Regenera dist/skills/ e dist/.agents/skills/ a partir do manifest.
   manifest/manifest.yaml   Fonte unica das skills (Codex, Claude, Antigravity).
   lock/check-lock.py       CLI de locks: list, lock, unlock, audit, check.
@@ -34,7 +34,7 @@ features/
   lock-ignore.txt    Arquivos que nunca devem ser travados.
 ```
 
-## `.ai/process.json`
+## `.guia/process.json`
 
 Configuracao por projeto. Inclui:
 
@@ -42,11 +42,11 @@ Configuracao por projeto. Inclui:
 - comandos de teste e validacao;
 - politica de lock (autovalidacao, etc.).
 
-## `.ai/tasks.json`
+## `.guia/tasks.json`
 
 Lista todas as demandas (features e issues) com status. Fonte programatica - leia daqui em vez de fazer parse de `FEATURES.md`.
 
-## `.ai/current-task.json`
+## `.guia/current-task.json`
 
 A demanda ativa no momento. Contem `taskId`, `status`, `title`, `chatTitle`.
 
@@ -61,17 +61,17 @@ Exemplo:
 }
 ```
 
-## `.ai/backlog.json`
+## `.guia/backlog.json`
 
 Itens futuros (`B-NNN`). Cada entrada tem id, titulo e contexto. Promovidos via `/promote` viram feature ou issue.
 
-## `.ai/docs-map.yaml`
+## `.guia/docs-map.yaml`
 
-Opcional. Declara os documentos vivos do projeto (README, CHANGELOG, docs/reference, ADRs, etc.) e quando cada um deve ser considerado para atualizacao. Quando presente, o `ai.py finish` bloqueia o fechamento ate o agente registrar o que fez com cada candidato. Quando ausente, o hook vira no-op com aviso amigavel.
+Opcional. Declara os documentos vivos do projeto (README, CHANGELOG, docs/reference, ADRs, etc.) e quando cada um deve ser considerado para atualizacao. Quando presente, o `guia.py finish` bloqueia o fechamento ate o agente registrar o que fez com cada candidato. Quando ausente, o hook vira no-op com aviso amigavel.
 
 Schema completo em [`docs-map.md`](docs-map.md). Receita de uso em [`docs/how-to/manter-docs-atualizados.md`](../how-to/manter-docs-atualizados.md).
 
-## `.ai/reports/`
+## `.guia/reports/`
 
 Relatorios gerados por `ready` e `finish`. Nome no formato `<task-id>-<acao>-<timestamp>.md`. Servem como historico granular alem do `FEATURES.md`.
 
@@ -96,7 +96,7 @@ Lista de paths/globs que **nunca** devem ser travados. Hoje inclui `.gitignore` 
 
 ## `dist/.claude-plugin/plugin.json`
 
-Manifest oficial do plugin Claude Code (spec: <https://code.claude.com/docs/en/plugins>). Define `name` (`ai`, vira namespace dos atalhos: `/ai:feature`, `/ai:issue`, ...), `description`, `version` e metadados (author, homepage, repository, license). Mudar so para bump de versao ou ajuste de metadados.
+Manifest oficial do plugin Claude Code (spec: <https://code.claude.com/docs/en/plugins>). Define `name` (`ai`, vira namespace dos atalhos: `/guia:feature`, `/guia:issue`, ...), `description`, `version` e metadados (author, homepage, repository, license). Mudar so para bump de versao ou ajuste de metadados.
 
 ## `core/manifest/manifest.yaml`
 

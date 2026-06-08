@@ -30,7 +30,7 @@ def _seed(sandbox: Path) -> None:
 
 def _run(sandbox: Path, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "core/src/ai.py", *args],
+        [sys.executable, "core/src/guia.py", *args],
         cwd=sandbox,
         capture_output=True,
         text=True,

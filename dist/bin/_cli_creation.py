@@ -195,7 +195,7 @@ def _find_backlog_source(
 
 
 def _promoted_summary(args: argparse.Namespace, source_id: str) -> list[str]:
-    summary: list[str] = [f"Backlog {source_id} promovido via ai-process."]
+    summary: list[str] = [f"Backlog {source_id} promovido via guia-fluxo."]
     if args.assessment:
         summary.append(f"Avaliacao IA: {args.assessment[0]}")
     return summary

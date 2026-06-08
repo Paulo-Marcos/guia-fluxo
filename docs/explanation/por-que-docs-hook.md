@@ -16,9 +16,9 @@ Bloquear o `finish` ate o agente registrar o que fez com cada doc candidato. Tir
 
 Tres elementos:
 
-- **`.ai/docs-map.yaml`** declara os docs vivos do projeto e quando cada um deve ser considerado para atualizacao.
-- **`ai.py docs-check`** computa candidatos a qualquer momento e devolve em texto humano ou JSON.
-- **`ai.py finish`** chama o mesmo computador antes de fechar e exige `--docs-touched`, `--docs-skip` ou `--docs-checked`.
+- **`.guia/docs-map.yaml`** declara os docs vivos do projeto e quando cada um deve ser considerado para atualizacao.
+- **`guia.py docs-check`** computa candidatos a qualquer momento e devolve em texto humano ou JSON.
+- **`guia.py finish`** chama o mesmo computador antes de fechar e exige `--docs-touched`, `--docs-skip` ou `--docs-checked`.
 
 ## Por que mapa declarado, e nao "agente decide do zero"
 
@@ -50,7 +50,7 @@ Forcar opcoes fechadas (`--docs-skip nothing-to-do`) treina o agente a passar o 
 ## Consequencias
 
 - **+** Docs vivos param de apodrecer "por esquecimento".
-- **+** O proprio repo dogfooda: `.ai/docs-map.yaml` lista cada doc do projeto.
+- **+** O proprio repo dogfooda: `.guia/docs-map.yaml` lista cada doc do projeto.
 - **+** `docs-check` standalone vira ferramenta de auditoria fora do `finish`.
 - **-** Curva de aprendizado: humano precisa entender mapa + triggers + flags do finish.
 - **-** Mapa exige manutencao. Doc novo so entra no controle se for adicionado ao YAML.

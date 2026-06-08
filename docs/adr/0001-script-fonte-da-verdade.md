@@ -16,7 +16,7 @@ Nenhum desses sintomas e culpa de um agente especifico - sao inerentes a confiar
 
 ## Decisao
 
-Toda mutacao de estado passa por `core/src/ai.py` (originalmente `scripts/ai.py`, movido em F-011). O agente nunca toca `.ai/*.json` nem `FEATURES.md` diretamente - apenas invoca o script via `core/bin/ai.ps1`/skill. A skill e fina (transporta comando); o motor e o Python.
+Toda mutacao de estado passa por `core/src/guia.py` (originalmente `scripts/guia.py`, movido em F-011). O agente nunca toca `.guia/*.json` nem `FEATURES.md` diretamente - apenas invoca o script via `core/bin/guia.ps1`/skill. A skill e fina (transporta comando); o motor e o Python.
 
 ## Consequencias
 

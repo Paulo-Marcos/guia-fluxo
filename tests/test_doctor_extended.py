@@ -1,4 +1,4 @@
-"""F-018: tests for the extended `ai doctor`.
+"""F-018: tests for the extended `guia doctor`.
 
 Cobre:
 - doctor no repo-mae passa (com manifest, render OK, lock_api importavel)
@@ -18,12 +18,12 @@ from pathlib import Path
 
 from conftest_paths import REPO_ROOT
 
-AI = REPO_ROOT / "core" / "src" / "ai.py"
+GUIA = REPO_ROOT / "core" / "src" / "guia.py"
 
 
 def _run_dev(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, str(AI), *args],
+        [sys.executable, str(GUIA), *args],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
@@ -31,8 +31,8 @@ def _run_dev(*args: str) -> subprocess.CompletedProcess[str]:
 
 
 def _seed_consumer(sandbox: Path) -> None:
-    """Replica o layout consumer flat: .ai/ + ai.py + lock_api.py."""
-    # ai.py + helpers flat (mesma estrutura de dist/bin/)
+    """Replica o layout consumer flat: .guia/ + guia.py + lock_api.py."""
+    # guia.py + helpers flat (mesma estrutura de dist/bin/)
     (sandbox / "bin").mkdir()
     for src in (REPO_ROOT / "core" / "src").glob("*.py"):
         if not src.name.startswith("__"):
@@ -42,7 +42,7 @@ def _seed_consumer(sandbox: Path) -> None:
 
 def _run_consumer(sandbox: Path, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "bin/ai.py", *args],
+        [sys.executable, "bin/guia.py", *args],
         cwd=sandbox,
         capture_output=True,
         text=True,
@@ -55,7 +55,7 @@ class DoctorDevTests(unittest.TestCase):
         # --skip-render para nao depender de sincronia do dist quando
         # outro teste paralelo esta rodando renders
         self.assertEqual(result.returncode, 0, msg=result.stderr)
-        self.assertIn("AI process files OK", result.stdout)
+        self.assertIn("Guia Fluxo files OK", result.stdout)
 
 
 class DoctorConsumerLiteTests(unittest.TestCase):
@@ -63,13 +63,13 @@ class DoctorConsumerLiteTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             sandbox = Path(tmp)
             _seed_consumer(sandbox)
-            # init para semear .ai/
+            # init para semear .guia/
             init_result = _run_consumer(sandbox, "init", "--project-name", "consumer-smoke")
             self.assertEqual(init_result.returncode, 0, msg=init_result.stderr)
             # doctor (sem flags) deve passar - modo lite
             doctor_result = _run_consumer(sandbox, "doctor")
             self.assertEqual(doctor_result.returncode, 0, msg=doctor_result.stderr)
-            self.assertIn("AI process files OK", doctor_result.stdout)
+            self.assertIn("Guia Fluxo files OK", doctor_result.stdout)
 
 
 if __name__ == "__main__":

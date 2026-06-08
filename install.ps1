@@ -1,25 +1,25 @@
 <#
 .SYNOPSIS
-    Instala o ai-process-pack num projeto consumidor.
+    Instala o guia-fluxo num projeto consumidor.
 
 .DESCRIPTION
     Copia o build (dist/) deste repo-mae para o layout final do consumidor:
 
         <Target>/
-            .ai-process/             (plugin Claude inteiro, intervalo seguro pra deletar/reinstalar)
+            .guia-fluxo/             (plugin Claude inteiro, intervalo seguro pra deletar/reinstalar)
                 .claude-plugin/      <- dist/.claude-plugin/
                 bin/                 <- dist/bin/ (motor standalone, vira PATH automaticamente no Claude)
-                skills/              <- dist/skills/ (skills do plugin, namespace ai:)
-            .agents/skills/ai-*/     <- dist/.agents/skills/ai-*/ (cross-tool Codex+Antigravity)
+                skills/              <- dist/skills/ (skills do plugin, namespace guia:)
+            .agents/skills/guia-*/   <- dist/.agents/skills/guia-*/ (cross-tool Codex+Antigravity)
             .githooks/commit-msg     <- dist/templates/.githooks/commit-msg (opcional, preserva se existe)
             features/registry.yaml   <- dist/templates/features/registry.yaml (opcional, preserva se existe)
             features/lock-ignore.txt <- dist/templates/features/lock-ignore.txt (opcional, preserva se existe)
 
-    Depois roda `ai init` no consumidor pra semear `.ai/` e `FEATURES.md`.
+    Depois roda `guia init` no consumidor pra semear `.guia/` e `FEATURES.md`.
 
-    Idempotente: re-rodar substitui .ai-process/ e .agents/skills/ pelo build atual,
+    Idempotente: re-rodar substitui .guia-fluxo/ e .agents/skills/ pelo build atual,
     preserva templates ja customizados (use -Force pra sobrescrever) e nao toca
-    em .ai/ ja inicializada.
+    em .guia/ ja inicializada.
 
 .PARAMETER Target
     Diretorio do projeto consumidor. Default: diretorio atual.
@@ -29,11 +29,11 @@
 
 .PARAMETER Force
     Sobrescreve templates de .githooks/ e features/ mesmo se ja existirem
-    no consumidor. Nao afeta .ai-process/ ou .agents/skills/ (esses sempre
+    no consumidor. Nao afeta .guia-fluxo/ ou .agents/skills/ (esses sempre
     sao substituidos pelo build atual).
 
 .PARAMETER SkipInit
-    Nao chamar `ai init` ao final. Util pra debugging ou pra rodar `init`
+    Nao chamar `guia init` ao final. Util pra debugging ou pra rodar `init`
     com flags customizadas depois.
 
 .EXAMPLE
@@ -72,7 +72,7 @@ if (-not (Test-Path $DistRoot)) {
 $TargetRoot = (Resolve-Path -LiteralPath $Target).Path
 
 Write-Host ""
-Write-Host "ai-process-pack installer" -ForegroundColor Cyan
+Write-Host "guia-fluxo installer" -ForegroundColor Cyan
 Write-Host "  origem:  $DistRoot"
 Write-Host "  destino: $TargetRoot"
 if ($DryRun) { Write-Host "  modo:    DRY-RUN (nada sera escrito)" -ForegroundColor Yellow }
@@ -138,8 +138,8 @@ function Copy-TemplateFile {
     Copy-Item -LiteralPath $Source -Destination $Destination -Force
 }
 
-Write-Host "1) Plugin Claude (.ai-process/)" -ForegroundColor Cyan
-$pluginRoot = Join-Path $TargetRoot ".ai-process"
+Write-Host "1) Plugin Claude (.guia-fluxo/)" -ForegroundColor Cyan
+$pluginRoot = Join-Path $TargetRoot ".guia-fluxo"
 Copy-PluginTree -Source (Join-Path $DistRoot ".claude-plugin") -Destination (Join-Path $pluginRoot ".claude-plugin") -Label ".claude-plugin"
 Copy-PluginTree -Source (Join-Path $DistRoot "skills") -Destination (Join-Path $pluginRoot "skills") -Label "skills"
 Copy-PluginTree -Source (Join-Path $DistRoot "bin") -Destination (Join-Path $pluginRoot "bin") -Label "bin"
@@ -156,12 +156,12 @@ Copy-TemplateFile -Source (Join-Path $DistRoot "templates/features/lock-ignore.t
 
 if ($SkipInit) {
     Write-Host ""
-    Write-Host "4) ai init: SKIPPED (use -SkipInit:`$false ou rode manualmente)" -ForegroundColor DarkGray
+    Write-Host "4) guia init: SKIPPED (use -SkipInit:`$false ou rode manualmente)" -ForegroundColor DarkGray
 }
 else {
     Write-Host ""
-    Write-Host "4) ai init (semeia .ai/ e FEATURES.md)" -ForegroundColor Cyan
-    $enginePath = Join-Path $pluginRoot "bin/ai.py"
+    Write-Host "4) guia init (semeia .guia/ e FEATURES.md)" -ForegroundColor Cyan
+    $enginePath = Join-Path $pluginRoot "bin/guia.py"
     if (-not (Test-Path $enginePath)) {
         Write-Host "  skip (motor nao encontrado em $enginePath; rode manualmente apos investigar)" -ForegroundColor DarkYellow
     }
@@ -173,7 +173,7 @@ else {
         try {
             & python $enginePath init
             if ($LASTEXITCODE -ne 0) {
-                Write-Host "  ai init retornou $LASTEXITCODE - investigue manualmente" -ForegroundColor Yellow
+                Write-Host "  guia init retornou $LASTEXITCODE - investigue manualmente" -ForegroundColor Yellow
             }
         }
         finally {
@@ -189,7 +189,7 @@ if ($DryRun) {
 }
 else {
     Write-Host "Proximos passos no consumidor:"
-    Write-Host "  - Abrir o projeto em Claude Code: o plugin em .ai-process/.claude-plugin/ sera detectado."
+    Write-Host "  - Abrir o projeto em Claude Code: o plugin em .guia-fluxo/.claude-plugin/ sera detectado."
     Write-Host "  - Configurar githooks: git config core.hooksPath .githooks"
-    Write-Host "  - Rodar 'python .ai-process/bin/ai.py doctor' para verificar."
+    Write-Host "  - Rodar 'python .guia-fluxo/bin/guia.py doctor' para verificar."
 }

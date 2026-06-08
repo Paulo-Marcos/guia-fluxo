@@ -18,7 +18,7 @@ def _task(**overrides):
         "kind": KIND_FEATURE,
         "title": "Some title",
         "status": "Em desenvolvimento",
-        "origin": "AI process (test)",
+        "origin": "Guia Fluxo (test)",
         "context": "Test ctx",
         "modifiedFiles": ["a.py", "b.py"],
         "summary": ["did A"],

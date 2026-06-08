@@ -1,6 +1,6 @@
 ---
 name: ready
-description: HANDOFF to developer validation — does NOT close the task. THE AGENT runs this when implementation is finished, NOT the human; it is the gate that forces human-in-the-loop before $finish. Triggered by /ready or "$ready" / "pronto para validar / enviar para teste". Marks the in-progress F-NNN/I-NNN as awaiting manual validation and records changed files, summary, and pending checks. Do NOT use for: closing an already-validated task (use $finish), or just inspecting the current task without changing its state (use $status).
+description: HANDOFF to developer validation — does NOT close the task. THE AGENT runs this when implementation is finished, NOT the human; it is the gate that forces human-in-the-loop before $finish. Triggered by /ready or "$ready" / "pronto para validar / enviar para teste". Marks the in-progress D-NNN as awaiting manual validation and records changed files, summary, and pending checks. Do NOT use for: closing an already-validated task (use $finish), or just inspecting the current task without changing its state (use $status).
 ---
 
 # Ready
@@ -12,11 +12,11 @@ Move the current task to developer validation without finalizing it.
 Run:
 
 ```powershell
-.\core\bin\ai.ps1 ready $ARGUMENTS
+.\core\bin\guia.ps1 ready $ARGUMENTS
 ```
 
 Pass changed files with `--file`, implementation notes with `--summary`, validation commands with `--validation`, and manual gaps with `--pending`.
 
-Portable fallback (Linux/Mac/sem PowerShell): `python core/src/ai.py ready $ARGUMENTS`.
+Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py ready $ARGUMENTS`.
 
 Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.

@@ -101,7 +101,7 @@ class RendererErrorPathsTests(unittest.TestCase):
                 capture_output=True,
                 text=True,
             )
-            # Renderer aborta porque collect_bin_outputs nao encontra core/src/ai.py,
+            # Renderer aborta porque collect_bin_outputs nao encontra core/src/guia.py,
             # ou porque _resolve_body acha o body ausente. Qualquer um e nao-zero.
             self.assertNotEqual(result.returncode, 0)
 
