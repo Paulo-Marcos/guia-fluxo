@@ -5,6 +5,24 @@ description: REFERENCE/BACKGROUND ONLY for the Guia Fluxo task-process pipeline 
 
 # Guia Fluxo
 
+Reference for the repository's task-process pipeline. Use this skill when the developer wants the **process overview** — what verbs exist, who triggers what, how the moving parts fit. The action playbook for each verb lives in the verb's own shim plus shared partials in `core/manifest/bodies/_partials/`.
+
+## Trigger Commands
+
+Legend: 👤 human triggers | 🤖 agent triggers | 👤→🤖 human authorizes, agent executes.
+
+- 👤 `/guia:feature <title>`: create a new `D-NNN` feature task.
+- 👤 `/guia:bug <title>`: create a new `D-NNN` bug task.
+- 👤 `/guia:chore <title>`: create a new `D-NNN` chore task.
+- 👤 `/guia:backlog add <title>`: park future work without starting implementation.
+- 👤 `/guia:backlog list`: show parked work.
+- 👤 `/guia:promote <B-NNN>`: agent evaluates the backlog item, proposes plan, asks worktree yes/no, then promotes it after the developer OKs.
+- 👤 `/guia:status [D-NNN]`: show active task and suggested chat title.
+- 🤖 `/guia:ready [D-NNN]`: handoff to validation. **The agent itself runs this when implementation ends** — never the human, never as a shortcut to skip ahead to `/guia:finish`.
+- 👤→🤖 `/guia:finish [D-NNN]`: close an already-validated task. The human confirms validation in real use; the agent runs the command.
+
+## Core Rule
+
 Use repository scripts as the source of truth:
 
 ```powershell
@@ -17,22 +35,32 @@ Use repository scripts as the source of truth:
 .\core\bin\guia.ps1 finish D-016 --lock --lock-id guia-fluxo
 ```
 
-Rules:
+Do not hand-generate IDs, status blocks, backlog records, or current-task records when `core/bin/guia.ps1` can do it.
 
-1. Create or update the task before code edits.
-2. Do not hand-generate IDs when `core/bin/guia.ps1` can do it.
-3. After every phase command, repeat the exact `NOME DO CHAT: ...` line printed by the script.
-4. Rename the real Claude chat/session when Claude exposes a supported path: use `/rename <suggested-title>` during the session, or start a new session with `claude -n <suggested-title>` when that flag is supported.
-5. If Claude cannot rename from the agent turn, print the suggested title and keep working. Do not use Codex App `codex_app.*` tools in Claude.
-6. Honor `features/registry.yaml` before file edits. If a file is locked, explain the lock id, protected functionality, why the edit is needed, expected impact, regression risk, and alternatives before asking for unlock.
-7. Use `/promote <B-NNN>` to evaluate a backlog item before creating a task: classify feature/bug/chore, ask missing questions, propose plan, confront risks/locks, ask worktree yes/no, then run `.\core\bin\guia.ps1 promote ...` after user OK.
-8. If user chooses worktree, pass `--worktree`; `finish` removes the created worktree when the task is closed.
-9. The agent itself runs `/ready` when implementation ends — do not wait for the human to ask, and do not skip ahead to `/finish`. Register changed files, summary, validations, and pending manual validation.
-10. The human confirms validation; the agent runs `/finish` only after that confirmation. It commits by default and suggests `#FINALIZADO`.
-11. Use `--lock` only when the developer asks to create a lock.
+## Where Behavior Lives
 
-Portable install:
+The per-verb action playbook is in each verb's shim body, which composes shared partials:
+
+- `_partials/title_context_rules.md` — how to synthesize `<title>` vs `<context>` (feature, bug, chore, backlog).
+- `_partials/post_cli.claude.md` — post-CLI flow: read `.guia/current-task.json`, repeat `NOME DO CHAT`, call `mark_chapter` as the reliable rename surrogate in Claude Code, also try `/rename <suggested-title>` when the build exposes it.
+- `_partials/lock_protocol.md` — `features/registry.yaml` enforcement and unlock request flow (any verb that edits files).
+
+Editing a partial changes every shim that uses it. This skill (`guia-fluxo`) is intentionally **not** part of that action chain — it stays as reference.
+
+## Chat Rename in Claude Code
+
+Claude Code does not expose a stable agent-driven rename of the chat sidebar title. The **reliable surrogate** is `mark_chapter` (`mcp__ccd_session__mark_chapter`): it drops a visible divider in the transcript and a ToC entry the developer can jump to. Call it on every phase transition (`#DEV` at creation, `#VALIDACAO` at ready, `#FINALIZADO` at finish) with the exact title printed after `NOME DO CHAT:`. Also try `/rename <suggested-title>` — if the slash command is exposed in this build, the sidebar also renames; if not, the chapter marker still solves the navigation need.
+
+Do not use Codex App `codex_app.*` tools in Claude.
+
+## Portable install
 
 ```powershell
 .\core\bin\guia.ps1 init --project-name "new-project"
+```
+
+To regenerate the per-agent files after editing the manifest or partials:
+
+```powershell
+python core/build/render-skills.py
 ```

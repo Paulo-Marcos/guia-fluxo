@@ -2,6 +2,86 @@
 
 ---
 
+## [D-047] ✨ Add partial includes to skill bodies
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-08)
+- **Tipo:** Feature
+- **Contexto:** Introduce a {{include: ...}} directive in render-skills.py so each shim body can pull shared post-CLI playbooks from core/manifest/bodies/_partials/. Migrate the 7 verb shims (feature/bug/chore/backlog/promote/ready/finish) to use the partials, add mark_chapter as a reliable rename surrogate for Claude Code, and simplify guia-fluxo into pure reference once all behavior lives in partials. Goal: kill duplication between *.agent.md and *.claude.md while keeping host-specific differences.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/build/render-skills.py`
+- `core/manifest/bodies/_partials/README.md`
+- `core/manifest/bodies/_partials/title_context_rules.md`
+- `core/manifest/bodies/_partials/lock_protocol.md`
+- `core/manifest/bodies/_partials/post_cli.agent.md`
+- `core/manifest/bodies/_partials/post_cli.claude.md`
+- `core/manifest/bodies/feature.agent.md`
+- `core/manifest/bodies/feature.claude.md`
+- `core/manifest/bodies/bug.agent.md`
+- `core/manifest/bodies/bug.claude.md`
+- `core/manifest/bodies/chore.agent.md`
+- `core/manifest/bodies/chore.claude.md`
+- `core/manifest/bodies/backlog.agent.md`
+- `core/manifest/bodies/backlog.claude.md`
+- `core/manifest/bodies/promote.agent.md`
+- `core/manifest/bodies/promote.claude.md`
+- `core/manifest/bodies/ready.agent.md`
+- `core/manifest/bodies/ready.claude.md`
+- `core/manifest/bodies/finish.agent.md`
+- `core/manifest/bodies/finish.claude.md`
+- `core/manifest/bodies/guia-fluxo.agent.md`
+- `core/manifest/bodies/guia-fluxo.claude.md`
+- `tests/test_render_includes.py`
+- `tests/test_body_partials.py`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CHANGELOG.md`
+- `dist/.agents/skills/guia-backlog/SKILL.md`
+- `dist/.agents/skills/guia-bug/SKILL.md`
+- `dist/.agents/skills/guia-chore/SKILL.md`
+- `dist/.agents/skills/guia-feature/SKILL.md`
+- `dist/.agents/skills/guia-finish/SKILL.md`
+- `dist/.agents/skills/guia-fluxo/SKILL.md`
+- `dist/.agents/skills/guia-promote/SKILL.md`
+- `dist/.agents/skills/guia-ready/SKILL.md`
+- `dist/skills/backlog/SKILL.md`
+- `dist/skills/bug/SKILL.md`
+- `dist/skills/chore/SKILL.md`
+- `dist/skills/feature/SKILL.md`
+- `dist/skills/finish/SKILL.md`
+- `dist/skills/guia-fluxo/SKILL.md`
+- `dist/skills/promote/SKILL.md`
+- `dist/skills/ready/SKILL.md`
+- `docs/adr/0012-partials-em-bodies.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Phase 1: extended render-skills.py with {{include:}} directive (recursive, with path-traversal and circular-include guards; paths resolve relative to the including file's directory).
+- Phase 2: created 4 shared partials in core/manifest/bodies/_partials/: title_context_rules.md, lock_protocol.md (host-agnostic), post_cli.agent.md and post_cli.claude.md (host-specific).
+- Phase 3: migrated 14 verb shims (feature/bug/chore/backlog/promote/ready/finish, agent+claude) to compose the partials via {{include:}}. Each shim now carries only its verb-specific intro + the CLI command; shared protocol lives in the partials.
+- Phase 4: simplified guia-fluxo.{agent,claude}.md. The 'Agent Behavior' list (13 items) was removed because every item now has a home: items 2-7 in post_cli partial, item 8 in lock_protocol partial, items 9-13 in the respective verb shims. guia-fluxo is now pure reference (Trigger Commands + Core Rule + Tool Notes + Portability + new 'Where Behavior Lives' index pointing to partials).
+- Added mark_chapter (mcp__ccd_session__mark_chapter) as the reliable rename surrogate in post_cli.claude.md, complementing /rename when the build supports it.
+- Phase 5: added tests/test_render_includes.py (9 tests covering the {{include:}} mechanism: basic expansion, inline-prose left alone, relative-to-including-file path resolution, recursive partial-includes-partial, missing-file abort, path-traversal block, circular-include detection, no-unexpanded-include in dist/) and tests/test_body_partials.py (13 tests covering actual composition: partials directory and README exist, expected 4 partials present, title_context appears only in create-verbs and not in lifecycle-verbs, lock_protocol appears only in editing-verbs and not in ready/backlog, post_cli appears in all 7 shims, mark_chapter appears only in claude targets and codex_app only in agent targets with no cross-contamination, frontmatter name/description correctness).
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- python core/build/render-skills.py --check (53 targets in sync)
+- python core/build/render-skills.py --check-orphans (zero orphans)
+- python core/src/guia.py doctor (Guia Fluxo files OK)
+- Spot-checked dist/skills/feature/SKILL.md and dist/.agents/skills/guia-ready/SKILL.md - partials expand inline cleanly
+- 22/22 new tests pass
+- Baseline render+manifest tests (15) still pass - zero regression
+- Full suite: 123 tests (101 baseline + 22 new), same 14 pre-existing failures + 2 pre-existing errors (unrelated to D-047 - they touch state JSON / smoke / promote-order)
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-046] ✨ Rename guia-fluxo -> Guia Fluxo (slug: guia). Escopo total sem compat: renomear shims /guia:* -> /guia:*, namespace plugin ai -> guia, binario guia.ps1 -> guia.ps1, diretorio .guia/ -> .guia/, package guia-fluxo -> guia-fluxo, todas referencias em docs/ADRs/scripts/CLAUDE.md/AGENTS.md. Pasta raiz do repo tambem sera renomeada no final (manual, com Claude fechado). Sem aliases de transicao. Decisoes confirmadas pelo usuario em chat.
 
 - **Status:** Validada

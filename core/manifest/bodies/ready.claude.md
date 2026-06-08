@@ -14,4 +14,6 @@ Pass changed files with `--file`, implementation notes with `--summary`, validat
 
 Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py ready $ARGUMENTS`.
 
-Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.
+{{include: _partials/post_cli.claude.md}}
+
+Then **stop and wait** for the developer to validate. Do not run `finish` until the developer confirms validation in real use.

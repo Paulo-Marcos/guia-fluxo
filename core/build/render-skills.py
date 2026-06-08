@@ -58,6 +58,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -242,6 +243,59 @@ def render_target(
     raise ValueError(f"target desconhecido: {target}")
 
 
+# Match `{{include: path/to/file.md}}` on its own line. Partials sao
+# resolvidos em build-time pelo renderer: o output em dist/ fica
+# self-contained (nenhuma indirecao em runtime do agente).
+INCLUDE_RE = re.compile(r"^\{\{include:\s*([^}\s][^}]*?)\s*\}\}$", re.MULTILINE)
+
+
+def _expand_includes(
+    text: str,
+    origin: Path,
+    body_cache: dict[Path, str],
+    stack: tuple[Path, ...] = (),
+) -> str:
+    """Recursively expand `{{include: <path>}}` directives.
+
+    Paths sao relativos ao **diretorio do arquivo que inclui** (semantica
+    intuitiva: um body em `bodies/foo.md` que faz `{{include: _partials/x.md}}`
+    pega `bodies/_partials/x.md`; um partial em `bodies/_partials/a.md` que
+    faz `{{include: b.md}}` pega `bodies/_partials/b.md`). Guards:
+      - file not found → exit 2
+      - path traversal (fora de MANIFEST_DIR) → exit 2
+      - include circular (path ja na pilha atual) → exit 2
+
+    `body_cache` evita re-leitura quando o mesmo partial aparece em
+    bodies diferentes. A pilha (`stack`) detecta ciclo per-render-path
+    sem poluir o cache.
+    """
+    base_dir = origin.parent
+
+    def replace(match: re.Match[str]) -> str:
+        rel = match.group(1).strip()
+        path = (base_dir / rel).resolve()
+        if not str(path).startswith(str(MANIFEST_DIR.resolve())):
+            sys.stderr.write(
+                f"Erro: include `{rel}` em {origin} aponta fora de core/manifest/ (path traversal recusado).\n"
+            )
+            sys.exit(2)
+        if not path.exists():
+            sys.stderr.write(
+                f"Erro: include `{rel}` (em {origin}) nao existe em {path}.\n"
+            )
+            sys.exit(2)
+        if path in stack:
+            chain = " -> ".join(str(p.relative_to(MANIFEST_DIR)) for p in stack + (path,))
+            sys.stderr.write(f"Erro: include circular detectado: {chain}\n")
+            sys.exit(2)
+        if path not in body_cache:
+            body_cache[path] = path.read_text(encoding="utf-8")
+        # Recursivo: partials podem incluir outros partials.
+        return _expand_includes(body_cache[path].strip("\n"), path, body_cache, stack + (path,))
+
+    return INCLUDE_RE.sub(replace, text)
+
+
 def _resolve_body(
     verb: str,
     target_name: str,
@@ -257,6 +311,7 @@ def _resolve_body(
       3. legacy target_spec['body'] inline (v1 backward compat)
 
     `body_cache` evita re-leitura quando dois caminhos sao identicos.
+    Includes `{{include: ...}}` sao expandidos antes de retornar.
     """
     explicit = target_spec.get("body_file")
     chosen = explicit or spec_shared_body
@@ -274,8 +329,10 @@ def _resolve_body(
             sys.exit(2)
         if path not in body_cache:
             body_cache[path] = path.read_text(encoding="utf-8")
-        return body_cache[path]
-    return target_spec.get("body") or ""
+        return _expand_includes(body_cache[path], path, body_cache)
+    body_inline = target_spec.get("body") or ""
+    # Inline bodies tambem suportam includes; origin sintetica.
+    return _expand_includes(body_inline, MANIFEST_DIR / f"<inline:{verb}.{target_name}>", body_cache)
 
 
 def collect_outputs(manifest: dict, only_verb: str | None = None) -> list[Output]:
@@ -456,6 +513,12 @@ def check_outputs(outputs: list[Output]) -> list[Path]:
 # o motor standalone gera __pycache__) e nao devem ser tratados como
 # orfaos do renderer.
 ORPHAN_IGNORE_DIR_NAMES = frozenset({"__pycache__", ".pytest_cache", ".mypy_cache"})
+
+# Partials viven em core/manifest/bodies/_partials/ - sao usados via
+# `{{include: ...}}` mas nao sao alvos diretos de render. O renderer
+# nao copia partials para dist/ (eles ja foram expandidos in-place no
+# body do verbo que os consumiu). Esse marcador documenta a convencao.
+PARTIAL_DIR_NAME = "_partials"
 
 
 def _is_ignored_for_orphan(path: Path) -> bool:

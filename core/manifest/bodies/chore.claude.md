@@ -2,6 +2,8 @@
 
 Cria uma task de chore (manutencao, refactor pequeno, build/lint, ajuste de docs ou config — coisa que nao e feature nova nem bug, mas merece rastro). Introduzido na Fase 4 do ADR-0011.
 
+{{include: _partials/title_context_rules.md}}
+
 Run:
 
 ```powershell
@@ -20,4 +22,8 @@ Quando usar `chore` vs alternativas:
 
 Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py chore "$ARGUMENTS"`.
 
-Depois leia `.guia/current-task.json`, repita o `NOME DO CHAT: ...` (vira `D-NNN 🧹 - #DEV - ...`), rode `/rename <suggested-title>` se a sessao suportar.
+{{include: _partials/post_cli.claude.md}}
+
+{{include: _partials/lock_protocol.md}}
+
+Then continue with the maintenance work.

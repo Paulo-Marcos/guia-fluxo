@@ -5,12 +5,22 @@ description: HANDOFF to developer validation — does NOT close the task. THE AG
 
 # Ready Shim
 
-**You (the agent) call this when implementation ends** — not the human. `ready` is the handoff to human validation; the human then validates in real use, and you call `finish` afterward. Do not skip `ready` and go straight to `finish`.
+**You (the agent) call this when implementation ends** — not the human. `ready` is the handoff to human validation; the human then validates in real use, and you call `finish` afterward. Do not skip `ready` and go straight to `finish` — that bypasses the human-in-the-loop gate (the reason `validate` was deprecated in F-003).
 
 Call the core process script:
 
 ```powershell
-.\core\bin\guia.ps1 ready F-000 --file path/to/file --summary "What changed" --validation "What passed"
+.\core\bin\guia.ps1 ready D-000 --file path/to/file --summary "What changed" --validation "What passed"
 ```
 
-Then continue using `guia-fluxo`.
+Pass changed files with `--file`, implementation notes with `--summary`, validation commands run with `--validation`, and manual gaps still pending with `--pending`.
+
+## After running the script
+
+1. Read `.guia/current-task.json` to confirm the new state.
+2. Repeat the exact `NOME DO CHAT: ...` line printed by the script — do not paraphrase or translate it.
+3. **Codex App:** if the thread tools are loaded, call `codex_app.list_threads` to find the current thread id, then call `codex_app.set_thread_title` with the title printed after `NOME DO CHAT:`. If the tools are not loaded, search for thread tools first.
+4. **Antigravity (no thread API):** print the title prominently as best-effort — the host has no programmatic rename today.
+5. If shell access fails, surface the exact command the developer can run by hand instead of silently failing.
+
+Then **stop and wait** for the developer to validate. Do not run `finish` until the developer confirms validation in real use.

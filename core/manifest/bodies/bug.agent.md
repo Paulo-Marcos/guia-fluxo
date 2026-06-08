@@ -1,6 +1,8 @@
 # Bug Shim
 
-Cria uma task de bug. Substitui o antigo `issue` (removido na Fase 4 do ADR-0011).
+Cria uma task de bug (regressao, defeito, comportamento incorreto). Substitui o antigo `issue` (removido na Fase 4 do ADR-0011).
+
+{{include: _partials/title_context_rules.md}}
 
 Call the core process script:
 
@@ -8,6 +10,10 @@ Call the core process script:
 .\core\bin\guia.ps1 bug "<title>" --context "<sintoma + impacto>"
 ```
 
-Aceita tambem `--status backlog|planned|in-development` para criar ja parqueado ou ja triado.
+Optional flags: `--status backlog|planned|in-development` (default `in-development`), `--origin "<source>"`.
 
-Then continue using `guia-fluxo`.
+{{include: _partials/post_cli.agent.md}}
+
+{{include: _partials/lock_protocol.md}}
+
+Then continue with investigation and fix, following `guia-fluxo` for cross-cutting protocol.

@@ -34,4 +34,8 @@ Pass changed files with `--file`, implementation notes with `--summary`, validat
 
 Portable fallback (Linux/Mac/sem PowerShell): `python core/src/guia.py finish $ARGUMENTS --docs-skip "..."`.
 
-Then repeat the exact `NOME DO CHAT: ...` line and run `/rename <suggested-title>` if Claude supports it.
+{{include: _partials/post_cli.claude.md}}
+
+{{include: _partials/lock_protocol.md}}
+
+Task is closed.
