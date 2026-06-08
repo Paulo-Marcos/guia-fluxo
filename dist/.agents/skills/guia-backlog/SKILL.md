@@ -1,11 +1,11 @@
 ---
 name: guia-backlog
-description: DEFER-AND-PARK skill: never starts implementation. Triggered ONLY by /backlog or "$backlog" with a subcommand (add / list). Saves future ideas to .guia/backlog.json (B-NNN) or lists them. Do NOT use for: starting work now (use $feature for new functionality, $bug for regressions, or $chore for maintenance), or evaluating one specific B-NNN to convert it (use $promote).
+description: DEFER-AND-PARK skill — never starts implementation. Subcommands: `add <title> --context "<why>"` parks an idea (saved to `.guia/tasks.json` with `status=Backlog`); `list` shows all parked items; `promote <id>` delegates to the promote flow. To start work immediately use `feature`/`bug`/`chore`; to evaluate one parked item before converting use `promote`.
 ---
 
 # Backlog
 
-Manage parked work without starting implementation. `backlog add` creates a `D-NNN` task with `status=Backlog`. `backlog list` shows all parked items (new D-NNN + legacy B-NNN). `backlog promote` delegates to the `/promote` flow.
+Manage parked work without starting implementation. `backlog add` creates a `D-NNN` task with `status=Backlog`. `backlog list` shows all parked items. `backlog promote` delegates to the `/promote` flow.
 
 ## Title vs Context
 

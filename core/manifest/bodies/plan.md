@@ -10,7 +10,7 @@ Run:
 
 Distinct from:
 - `$backlog add`: park an idea that has not been triaged yet.
-- `$promote`: triage a legacy B-NNN deciding feature/bug and start immediately.
+- `$promote`: triage a backlog item, deciding kind and plan, then start immediately.
 - `$start`: start now (moves from `Backlog` or `Planejada` to `Em desenvolvimento`).
 
 Fails if the task is in a terminal state (`Validada`, `Finalizada`, `Cancelada`) or already `Planejada`. Tasks promoted from `Backlog` to `Planejada` enter `FEATURES.md` (join the catalog).

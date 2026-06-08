@@ -15,19 +15,25 @@
 # Codex, Antigravity) usa pra escolher a skill - manter junto reduz a
 # chance de drift na hora de mexer no trigger.
 #
-# Para alterar comportamento de uma skill: edite o markdown em bodies/ e
-# rode `python core/build/render-skills.py`. Bodies sao markdown puro, sem
-# YAML wrap-around - preview e diff limpos.
+# Convencao de description (D-051):
+#   1. Comeca com o prefixo canonico (PRIMARY TRIGGER, HANDOFF, READ-ONLY,
+#      DEFER-AND-PARK, EVALUATE-AND-CONVERT, REFERENCE/BACKGROUND ONLY,
+#      CLOSE, TERMINAL CANCEL, PAUSE, RESUME, PLAN, START).
+#   2. Definicao curta do que o verbo faz.
+#   3. Opcoes/flags reais (--context, --reason, --status, --file, etc.).
+#   4. Disambiguacao breve (1-2 alternativas, nao 5).
+#   5. Sem mencao a historia (ADR-NNNN, "Phase X", "replaces old", "legacy").
 #
-# Detalhes em docs/adr/0008-layout-b-manifest.md (Layout B) e
-# docs/adr/0012-partials-em-bodies.md + ADR de D-050 (consolidacao).
+# Detalhes em docs/adr/0008-layout-b-manifest.md (Layout B),
+# docs/adr/0012-partials-em-bodies.md (partials),
+# docs/adr/0013-consolidacao-bodies-por-verbo.md (1 body por verbo).
 
 version: 2
 
 verbs:
   guia-fluxo:
     description: |
-      REFERENCE/BACKGROUND ONLY for the Guia Fluxo task-process pipeline (D-NNN/B-NNN, locks, chat-rename, worktree). Loaded as context by the dedicated shims, not as a trigger competitor. Do NOT auto-fire on /feature, /bug, /chore, /backlog, /promote, /ready, /finish, /status — those route to their own shims first. Use guia-fluxo directly ONLY when the user asks for the full process overview ("explain Guia Fluxo", "how does this pipeline work", "como funciona o guia-fluxo") or needs the installation/portability guide.
+      REFERENCE/BACKGROUND ONLY — overview of the Guia Fluxo task-process pipeline (D-NNN tasks, status states, locks, chat-rename, worktree). Use directly when the developer asks for the process overview ("explain Guia Fluxo", "how does this pipeline work"), the installation guide, or the portability checklist. Not a competitor to the action verbs — those route to their own shims first.
     targets:
       agent_skill:
         body_file: bodies/guia-fluxo.md
@@ -36,7 +42,7 @@ verbs:
 
   feature:
     description: |
-      PRIMARY TRIGGER for /feature or "$feature". Creates a NEW D-NNN feature task and starts implementation immediately. Do NOT use for: bugs/regressions (use $bug), maintenance without behavior change (use $chore), deferred ideas without starting work (use $backlog), or evaluating an existing B-NNN (use $promote).
+      PRIMARY TRIGGER — create a new `D-NNN` feature task for a new capability or new functionality, starting implementation immediately. Options: `--context "<why>"` (motivation), `--origin "<source>"` (default: Guia Fluxo), `--status backlog|planned|in-development` (default `in-development`). For defects use `bug`; for maintenance use `chore`; to park without starting use `backlog`.
     targets:
       agent_skill:
         body_file: bodies/feature.md
@@ -45,7 +51,7 @@ verbs:
 
   bug:
     description: |
-      PRIMARY TRIGGER for /bug or "$bug". Creates a NEW D-NNN bug/regression task with kind=bug (substitui o antigo /issue removido na Fase 4 do ADR-0011). Use para defeitos, regressoes e comportamento incorreto. Do NOT use for: nova capacidade (use $feature), manutencao sem mudanca de comportamento (use $chore), ideia parqueada (use $backlog) ou avaliar um B-NNN existente (use $promote).
+      PRIMARY TRIGGER — create a new `D-NNN` bug task for a regression, defect, or incorrect behavior. Options: `--context "<symptom + impact>"`, `--origin "<source>"`, `--status backlog|planned|in-development` (default `in-development`). For new capabilities use `feature`; for maintenance without behavior change use `chore`.
     targets:
       agent_skill:
         body_file: bodies/bug.md
@@ -54,7 +60,7 @@ verbs:
 
   chore:
     description: |
-      PRIMARY TRIGGER for /chore or "$chore". Creates a NEW D-NNN chore task com kind=chore. Use para manutencao que merece rastro mas nao e feature/bug: refactor pequeno, atualizar dependencia, ajustar build/lint, organizar pasta, melhorar config. Do NOT use for: capacidade nova (use $feature), regressao/defeito (use $bug), ideia parqueada (use $backlog).
+      PRIMARY TRIGGER — create a new `D-NNN` chore task for maintenance that deserves a trace but isn't a feature or bug: small refactor, dependency upgrade, build/lint tweak, config or doc fix. Options: `--context "<what + why>"`, `--origin "<source>"`, `--status backlog|planned|in-development` (default `in-development`). For new capabilities use `feature`; for broken behavior use `bug`.
     targets:
       agent_skill:
         body_file: bodies/chore.md
@@ -63,7 +69,7 @@ verbs:
 
   backlog:
     description: |
-      DEFER-AND-PARK skill: never starts implementation. Triggered ONLY by /backlog or "$backlog" with a subcommand (add / list). Saves future ideas to .guia/backlog.json (B-NNN) or lists them. Do NOT use for: starting work now (use $feature for new functionality, $bug for regressions, or $chore for maintenance), or evaluating one specific B-NNN to convert it (use $promote).
+      DEFER-AND-PARK skill — never starts implementation. Subcommands: `add <title> --context "<why>"` parks an idea (saved to `.guia/tasks.json` with `status=Backlog`); `list` shows all parked items; `promote <id>` delegates to the promote flow. To start work immediately use `feature`/`bug`/`chore`; to evaluate one parked item before converting use `promote`.
     targets:
       agent_skill:
         body_file: bodies/backlog.md
@@ -72,7 +78,7 @@ verbs:
 
   promote:
     description: |
-      EVALUATE-AND-CONVERT one specific backlog item. Triggered ONLY by /promote <B-NNN> or "$promote B-NNN" with an explicit backlog ID. AI reads the item, asks missing questions, proposes a plan, confronts locks/risks, asks worktree y/n, then converts the B-NNN into a D-NNN task (kind feature/bug/chore). Do NOT use for: adding or listing backlog items (use $backlog), or creating a task without going through backlog first (use $feature, $bug or $chore).
+      EVALUATE-AND-CONVERT one parked item. Takes `<B-NNN>` or `<D-NNN>` with `status=Backlog`. The agent reads the item, asks any missing question, proposes a plan, calls out locks/risks, and asks worktree y/n — only after developer OK runs the CLI. Required: `--kind feature|bug|chore`. Options: `--assessment "<verdict>"`, `--plan "<step>"` (repeatable), `--worktree`, `--branch <name>`, `--worktree-path <path>`. To add/list parked items use `backlog`; to create a task without parking first use `feature`/`bug`/`chore`.
     targets:
       agent_skill:
         body_file: bodies/promote.md
@@ -81,7 +87,7 @@ verbs:
 
   ready:
     description: |
-      HANDOFF to developer validation — does NOT close the task. THE AGENT runs this when implementation is finished, NOT the human; it is the gate that forces human-in-the-loop before $finish. Triggered by /ready or "$ready" / "pronto para validar / enviar para teste". Marks the in-progress D-NNN as awaiting manual validation and records changed files, summary, and pending checks. Do NOT use for: closing an already-validated task (use $finish), or just inspecting the current task without changing its state (use $status).
+      HANDOFF to developer validation — does NOT close the task. **The agent runs this itself when implementation ends**, never the human. The gate that forces human-in-the-loop before `finish`. Options: `--file <path>` (changed files, repeatable), `--summary "<note>"` (implementation notes, repeatable), `--validation "<cmd>"` (validations that passed, repeatable), `--pending "<gap>"` (manual checks still needed, repeatable). To close after validation use `finish`; to inspect without changing state use `status`.
     targets:
       agent_skill:
         body_file: bodies/ready.md
@@ -90,7 +96,7 @@ verbs:
 
   finish:
     description: |
-      CLOSE an ALREADY-validated task; runs the docs-check hook, commits by default and optionally creates a lock. Triggered by /finish or "$finish" / "finalizar / fechar / concluir tarefa validada". Use ONLY after the developer explicitly confirms the work is final — never as a shortcut to skip validation. Do NOT use for: sending the task to validation first (use $ready), or showing current state without closing (use $status).
+      CLOSE an already-validated task — runs the docs-check hook and commits by default. Use only after the developer confirms validation in real use. Required when `.guia/docs-map.yaml` exists: `--docs-touched <path>` (repeatable) or `--docs-skip "<reason>"`. Options: `--file`, `--summary`, `--validation` (same as ready), `--no-commit` (dry close), `--lock --lock-id <slug> --lock-description "..."` (protect files after close). For handoff to validation use `ready`; for inspection use `status`.
     targets:
       agent_skill:
         body_file: bodies/finish.md
@@ -99,7 +105,7 @@ verbs:
 
   status:
     description: |
-      READ-ONLY: show the current active task and the suggested chat title. Triggered by /status or "$status" / "qual a tarefa atual / status do processo". Never creates, modifies, advances, or closes a task. Do NOT use for: creating tasks (use $feature, $bug or $chore), handoff to validation (use $ready), or closing a validated task (use $finish).
+      READ-ONLY — show the current active task and the suggested chat title. Optional: `<D-NNN>` to inspect a specific task instead of the current one. Never creates, modifies, advances, or closes a task. To create use `feature`/`bug`/`chore`; for state transitions use `ready`/`finish`/`block`/`unblock`/`cancel`.
     targets:
       agent_skill:
         body_file: bodies/status.md
@@ -108,7 +114,7 @@ verbs:
 
   cancel:
     description: |
-      TERMINAL CANCEL — encerra a task com `status: Cancelada` (terminal, nao volta). Triggered by /cancel or "$cancel" / "cancelar tarefa / nao vou fazer / criada por engano". Exige `--reason` obrigatorio. Use para: demanda criada por engano, promote errado, escopo desfeito. Do NOT use for: pausa temporaria que vai voltar (use $block), tarefa concluida e validada (use $finish), ou re-triagem (cancele e abra nova).
+      TERMINAL CANCEL — closes the task with `status=Cancelada` (terminal, does not return). Use when the task will NOT be completed: created by mistake, scope dropped, wrong promote. Required: `--reason "<motive>"`. Options: `--keep-worktree` (default removes the worktree if present), `--set-current` (default clears current-task.json if the cancelled task was current). For a temporary pause that will resume use `block`; for a validated close use `finish`.
     targets:
       agent_skill:
         body_file: bodies/cancel.md
@@ -117,7 +123,7 @@ verbs:
 
   block:
     description: |
-      PAUSE in-flight task — preserva WIP, move status para `Bloqueada`. Triggered by /block or "$block" / "pausar tarefa / bloquear / esperar dependencia". Exige `--reason` obrigatorio (fica em `task.blocks[]`). Use quando a task vai voltar: esperando decisao, dependencia externa, prioridade trocada. Do NOT use for: encerramento definitivo (use $cancel), entrega para validacao (use $ready), ou fechamento (use $finish).
+      PAUSE an in-flight task — preserves WIP and moves status to `Bloqueada`. Use when the task will return: waiting on a decision, external dependency, priority swap. Required: `--reason "<motive>"` (recorded in `task.blocks[]`). To resume use `unblock`; for terminal close use `cancel`; for handoff to validation use `ready`.
     targets:
       agent_skill:
         body_file: bodies/block.md
@@ -126,7 +132,7 @@ verbs:
 
   unblock:
     description: |
-      RESUME a paused task — move status de `Bloqueada` para `Em desenvolvimento`. Triggered by /unblock or "$unblock" / "retomar tarefa / desbloquear / dependencia resolvida". Inverso de $block. Falha se a task nao estava em `Bloqueada`. Do NOT use for: criar nova task (use $feature, $bug ou $chore), promover backlog (use $promote), ou voltar de cancelamento (cancelamento e terminal - abra nova task).
+      RESUME a paused task — moves status from `Bloqueada` back to `Em desenvolvimento`. Inverse of `block`. Options: `--note "<what unblocked>"`. Fails if the task wasn't `Bloqueada` (preserves flow states).
     targets:
       agent_skill:
         body_file: bodies/unblock.md
@@ -135,7 +141,7 @@ verbs:
 
   plan:
     description: |
-      PLAN — marca task como `Planejada` (triada mas nao iniciada). Triggered by /plan or "$plan" / "planejar tarefa / triagem feita / aguardar para comecar". Aceita transicao de Backlog (item parqueado que ganhou prioridade) ou de Em desenvolvimento (despriorizado mas ja conhecido). Do NOT use for: comecar trabalho agora (use $start ou $promote), guardar ideia sem decidir (use $backlog), ou entregar pra validacao (use $ready).
+      PLAN — mark a task as `Planejada` (triaged but not started yet). Accepts transition from `Backlog` (parked item that gained priority) or from `Em desenvolvimento` (deprioritized but already known). Options: `--note "<rationale>"`. To begin work use `start` (already triaged) or `promote` (still needs triage); to park without deciding use `backlog`.
     targets:
       agent_skill:
         body_file: bodies/plan.md
@@ -144,7 +150,7 @@ verbs:
 
   start:
     description: |
-      START — comeca trabalho em uma task Planejada ou diretamente Backlog (status -> Em desenvolvimento). Triggered by /start or "$start" / "comecar tarefa / iniciar trabalho / bora codar". Diferente de $promote: assume triagem feita (kind ja decidido). Falha se task ja Em desenvolvimento ou terminal. Do NOT use for: criar nova task do zero (use $feature, $bug ou $chore), triar backlog item (use $promote), ou retomar pausa (use $unblock).
+      START — begin work on a `Planejada` or `Backlog` task (status → `Em desenvolvimento`). Assumes triage is done (kind already decided); use `promote` when kind still needs deciding. Options: `--note "<starting note>"`. To resume from `Bloqueada` use `unblock`; to create a fresh task use `feature`/`bug`/`chore`.
     targets:
       agent_skill:
         body_file: bodies/start.md

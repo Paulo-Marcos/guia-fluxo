@@ -1,6 +1,6 @@
 ---
 name: guia-unblock
-description: RESUME a paused task — move status de `Bloqueada` para `Em desenvolvimento`. Triggered by /unblock or "$unblock" / "retomar tarefa / desbloquear / dependencia resolvida". Inverso de $block. Falha se a task nao estava em `Bloqueada`. Do NOT use for: criar nova task (use $feature, $bug ou $chore), promover backlog (use $promote), ou voltar de cancelamento (cancelamento e terminal - abra nova task).
+description: RESUME a paused task — moves status from `Bloqueada` back to `Em desenvolvimento`. Inverse of `block`. Options: `--note "<what unblocked>"`. Fails if the task wasn't `Bloqueada` (preserves flow states).
 ---
 
 # Unblock

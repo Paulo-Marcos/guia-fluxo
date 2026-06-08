@@ -1,6 +1,6 @@
 ---
 name: promote
-description: EVALUATE-AND-CONVERT one specific backlog item. Triggered ONLY by /promote <B-NNN> or "$promote B-NNN" with an explicit backlog ID. AI reads the item, asks missing questions, proposes a plan, confronts locks/risks, asks worktree y/n, then converts the B-NNN into a D-NNN task (kind feature/bug/chore). Do NOT use for: adding or listing backlog items (use $backlog), or creating a task without going through backlog first (use $feature, $bug or $chore).
+description: EVALUATE-AND-CONVERT one parked item. Takes `<B-NNN>` or `<D-NNN>` with `status=Backlog`. The agent reads the item, asks any missing question, proposes a plan, calls out locks/risks, and asks worktree y/n — only after developer OK runs the CLI. Required: `--kind feature|bug|chore`. Options: `--assessment "<verdict>"`, `--plan "<step>"` (repeatable), `--worktree`, `--branch <name>`, `--worktree-path <path>`. To add/list parked items use `backlog`; to create a task without parking first use `feature`/`bug`/`chore`.
 ---
 
 # Promote

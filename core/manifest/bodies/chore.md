@@ -1,6 +1,6 @@
 # Chore
 
-Create a chore task (maintenance, small refactor, build/lint, docs or config adjustments — anything that is not a new feature nor a bug, but deserves a trace). Introduced in ADR-0011 Phase 4.
+Create a chore task for maintenance that deserves a trace but is not a new feature nor a bug fix: small refactor, dependency upgrade, build/lint tweak, config or doc adjustment without behavior change.
 
 {{include: _partials/title_context_rules.md}}
 

@@ -1,6 +1,6 @@
 # Bug
 
-Create a bug task (regression, defect, incorrect behavior) before editing code. Replaces the old `/issue` (removed in ADR-0011 Phase 4 — `issue` collided with the umbrella sense of the term in GitHub/Jira/Linear).
+Create a bug task before editing code. Use for a regression, a defect, or any incorrect behavior that needs investigation and fix.
 
 {{include: _partials/title_context_rules.md}}
 

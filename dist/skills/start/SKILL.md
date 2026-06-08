@@ -1,6 +1,6 @@
 ---
 name: start
-description: START — comeca trabalho em uma task Planejada ou diretamente Backlog (status -> Em desenvolvimento). Triggered by /start or "$start" / "comecar tarefa / iniciar trabalho / bora codar". Diferente de $promote: assume triagem feita (kind ja decidido). Falha se task ja Em desenvolvimento ou terminal. Do NOT use for: criar nova task do zero (use $feature, $bug ou $chore), triar backlog item (use $promote), ou retomar pausa (use $unblock).
+description: START — begin work on a `Planejada` or `Backlog` task (status → `Em desenvolvimento`). Assumes triage is done (kind already decided); use `promote` when kind still needs deciding. Options: `--note "<starting note>"`. To resume from `Bloqueada` use `unblock`; to create a fresh task use `feature`/`bug`/`chore`.
 ---
 
 # Start

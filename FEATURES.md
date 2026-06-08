@@ -2,6 +2,74 @@
 
 ---
 
+## [D-051] 🧹 Strip legacy mentions and rebalance trigger descriptions
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-08)
+- **Tipo:** Chore
+- **Contexto:** Two issues raised: (1) Bodies and descriptions reference historical decisions (ADR-0011 Phase 4, F-003, 'replaces old /issue', 'introduced in', 'legacy B-NNN') — this is project history that belongs in commit log + ADRs, not in user-facing skill instructions. Treat this as the initial version of a new tool. (2) Manifest descriptions are unbalanced: heavy on 'Do NOT use for X' routing hints (4-5 alternatives each) and light on what the verb actually does + its options (--context, --origin, --reason, --status, --file, etc.). User wants definition-first, options-listed descriptions with brief disambiguation.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/manifest/bodies/bug.md`
+- `core/manifest/bodies/chore.md`
+- `core/manifest/bodies/ready.md`
+- `core/manifest/bodies/plan.md`
+- `core/manifest/bodies/backlog.md`
+- `core/manifest/manifest.yaml`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CHANGELOG.md`
+- `dist/.agents/skills/guia-backlog/SKILL.md`
+- `dist/.agents/skills/guia-block/SKILL.md`
+- `dist/.agents/skills/guia-bug/SKILL.md`
+- `dist/.agents/skills/guia-cancel/SKILL.md`
+- `dist/.agents/skills/guia-chore/SKILL.md`
+- `dist/.agents/skills/guia-feature/SKILL.md`
+- `dist/.agents/skills/guia-finish/SKILL.md`
+- `dist/.agents/skills/guia-fluxo/SKILL.md`
+- `dist/.agents/skills/guia-plan/SKILL.md`
+- `dist/.agents/skills/guia-promote/SKILL.md`
+- `dist/.agents/skills/guia-ready/SKILL.md`
+- `dist/.agents/skills/guia-start/SKILL.md`
+- `dist/.agents/skills/guia-status/SKILL.md`
+- `dist/.agents/skills/guia-unblock/SKILL.md`
+- `dist/skills/backlog/SKILL.md`
+- `dist/skills/block/SKILL.md`
+- `dist/skills/bug/SKILL.md`
+- `dist/skills/cancel/SKILL.md`
+- `dist/skills/chore/SKILL.md`
+- `dist/skills/feature/SKILL.md`
+- `dist/skills/finish/SKILL.md`
+- `dist/skills/guia-fluxo/SKILL.md`
+- `dist/skills/plan/SKILL.md`
+- `dist/skills/promote/SKILL.md`
+- `dist/skills/ready/SKILL.md`
+- `dist/skills/start/SKILL.md`
+- `dist/skills/status/SKILL.md`
+- `dist/skills/unblock/SKILL.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Stripped historical/legacy references from 5 bodies. bug.md: removed 'Replaces the old /issue (removed in ADR-0011 Phase 4 ...)'. chore.md: removed 'Introduced in ADR-0011 Phase 4.'. ready.md: removed '(the reason validate was deprecated in F-003)'. plan.md: 'legacy B-NNN' -> 'backlog item'. backlog.md: removed '(new D-NNN + legacy B-NNN)' qualifier.
+- Rewrote all 14 manifest descriptions. New convention (documented in manifest.yaml header): (1) canonical ADR-0010 prefix, (2) short definition, (3) real CLI options/flags, (4) brief disambiguation (1-2 alternatives, not 4-5), (5) no historical mentions. All EN for consistency. Each description now lists the actual flags an agent can pass (--context, --origin, --status, --reason, --file, --summary, --validation, --pending, --docs-touched, --docs-skip, --no-commit, --lock, --keep-worktree, --set-current, --note, --kind, --assessment, --plan, --worktree, etc.) instead of just enumerating verbs to NOT use.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- python core/build/render-skills.py --check (53 targets in sync)
+- python core/build/render-skills.py --check-orphans (zero orphans)
+- grep for ADR-0011|Phase 4|legacy|Replaces the old|substitui o antigo|Introduced in|deprecated|removed in in dist/skills/ and dist/.agents/skills/ returns no files - zero legacy mentions in user-facing skill content
+- Spot-checked dist/skills/bug/SKILL.md - description shows new definition-first form, body intro shows clean 'Use for a regression, a defect, or any incorrect behavior' without ADR references
+- render+manifest+include+partial tests: 42/42 pass
+- Full suite: 128 tests, same 14 pre-existing failures + 2 pre-existing errors unchanged (zero regression)
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-050] 🧹 Consolidate per-verb bodies via host-aware include
 
 - **Status:** Validada

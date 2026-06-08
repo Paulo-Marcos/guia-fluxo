@@ -1,11 +1,11 @@
 ---
 name: guia-bug
-description: PRIMARY TRIGGER for /bug or "$bug". Creates a NEW D-NNN bug/regression task with kind=bug (substitui o antigo /issue removido na Fase 4 do ADR-0011). Use para defeitos, regressoes e comportamento incorreto. Do NOT use for: nova capacidade (use $feature), manutencao sem mudanca de comportamento (use $chore), ideia parqueada (use $backlog) ou avaliar um B-NNN existente (use $promote).
+description: PRIMARY TRIGGER — create a new `D-NNN` bug task for a regression, defect, or incorrect behavior. Options: `--context "<symptom + impact>"`, `--origin "<source>"`, `--status backlog|planned|in-development` (default `in-development`). For new capabilities use `feature`; for maintenance without behavior change use `chore`.
 ---
 
 # Bug
 
-Create a bug task (regression, defect, incorrect behavior) before editing code. Replaces the old `/issue` (removed in ADR-0011 Phase 4 — `issue` collided with the umbrella sense of the term in GitHub/Jira/Linear).
+Create a bug task before editing code. Use for a regression, a defect, or any incorrect behavior that needs investigation and fix.
 
 ## Title vs Context
 

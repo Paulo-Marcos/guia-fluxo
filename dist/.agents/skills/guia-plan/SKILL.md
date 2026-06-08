@@ -1,6 +1,6 @@
 ---
 name: guia-plan
-description: PLAN — marca task como `Planejada` (triada mas nao iniciada). Triggered by /plan or "$plan" / "planejar tarefa / triagem feita / aguardar para comecar". Aceita transicao de Backlog (item parqueado que ganhou prioridade) ou de Em desenvolvimento (despriorizado mas ja conhecido). Do NOT use for: comecar trabalho agora (use $start ou $promote), guardar ideia sem decidir (use $backlog), ou entregar pra validacao (use $ready).
+description: PLAN — mark a task as `Planejada` (triaged but not started yet). Accepts transition from `Backlog` (parked item that gained priority) or from `Em desenvolvimento` (deprioritized but already known). Options: `--note "<rationale>"`. To begin work use `start` (already triaged) or `promote` (still needs triage); to park without deciding use `backlog`.
 ---
 
 # Plan
@@ -15,7 +15,7 @@ Run:
 
 Distinct from:
 - `$backlog add`: park an idea that has not been triaged yet.
-- `$promote`: triage a legacy B-NNN deciding feature/bug and start immediately.
+- `$promote`: triage a backlog item, deciding kind and plan, then start immediately.
 - `$start`: start now (moves from `Backlog` or `Planejada` to `Em desenvolvimento`).
 
 Fails if the task is in a terminal state (`Validada`, `Finalizada`, `Cancelada`) or already `Planejada`. Tasks promoted from `Backlog` to `Planejada` enter `FEATURES.md` (join the catalog).

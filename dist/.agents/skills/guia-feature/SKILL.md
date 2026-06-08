@@ -1,6 +1,6 @@
 ---
 name: guia-feature
-description: PRIMARY TRIGGER for /feature or "$feature". Creates a NEW D-NNN feature task and starts implementation immediately. Do NOT use for: bugs/regressions (use $bug), maintenance without behavior change (use $chore), deferred ideas without starting work (use $backlog), or evaluating an existing B-NNN (use $promote).
+description: PRIMARY TRIGGER — create a new `D-NNN` feature task for a new capability or new functionality, starting implementation immediately. Options: `--context "<why>"` (motivation), `--origin "<source>"` (default: Guia Fluxo), `--status backlog|planned|in-development` (default `in-development`). For defects use `bug`; for maintenance use `chore`; to park without starting use `backlog`.
 ---
 
 # Feature

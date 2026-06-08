@@ -1,6 +1,6 @@
 ---
 name: guia-fluxo
-description: REFERENCE/BACKGROUND ONLY for the Guia Fluxo task-process pipeline (D-NNN/B-NNN, locks, chat-rename, worktree). Loaded as context by the dedicated shims, not as a trigger competitor. Do NOT auto-fire on /feature, /bug, /chore, /backlog, /promote, /ready, /finish, /status — those route to their own shims first. Use guia-fluxo directly ONLY when the user asks for the full process overview ("explain Guia Fluxo", "how does this pipeline work", "como funciona o guia-fluxo") or needs the installation/portability guide.
+description: REFERENCE/BACKGROUND ONLY — overview of the Guia Fluxo task-process pipeline (D-NNN tasks, status states, locks, chat-rename, worktree). Use directly when the developer asks for the process overview ("explain Guia Fluxo", "how does this pipeline work"), the installation guide, or the portability checklist. Not a competitor to the action verbs — those route to their own shims first.
 ---
 
 # Guia Fluxo

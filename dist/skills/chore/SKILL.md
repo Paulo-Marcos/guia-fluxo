@@ -1,11 +1,11 @@
 ---
 name: chore
-description: PRIMARY TRIGGER for /chore or "$chore". Creates a NEW D-NNN chore task com kind=chore. Use para manutencao que merece rastro mas nao e feature/bug: refactor pequeno, atualizar dependencia, ajustar build/lint, organizar pasta, melhorar config. Do NOT use for: capacidade nova (use $feature), regressao/defeito (use $bug), ideia parqueada (use $backlog).
+description: PRIMARY TRIGGER — create a new `D-NNN` chore task for maintenance that deserves a trace but isn't a feature or bug: small refactor, dependency upgrade, build/lint tweak, config or doc fix. Options: `--context "<what + why>"`, `--origin "<source>"`, `--status backlog|planned|in-development` (default `in-development`). For new capabilities use `feature`; for broken behavior use `bug`.
 ---
 
 # Chore
 
-Create a chore task (maintenance, small refactor, build/lint, docs or config adjustments — anything that is not a new feature nor a bug, but deserves a trace). Introduced in ADR-0011 Phase 4.
+Create a chore task for maintenance that deserves a trace but is not a new feature nor a bug fix: small refactor, dependency upgrade, build/lint tweak, config or doc adjustment without behavior change.
 
 ## Title vs Context
 
