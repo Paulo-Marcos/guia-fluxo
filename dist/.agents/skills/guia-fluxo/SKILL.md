@@ -9,16 +9,18 @@ Use this skill to run the repository process through deterministic scripts inste
 
 ## Trigger Commands
 
-- `/feature <title>`: create a new `D-NNN` feature task.
-- `/bug <title>`: create a new `D-NNN` bug task.
-- `/chore <title>`: create a new `D-NNN` chore task.
-- `/backlog add <title>`: save future work without starting implementation.
-- `/backlog list`: show future work.
-- `/backlog promote <B-NNN>`: convert backlog item into a task.
-- `/promote <B-NNN>`: AI evaluates backlog item, asks for missing information, proposes plan, asks worktree yes/no, then promotes it.
-- `/status [D-NNN]`: show active task and suggested chat title.
-- `/ready [D-NNN]`: mark implementation as waiting for developer validation.
-- `/finish [D-NNN]`: close an already validated task, suggest `#FINALIZADO`, and commit by default.
+Legend: 👤 human triggers | 🤖 agent triggers | 👤→🤖 human authorizes, agent executes.
+
+- 👤 `/feature <title>`: create a new `D-NNN` feature task.
+- 👤 `/bug <title>`: create a new `D-NNN` bug task.
+- 👤 `/chore <title>`: create a new `D-NNN` chore task.
+- 👤 `/backlog add <title>`: save future work without starting implementation.
+- 👤 `/backlog list`: show future work.
+- 👤 `/backlog promote <B-NNN>`: convert backlog item into a task.
+- 👤 `/promote <B-NNN>`: AI evaluates backlog item, asks for missing information, proposes plan, asks worktree yes/no, then promotes it.
+- 👤 `/status [D-NNN]`: show active task and suggested chat title.
+- 🤖 `/ready [D-NNN]`: mark implementation as waiting for developer validation. The agent always triggers this — never the human.
+- 👤→🤖 `/finish [D-NNN]`: close an already validated task, suggest `#FINALIZADO`, and commit by default. The human confirms validation; the agent runs the command.
 
 ## Core Rule
 
@@ -60,7 +62,7 @@ python core/src/guia.py feature "Short title" --context "Why this matters"
 8. If a needed file is locked, explain the lock id, protected functionality, why the edit is needed, expected impact, regression risk, and alternatives before asking for unlock.
 9. On `/promote <B-NNN>`, read the backlog item first. Decide kind (feature/bug/chore), check if the request is actionable, ask missing questions if needed, propose a short execution plan, confront risks/locks, and ask whether to use worktree. Only after user OK, run `.\core\bin\guia.ps1 promote ...`.
 10. If user chooses worktree, pass `--worktree`; the task stores worktree metadata and `finish` removes it when closing.
-11. On `/ready`, register changed files, summary, validations, and pending manual validation.
+11. The agent MUST call `/ready` itself when implementation ends — never wait for the human to ask, and never skip ahead to `/finish`. On `/ready`, register changed files, summary, validations, and pending manual validation.
 12. On `/finish`, only close when the developer says the work is validated/final. Commit is on by default; pass `--no-commit` for dry close.
 13. Use `--lock` on `/finish` only when the developer asks to create/update the lock.
 

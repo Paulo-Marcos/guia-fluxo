@@ -22,8 +22,8 @@ Rules:
 6. Honor `features/registry.yaml` before file edits. If a file is locked, explain the lock id, protected functionality, why the edit is needed, expected impact, regression risk, and alternatives before asking for unlock.
 7. Use `/promote <B-NNN>` to evaluate a backlog item before creating a task: classify feature/bug/chore, ask missing questions, propose plan, confront risks/locks, ask worktree yes/no, then run `.\core\bin\guia.ps1 promote ...` after user OK.
 8. If user chooses worktree, pass `--worktree`; `finish` removes the created worktree when the task is closed.
-9. Use `/ready` when implementation is done but still needs developer validation.
-10. Use `/finish` only after the developer confirms final validation. It commits by default and suggests `#FINALIZADO`.
+9. The agent itself runs `/ready` when implementation ends — do not wait for the human to ask, and do not skip ahead to `/finish`. Register changed files, summary, validations, and pending manual validation.
+10. The human confirms validation; the agent runs `/finish` only after that confirmation. It commits by default and suggests `#FINALIZADO`.
 11. Use `--lock` only when the developer asks to create a lock.
 
 Portable install:
