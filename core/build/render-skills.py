@@ -43,11 +43,19 @@ Generated templates/:
 
 Hardening (F-015):
 - TEMPLATE_FILES validado: --check detecta arquivos em core/templates/ nao listados.
-- Renderer aborta (sys.exit 2) se o marcador `..\\src\\guia.py` sumir do wrapper.
+- Renderer aborta (exit 2) se o marcador `..\\src\\guia.py` sumir do wrapper.
 - YAML dos templates e validado via yaml.safe_load antes de copiar.
 - dataclass Output substitui a tupla de 4 elementos.
 - --check-orphans lista arquivos em dist/bin/ ou dist/skills/ sem correspondente.
 - Description vazia gera erro explicito em vez de SKILL.md silenciosamente quebrado.
+
+Design (D-059):
+- `Paths` (frozen) carrega toda config de caminho; construido uma vez e
+  passado explicitamente as funcoes de coleta (sem estado global mutavel).
+- Validacao/parse lancam `RenderError`; `main()` mapeia para exit 2.
+  Funcoes de coleta ficam puras e testaveis sem capturar SystemExit.
+- `TARGETS` (registro) concentra o conhecimento por host (nome, diretorio
+  destino, sufixo de include_per_target, label) num lugar so.
 
 Usage:
     python core/build/render-skills.py
@@ -63,6 +71,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from textwrap import dedent
+from typing import Callable
 
 try:
     import yaml
@@ -72,33 +81,65 @@ except ImportError:
 
 
 ROOT = Path(__file__).resolve().parents[2]
-MANIFEST_DIR = ROOT / "core" / "manifest"
-MANIFEST = MANIFEST_DIR / "manifest.yaml"
-BODIES_DIR = MANIFEST_DIR / "bodies"
-DEFAULT_DIST_DIR = ROOT / "dist"
-
-# Mutaveis: ajustados por --output-dir no CLI antes de coletar outputs.
-DIST_DIR = DEFAULT_DIST_DIR
-CLAUDE_SKILL_DIR = DIST_DIR / "skills"
-AGENT_SKILL_DIR = DIST_DIR / ".agents" / "skills"
-BIN_DIR = DIST_DIR / "bin"
-TEMPLATES_DIR = DIST_DIR / "templates"
 
 
-def _retarget_dist(path: Path) -> None:
-    """Aponta DIST_DIR + subpastas para outro destino (achado 4.5)."""
-    global DIST_DIR, CLAUDE_SKILL_DIR, AGENT_SKILL_DIR, BIN_DIR, TEMPLATES_DIR
-    DIST_DIR = path.resolve()
-    CLAUDE_SKILL_DIR = DIST_DIR / "skills"
-    AGENT_SKILL_DIR = DIST_DIR / ".agents" / "skills"
-    BIN_DIR = DIST_DIR / "bin"
-    TEMPLATES_DIR = DIST_DIR / "templates"
+class RenderError(Exception):
+    """Falha de build do renderer.
 
-CORE_SRC_DIR = ROOT / "core" / "src"
-ENGINE_SRC = CORE_SRC_DIR / "guia.py"
-LOCK_API_SRC = ROOT / "core" / "lock" / "lock_api.py"
-WRAPPER_SRC = ROOT / "core" / "bin" / "guia.ps1"
-TEMPLATES_SRC = ROOT / "core" / "templates"
+    Lancada pelas funcoes de coleta/validacao em vez de encerrar o
+    processo diretamente. `main()` captura e mapeia para exit code 2,
+    mantendo o nucleo de transformacao puro e testavel (D-059, P2).
+    """
+
+
+# --- Config / paths (D-059, P1) -------------------------------------------
+
+
+@dataclass(frozen=True)
+class Paths:
+    """Todos os caminhos de fonte e destino do build.
+
+    Substitui o estado global mutavel anterior: construido uma vez em
+    `main()` (ou nos testes) e passado explicitamente. Imutavel; use
+    `dataclasses.replace` para variacoes (sandbox de teste, --output-dir).
+    """
+
+    root: Path
+    manifest_dir: Path
+    manifest: Path
+    bodies_dir: Path
+    dist_dir: Path
+    claude_skill_dir: Path
+    agent_skill_dir: Path
+    bin_dir: Path
+    templates_dir: Path
+    core_src_dir: Path
+    engine_src: Path
+    lock_api_src: Path
+    wrapper_src: Path
+    templates_src: Path
+
+    @classmethod
+    def build(cls, root: Path, dist_dir: Path | None = None) -> "Paths":
+        manifest_dir = root / "core" / "manifest"
+        dist = (dist_dir if dist_dir is not None else root / "dist").resolve()
+        return cls(
+            root=root,
+            manifest_dir=manifest_dir,
+            manifest=manifest_dir / "manifest.yaml",
+            bodies_dir=manifest_dir / "bodies",
+            dist_dir=dist,
+            claude_skill_dir=dist / "skills",
+            agent_skill_dir=dist / ".agents" / "skills",
+            bin_dir=dist / "bin",
+            templates_dir=dist / "templates",
+            core_src_dir=root / "core" / "src",
+            engine_src=root / "core" / "src" / "guia.py",
+            lock_api_src=root / "core" / "lock" / "lock_api.py",
+            wrapper_src=root / "core" / "bin" / "guia.ps1",
+            templates_src=root / "core" / "templates",
+        )
+
 
 # Marcador usado por core/bin/guia.ps1 para resolver o motor. No dist/, o
 # layout vira flat (guia.py vizinho do wrapper), entao o marcador e
@@ -116,17 +157,10 @@ TEMPLATE_FILES: list[tuple[str, str]] = [
 # Templates "promovidos" a partir de outros lugares do core/. F-018
 # consolidou `core/hooks/commit-msg` como fonte unica - o renderer
 # replica em `dist/templates/.githooks/commit-msg` para o instalador
-# usar no consumer.
-PROMOTED_TEMPLATES: list[tuple[Path, str]] = [
-    (ROOT / "core" / "hooks" / "commit-msg", ".githooks/commit-msg"),
+# usar no consumer. Fonte como tupla relativa a paths.root.
+PROMOTED_TEMPLATES: list[tuple[tuple[str, ...], str]] = [
+    (("core", "hooks", "commit-msg"), ".githooks/commit-msg"),
 ]
-
-TARGET_LABELS = {
-    "agent_skill": "dist/.agents/skills/guia-<verb>/SKILL.md",
-    "claude_skill": "dist/skills/<verb>/SKILL.md",
-    "bin": "dist/bin/<file>",
-    "template": "dist/templates/<file>",
-}
 
 POSIX_SHIM = (
     "#!/usr/bin/env bash\n"
@@ -143,32 +177,76 @@ class Output:
     content: str
 
 
-# --- Loaders ---------------------------------------------------------------
+# --- Target registry (D-059, P3) ------------------------------------------
 
 
-def load_manifest() -> dict:
-    if not MANIFEST.exists():
-        sys.stderr.write(f"Erro: manifest nao encontrado em {MANIFEST}\n")
-        sys.exit(2)
-    data = yaml.safe_load(MANIFEST.read_text(encoding="utf-8")) or {}
-    if not isinstance(data, dict) or not data.get("verbs"):
-        sys.stderr.write(
-            "Erro: manifest invalido ou vazio (esperado mapping com chave `verbs:`)\n"
-        )
-        sys.exit(2)
-    return data
-
-
-def agent_skill_name(verb: str) -> str:
+def _agent_skill_name(verb: str) -> str:
     return verb if verb.startswith("guia-") else f"guia-{verb}"
 
 
-def target_path(target: str, verb: str) -> Path:
-    if target == "agent_skill":
-        return AGENT_SKILL_DIR / agent_skill_name(verb) / "SKILL.md"
-    if target == "claude_skill":
-        return CLAUDE_SKILL_DIR / verb / "SKILL.md"
-    raise ValueError(f"target desconhecido: {target}")
+@dataclass(frozen=True)
+class TargetSpec:
+    """Tudo que difere entre os hosts de skill num lugar so.
+
+    Adicionar um host novo = adicionar uma entrada em TARGETS. As funcoes
+    de render/path/host-suffix consultam o registro em vez de espalhar
+    `if target == ...` (fecha OCP).
+    """
+
+    key: str
+    host_suffix: str  # sufixo usado por {{include_per_target: base}} -> base.<suffix>.md
+    label: str
+    name_of: Callable[[str], str]
+    dir_of: Callable[[Paths], Path]
+
+    def skill_name(self, verb: str) -> str:
+        return self.name_of(verb)
+
+    def output_path(self, verb: str, paths: Paths) -> Path:
+        return self.dir_of(paths) / self.skill_name(verb) / "SKILL.md"
+
+
+TARGETS: dict[str, TargetSpec] = {
+    "agent_skill": TargetSpec(
+        key="agent_skill",
+        host_suffix="agent",
+        label="dist/.agents/skills/guia-<verb>/SKILL.md",
+        name_of=_agent_skill_name,
+        dir_of=lambda p: p.agent_skill_dir,
+    ),
+    "claude_skill": TargetSpec(
+        key="claude_skill",
+        host_suffix="claude",
+        label="dist/skills/<verb>/SKILL.md",
+        name_of=lambda verb: verb,
+        dir_of=lambda p: p.claude_skill_dir,
+    ),
+}
+
+
+def _target(target_name: str) -> TargetSpec:
+    spec = TARGETS.get(target_name)
+    if spec is None:
+        raise ValueError(f"target desconhecido: {target_name}")
+    return spec
+
+
+# --- Loaders ---------------------------------------------------------------
+
+
+def load_manifest(paths: Paths) -> dict:
+    if not paths.manifest.exists():
+        raise RenderError(f"Erro: manifest nao encontrado em {paths.manifest}")
+    data = yaml.safe_load(paths.manifest.read_text(encoding="utf-8")) or {}
+    if not isinstance(data, dict) or not data.get("verbs"):
+        raise RenderError(
+            "Erro: manifest invalido ou vazio (esperado mapping com chave `verbs:`)"
+        )
+    return data
+
+
+def target_path(target: str, verb: str, paths: Paths) -> Path:
+    return _target(target).output_path(verb, paths)
 
 
 # Chaves de frontmatter sempre reservadas e geradas pelo renderer.
@@ -181,7 +259,7 @@ RESERVED_FRONTMATTER_KEYS = frozenset({"name", "description"})
 ALLOWED_EXTRA_KEYS = frozenset({"allowed-tools", "model"})
 
 
-def _format_frontmatter_value(value) -> str:
+def _format_frontmatter_value(value: object) -> str:
     """Format a frontmatter value as a YAML scalar / inline list.
 
     Strings ficam plain; listas viram inline `[a, b, c]`; outros tipos
@@ -203,11 +281,10 @@ def render_skill_md(
 ) -> str:
     desc = description.strip()
     if not desc:
-        sys.stderr.write(
+        raise RenderError(
             f"Erro: description vazio para verbo `{verb}` no manifest.\n"
-            f"      Sem description o frontmatter da skill fica invalido.\n"
+            f"      Sem description o frontmatter da skill fica invalido."
         )
-        sys.exit(2)
     body_text = dedent(body).strip("\n")
     if not body_text:
         sys.stderr.write(f"Aviso: body vazio para verbo `{verb}`. SKILL.md sera so frontmatter.\n")
@@ -215,10 +292,9 @@ def render_skill_md(
     if extras:
         for key, value in extras.items():
             if key in RESERVED_FRONTMATTER_KEYS:
-                sys.stderr.write(
-                    f"Erro: frontmatter.{key} (verbo `{verb}`) e reservado pelo renderer.\n"
+                raise RenderError(
+                    f"Erro: frontmatter.{key} (verbo `{verb}`) e reservado pelo renderer."
                 )
-                sys.exit(2)
             if key not in ALLOWED_EXTRA_KEYS:
                 sys.stderr.write(
                     f"Aviso: frontmatter.{key} (verbo `{verb}`) nao esta na lista permitida ({sorted(ALLOWED_EXTRA_KEYS)}).\n"
@@ -236,11 +312,7 @@ def render_target(
     body: str,
     extras: dict | None = None,
 ) -> str:
-    if target == "agent_skill":
-        return render_skill_md(agent_skill_name(verb), description, body, verb, extras)
-    if target == "claude_skill":
-        return render_skill_md(verb, description, body, verb, extras)
-    raise ValueError(f"target desconhecido: {target}")
+    return render_skill_md(_target(target).skill_name(verb), description, body, verb, extras)
 
 
 # Match `{{include: path/to/file.md}}` on its own line. Partials sao
@@ -259,28 +331,21 @@ INCLUDE_PER_TARGET_RE = re.compile(
     r"^\{\{include_per_target:\s*([^}\s][^}]*?)\s*\}\}$", re.MULTILINE
 )
 
-# Mapa target_name -> sufixo usado por {{include_per_target:}} ao montar
-# o caminho final do partial. Adicionar host novo? Estenda este mapa.
-TARGET_HOST_SUFFIX = {
-    "agent_skill": "agent",
-    "claude_skill": "claude",
-}
-
 
 def _expand_per_target(text: str, target_name: str, origin: Path) -> str:
     """Pre-processa {{include_per_target: <base>}} em {{include: <base>.<host>.md}}.
 
     Roda **antes** de _expand_includes, entao o caminho gerado segue a
-    semantica padrao do include (relativo ao arquivo que inclui).
-    target_name desconhecido aborta com mensagem clara.
+    semantica padrao do include (relativo ao arquivo que inclui). O sufixo
+    do host vem do registro TARGETS; target desconhecido aborta.
     """
-    suffix = TARGET_HOST_SUFFIX.get(target_name)
+    spec = TARGETS.get(target_name)
+    suffix = spec.host_suffix if spec else None
     if suffix is None and INCLUDE_PER_TARGET_RE.search(text):
-        sys.stderr.write(
-            f"Erro: target `{target_name}` (em {origin}) nao tem mapping em "
-            f"TARGET_HOST_SUFFIX, mas o body usa {{{{include_per_target:}}}}.\n"
+        raise RenderError(
+            f"Erro: target `{target_name}` (em {origin}) nao tem entrada em "
+            f"TARGETS, mas o body usa {{{{include_per_target:}}}}."
         )
-        sys.exit(2)
 
     def replace(match: re.Match[str]) -> str:
         base = match.group(1).strip()
@@ -292,6 +357,7 @@ def _expand_per_target(text: str, target_name: str, origin: Path) -> str:
 def _expand_includes(
     text: str,
     origin: Path,
+    manifest_dir: Path,
     body_cache: dict[Path, str],
     stack: tuple[Path, ...] = (),
 ) -> str:
@@ -301,37 +367,37 @@ def _expand_includes(
     intuitiva: um body em `bodies/foo.md` que faz `{{include: _partials/x.md}}`
     pega `bodies/_partials/x.md`; um partial em `bodies/_partials/a.md` que
     faz `{{include: b.md}}` pega `bodies/_partials/b.md`). Guards:
-      - file not found → exit 2
-      - path traversal (fora de MANIFEST_DIR) → exit 2
-      - include circular (path ja na pilha atual) → exit 2
+      - file not found -> RenderError
+      - path traversal (fora de manifest_dir) -> RenderError
+      - include circular (path ja na pilha atual) -> RenderError
 
     `body_cache` evita re-leitura quando o mesmo partial aparece em
     bodies diferentes. A pilha (`stack`) detecta ciclo per-render-path
     sem poluir o cache.
     """
     base_dir = origin.parent
+    root = manifest_dir.resolve()
 
     def replace(match: re.Match[str]) -> str:
         rel = match.group(1).strip()
         path = (base_dir / rel).resolve()
-        if not str(path).startswith(str(MANIFEST_DIR.resolve())):
-            sys.stderr.write(
-                f"Erro: include `{rel}` em {origin} aponta fora de core/manifest/ (path traversal recusado).\n"
+        if not str(path).startswith(str(root)):
+            raise RenderError(
+                f"Erro: include `{rel}` em {origin} aponta fora de core/manifest/ (path traversal recusado)."
             )
-            sys.exit(2)
         if not path.exists():
-            sys.stderr.write(
-                f"Erro: include `{rel}` (em {origin}) nao existe em {path}.\n"
+            raise RenderError(
+                f"Erro: include `{rel}` (em {origin}) nao existe em {path}."
             )
-            sys.exit(2)
         if path in stack:
-            chain = " -> ".join(str(p.relative_to(MANIFEST_DIR)) for p in stack + (path,))
-            sys.stderr.write(f"Erro: include circular detectado: {chain}\n")
-            sys.exit(2)
+            chain = " -> ".join(str(p.relative_to(manifest_dir)) for p in stack + (path,))
+            raise RenderError(f"Erro: include circular detectado: {chain}")
         if path not in body_cache:
             body_cache[path] = path.read_text(encoding="utf-8")
         # Recursivo: partials podem incluir outros partials.
-        return _expand_includes(body_cache[path].strip("\n"), path, body_cache, stack + (path,))
+        return _expand_includes(
+            body_cache[path].strip("\n"), path, manifest_dir, body_cache, stack + (path,)
+        )
 
     return INCLUDE_RE.sub(replace, text)
 
@@ -341,6 +407,7 @@ def _resolve_body(
     target_name: str,
     target_spec: dict,
     spec_shared_body: str | None,
+    paths: Paths,
     body_cache: dict[Path, str],
 ) -> str:
     """Return the body for a target.
@@ -355,32 +422,33 @@ def _resolve_body(
     expandidos antes de retornar (o segundo vira o primeiro no
     pre-processamento, baseado em target_name).
     """
+    manifest_dir = paths.manifest_dir
     explicit = target_spec.get("body_file")
     chosen = explicit or spec_shared_body
     if chosen:
-        path = (MANIFEST_DIR / chosen).resolve()
+        path = (manifest_dir / chosen).resolve()
         if not path.exists():
-            sys.stderr.write(
-                f"Erro: body_file `{chosen}` (de `{verb}.{target_name}`) nao existe em {path}.\n"
+            raise RenderError(
+                f"Erro: body_file `{chosen}` (de `{verb}.{target_name}`) nao existe em {path}."
             )
-            sys.exit(2)
-        if not str(path).startswith(str(MANIFEST_DIR.resolve())):
-            sys.stderr.write(
-                f"Erro: body_file `{chosen}` aponta fora de core/manifest/ (path traversal recusado).\n"
+        if not str(path).startswith(str(manifest_dir.resolve())):
+            raise RenderError(
+                f"Erro: body_file `{chosen}` aponta fora de core/manifest/ (path traversal recusado)."
             )
-            sys.exit(2)
         if path not in body_cache:
             body_cache[path] = path.read_text(encoding="utf-8")
         pre = _expand_per_target(body_cache[path], target_name, path)
-        return _expand_includes(pre, path, body_cache)
+        return _expand_includes(pre, path, manifest_dir, body_cache)
     body_inline = target_spec.get("body") or ""
     # Inline bodies tambem suportam includes; origin sintetica.
-    origin = MANIFEST_DIR / f"<inline:{verb}.{target_name}>"
+    origin = manifest_dir / f"<inline:{verb}.{target_name}>"
     pre = _expand_per_target(body_inline, target_name, origin)
-    return _expand_includes(pre, origin, body_cache)
+    return _expand_includes(pre, origin, manifest_dir, body_cache)
 
 
-def collect_outputs(manifest: dict, only_verb: str | None = None) -> list[Output]:
+def collect_outputs(
+    manifest: dict, paths: Paths, only_verb: str | None = None
+) -> list[Output]:
     outputs: list[Output] = []
     verbs = manifest.get("verbs") or {}
     body_cache: dict[Path, str] = {}
@@ -388,28 +456,23 @@ def collect_outputs(manifest: dict, only_verb: str | None = None) -> list[Output
         if only_verb and verb != only_verb:
             continue
         if not isinstance(spec, dict):
-            sys.stderr.write(f"Erro: verb `{verb}` no manifest precisa ser um mapping.\n")
-            sys.exit(2)
+            raise RenderError(f"Erro: verb `{verb}` no manifest precisa ser um mapping.")
         description = (spec.get("description") or "").strip()
         shared_body = spec.get("shared_body")
         extras = spec.get("frontmatter")
         if extras is not None and not isinstance(extras, dict):
-            sys.stderr.write(
-                f"Erro: verbs.{verb}.frontmatter precisa ser um mapping.\n"
-            )
-            sys.exit(2)
+            raise RenderError(f"Erro: verbs.{verb}.frontmatter precisa ser um mapping.")
         targets = spec.get("targets") or {}
         if not targets:
             sys.stderr.write(f"Aviso: verbo `{verb}` sem `targets:` declarado.\n")
         for target_name, target_spec in targets.items():
             if not isinstance(target_spec, dict):
-                sys.stderr.write(
-                    f"Erro: targets.{target_name} de `{verb}` precisa ser um mapping.\n"
+                raise RenderError(
+                    f"Erro: targets.{target_name} de `{verb}` precisa ser um mapping."
                 )
-                sys.exit(2)
-            body = _resolve_body(verb, target_name, target_spec, shared_body, body_cache)
+            body = _resolve_body(verb, target_name, target_spec, shared_body, paths, body_cache)
             content = render_target(target_name, verb, description, body, extras)
-            outputs.append(Output(target_path(target_name, verb), target_name, verb, content))
+            outputs.append(Output(target_path(target_name, verb, paths), target_name, verb, content))
     return outputs
 
 
@@ -425,75 +488,66 @@ def _adapt_wrapper_for_plugin(text: str) -> str:
     em vez do warning silencioso de antes (achado 4.3).
     """
     if WRAPPER_MARKER not in text:
-        sys.stderr.write(
+        raise RenderError(
             f"Erro: core/bin/guia.ps1 nao contem o marcador `{WRAPPER_MARKER}`.\n"
             "      O renderer presume esse marker para adaptar o wrapper ao layout flat\n"
             "      do plugin. Se voce reescreveu o wrapper, ajuste WRAPPER_MARKER em\n"
-            "      core/build/render-skills.py para o novo marker.\n"
+            "      core/build/render-skills.py para o novo marker."
         )
-        sys.exit(2)
     return text.replace(WRAPPER_MARKER, WRAPPER_REPLACEMENT)
 
 
-def _python_source_files() -> list[Path]:
+def _python_source_files(paths: Paths) -> list[Path]:
     """All .py files in core/src/ (ai.py + helpers _*.py).
 
     Excludes __pycache__/ and the like. The whole pack is shipped flat to
     dist/bin/ so imports work side-by-side.
     """
-    if not CORE_SRC_DIR.exists():
-        sys.stderr.write(f"Erro: pasta de motor nao encontrada em {CORE_SRC_DIR}\n")
-        sys.exit(2)
-    files = sorted(
+    if not paths.core_src_dir.exists():
+        raise RenderError(f"Erro: pasta de motor nao encontrada em {paths.core_src_dir}")
+    return sorted(
         path
-        for path in CORE_SRC_DIR.glob("*.py")
+        for path in paths.core_src_dir.glob("*.py")
         if path.is_file() and not path.name.startswith("__")
     )
-    return files
 
 
-def collect_bin_outputs() -> list[Output]:
-    if not ENGINE_SRC.exists():
-        sys.stderr.write(f"Erro: motor nao encontrado em {ENGINE_SRC}\n")
-        sys.exit(2)
-    if not WRAPPER_SRC.exists():
-        sys.stderr.write(f"Erro: wrapper nao encontrado em {WRAPPER_SRC}\n")
-        sys.exit(2)
-    if not LOCK_API_SRC.exists():
-        sys.stderr.write(f"Erro: lock_api nao encontrado em {LOCK_API_SRC}\n")
-        sys.exit(2)
+def collect_bin_outputs(paths: Paths) -> list[Output]:
+    if not paths.engine_src.exists():
+        raise RenderError(f"Erro: motor nao encontrado em {paths.engine_src}")
+    if not paths.wrapper_src.exists():
+        raise RenderError(f"Erro: wrapper nao encontrado em {paths.wrapper_src}")
+    if not paths.lock_api_src.exists():
+        raise RenderError(f"Erro: lock_api nao encontrado em {paths.lock_api_src}")
 
     outputs: list[Output] = []
-    for src in _python_source_files():
-        outputs.append(Output(BIN_DIR / src.name, "bin", src.name, src.read_text(encoding="utf-8")))
+    for src in _python_source_files(paths):
+        outputs.append(Output(paths.bin_dir / src.name, "bin", src.name, src.read_text(encoding="utf-8")))
     outputs.append(
-        Output(BIN_DIR / "lock_api.py", "bin", "lock_api.py", LOCK_API_SRC.read_text(encoding="utf-8"))
+        Output(paths.bin_dir / "lock_api.py", "bin", "lock_api.py", paths.lock_api_src.read_text(encoding="utf-8"))
     )
-    wrapper = _adapt_wrapper_for_plugin(WRAPPER_SRC.read_text(encoding="utf-8"))
-    outputs.append(Output(BIN_DIR / "guia.ps1", "bin", "guia.ps1", wrapper))
-    outputs.append(Output(BIN_DIR / "guia", "bin", "guia", POSIX_SHIM))
+    wrapper = _adapt_wrapper_for_plugin(paths.wrapper_src.read_text(encoding="utf-8"))
+    outputs.append(Output(paths.bin_dir / "guia.ps1", "bin", "guia.ps1", wrapper))
+    outputs.append(Output(paths.bin_dir / "guia", "bin", "guia", POSIX_SHIM))
     return outputs
 
 
 # --- templates/ -----------------------------------------------------------
 
 
-def _validate_template_set() -> None:
+def _validate_template_set(paths: Paths) -> None:
     """Fail if core/templates/ has files not declared in TEMPLATE_FILES."""
     declared = {src for src, _dst in TEMPLATE_FILES}
     found: set[str] = set()
-    for path in TEMPLATES_SRC.rglob("*"):
+    for path in paths.templates_src.rglob("*"):
         if path.is_file():
-            rel = path.relative_to(TEMPLATES_SRC).as_posix()
-            found.add(rel)
+            found.add(path.relative_to(paths.templates_src).as_posix())
     extras = found - declared
     if extras:
-        sys.stderr.write(
+        raise RenderError(
             "Erro: arquivos em core/templates/ nao declarados em TEMPLATE_FILES:\n"
             + "\n".join(f"  - {x}" for x in sorted(extras))
-            + "\n"
         )
-        sys.exit(2)
 
 
 def _validate_template_yaml(src: Path) -> None:
@@ -503,28 +557,26 @@ def _validate_template_yaml(src: Path) -> None:
     try:
         yaml.safe_load(src.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
-        sys.stderr.write(f"Erro: template YAML invalido em {src}: {exc}\n")
-        sys.exit(2)
+        raise RenderError(f"Erro: template YAML invalido em {src}: {exc}")
 
 
-def collect_template_outputs() -> list[Output]:
-    _validate_template_set()
+def collect_template_outputs(paths: Paths) -> list[Output]:
+    _validate_template_set(paths)
     outputs: list[Output] = []
     for src_rel, dst_rel in TEMPLATE_FILES:
-        src = TEMPLATES_SRC / src_rel
+        src = paths.templates_src / src_rel
         if not src.exists():
-            sys.stderr.write(f"Erro: template nao encontrado em {src}\n")
-            sys.exit(2)
+            raise RenderError(f"Erro: template nao encontrado em {src}")
         _validate_template_yaml(src)
         content = src.read_text(encoding="utf-8")
-        outputs.append(Output(TEMPLATES_DIR / dst_rel, "template", dst_rel, content))
+        outputs.append(Output(paths.templates_dir / dst_rel, "template", dst_rel, content))
     # Templates promovidos de fora de core/templates/ (achado 6.Q1).
-    for src, dst_rel in PROMOTED_TEMPLATES:
+    for rel, dst_rel in PROMOTED_TEMPLATES:
+        src = paths.root.joinpath(*rel)
         if not src.exists():
-            sys.stderr.write(f"Erro: template promovido nao encontrado em {src}\n")
-            sys.exit(2)
+            raise RenderError(f"Erro: template promovido nao encontrado em {src}")
         content = src.read_text(encoding="utf-8")
-        outputs.append(Output(TEMPLATES_DIR / dst_rel, "template", dst_rel, content))
+        outputs.append(Output(paths.templates_dir / dst_rel, "template", dst_rel, content))
     return outputs
 
 
@@ -570,7 +622,7 @@ def _is_ignored_for_orphan(path: Path) -> bool:
     return any(part in ORPHAN_IGNORE_DIR_NAMES for part in path.parts)
 
 
-def find_orphans(outputs: list[Output]) -> list[Path]:
+def find_orphans(outputs: list[Output], paths: Paths) -> list[Path]:
     """List files in dist/bin/ and dist/skills/ that are not part of outputs.
 
     Useful to detect verb removals or renamed helpers that left stale
@@ -579,7 +631,7 @@ def find_orphans(outputs: list[Output]) -> list[Path]:
     """
     expected = {output.path.resolve() for output in outputs}
     orphans: list[Path] = []
-    for root in (BIN_DIR, CLAUDE_SKILL_DIR, AGENT_SKILL_DIR, TEMPLATES_DIR):
+    for root in (paths.bin_dir, paths.claude_skill_dir, paths.agent_skill_dir, paths.templates_dir):
         if not root.exists():
             continue
         for path in root.rglob("*"):
@@ -592,7 +644,7 @@ def find_orphans(outputs: list[Output]) -> list[Path]:
     return orphans
 
 
-def clean_orphans(outputs: list[Output]) -> list[Path]:
+def clean_orphans(outputs: list[Output], paths: Paths) -> list[Path]:
     """Apaga arquivos orfaos retornados por `find_orphans` (achado 4.Q3).
 
     Tambem remove diretorios que ficaram vazios apos a limpeza para que
@@ -601,7 +653,7 @@ def clean_orphans(outputs: list[Output]) -> list[Path]:
 
     Retorna a lista de paths apagados.
     """
-    orphans = find_orphans(outputs)
+    orphans = find_orphans(outputs, paths)
     removed: list[Path] = []
     for path in orphans:
         try:
@@ -610,7 +662,7 @@ def clean_orphans(outputs: list[Output]) -> list[Path]:
         except OSError as exc:
             sys.stderr.write(f"Aviso: nao consegui apagar {path}: {exc}\n")
     # Limpeza de diretorios vazios (bottom-up)
-    for root in (CLAUDE_SKILL_DIR, AGENT_SKILL_DIR, TEMPLATES_DIR, BIN_DIR):
+    for root in (paths.claude_skill_dir, paths.agent_skill_dir, paths.templates_dir, paths.bin_dir):
         if not root.exists():
             continue
         # Bottom-up: rglob retorna nested-first quando reverse-sort
@@ -626,7 +678,66 @@ def clean_orphans(outputs: list[Output]) -> list[Path]:
 # --- Entry point ----------------------------------------------------------
 
 
-def main() -> int:
+def _rel(path: Path, root: Path) -> str:
+    """Path relativo a root quando possivel; absoluto caso contrario."""
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
+def collect_all_outputs(paths: Paths, only_verb: str | None) -> list[Output]:
+    """Skills do manifest + (quando full render) bin/ e templates/."""
+    outputs = collect_outputs(load_manifest(paths), paths, only_verb=only_verb)
+    if not only_verb:
+        outputs = outputs + collect_bin_outputs(paths) + collect_template_outputs(paths)
+    return outputs
+
+
+def _run_check_orphans(outputs: list[Output], paths: Paths) -> int:
+    orphans = find_orphans(outputs, paths)
+    if not orphans:
+        print("OK: nenhum orfao em dist/.")
+        return 0
+    print("Arquivos orfaos (em dist/ sem origem no manifest/motor):\n", file=sys.stderr)
+    for path in orphans:
+        print(f"  - {_rel(path, paths.root)}", file=sys.stderr)
+    return 1
+
+
+def _run_check(outputs: list[Output], paths: Paths) -> int:
+    stale = check_outputs(outputs)
+    if stale:
+        print(
+            "Arquivos gerados estao desatualizados em relacao ao manifest/motor/wrapper:\n",
+            file=sys.stderr,
+        )
+        for p in stale:
+            print(f"  - {_rel(p, paths.root)}", file=sys.stderr)
+        print("\nRode: python core/build/render-skills.py", file=sys.stderr)
+        return 1
+    print(f"OK: {len(outputs)} alvo(s) em sincronia com o manifest.")
+    return 0
+
+
+def _run_render(outputs: list[Output], paths: Paths, do_clean: bool) -> int:
+    written = write_outputs(outputs)
+    cleaned = clean_orphans(outputs, paths) if do_clean else []
+    if not written and not cleaned:
+        print(f"OK: {len(outputs)} alvo(s) ja estavam atualizados. Nada gravado.")
+        return 0
+    if written:
+        print(f"Renderizados {len(written)} arquivo(s) de {len(outputs)} alvo(s):")
+        for p in written:
+            print(f"  + {_rel(p, paths.root)}")
+    if cleaned:
+        print(f"Apagados {len(cleaned)} arquivo(s) orfao(s):")
+        for p in cleaned:
+            print(f"  - {_rel(p, paths.root)}")
+    return 0
+
+
+def _build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Exit 1 se algum alvo estiver stale.")
     parser.add_argument("--verb", help="Renderiza apenas um verbo do manifest (pula dist/bin/).")
@@ -646,66 +757,32 @@ def main() -> int:
         default=None,
         help="Sobrescreve destino dist/ (default: <repo>/dist/).",
     )
-    args = parser.parse_args()
+    return parser
 
-    if args.output_dir is not None:
-        _retarget_dist(args.output_dir)
 
-    manifest = load_manifest()
-    outputs = collect_outputs(manifest, only_verb=args.verb)
-    if not args.verb:
-        outputs = outputs + collect_bin_outputs() + collect_template_outputs()
-
+def _dispatch(args: argparse.Namespace, paths: Paths) -> int:
+    outputs = collect_all_outputs(paths, args.verb)
     if not outputs:
         sys.stderr.write("Aviso: nenhum alvo a renderizar (manifest vazio ou --verb nao bate).\n")
         return 0
-
     if args.check_orphans:
-        orphans = find_orphans(outputs)
-        if not orphans:
-            print("OK: nenhum orfao em dist/.")
-            return 0
-        print("Arquivos orfaos (em dist/ sem origem no manifest/motor):\n", file=sys.stderr)
-        for path in orphans:
-            print(f"  - {path.relative_to(ROOT)}", file=sys.stderr)
-        return 1
-
+        return _run_check_orphans(outputs, paths)
     if args.check:
-        stale = check_outputs(outputs)
-        if stale:
-            print(
-                "Arquivos gerados estao desatualizados em relacao ao manifest/motor/wrapper:\n",
-                file=sys.stderr,
-            )
-            for p in stale:
-                print(f"  - {p.relative_to(ROOT)}", file=sys.stderr)
-            print("\nRode: python core/build/render-skills.py", file=sys.stderr)
-            return 1
-        print(f"OK: {len(outputs)} alvo(s) em sincronia com o manifest.")
-        return 0
+        return _run_check(outputs, paths)
+    return _run_render(outputs, paths, args.clean)
 
-    written = write_outputs(outputs)
-    cleaned: list[Path] = []
-    if args.clean:
-        cleaned = clean_orphans(outputs)
-    if not written and not cleaned:
-        print(f"OK: {len(outputs)} alvo(s) ja estavam atualizados. Nada gravado.")
-        return 0
-    if written:
-        print(f"Renderizados {len(written)} arquivo(s) de {len(outputs)} alvo(s):")
-        for p in written:
-            try:
-                print(f"  + {p.relative_to(ROOT)}")
-            except ValueError:
-                print(f"  + {p}")
-    if cleaned:
-        print(f"Apagados {len(cleaned)} arquivo(s) orfao(s):")
-        for p in cleaned:
-            try:
-                print(f"  - {p.relative_to(ROOT)}")
-            except ValueError:
-                print(f"  - {p}")
-    return 0
+
+def main(argv: list[str] | None = None) -> int:
+    args = _build_arg_parser().parse_args(argv)
+    paths = Paths.build(ROOT, dist_dir=args.output_dir)
+    try:
+        return _dispatch(args, paths)
+    except RenderError as exc:
+        message = str(exc)
+        if not message.endswith("\n"):
+            message += "\n"
+        sys.stderr.write(message)
+        return 2
 
 
 if __name__ == "__main__":

@@ -18,6 +18,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 
 from conftest_paths import REPO_ROOT
@@ -55,14 +56,28 @@ def _sandbox_manifest(tmp: Path, bodies: dict[str, str], manifest_yaml: str) -> 
     return manifest_dir, manifest_file
 
 
+def _paths_for(module, manifest_dir: Path, manifest_file: Path):
+    """Constroi um Paths apontando o manifest para o sandbox (D-059).
+
+    Substitui o antigo monkeypatch de globais (module.MANIFEST_DIR/MANIFEST)
+    pela injecao explicita de config que a nova API exige.
+    """
+    base = module.Paths.build(REPO_ROOT)
+    return replace(
+        base,
+        manifest_dir=manifest_dir,
+        manifest=manifest_file,
+        bodies_dir=manifest_dir / "bodies",
+    )
+
+
 def _render_in_sandbox(manifest_dir: Path, manifest_file: Path, module_name: str):
-    """Executa collect_outputs apos patchear MANIFEST_DIR / MANIFEST."""
+    """Executa collect_outputs com Paths apontado para o sandbox."""
     module = _load_render_module(module_name)
-    module.MANIFEST_DIR = manifest_dir
-    module.MANIFEST = manifest_file
+    paths = _paths_for(module, manifest_dir, manifest_file)
     try:
-        manifest_data = module.load_manifest()
-        return module.collect_outputs(manifest_data)
+        manifest_data = module.load_manifest(paths)
+        return module.collect_outputs(manifest_data, paths)
     finally:
         sys.modules.pop(module_name, None)
 
@@ -168,12 +183,10 @@ class GuardTests(unittest.TestCase):
                 _MINIMAL_MANIFEST,
             )
             module = _load_render_module("render_probe_missing")
-            module.MANIFEST_DIR = mdir
-            module.MANIFEST = mfile
+            paths = _paths_for(module, mdir, mfile)
             try:
-                with self.assertRaises(SystemExit) as ctx:
-                    module.collect_outputs(module.load_manifest())
-                self.assertEqual(ctx.exception.code, 2)
+                with self.assertRaises(module.RenderError):
+                    module.collect_outputs(module.load_manifest(paths), paths)
             finally:
                 sys.modules.pop("render_probe_missing", None)
 
@@ -185,12 +198,10 @@ class GuardTests(unittest.TestCase):
                 _MINIMAL_MANIFEST,
             )
             module = _load_render_module("render_probe_traversal")
-            module.MANIFEST_DIR = mdir
-            module.MANIFEST = mfile
+            paths = _paths_for(module, mdir, mfile)
             try:
-                with self.assertRaises(SystemExit) as ctx:
-                    module.collect_outputs(module.load_manifest())
-                self.assertEqual(ctx.exception.code, 2)
+                with self.assertRaises(module.RenderError):
+                    module.collect_outputs(module.load_manifest(paths), paths)
             finally:
                 sys.modules.pop("render_probe_traversal", None)
 
@@ -206,12 +217,10 @@ class GuardTests(unittest.TestCase):
                 _MINIMAL_MANIFEST,
             )
             module = _load_render_module("render_probe_cycle")
-            module.MANIFEST_DIR = mdir
-            module.MANIFEST = mfile
+            paths = _paths_for(module, mdir, mfile)
             try:
-                with self.assertRaises(SystemExit) as ctx:
-                    module.collect_outputs(module.load_manifest())
-                self.assertEqual(ctx.exception.code, 2)
+                with self.assertRaises(module.RenderError):
+                    module.collect_outputs(module.load_manifest(paths), paths)
             finally:
                 sys.modules.pop("render_probe_cycle", None)
 
@@ -290,12 +299,10 @@ class IncludePerTargetTests(unittest.TestCase):
                 _DUAL_TARGET_MANIFEST,
             )
             module = _load_render_module("render_probe_pertarget_missing")
-            module.MANIFEST_DIR = mdir
-            module.MANIFEST = mfile
+            paths = _paths_for(module, mdir, mfile)
             try:
-                with self.assertRaises(SystemExit) as ctx:
-                    module.collect_outputs(module.load_manifest())
-                self.assertEqual(ctx.exception.code, 2)
+                with self.assertRaises(module.RenderError):
+                    module.collect_outputs(module.load_manifest(paths), paths)
             finally:
                 sys.modules.pop("render_probe_pertarget_missing", None)
 

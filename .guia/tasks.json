@@ -2,6 +2,174 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-059",
+      "kind": "chore",
+      "title": "Refactor render-skills: config DI + RenderError",
+      "status": "Validada",
+      "origin": "Guia Fluxo (2026-06-10)",
+      "context": "Refactor de qualidade em core/build/render-skills.py sem mudanca de comportamento externo. P1: trocar estado global mutavel (DIST_DIR/MANIFEST_DIR e derivados) por objeto de config injetado. P2: substituir sys.exit(2) interno por excecao RenderError capturada no main(). P3: centralizar conhecimento de targets num registro unico (fecha OCP). P4: remover codigo morto TARGET_LABELS e BODIES_DIR. P5: extrair handlers por modo do main(). Mais 5 lacunas de teste: guarda do --clean sem flag preserva orfao, marcador ausente do wrapper aborta, reserved frontmatter key aborta, idempotencia de write_outputs, _validate_template_set aborta com template nao declarado. Criterio de sucesso: todos os testes existentes continuam passando + render --check verde.",
+      "createdAt": "2026-06-10",
+      "updatedAt": "2026-06-10",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "core/build/render-skills.py",
+        "tests/test_render_includes.py",
+        "tests/test_render_polish.py",
+        "tests/test_render_hardening.py",
+        ".guia/current-task.json",
+        ".guia/tasks.json"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo.",
+        "P1: estado global mutavel substituido por dataclass Paths (frozen) injetada; load_manifest/collect_outputs/collect_bin_outputs/collect_template_outputs/find_orphans/clean_orphans agora recebem paths",
+        "P2: sys.exit(2) interno trocado por RenderError; main() captura e mapeia para exit 2 (CLI mantem o mesmo contrato de exit code)",
+        "P3: registro TARGETS (TargetSpec) concentra nome/diretorio/host_suffix/label por host; fim dos if target== espalhados",
+        "P4: removidos TARGET_LABELS e BODIES_DIR (codigo morto confirmado por grep)",
+        "P5: main() dividido em _build_arg_parser/_dispatch/_run_check/_run_check_orphans/_run_render + helper _rel",
+        "Testes white-box migrados para a nova API (Paths via dataclasses.replace; RenderError no lugar de SystemExit). Novo tests/test_render_hardening.py cobre 5 lacunas: --clean opt-in, marcador do wrapper, frontmatter reservado, idempotencia, template nao declarado",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "python core/build/render-skills.py --check (OK: 53 alvos em sincronia, zero churn no dist/)",
+        "python core/build/render-skills.py --check-orphans (OK: nenhum orfao)",
+        "pytest render suite (51 passed: 42 existentes + 9 novos)"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-059",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-059",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [],
+        "checkedAt": "2026-06-10",
+        "skipped": "refactor interno do renderer (build script); saida dist/ byte-identica, sem mudanca user-facing nem arquitetural"
+      }
+    },
+    {
+      "id": "D-058",
+      "kind": "feature",
+      "title": "Spike: instalar em projeto-teste e mapear experiencia real do consumidor",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-10)",
+      "context": "Objetivo: antes de implementar D-055 (renomear FEATURES.md), D-056 (mover features/ para .guia/) e D-057 (rename de chat), criar um projeto-teste vazio e rodar install.ps1 nele para ver exatamente o que o usuario recebe hoje. Isso serve dois propositos: (1) Validar o que funciona e o que esta estranho na visao do consumidor - quais pastas aparecem, o que o Claude Code detecta, se o doctor passa, se as skills disparam, se o fluxo feature -> ready -> finish funciona end-to-end. (2) Usar a experiencia real para priorizar e detalhar os backlogs estruturais (D-053, D-055, D-056) com evidencias concretas em vez de suposicoes. Passos sugeridos: (a) criar pasta vazia em algum lugar fora do repo-mae (ex: C:/dev/guia-teste); (b) rodar: .\\install.ps1 -Target C:/dev/guia-teste -DryRun para previa; (c) rodar sem DryRun; (d) abrir o projeto no Claude Code e verificar se o plugin e detectado; (e) criar uma demanda de teste, rodar ready + finish; (f) documentar o que ficou confuso, o que estava faltando, o que soou errado no nome/layout. Resultado esperado: lista de ajustes priorizados que alimenta D-053/D-055/D-056 com contexto real.",
+      "createdAt": "2026-06-10",
+      "updatedAt": "2026-06-10",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-057",
+      "kind": "feature",
+      "title": "Script de rename automatico do chat Claude a partir de chat-title.txt",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-09)",
+      "context": "Problema: o agente escreve o titulo correto em .guia/chat-title.txt e imprime 'NOME DO CHAT: ...' mas nao consegue aplicar /rename automaticamente dentro do Claude Code (e um comando interno do chat, nao parametro de CLI). Workaround atual: usuario copia o titulo manualmente. Solucao desejada: um script externo (core/bin/guia-rename.ps1 ou similar) que leia .guia/chat-title.txt e acione o rename pelo mecanismo disponivel. Opcoes a avaliar: (1) claude --rename 'titulo' se o CLI suportar (verificar docs do Claude Code CLI); (2) mark_chapter como substituto de rename dentro do Claude Code (ja implementado em post_cli.claude.md); (3) launcher que passa o titulo como --session-name ao criar nova sessao (relacionado a D-048 - Launcher de terminal); (4) MCP tool mcp__ccd_session__mark_chapter que ja existe e pode ser chamado pelo proprio agente sem script externo. Avaliar se o problema real e o rename em sessao existente (script externo necessario) ou o titulo na criacao (D-048 resolve). Dependencia: descobrir se Claude Code CLI expoe algum mecanismo de rename de sessao em andamento.",
+      "createdAt": "2026-06-09",
+      "updatedAt": "2026-06-09",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-056",
+      "kind": "feature",
+      "title": "Racionalizar estrutura de pastas: features/ para dentro de .guia/, clarificar separacao ferramenta-vs-dados",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-09)",
+      "context": "Tres problemas identificados: (1) features/ (registry.yaml + lock-ignore.txt) esta na raiz do projeto consumidor, mas e dado do processo da ferramenta - deveria estar em .guia/features/ ou .guia/locks/ junto do restante do processo. Hoje REGISTRY_FILE = ROOT / 'features' / 'registry.yaml' em _constants.py. Mover exige: atualizar _constants.py, atualizar install.ps1, atualizar docs/reference/files.md, migrar projetos existentes. (2) Confusao sobre o que e ferramenta vs dados: no repo-fonte, dist/ serve diretamente como plugin via extraKnownMarketplaces - o usuario-dev nao ve .guia-fluxo/ porque esta dentro do proprio repo. No projeto consumidor, install.ps1 cria .guia-fluxo/ (ferramenta) e .guia/ (dados). Essa distincao nao esta documentada claramente no README/CONTRIBUTING. (3) Suficiencia para operacao: .agents/skills/ + .claude-plugin/ nao sao suficientes sozinhos - bin/ (motor Python) e obrigatorio para execucao real. O doctor deveria checar se bin/ existe no layout consumidor e alertar quando falta. Escopo da tarefa: mover features/ para .guia/features/, atualizar todos os caminhos, adicionar verificacao no doctor, atualizar docs descrevendo os dois contextos (dev vs consumidor).",
+      "createdAt": "2026-06-09",
+      "updatedAt": "2026-06-09",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-055",
+      "kind": "feature",
+      "title": "Renomear FEATURES.md e implementar arquivamento de demandas antigas",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-09)",
+      "context": "Dois problemas: (1) Nome 'FEATURES.md' nao reflete a realidade atual - o arquivo guarda features, bugs e chores (o guarda-chuva e 'demanda'). Candidatos: DEMANDAS.md, HISTORICO.md, DEMANDS.md. (2) Tamanho: o arquivo cresce indefinidamente. Hoje tem 122KB com 52+ demandas e vai piorar. Custo real: agente carregando o arquivo inteiro no contexto a cada operacao. Solucao proposta: manter somente as N ultimas demandas (parametro em process.json, default 20-30) no arquivo ativo; mover demandas mais antigas para DEMANDAS.archive.md (ou .guia/historico/YYYY-MM.md). Para o bloqueio de leitura por IA: adicionar uma linha no topo do arquivo de arquivo como '<!-- guia-fluxo: archive=true ai-skip=true -->' que o agente pode verificar antes de carregar. Impacto tecnico: _features_md.py (upsert_features_entry), _tasks.py (format/display), _constants.py (path do arquivo). Avaliar se FEATURES.md fica na raiz ou vai para .guia/ junto dos outros arquivos de processo.",
+      "createdAt": "2026-06-09",
+      "updatedAt": "2026-06-09",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-054",
+      "kind": "feature",
+      "title": "Enriquecer mensagem de commit com resumo do que foi feito",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-09)",
+      "context": "Hoje o commit gerado pelo finish tem formato minimo: '{kind}: {title}\\n\\nTask: {id}'. Nao ha resumo do que mudou, quais validacoes passaram, ou referencia ao contexto. Melhorias possiveis: (1) incluir o campo summary da task no corpo do commit (o que foi feito); (2) incluir validacoes que passaram; (3) listar arquivos modificados de forma legivel (ja esta em modifiedFiles mas nao aparece no commit); (4) permitir que o agente passe --commit-body 'texto adicional' no finish para complementar a mensagem automatica; (5) avaliar se o formato deveria seguir Conventional Commits mais estritamente (scope, breaking change). Cuidado: a mensagem de commit atual e simples de parsear por ferramentas - nao complexificar sem motivo claro.",
+      "createdAt": "2026-06-09",
+      "updatedAt": "2026-06-09",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-053",
+      "kind": "feature",
+      "title": "Reorganizar core/src/ em subpastas por camada (cli/, domain/, infra/, shared/)",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-09)",
+      "context": "Hoje core/src/ tem 19 arquivos flat. Proposta: cli/ (guia.py, _cli_creation, _cli_lifecycle, _cli_tasks, _cli_meta), domain/ (_tasks, _features_md, _docs_hook, _locks, _commit, _worktree, _validation_runner), infra/ (_git_ops, _state, _reports), shared/ (_constants, _clock, _paths, _process_config). Nao trivial: o build render-skills.py copia os arquivos flat para dist/bin/, entao a reorganizacao exige: (1) atualizar todos os imports de 'from _X import' para 'from camada._X import' ou usar __init__.py re-exportando; (2) atualizar o build para copiar recursivamente ou aplanar na copia; (3) garantir que o layout flat do dist/ continue funcionando. Fazer como chore com suite de testes passando antes e depois.",
+      "createdAt": "2026-06-09",
+      "updatedAt": "2026-06-09",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-052",
+      "kind": "feature",
+      "title": "Record task timestamps and execution stats",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-08)",
+      "context": "Today tasks store only createdAt and updatedAt as dates (no time component). Goal: capture richer timing data to support performance/throughput analysis later.\n\nRequired signals (minimum):\n- startedAt: precise timestamp when status transitions to Em desenvolvimento (covers both /feature|/bug|/chore created at status=in-development AND /start|/promote from Backlog/Planejada).\n- finishedAt: precise timestamp when status reaches a terminal state (Finalizada / Cancelada).\n- elapsedTotal: finishedAt - startedAt (wall-clock, including pauses).\n\nStretch (worth considering):\n- readyAt: timestamp when agent runs /ready (lets us measure dev time vs validation wait time separately).\n- blocks[]: each block already has reason, but extend with blockedAt + unblockedAt timestamps so we can compute elapsedBlocked = sum(unblockedAt - blockedAt). Then activeTime = elapsedTotal - elapsedBlocked.\n- per-phase counts: how many times the task was blocked/unblocked, how many ready->finish cycles (if we ever allow ready being re-triggered).\n\nUse cases:\n- Average time-to-validation per kind (feature vs bug vs chore).\n- Time spent blocked vs actively developed.\n- Detect tasks that sit too long in Aguardando validacao (process bottleneck).\n\nNotes for implementation:\n- Use ISO-8601 with timezone (avoid the createdAt: '2026-06-08' format - need full datetime).\n- Backfill old tasks: leave new fields null for tasks created before the change (do not invent timestamps).\n- Probably touches: _clock.py (timestamp source), _tasks.py (new_task + transition helpers), _cli_creation.py + _cli_lifecycle.py (set the new fields), _features_md.py / _reports.py (surface the new data), .guia/process.json (schema bump?), tasks.json schemaVersion bump.\n- Add a 'stats' subcommand or extend 'tasks show --json' to expose computed elapsedTotal/activeTime.\n- Test coverage: a new test file simulating create -> block -> unblock -> ready -> finish and asserting the elapsed math.",
+      "createdAt": "2026-06-08",
+      "updatedAt": "2026-06-08",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
       "id": "D-051",
       "kind": "chore",
       "title": "Strip legacy mentions and rebalance trigger descriptions",

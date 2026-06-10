@@ -2,6 +2,44 @@
 
 ---
 
+## [D-059] 🧹 Refactor render-skills: config DI + RenderError
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-10)
+- **Tipo:** Chore
+- **Contexto:** Refactor de qualidade em core/build/render-skills.py sem mudanca de comportamento externo. P1: trocar estado global mutavel (DIST_DIR/MANIFEST_DIR e derivados) por objeto de config injetado. P2: substituir sys.exit(2) interno por excecao RenderError capturada no main(). P3: centralizar conhecimento de targets num registro unico (fecha OCP). P4: remover codigo morto TARGET_LABELS e BODIES_DIR. P5: extrair handlers por modo do main(). Mais 5 lacunas de teste: guarda do --clean sem flag preserva orfao, marcador ausente do wrapper aborta, reserved frontmatter key aborta, idempotencia de write_outputs, _validate_template_set aborta com template nao declarado. Criterio de sucesso: todos os testes existentes continuam passando + render --check verde.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/build/render-skills.py`
+- `tests/test_render_includes.py`
+- `tests/test_render_polish.py`
+- `tests/test_render_hardening.py`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- P1: estado global mutavel substituido por dataclass Paths (frozen) injetada; load_manifest/collect_outputs/collect_bin_outputs/collect_template_outputs/find_orphans/clean_orphans agora recebem paths
+- P2: sys.exit(2) interno trocado por RenderError; main() captura e mapeia para exit 2 (CLI mantem o mesmo contrato de exit code)
+- P3: registro TARGETS (TargetSpec) concentra nome/diretorio/host_suffix/label por host; fim dos if target== espalhados
+- P4: removidos TARGET_LABELS e BODIES_DIR (codigo morto confirmado por grep)
+- P5: main() dividido em _build_arg_parser/_dispatch/_run_check/_run_check_orphans/_run_render + helper _rel
+- Testes white-box migrados para a nova API (Paths via dataclasses.replace; RenderError no lugar de SystemExit). Novo tests/test_render_hardening.py cobre 5 lacunas: --clean opt-in, marcador do wrapper, frontmatter reservado, idempotencia, template nao declarado
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- python core/build/render-skills.py --check (OK: 53 alvos em sincronia, zero churn no dist/)
+- python core/build/render-skills.py --check-orphans (OK: nenhum orfao)
+- pytest render suite (51 passed: 42 existentes + 9 novos)
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-051] 🧹 Strip legacy mentions and rebalance trigger descriptions
 
 - **Status:** Validada

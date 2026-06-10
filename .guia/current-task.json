@@ -1,6 +1,6 @@
 {
-  "taskId": "D-051",
+  "taskId": "D-059",
   "status": "Validada",
-  "title": "Strip legacy mentions and rebalance trigger descriptions",
-  "chatTitle": "D-051 \ud83e\uddf9 - #FINALIZADO - Strip legacy mentions and rebalance trigger descriptions"
+  "title": "Refactor render-skills: config DI + RenderError",
+  "chatTitle": "D-059 \ud83e\uddf9 - #FINALIZADO - Refactor render-skills: config DI + RenderError"
 }

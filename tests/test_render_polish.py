@@ -7,11 +7,27 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 
 import yaml
 
 from conftest_paths import REPO_ROOT
+
+
+def _sandbox_paths(module, manifest_dir: Path, manifest_file: Path):
+    """Paths apontando o manifest para o sandbox de teste (D-059).
+
+    Substitui o antigo monkeypatch de module.MANIFEST_DIR/MANIFEST pela
+    injecao de config que a API refatorada exige.
+    """
+    base = module.Paths.build(REPO_ROOT)
+    return replace(
+        base,
+        manifest_dir=manifest_dir,
+        manifest=manifest_file,
+        bodies_dir=manifest_dir / "bodies",
+    )
 
 RENDER = REPO_ROOT / "core" / "build" / "render-skills.py"
 
@@ -109,10 +125,9 @@ class FrontmatterExtrasTests(unittest.TestCase):
             sys.modules["render_skills_probe"] = module
             try:
                 spec.loader.exec_module(module)
-                module.MANIFEST_DIR = tmp_manifest_dir
-                module.MANIFEST = tmp_manifest
-                manifest_data = module.load_manifest()
-                outputs = module.collect_outputs(manifest_data)
+                paths = _sandbox_paths(module, tmp_manifest_dir, tmp_manifest)
+                manifest_data = module.load_manifest(paths)
+                outputs = module.collect_outputs(manifest_data, paths)
                 test_output = next(o for o in outputs if o.name == "test" and o.target == "claude_skill")
                 content = test_output.content
                 self.assertIn("allowed-tools: [Read, Edit]", content)
@@ -154,10 +169,9 @@ class SharedBodyExplicitTests(unittest.TestCase):
             sys.modules["render_skills_probe2"] = module
             try:
                 spec.loader.exec_module(module)
-                module.MANIFEST_DIR = tmp_manifest_dir
-                module.MANIFEST = tmp_manifest
-                manifest_data = module.load_manifest()
-                outputs = module.collect_outputs(manifest_data)
+                paths = _sandbox_paths(module, tmp_manifest_dir, tmp_manifest)
+                manifest_data = module.load_manifest(paths)
+                outputs = module.collect_outputs(manifest_data, paths)
                 # 2 outputs (agent + claude) ambos com `# Shared` no corpo
                 self.assertEqual(len(outputs), 2)
                 for output in outputs:
@@ -195,9 +209,8 @@ class SharedBodyExplicitTests(unittest.TestCase):
             sys.modules["render_skills_probe3"] = module
             try:
                 spec.loader.exec_module(module)
-                module.MANIFEST_DIR = tmp_manifest_dir
-                module.MANIFEST = tmp_manifest
-                outputs = module.collect_outputs(module.load_manifest())
+                paths = _sandbox_paths(module, tmp_manifest_dir, tmp_manifest)
+                outputs = module.collect_outputs(module.load_manifest(paths), paths)
                 agent_out = next(o for o in outputs if o.target == "agent_skill")
                 claude_out = next(o for o in outputs if o.target == "claude_skill")
                 self.assertIn("# Shared", agent_out.content)
