@@ -1,6 +1,6 @@
 {
-  "taskId": "D-069",
+  "taskId": "D-068",
   "status": "Validada",
-  "title": "Corrigir drift de docs: verbo issue removido",
-  "chatTitle": "D-069 \ud83e\uddf9 - #FINALIZADO - Corrigir drift de docs: verbo issue removido"
+  "title": "CI roda pytest em matrix Windows+Linux",
+  "chatTitle": "D-068 \ud83e\uddf9 - #FINALIZADO - CI roda pytest em matrix Windows+Linux"
 }

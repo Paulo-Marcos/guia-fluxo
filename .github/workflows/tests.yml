@@ -1,0 +1,40 @@
+# Roda a suite pytest (tests/) em matrix Windows + Linux x Python 3.10/3.12.
+# Ate aqui nenhum workflow exercitava tests/ - so render-check (doctor +
+# render --check) e lock-check. Este fecha o pilar "Testes + CI": cada push
+# em main e cada pull_request roda a suite em ambos os SOs para pegar
+# regressao cross-plataforma (ex.: encoding cp1252 vs UTF-8 no Windows).
+#
+# O pack roda com stdlib + pyyaml; pytest e a unica dependencia extra de
+# teste. Sem pyproject/pytest.ini: pytest descobre tests/ pela raiz sem config.
+
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: pytest (${{ matrix.os }}, py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.10', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install deps (pyyaml + pytest)
+        run: pip install pyyaml pytest
+
+      - name: pytest
+        run: pytest

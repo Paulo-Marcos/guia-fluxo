@@ -34,6 +34,7 @@ def _run(sandbox: Path, *args: str) -> subprocess.CompletedProcess[str]:
         cwd=sandbox,
         capture_output=True,
         text=True,
+        encoding="utf-8",  # CLI emite UTF-8 (emoji markers); Windows default e cp1252.
     )
 
 
@@ -42,7 +43,7 @@ class TasksListTests(unittest.TestCase):
         _seed(sandbox)
         self.assertEqual(_run(sandbox, "init", "--project-name", "t").returncode, 0)
         self.assertEqual(_run(sandbox, "feature", "First").returncode, 0)
-        self.assertEqual(_run(sandbox, "issue", "Bug A").returncode, 0)
+        self.assertEqual(_run(sandbox, "bug", "Bug A").returncode, 0)
         self.assertEqual(_run(sandbox, "feature", "Second").returncode, 0)
 
     def test_list_returns_all(self) -> None:
@@ -51,7 +52,7 @@ class TasksListTests(unittest.TestCase):
             self._setup_three_tasks(sandbox)
             result = _run(sandbox, "tasks", "list")
             self.assertEqual(result.returncode, 0, msg=result.stderr)
-            lines = [l for l in result.stdout.splitlines() if l.startswith(("F-", "I-"))]
+            lines = [l for l in result.stdout.splitlines() if l.startswith("D-")]
             self.assertEqual(len(lines), 3)
 
     def test_list_json(self) -> None:
@@ -70,7 +71,7 @@ class TasksListTests(unittest.TestCase):
             self._setup_three_tasks(sandbox)
             result = _run(sandbox, "tasks", "list", "--limit", "2")
             self.assertEqual(result.returncode, 0)
-            lines = [l for l in result.stdout.splitlines() if l.startswith(("F-", "I-"))]
+            lines = [l for l in result.stdout.splitlines() if l.startswith("D-")]
             self.assertEqual(len(lines), 2)
 
 
@@ -81,10 +82,10 @@ class TasksShowTests(unittest.TestCase):
             _seed(sandbox)
             _run(sandbox, "init", "--project-name", "t")
             _run(sandbox, "feature", "Hello")
-            result = _run(sandbox, "tasks", "show", "F-001", "--json")
+            result = _run(sandbox, "tasks", "show", "D-001", "--json")
             self.assertEqual(result.returncode, 0, msg=result.stderr)
             task = json.loads(result.stdout)
-            self.assertEqual(task["id"], "F-001")
+            self.assertEqual(task["id"], "D-001")
             self.assertEqual(task["title"], "Hello")
 
     def test_show_missing_exits_1(self) -> None:
@@ -103,10 +104,10 @@ class TasksFilterTests(unittest.TestCase):
         _seed(sandbox)
         _run(sandbox, "init", "--project-name", "t")
         _run(sandbox, "feature", "Feat1")
-        _run(sandbox, "issue", "Issue1")
+        _run(sandbox, "bug", "Issue1")
         _run(sandbox, "feature", "Feat2")
-        # ready Feat2 para mudar status
-        _run(sandbox, "ready", "F-002", "--summary", "ready")
+        # ready Feat2 (D-003) para mudar status
+        _run(sandbox, "ready", "D-003", "--summary", "ready")
 
     def test_filter_by_status(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -116,17 +117,17 @@ class TasksFilterTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, msg=result.stderr)
             payload = json.loads(result.stdout)
             self.assertEqual(payload["count"], 1)
-            self.assertEqual(payload["tasks"][0]["id"], "F-002")
+            self.assertEqual(payload["tasks"][0]["id"], "D-003")
 
     def test_filter_by_kind(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             sandbox = Path(tmp)
             self._setup(sandbox)
-            result = _run(sandbox, "tasks", "filter", "--kind", "issue", "--json")
+            result = _run(sandbox, "tasks", "filter", "--kind", "bug", "--json")
             self.assertEqual(result.returncode, 0, msg=result.stderr)
             payload = json.loads(result.stdout)
             self.assertEqual(payload["count"], 1)
-            self.assertEqual(payload["tasks"][0]["kind"], "issue")
+            self.assertEqual(payload["tasks"][0]["kind"], "bug")
 
     def test_filter_combined(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -145,7 +146,7 @@ class TasksFilterTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, msg=result.stderr)
             payload = json.loads(result.stdout)
             self.assertEqual(payload["count"], 1)
-            self.assertEqual(payload["tasks"][0]["id"], "F-001")
+            self.assertEqual(payload["tasks"][0]["id"], "D-001")
 
 
 if __name__ == "__main__":

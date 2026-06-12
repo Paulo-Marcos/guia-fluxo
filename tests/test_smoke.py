@@ -45,15 +45,16 @@ class SmokeTest(unittest.TestCase):
                     check=True,
                     capture_output=True,
                     text=True,
+                    encoding="utf-8",  # CLI emite UTF-8 (emoji markers); Windows default e cp1252.
                 )
 
             run("init", "--project-name", "smoke")
             run("feature", "smoke")
-            run("ready", "F-001", "--summary", "smoke entregue")
-            run("finish", "F-001", "--no-commit", "--summary", "smoke fechado")
+            run("ready", "D-001", "--summary", "smoke entregue")
+            run("finish", "D-001", "--no-commit", "--summary", "smoke fechado")
 
             tasks = json.loads((sandbox / ".guia" / "tasks.json").read_text(encoding="utf-8"))
-            task = next(t for t in tasks["tasks"] if t["id"] == "F-001")
+            task = next(t for t in tasks["tasks"] if t["id"] == "D-001")
             self.assertEqual(task["status"], "Validada")
 
 

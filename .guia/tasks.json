@@ -80,22 +80,76 @@
       "id": "D-068",
       "kind": "chore",
       "title": "CI roda pytest em matrix Windows+Linux",
-      "status": "Em desenvolvimento",
+      "status": "Validada",
       "origin": "Guia Fluxo (2026-06-11)",
       "context": "Pilar 'Testes + CI' do artigo Akita (boas praticas OSS na era LLM). A suite em tests/ (20+ arquivos) nao roda em nenhum workflow hoje: so render-check (doctor + render --check) e lock-check existem. Adicionar .github/workflows/tests.yml rodando pytest em push + pull_request, matrix ubuntu-latest + windows-latest (e 2 versoes de Python, ex. 3.10 e 3.12). Verificavel localmente: pytest verde + YAML valido. Maior gap / menor esforco do mapeamento. Independente: nao depende de publicar o repo (autoria local self-contained; ativa quando o repo for pro GitHub).",
       "createdAt": "2026-06-11",
-      "updatedAt": "2026-06-11",
+      "updatedAt": "2026-06-12",
       "modifiedFiles": [
-        "FEATURES.md"
+        "FEATURES.md",
+        ".github/workflows/tests.yml",
+        "tests/test_tasks_list.py",
+        "tests/test_tasks_domain.py",
+        "tests/test_features_md.py",
+        "tests/test_cli_promote_order.py",
+        "tests/test_smoke.py",
+        ".guia/current-task.json",
+        ".guia/tasks.json",
+        "CHANGELOG.md"
       ],
       "summary": [
         "Demanda criada via Guia Fluxo.",
-        "Em desenvolvimento desde 2026-06-11."
+        "Em desenvolvimento desde 2026-06-11.",
+        "Adicionado .github/workflows/tests.yml: pytest em matrix os=[ubuntu-latest,windows-latest] x python=[3.10,3.12], em push(main)+pull_request. Sem pytest.ini (pytest acha tests/ pela raiz). Instala so pyyaml+pytest.",
+        "Escopo expandido (decisao do dev): suite tinha 16 falhas pre-existentes - testes stale vs ADR-0011 (IDs neutros D-NNN + remocao do comando issue). Migrados test_tasks_list/domain/features_md/cli_promote_order/smoke para D-NNN, kind bug, rotulo 'Bug (legacy)', heading com emoji marker e modelo in-place de backlog/promote. Removido test_next_backlog (cobria next_backlog_id, funcao inexistente).",
+        "Fix cross-plataforma: helpers de subprocess dos testes decodificam stdout com encoding=utf-8 (CLI emite emoji via _bootstrap_utf8_io; Windows cp1252 quebrava no marker bug / byte 0x90).",
+        "Docs: entrada no CHANGELOG (Added=workflow CI; Fixed=migracao da suite ao ADR-0011 + fix cp1252/UTF-8).",
+        "Fechado sem commit: tests.yml e arquivo novo sob lock 'adicoes-exigem-autorizacao'; o commit precisa de [unlock:...] que o finish nao injeta."
       ],
-      "validations": [],
-      "pending": [
-        "Executar implementacao e validacoes."
-      ]
+      "validations": [
+        "pytest local verde: 136 passed (Windows)",
+        "render-skills.py --check verde (53 alvos em sincronia)",
+        "doctor verde (Guia Fluxo files OK)",
+        "tests.yml validado com yaml.safe_load (matrix os x python correto)"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-068",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-068",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md"
+        ],
+        "checkedAt": "2026-06-12",
+        "skipped": "FEATURES.md ja e atualizado pelo proprio finish; visao-geral/ADR sem mudanca arquitetural (D-068 = infra de CI + manutencao de testes)"
+      }
     },
     {
       "id": "D-067",

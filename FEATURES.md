@@ -44,7 +44,7 @@
 
 ## [D-068] 🧹 CI roda pytest em matrix Windows+Linux
 
-- **Status:** Em desenvolvimento
+- **Status:** Validada
 - **Origem:** Guia Fluxo (2026-06-11)
 - **Tipo:** Chore
 - **Contexto:** Pilar 'Testes + CI' do artigo Akita (boas praticas OSS na era LLM). A suite em tests/ (20+ arquivos) nao roda em nenhum workflow hoje: so render-check (doctor + render --check) e lock-check existem. Adicionar .github/workflows/tests.yml rodando pytest em push + pull_request, matrix ubuntu-latest + windows-latest (e 2 versoes de Python, ex. 3.10 e 3.12). Verificavel localmente: pytest verde + YAML valido. Maior gap / menor esforco do mapeamento. Independente: nao depende de publicar o repo (autoria local self-contained; ativa quando o repo for pro GitHub).
@@ -52,19 +52,36 @@
 ### Arquivos modificados/criados
 
 - `FEATURES.md`
+- `.github/workflows/tests.yml`
+- `tests/test_tasks_list.py`
+- `tests/test_tasks_domain.py`
+- `tests/test_features_md.py`
+- `tests/test_cli_promote_order.py`
+- `tests/test_smoke.py`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CHANGELOG.md`
 
 ### O que foi feito
 
 - Demanda criada via Guia Fluxo.
 - Em desenvolvimento desde 2026-06-11.
+- Adicionado .github/workflows/tests.yml: pytest em matrix os=[ubuntu-latest,windows-latest] x python=[3.10,3.12], em push(main)+pull_request. Sem pytest.ini (pytest acha tests/ pela raiz). Instala so pyyaml+pytest.
+- Escopo expandido (decisao do dev): suite tinha 16 falhas pre-existentes - testes stale vs ADR-0011 (IDs neutros D-NNN + remocao do comando issue). Migrados test_tasks_list/domain/features_md/cli_promote_order/smoke para D-NNN, kind bug, rotulo 'Bug (legacy)', heading com emoji marker e modelo in-place de backlog/promote. Removido test_next_backlog (cobria next_backlog_id, funcao inexistente).
+- Fix cross-plataforma: helpers de subprocess dos testes decodificam stdout com encoding=utf-8 (CLI emite emoji via _bootstrap_utf8_io; Windows cp1252 quebrava no marker bug / byte 0x90).
+- Docs: entrada no CHANGELOG (Added=workflow CI; Fixed=migracao da suite ao ADR-0011 + fix cp1252/UTF-8).
+- Fechado sem commit: tests.yml e arquivo novo sob lock 'adicoes-exigem-autorizacao'; o commit precisa de [unlock:...] que o finish nao injeta.
 
 ### Validacao feita
 
-- Nenhuma.
+- pytest local verde: 136 passed (Windows)
+- render-skills.py --check verde (53 alvos em sincronia)
+- doctor verde (Guia Fluxo files OK)
+- tests.yml validado com yaml.safe_load (matrix os x python correto)
 
 ### Validacao pendente
 
-- Executar implementacao e validacoes.
+- Nenhuma.
 
 ## [D-059] 🧹 Refactor render-skills: config DI + RenderError
 

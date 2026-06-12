@@ -39,6 +39,7 @@ def _run(sandbox: Path, *args: str) -> subprocess.CompletedProcess[str]:
         cwd=sandbox,
         capture_output=True,
         text=True,
+        encoding="utf-8",  # CLI emite UTF-8 (emoji markers); Windows default e cp1252.
     )
 
 
@@ -49,17 +50,22 @@ class PromoteOrderTests(unittest.TestCase):
             _seed_sandbox(sandbox)
             self.assertEqual(_run(sandbox, "init", "--project-name", "t").returncode, 0)
             self.assertEqual(_run(sandbox, "backlog", "add", "Future").returncode, 0)
-            result = _run(sandbox, "promote", "B-001", "--kind", "feature")
+            # ADR-0011: backlog add cria D-001 (status=Backlog) em tasks.json.
+            result = _run(sandbox, "promote", "D-001", "--kind", "feature")
             self.assertEqual(result.returncode, 0, msg=result.stderr)
             tasks = json.loads((sandbox / ".guia" / "tasks.json").read_text(encoding="utf-8"))
             backlog = json.loads((sandbox / ".guia" / "backlog.json").read_text(encoding="utf-8"))
-            self.assertTrue(any(t["id"] == "F-001" for t in tasks["tasks"]))
-            self.assertEqual(backlog["items"], [])  # item foi consumido
+            promoted = next((t for t in tasks["tasks"] if t["id"] == "D-001"), None)
+            self.assertIsNotNone(promoted)
+            self.assertEqual(promoted["status"], "Em desenvolvimento")  # saiu do Backlog
+            self.assertEqual(backlog["items"], [])  # backlog.json legacy permanece vazio
 
-    def test_promote_failure_keeps_backlog_intact(self) -> None:
+    def test_promote_failure_keeps_demand_intact(self) -> None:
         """Sem .git no sandbox, --worktree falha em git_branch_exists.
 
-        Esperado: backlog mantem o B-001 (nao foi consumido).
+        ADR-0011: o item de backlog vive em tasks.json (status=Backlog) e
+        promote o muta in-place. Esperado: a demanda D-001 nunca se perde -
+        fica preservada como Backlog (falha) ou ja promovida (sucesso).
         """
         with tempfile.TemporaryDirectory() as tmp:
             sandbox = Path(tmp)
@@ -69,7 +75,7 @@ class PromoteOrderTests(unittest.TestCase):
             result = _run(
                 sandbox,
                 "promote",
-                "B-001",
+                "D-001",
                 "--kind",
                 "feature",
                 "--worktree",
@@ -77,13 +83,17 @@ class PromoteOrderTests(unittest.TestCase):
                 "guia-fluxo/test-branch",
             )
             # Pode passar OU falhar dependendo do git no sandbox.
-            # O que NAO pode acontecer e: backlog vazio + task ausente.
-            backlog = json.loads((sandbox / ".guia" / "backlog.json").read_text(encoding="utf-8"))
+            # O que NAO pode acontecer e: a demanda sumir de tasks.json.
             tasks = json.loads((sandbox / ".guia" / "tasks.json").read_text(encoding="utf-8"))
-            has_task = any(t["id"] == "F-001" for t in tasks["tasks"])
-            has_backlog_item = any(it["id"] == "B-001" for it in backlog["items"])
-            # invariante: ou criou a task, ou preservou o backlog. Nunca os dois falhos.
-            self.assertTrue(has_task or has_backlog_item, msg=result.stderr)
+            demand = next((t for t in tasks["tasks"] if t["id"] == "D-001"), None)
+            # invariante: a demanda continua registrada, em Backlog (preservada)
+            # ou Em desenvolvimento (promovida). Nunca perdida.
+            self.assertIsNotNone(demand, msg=result.stderr)
+            self.assertIn(
+                demand["status"],
+                ("Backlog", "Em desenvolvimento"),
+                msg=result.stderr,
+            )
 
 
 if __name__ == "__main__":

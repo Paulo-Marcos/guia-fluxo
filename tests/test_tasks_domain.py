@@ -52,20 +52,19 @@ class NextIdTests(unittest.TestCase):
         _constants.FEATURES_FILE = self._original_features
         self._tmp.cleanup()
 
-    def test_next_feature_zero(self) -> None:
-        self.assertEqual(_tasks.next_task_id(KIND_FEATURE, []), "F-001")
+    def test_next_id_zero(self) -> None:
+        self.assertEqual(_tasks.next_task_id(KIND_FEATURE, []), "D-001")
 
-    def test_next_feature_after_existing(self) -> None:
+    def test_next_id_after_existing(self) -> None:
         existing = [{"id": "F-001"}, {"id": "F-002"}, {"id": "I-001"}]
-        self.assertEqual(_tasks.next_task_id(KIND_FEATURE, existing), "F-003")
+        self.assertEqual(_tasks.next_task_id(KIND_FEATURE, existing), "D-003")
 
-    def test_next_issue_independent_of_feature(self) -> None:
+    def test_next_id_monotonic_across_prefixes(self) -> None:
+        # ADR-0011: IDs sao neutros (D-NNN) e o kind e ignorado. A
+        # numeracao e monotonica considerando todos os prefixos vivos
+        # (D/F/I), entao D-NNN nunca colide com um F-/I- ja existente.
         existing = [{"id": "F-007"}, {"id": "I-002"}]
-        self.assertEqual(_tasks.next_task_id(KIND_ISSUE, existing), "I-003")
-
-    def test_next_backlog(self) -> None:
-        existing = [{"id": "B-001"}, {"id": "B-005"}]
-        self.assertEqual(_tasks.next_backlog_id(existing), "B-006")
+        self.assertEqual(_tasks.next_task_id(KIND_ISSUE, existing), "D-008")
 
 
 class MergeListTests(unittest.TestCase):

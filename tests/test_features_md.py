@@ -32,7 +32,7 @@ def _task(**overrides):
 class RenderBlockTests(unittest.TestCase):
     def test_includes_all_sections(self) -> None:
         rendered = _features_md.render_features_block(_task())
-        self.assertIn("## [F-001] Some title", rendered)
+        self.assertIn("## [F-001] ✨ Some title", rendered)
         self.assertIn("### Arquivos modificados/criados", rendered)
         self.assertIn("### O que foi feito", rendered)
         self.assertIn("### Validacao feita", rendered)
@@ -46,7 +46,7 @@ class RenderBlockTests(unittest.TestCase):
         self.assertEqual(_features_md.task_kind_label(_task()), "Feature")
         self.assertEqual(
             _features_md.task_kind_label(_task(kind=KIND_ISSUE)),
-            "Issue / regressao",
+            "Bug (legacy)",
         )
 
     def test_markdown_list_wrap(self) -> None:
