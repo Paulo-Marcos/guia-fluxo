@@ -2,6 +2,26 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-070",
+      "kind": "chore",
+      "title": "Docs quick wins: residuo CONTRIBUTING + llms.txt",
+      "status": "Planejada",
+      "origin": "Guia Fluxo (2026-06-12)",
+      "context": "Quick wins do mapeamento do artigo Akita (boas praticas OSS na era LLM). (a) Residuo do D-069: CONTRIBUTING.md tabela Tipos em uso ainda lista o verbo issue como atual (linha 78) - trocar para bug via /bug. (b) Avaliar/criar llms.txt minimo na raiz apontando para AGENTS.md, CLAUDE.md, README e docs. Independente de publicar o repo.",
+      "createdAt": "2026-06-12",
+      "updatedAt": "2026-06-12",
+      "modifiedFiles": [
+        "FEATURES.md"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo."
+      ],
+      "validations": [],
+      "pending": [
+        "Executar implementacao e validacoes."
+      ]
+    },
+    {
       "id": "D-069",
       "kind": "chore",
       "title": "Corrigir drift de docs: verbo issue removido",

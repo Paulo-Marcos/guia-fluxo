@@ -2,6 +2,30 @@
 
 ---
 
+## [D-070] 🧹 Docs quick wins: residuo CONTRIBUTING + llms.txt
+
+- **Status:** Planejada
+- **Origem:** Guia Fluxo (2026-06-12)
+- **Tipo:** Chore
+- **Contexto:** Quick wins do mapeamento do artigo Akita (boas praticas OSS na era LLM). (a) Residuo do D-069: CONTRIBUTING.md tabela Tipos em uso ainda lista o verbo issue como atual (linha 78) - trocar para bug via /bug. (b) Avaliar/criar llms.txt minimo na raiz apontando para AGENTS.md, CLAUDE.md, README e docs. Independente de publicar o repo.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Executar implementacao e validacoes.
+
+
 ## [D-069] 🧹 Corrigir drift de docs: verbo issue removido
 
 - **Status:** Validada

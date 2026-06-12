@@ -1,6 +1,6 @@
 {
-  "taskId": "D-068",
-  "status": "Validada",
-  "title": "CI roda pytest em matrix Windows+Linux",
-  "chatTitle": "D-068 \ud83e\uddf9 - #FINALIZADO - CI roda pytest em matrix Windows+Linux"
+  "taskId": "D-070",
+  "status": "Planejada",
+  "title": "Docs quick wins: residuo CONTRIBUTING + llms.txt",
+  "chatTitle": "D-070 \ud83e\uddf9 - #PLANEJADA - Docs quick wins: residuo CONTRIBUTING + llms.txt"
 }
