@@ -33,7 +33,7 @@ Nao recomendado. O workflow `.github/workflows/lock-check.yml` re-checa no PR e 
 
 O pack atualmente expoe apenas `commit-msg`. Hooks adicionais sao opcionais e devem ser tratados como guarda-corpo, nao como substituto do script:
 
-- `UserPromptSubmit`: lembrar de rodar `/feature` ou `/issue` se nao houver task ativa.
+- `UserPromptSubmit`: lembrar de rodar `/feature` ou `/bug` se nao houver task ativa.
 - `PreToolUse`: checar `features/registry.yaml` antes de editar.
 - `PostToolUse`: sugerir registrar arquivos na demanda atual.
 - `Stop`: avisar se houve mudanca sem `/ready` ou sem `finish`.

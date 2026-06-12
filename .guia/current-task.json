@@ -1,6 +1,6 @@
 {
-  "taskId": "D-059",
+  "taskId": "D-069",
   "status": "Validada",
-  "title": "Refactor render-skills: config DI + RenderError",
-  "chatTitle": "D-059 \ud83e\uddf9 - #FINALIZADO - Refactor render-skills: config DI + RenderError"
+  "title": "Corrigir drift de docs: verbo issue removido",
+  "chatTitle": "D-069 \ud83e\uddf9 - #FINALIZADO - Corrigir drift de docs: verbo issue removido"
 }

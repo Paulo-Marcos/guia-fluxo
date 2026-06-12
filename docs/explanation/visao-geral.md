@@ -6,7 +6,7 @@ O guia-fluxo transforma pedidos soltos em demandas rastreaveis usando script det
 
 | Peca | Papel |
 | --- | --- |
-| **Skill** | Interface conversacional. Como o agente entende `/feature`, `/issue`, etc. |
+| **Skill** | Interface conversacional. Como o agente entende `/feature`, `/bug`, etc. |
 | **Script** (`core/src/guia.py`) | Fonte de verdade e automacao. Todas as mutacoes passam por aqui. |
 | **`.guia/*.json`** | Estado legivel por programas. Tasks, backlog, current, reports. |
 | **`FEATURES.md`** | Historico legivel por humano. Espelha o JSON em prosa. |
@@ -57,7 +57,7 @@ Backlog ──┬──> Planejada ──> Em desenvolvimento ──> Aguardando
 
 ## Plugin ou repo?
 
-Desde F-009 (2026-06-01) o pack adota o **layout oficial de plugin Claude Code**. Desde F-011 (B-007, 2026-06-02) o repo-mae separa **fontes em `core/`** (`src/`, `build/`, `manifest/`, `lock/`, `hooks/`, `templates/`) de **buildado em `dist/`** (`.claude-plugin/`, `skills/`, `.agents/skills/`, `bin/`). O marketplace local fica em `dist/.claude-plugin/marketplace.json` apontando o plugin raiz para `dist/`. Os atalhos no Claude saem `/guia:feature`, `/guia:issue`, etc. Codex e Antigravity descobrem via `dist/.agents/skills/guia-<verbo>/SKILL.md` (convencao AGENTS.md, prefixo `ai-` desde F-012 pra evitar colisao com comandos nativos), entao usam `/ai-feature` ou `$ai-feature`. Decisao em [`../adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md).
+Desde F-009 (2026-06-01) o pack adota o **layout oficial de plugin Claude Code**. Desde F-011 (B-007, 2026-06-02) o repo-mae separa **fontes em `core/`** (`src/`, `build/`, `manifest/`, `lock/`, `hooks/`, `templates/`) de **buildado em `dist/`** (`.claude-plugin/`, `skills/`, `.agents/skills/`, `bin/`). O marketplace local fica em `dist/.claude-plugin/marketplace.json` apontando o plugin raiz para `dist/`. Os atalhos no Claude saem `/guia:feature`, `/guia:bug`, etc. Codex e Antigravity descobrem via `dist/.agents/skills/guia-<verbo>/SKILL.md` (convencao AGENTS.md, prefixo `ai-` desde F-012 pra evitar colisao com comandos nativos), entao usam `/ai-feature` ou `$ai-feature`. Decisao em [`../adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md).
 
 `dist/bin/` (introduzido em F-012) empacota o motor standalone do plugin: copia exata de `core/src/guia.py`, wrapper `guia.ps1` reescrito pra layout flat (motor lado a lado), e shim POSIX `ai`. O `bin/` do plugin e auto-mapeado pra PATH pelo Claude Code, entao apos o instalador (passo 3 de B-008, ainda nao entregue) copiar `dist/*` pra `.guia-fluxo/` no consumidor, basta digitar `ai status` no terminal de qualquer sessao.
 

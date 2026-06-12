@@ -18,7 +18,7 @@ suportados.
 
 O pack segue o **layout oficial de plugin Claude Code**, com fontes em `core/` e build em `dist/` (`dist/.claude-plugin/plugin.json` + `dist/skills/`). O marketplace local (`dist/.claude-plugin/marketplace.json`) e registrado pelo proprio repo via `.claude/settings.json` (path `./dist`). Tres caminhos:
 
-1. **Dogfood / dev (este repo aberto em Claude Code):** ele prompta pra confirmar o marketplace local e instala o plugin `ai`. Atalhos `/guia:feature`, `/guia:issue`, etc. ficam disponiveis automaticamente. (Fallback se nao aparecer o prompt: `/plugin marketplace add ./dist` + `/plugin install ai@guia-fluxo`, ou `claude --plugin-dir ./dist`.)
+1. **Dogfood / dev (este repo aberto em Claude Code):** ele prompta pra confirmar o marketplace local e instala o plugin `ai`. Atalhos `/guia:feature`, `/guia:bug`, etc. ficam disponiveis automaticamente. (Fallback se nao aparecer o prompt: `/plugin marketplace add ./dist` + `/plugin install ai@guia-fluxo`, ou `claude --plugin-dir ./dist`.)
 2. **Instalador oficial em qualquer projeto consumidor (Claude Code, Codex CLI ou Antigravity):** desde F-013, `install.ps1` (Windows) e `install.sh` (Linux/Mac) copiam `dist/` para `.guia-fluxo/` no projeto consumidor, criam `.agents/skills/` (Codex+Antigravity) e rodam `ai init`. Idempotente, com `--dry-run` e `--force`. Receita: [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md).
 3. **Marketplace remoto (B-009, planejado):** quando o repo for publicado em `github.com/paulosmarcos/guia-fluxo`, `/plugin marketplace add paulosmarcos/guia-fluxo` + `/plugin install ai@guia-fluxo` substituira o passo de clonar.
 

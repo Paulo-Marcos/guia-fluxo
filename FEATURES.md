@@ -2,6 +2,70 @@
 
 ---
 
+## [D-069] 🧹 Corrigir drift de docs: verbo issue removido
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-11)
+- **Tipo:** Chore
+- **Contexto:** Pilar 'Documentacao' do artigo Akita. README.md linha 21 ainda lista /guia:issue, removido no ADR-0011 Fase 4 (substituido por /guia:bug). Varrer README.md + docs/ por referencias obsoletas a verbos/IDs removidos (issue, /guia:issue, ai issue, kind=issue usado como verbo) e alinhar ao vocabulario atual (bug, D-NNN). NAO mexer em mencoes legacy intencionais: 'Bug (legacy)', aceitacao de F/I/B-NNN como input, e historico no CHANGELOG/ADR. Independente: edicao de doc pura, sem dependencia de outra frente.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `README.md`
+- `docs/explanation/visao-geral.md`
+- `docs/reference/files.md`
+- `docs/reference/hooks-git.md`
+- `docs/tutorials/primeiro-uso.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/how-to/renomear-chat.md`
+- `docs/how-to/manter-docs-atualizados.md`
+- `docs/how-to/promover-backlog.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CHANGELOG.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Em desenvolvimento desde 2026-06-11.
+- Removido verbo/atalho obsoleto 'issue' de README e docs vivos: /guia:issue->/guia:bug (README, files.md, instalar-em-outro-projeto, visao-geral), /feature ou /issue->/bug (hooks-git), --kind issue->--kind bug (promover-backlog x2), e ajuste de prosa (files.md 'features e issues'->'features, bugs e chores'; promover-backlog 'feature ou issue'->'feature, bug ou chore'; renomear-chat lista de verbos; manter-docs 'feature/issue'->'demanda'; primeiro-uso 'feature/issue'->'feature/bug/chore').
+- Preservadas as mencoes legacy/historicas intencionais: 'Bug (legacy)' e kind=issue navegavel (visao-geral, cli.md), aceitacao de F/I/B-NNN, notas de remocao da Fase 4, ADRs (0004/0006/0010/0011) e auditorias F-014 (snapshots historicos, onde [ISSUE] e rotulo de classificacao, nao o verbo).
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- doctor: Guia Fluxo files OK.
+- python core/build/render-skills.py --check: OK 53 alvos em sincronia
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-068] 🧹 CI roda pytest em matrix Windows+Linux
+
+- **Status:** Em desenvolvimento
+- **Origem:** Guia Fluxo (2026-06-11)
+- **Tipo:** Chore
+- **Contexto:** Pilar 'Testes + CI' do artigo Akita (boas praticas OSS na era LLM). A suite em tests/ (20+ arquivos) nao roda em nenhum workflow hoje: so render-check (doctor + render --check) e lock-check existem. Adicionar .github/workflows/tests.yml rodando pytest em push + pull_request, matrix ubuntu-latest + windows-latest (e 2 versoes de Python, ex. 3.10 e 3.12). Verificavel localmente: pytest verde + YAML valido. Maior gap / menor esforco do mapeamento. Independente: nao depende de publicar o repo (autoria local self-contained; ativa quando o repo for pro GitHub).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Em desenvolvimento desde 2026-06-11.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Executar implementacao e validacoes.
+
 ## [D-059] 🧹 Refactor render-skills: config DI + RenderError
 
 - **Status:** Validada

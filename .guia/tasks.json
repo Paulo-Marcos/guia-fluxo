@@ -2,6 +2,214 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-069",
+      "kind": "chore",
+      "title": "Corrigir drift de docs: verbo issue removido",
+      "status": "Validada",
+      "origin": "Guia Fluxo (2026-06-11)",
+      "context": "Pilar 'Documentacao' do artigo Akita. README.md linha 21 ainda lista /guia:issue, removido no ADR-0011 Fase 4 (substituido por /guia:bug). Varrer README.md + docs/ por referencias obsoletas a verbos/IDs removidos (issue, /guia:issue, ai issue, kind=issue usado como verbo) e alinhar ao vocabulario atual (bug, D-NNN). NAO mexer em mencoes legacy intencionais: 'Bug (legacy)', aceitacao de F/I/B-NNN como input, e historico no CHANGELOG/ADR. Independente: edicao de doc pura, sem dependencia de outra frente.",
+      "createdAt": "2026-06-11",
+      "updatedAt": "2026-06-12",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "README.md",
+        "docs/explanation/visao-geral.md",
+        "docs/reference/files.md",
+        "docs/reference/hooks-git.md",
+        "docs/tutorials/primeiro-uso.md",
+        "docs/how-to/instalar-em-outro-projeto.md",
+        "docs/how-to/renomear-chat.md",
+        "docs/how-to/manter-docs-atualizados.md",
+        "docs/how-to/promover-backlog.md",
+        ".guia/current-task.json",
+        ".guia/tasks.json",
+        "CHANGELOG.md"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo.",
+        "Em desenvolvimento desde 2026-06-11.",
+        "Removido verbo/atalho obsoleto 'issue' de README e docs vivos: /guia:issue->/guia:bug (README, files.md, instalar-em-outro-projeto, visao-geral), /feature ou /issue->/bug (hooks-git), --kind issue->--kind bug (promover-backlog x2), e ajuste de prosa (files.md 'features e issues'->'features, bugs e chores'; promover-backlog 'feature ou issue'->'feature, bug ou chore'; renomear-chat lista de verbos; manter-docs 'feature/issue'->'demanda'; primeiro-uso 'feature/issue'->'feature/bug/chore').",
+        "Preservadas as mencoes legacy/historicas intencionais: 'Bug (legacy)' e kind=issue navegavel (visao-geral, cli.md), aceitacao de F/I/B-NNN, notas de remocao da Fase 4, ADRs (0004/0006/0010/0011) e auditorias F-014 (snapshots historicos, onde [ISSUE] e rotulo de classificacao, nao o verbo).",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "doctor: Guia Fluxo files OK.",
+        "python core/build/render-skills.py --check: OK 53 alvos em sincronia"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-069",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-069",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md",
+          "docs/explanation/visao-geral.md"
+        ],
+        "checkedAt": "2026-06-12",
+        "skipped": "FEATURES.md: auto-mantido pelo script no finish. docs/adr/: D-069 e drift cleanup do ADR-0011 ja Aceito, sem decisao arquitetural nova."
+      }
+    },
+    {
+      "id": "D-068",
+      "kind": "chore",
+      "title": "CI roda pytest em matrix Windows+Linux",
+      "status": "Em desenvolvimento",
+      "origin": "Guia Fluxo (2026-06-11)",
+      "context": "Pilar 'Testes + CI' do artigo Akita (boas praticas OSS na era LLM). A suite em tests/ (20+ arquivos) nao roda em nenhum workflow hoje: so render-check (doctor + render --check) e lock-check existem. Adicionar .github/workflows/tests.yml rodando pytest em push + pull_request, matrix ubuntu-latest + windows-latest (e 2 versoes de Python, ex. 3.10 e 3.12). Verificavel localmente: pytest verde + YAML valido. Maior gap / menor esforco do mapeamento. Independente: nao depende de publicar o repo (autoria local self-contained; ativa quando o repo for pro GitHub).",
+      "createdAt": "2026-06-11",
+      "updatedAt": "2026-06-11",
+      "modifiedFiles": [
+        "FEATURES.md"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo.",
+        "Em desenvolvimento desde 2026-06-11."
+      ],
+      "validations": [],
+      "pending": [
+        "Executar implementacao e validacoes."
+      ]
+    },
+    {
+      "id": "D-067",
+      "kind": "feature",
+      "title": "Dependencia entre demandas (so executa apos concluir)",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-11)",
+      "context": "Permitir que uma demanda declare dependencia de outra(s) (ex: D-065 depende de D-066). A demanda dependente fica bloqueada para execucao ate que a demanda da qual depende seja concluida (status Concluida). O start/promote deve recusar iniciar enquanto a dependencia nao fechar, e idealmente listar/visualizar a cadeia de dependencias. Caso de uso real: as 4 skills D-063..D-066 ja tem relacao de pre-requisito entre si.",
+      "createdAt": "2026-06-11",
+      "updatedAt": "2026-06-11",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-066",
+      "kind": "feature",
+      "title": "Registro de skills do projeto por tema",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-11)",
+      "context": "Funcionalidade para cadastrar as skills necessarias do projeto e a forma de aciona-las em grupo. O usuario define que o projeto usa skills x, y, z e esse bolo e acionado por tema/evento conforme necessidade, evitando chamar cada skill manualmente toda hora. Base para a auditoria de pasta/feature consumir as skills de qualidade e arquitetura.",
+      "createdAt": "2026-06-11",
+      "updatedAt": "2026-06-11",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-065",
+      "kind": "feature",
+      "title": "Skill de auditoria de pasta/feature com nota",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-11)",
+      "context": "Skill onde o usuario aponta uma funcionalidade ou pasta e ela levanta o que faz, por que faz, se faz sentido, da uma nota, e identifica melhorias e problemas. Usa as skills de qualidade e arquitetura cadastradas pelo registro de skills do projeto (depende do item Registro de skills por tema) para avaliar aquela parte do projeto.",
+      "createdAt": "2026-06-11",
+      "updatedAt": "2026-06-11",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-064",
+      "kind": "feature",
+      "title": "Skill de avaliacao tema vs projeto",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-11)",
+      "context": "Skill que avalia um tema/contexto/estrutura (ex: um padrao, metodologia ou conceito), relaciona com o projeto do usuario, explica e detalha, e propoe acoes para o projeto atender ao proposto. Deve dizer se o projeto ja atende, nao atende, ou quais adaptacoes sao necessarias.",
+      "createdAt": "2026-06-11",
+      "updatedAt": "2026-06-11",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-063",
+      "kind": "feature",
+      "title": "Skill de commits funcionais por feature",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-11)",
+      "context": "Skill que levanta tudo que esta sem commitar (working tree), agrupa as mudancas por funcionalidade/feature, estrutura e explica cada grupo, e gerencia commits funcionais - um commit por funcao logica em vez de um commit unico com tudo junto. Objetivo: facilitar revisao e historico limpo.",
+      "createdAt": "2026-06-11",
+      "updatedAt": "2026-06-11",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-062",
+      "kind": "feature",
+      "title": "Avaliar arquitetura (DDD/SOLID) ao criar lock",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-11)",
+      "context": "Disparar uma skill ao travar (lock) que avalia a funcionalidade sob DDD, Clean Architecture e SOLID, verificando se os arquivos realmente isolam a funcionalidade (responsabilidade unica). Hoje a trava e por caminho de arquivo, entao o grao minimo e o arquivo inteiro; se um arquivo acumula varias responsabilidades, travar protege coisas nao relacionadas. A skill avaliaria a coesao e, quando um arquivo tem responsabilidades misturadas, sugeriria design patterns para separa-las em modulos de responsabilidade unica, permitindo travar apenas o que pertence aquela funcionalidade. Objetivo: alinhar feature de negocio (id do lock) com os arquivos travados. Abordagem detalhada fica para depois.",
+      "createdAt": "2026-06-11",
+      "updatedAt": "2026-06-11",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-061",
+      "kind": "feature",
+      "title": "Corrigir path do check-lock no hook do consumidor",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-10)",
+      "context": "O template dist/templates/.githooks/commit-msg termina com: exec PY ROOT/core/lock/check-lock.py hook 1. Mas no projeto consumidor nao existe core/lock/check-lock.py. O install.ps1 copia o motor de dist/bin/ para .guia-fluxo/bin/, que tem lock_api.py e guia.py mas NENHUM check-lock.py, e o consumidor nao tem pasta core/ alguma. O hook resolve a raiz via git rev-parse --show-toplevel e procura core/lock/check-lock.py a partir dela, entao no consumidor o commit-msg falha por caminho inexistente.\n\nDecidir a correcao: (a) gerar um template de hook especifico para o consumidor apontando para .guia-fluxo/bin/ com um entrypoint de lock equivalente; ou (b) expor um subcomando tipo guia lock hook no motor (guia.py) e o template chamar isso em vez de check-lock.py. Verificar tambem install.sh e a rota copia-manual da doc. Confirmar se o hook do consumidor algum dia rodou de fato (pode estar quebrado desde a adocao do layout .guia-fluxo/).\n\nOrigem: descoberto durante explicacao do fluxo de hooks git (2026-06-10).",
+      "createdAt": "2026-06-10",
+      "updatedAt": "2026-06-10",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-060",
+      "kind": "feature",
+      "title": "Documentar colisao de core.hooksPath no install",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-10)",
+      "context": "O guia de instalacao no consumidor (docs/how-to/instalar-em-outro-projeto.md, secao Ativando o hook git no consumidor) e o install.ps1 mandam rodar: git config core.hooksPath .githooks. Problema: se o consumidor JA tem core.hooksPath apontando para outra pasta (Husky, pasta propria, etc.), esse comando SOBRESCREVE o config e desliga silenciosamente os hooks existentes dele, porque core.hooksPath aceita uma unica pasta (override total de .git/hooks/).\n\nFalta orientacao para esse caso: detectar hooksPath ja existente e, em vez de sobrescrever, copiar/mover o .githooks/commit-msg para a pasta que o consumidor ja usa. Acao sugerida: (a) atualizar a doc com essa ressalva; (b) talvez install.ps1/install.sh imprimir um aviso quando git config --get core.hooksPath ja retorna algo diferente de .githooks.\n\nOrigem: descoberto durante explicacao do fluxo de hooks git (2026-06-10).",
+      "createdAt": "2026-06-10",
+      "updatedAt": "2026-06-10",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
       "id": "D-059",
       "kind": "chore",
       "title": "Refactor render-skills: config DI + RenderError",

@@ -111,9 +111,9 @@ Estado do processo (`.guia/`, `FEATURES.md`) e dados seus — apague separadamen
 
 | Agente | Como descobre o pack | Comandos |
 | --- | --- | --- |
-| Claude Code | Plugin em `.guia-fluxo/.claude-plugin/plugin.json` (auto-detectado quando abre o projeto). | `/guia:feature`, `/guia:issue`, `/guia:status`, etc. |
-| Codex CLI | Convencao AGENTS.md: le `.agents/skills/ai-*/SKILL.md`. | `/ai-feature`, `/ai-issue`, etc. |
-| Antigravity | Mesma convencao do Codex (AGENTS.md). | `$ai-feature`, `$ai-issue`, etc. |
+| Claude Code | Plugin em `.guia-fluxo/.claude-plugin/plugin.json` (auto-detectado quando abre o projeto). | `/guia:feature`, `/guia:bug`, `/guia:status`, etc. |
+| Codex CLI | Convencao AGENTS.md: le `.agents/skills/ai-*/SKILL.md`. | `/ai-feature`, `/ai-bug`, etc. |
+| Antigravity | Mesma convencao do Codex (AGENTS.md). | `$ai-feature`, `$ai-bug`, etc. |
 
 Detalhes da decisao em [`../adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md).
 

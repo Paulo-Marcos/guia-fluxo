@@ -5,7 +5,7 @@
 ## Fluxo obrigatorio
 
 1. Ler o item em `.guia/backlog.json`.
-2. Classificar como `feature` ou `issue`.
+2. Classificar como `feature`, `bug` ou `chore`.
 3. Avaliar se titulo/contexto sao suficientes.
 4. Se faltar informacao, perguntar antes de criar demanda.
 5. Propor plano curto de execucao.
@@ -16,7 +16,7 @@
 ## Exemplo sem worktree
 
 ```powershell
-.\core\bin\guia.ps1 promote B-019 --kind issue `
+.\core\bin\guia.ps1 promote B-019 --kind bug `
     --assessment "Regressao de agendamento" `
     --plan "Inspecionar servico de publicacao em massa"
 ```
@@ -24,7 +24,7 @@
 ## Exemplo com worktree
 
 ```powershell
-.\core\bin\guia.ps1 promote B-019 --kind issue --worktree `
+.\core\bin\guia.ps1 promote B-019 --kind bug --worktree `
     --assessment "Regressao de agendamento" `
     --plan "Criar teste de intervalo antes do fix"
 ```

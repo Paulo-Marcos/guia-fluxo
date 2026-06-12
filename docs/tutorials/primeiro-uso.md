@@ -110,6 +110,6 @@ Para travar a feature contra refactor futuro (opcional):
 ## Proximos passos
 
 - [How-to: instalar em outro projeto](../how-to/instalar-em-outro-projeto.md) - rota oficial via `install.ps1`/`install.sh` para projetos consumidores.
-- [How-to: promover backlog para feature/issue](../how-to/promover-backlog.md) - quando voce ja tem uma ideia rascunhada no backlog.
+- [How-to: promover backlog para feature/bug/chore](../how-to/promover-backlog.md) - quando voce ja tem uma ideia rascunhada no backlog.
 - [Reference: CLI completo](../reference/cli.md) - todas as flags de cada subcomando.
 - [Explanation: visao geral do processo](../explanation/visao-geral.md) - entender o papel de cada peca.

@@ -44,7 +44,7 @@ Configuracao por projeto. Inclui:
 
 ## `.guia/tasks.json`
 
-Lista todas as demandas (features e issues) com status. Fonte programatica - leia daqui em vez de fazer parse de `FEATURES.md`.
+Lista todas as demandas (features, bugs e chores) com status. Fonte programatica - leia daqui em vez de fazer parse de `FEATURES.md`.
 
 ## `.guia/current-task.json`
 
@@ -63,7 +63,7 @@ Exemplo:
 
 ## `.guia/backlog.json`
 
-Itens futuros (`B-NNN`). Cada entrada tem id, titulo e contexto. Promovidos via `/promote` viram feature ou issue.
+Itens futuros (`B-NNN`). Cada entrada tem id, titulo e contexto. Promovidos via `/promote` viram feature, bug ou chore.
 
 ## `.guia/docs-map.yaml`
 
@@ -96,7 +96,7 @@ Lista de paths/globs que **nunca** devem ser travados. Hoje inclui `.gitignore` 
 
 ## `dist/.claude-plugin/plugin.json`
 
-Manifest oficial do plugin Claude Code (spec: <https://code.claude.com/docs/en/plugins>). Define `name` (`ai`, vira namespace dos atalhos: `/guia:feature`, `/guia:issue`, ...), `description`, `version` e metadados (author, homepage, repository, license). Mudar so para bump de versao ou ajuste de metadados.
+Manifest oficial do plugin Claude Code (spec: <https://code.claude.com/docs/en/plugins>). Define `name` (`ai`, vira namespace dos atalhos: `/guia:feature`, `/guia:bug`, ...), `description`, `version` e metadados (author, homepage, repository, license). Mudar so para bump de versao ou ajuste de metadados.
 
 ## `core/manifest/manifest.yaml`
 

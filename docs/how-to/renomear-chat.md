@@ -1,6 +1,6 @@
 # Como renomear o chat
 
-Todo comando do CLI (`feature`, `issue`, `ready`, `finish`, `validate`, `status`) imprime um titulo sugerido no formato:
+Todo comando do CLI (`feature`, `bug`, `chore`, `ready`, `finish`, `status`) imprime um titulo sugerido no formato:
 
 ```text
 F-016 - #DEV - Titulo

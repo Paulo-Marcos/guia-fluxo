@@ -17,7 +17,7 @@ Test-Path .guia/docs-map.yaml
 
 ## 2. Fluxo padrao por `/finish`
 
-1. Quando o desenvolvedor confirmou que a feature/issue esta validada, rode o check antes de fechar:
+1. Quando o desenvolvedor confirmou que a demanda esta validada, rode o check antes de fechar:
 
    ```powershell
    .\core\bin\guia.ps1 docs-check
