@@ -27,7 +27,7 @@ git config core.hooksPath core/hooks
 Toda contribuicao passa pelo proprio processo do pack (dogfooding). Nao edite `.guia/*.json` nem `FEATURES.md` a mao - quem altera e o script.
 
 1. **Abra uma demanda.**
-   - Bug ou regressao: `.\core\bin\guia.ps1 issue "Titulo curto" --context "Sintoma e impacto"`
+   - Bug ou regressao: `.\core\bin\guia.ps1 bug "Titulo curto" --context "Sintoma e impacto"`
    - Nova capacidade: `.\core\bin\guia.ps1 feature "Titulo curto" --context "Motivo e escopo"`
    - Ideia futura, sem prazo: `.\core\bin\guia.ps1 backlog add "Ideia" --context "Quando pode ser util"`
 2. **Implemente.** Edite arquivos. Se algum estiver travado em `features/registry.yaml`, siga [`docs/how-to/editar-arquivo-travado.md`](docs/how-to/editar-arquivo-travado.md).
@@ -75,8 +75,8 @@ Tipos em uso:
 | Tipo | Quando |
 | --- | --- |
 | `feature` | Nova capacidade entregue via `/feature`. |
-| `issue` | Correcao ou regressao entregue via `/issue`. |
-| `chore` | Manutencao sem demanda formal (libs, formatacao, build). |
+| `bug` | Correcao ou regressao entregue via `/bug`. |
+| `chore` | Manutencao entregue via `/chore` (refactor pequeno, deps, build/lint). |
 
 Exemplos reais do historico:
 

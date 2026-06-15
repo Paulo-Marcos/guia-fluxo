@@ -5,21 +5,67 @@
       "id": "D-070",
       "kind": "chore",
       "title": "Docs quick wins: residuo CONTRIBUTING + llms.txt",
-      "status": "Planejada",
+      "status": "Validada",
       "origin": "Guia Fluxo (2026-06-12)",
       "context": "Quick wins do mapeamento do artigo Akita (boas praticas OSS na era LLM). (a) Residuo do D-069: CONTRIBUTING.md tabela Tipos em uso ainda lista o verbo issue como atual (linha 78) - trocar para bug via /bug. (b) Avaliar/criar llms.txt minimo na raiz apontando para AGENTS.md, CLAUDE.md, README e docs. Independente de publicar o repo.",
       "createdAt": "2026-06-12",
       "updatedAt": "2026-06-12",
       "modifiedFiles": [
-        "FEATURES.md"
+        "FEATURES.md",
+        "CONTRIBUTING.md",
+        "llms.txt",
+        "CHANGELOG.md"
       ],
       "summary": [
-        "Demanda criada via Guia Fluxo."
+        "Demanda criada via Guia Fluxo.",
+        "Em desenvolvimento desde 2026-06-12.",
+        "CONTRIBUTING.md: troquei a linha obsoleta da tabela Tipos em uso (issue -> bug, /issue -> /bug) e atualizei a descricao do chore de [Manutencao sem demanda formal] para [Manutencao entregue via /chore (refactor pequeno, deps, build/lint)], coerente com o modelo atual onde chore E demanda formal D-NNN kind=chore.",
+        "O grep por issue pegou uma 2a referencia VIVA ao verbo removido, no fluxo Abra uma demanda (antiga linha 30): corrigida issue -> bug. Preservei o exemplo historico (issue: Paridade de skills...) e as 3 mencoes legitimas a issue do GitHub (canais de reporte).",
+        "llms.txt CRIADO. Decisao: vale a pena - o repo e uma ferramenta DE agentes, entao um llms.txt minimo e barato e coerente; complementa AGENTS.md (briefing profundo) sem duplicar, e a porta de entrada de 4 linhas. Formato padrao llmstxt.org: H1 + blockquote de 1 linha + bullets para AGENTS.md, CLAUDE.md, README.md, docs/.",
+        "AVISO UNLOCK: llms.txt e arquivo NOVO -> cai no lock global adicoes-exigem-autorizacao (operations add, files asterisco). O commit (feito pelo humano) precisara da marca: [unlock:adicoes-exigem-autorizacao] motivo: adiciona indice llms.txt para agentes.",
+        "Fechada apos validacao humana. CHANGELOG ganhou entradas Added (llms.txt) e Fixed (residuo issue em CONTRIBUTING)."
       ],
-      "validations": [],
-      "pending": [
-        "Executar implementacao e validacoes."
-      ]
+      "validations": [
+        "doctor verde (exit 0). Nao toquei core/ nem manifest, render dispensado."
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-070",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-070",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md"
+        ],
+        "checkedAt": "2026-06-12",
+        "skipped": "resto nao precisa: mudanca doc-only (residuo CONTRIBUTING + indice llms.txt), sem alteracao de arquitetura ou regra do pack; FEATURES.md atualizado automaticamente pelo script"
+      }
     },
     {
       "id": "D-069",

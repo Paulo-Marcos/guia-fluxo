@@ -1,0 +1,10 @@
+# guia-fluxo
+
+> Processo portavel para agentes de IA transformarem pedidos soltos em demandas rastreaveis (D-NNN) e protegerem arquivos homologados via lock. Toda mutacao de estado passa pelo CLI `core/bin/guia.ps1` (ou `python core/src/guia.py`), nunca editando `.guia/*.json` a mao.
+
+## Docs
+
+- [AGENTS.md](AGENTS.md): briefing canonico para qualquer agente — regras nao-negociaveis, fluxo padrao por turno, convencoes de commit.
+- [CLAUDE.md](CLAUDE.md): pointer especifico do Claude Code — skills do plugin (namespace `ai`), atalhos `/guia:*`.
+- [README.md](README.md): visao geral, instalacao e uso para humanos.
+- [docs/](docs/): documentacao Diataxis (tutorials, how-to, reference, explanation) e ADRs.

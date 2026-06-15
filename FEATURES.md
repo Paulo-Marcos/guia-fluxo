@@ -4,7 +4,7 @@
 
 ## [D-070] 🧹 Docs quick wins: residuo CONTRIBUTING + llms.txt
 
-- **Status:** Planejada
+- **Status:** Validada
 - **Origem:** Guia Fluxo (2026-06-12)
 - **Tipo:** Chore
 - **Contexto:** Quick wins do mapeamento do artigo Akita (boas praticas OSS na era LLM). (a) Residuo do D-069: CONTRIBUTING.md tabela Tipos em uso ainda lista o verbo issue como atual (linha 78) - trocar para bug via /bug. (b) Avaliar/criar llms.txt minimo na raiz apontando para AGENTS.md, CLAUDE.md, README e docs. Independente de publicar o repo.
@@ -12,19 +12,27 @@
 ### Arquivos modificados/criados
 
 - `FEATURES.md`
+- `CONTRIBUTING.md`
+- `llms.txt`
+- `CHANGELOG.md`
 
 ### O que foi feito
 
 - Demanda criada via Guia Fluxo.
+- Em desenvolvimento desde 2026-06-12.
+- CONTRIBUTING.md: troquei a linha obsoleta da tabela Tipos em uso (issue -> bug, /issue -> /bug) e atualizei a descricao do chore de [Manutencao sem demanda formal] para [Manutencao entregue via /chore (refactor pequeno, deps, build/lint)], coerente com o modelo atual onde chore E demanda formal D-NNN kind=chore.
+- O grep por issue pegou uma 2a referencia VIVA ao verbo removido, no fluxo Abra uma demanda (antiga linha 30): corrigida issue -> bug. Preservei o exemplo historico (issue: Paridade de skills...) e as 3 mencoes legitimas a issue do GitHub (canais de reporte).
+- llms.txt CRIADO. Decisao: vale a pena - o repo e uma ferramenta DE agentes, entao um llms.txt minimo e barato e coerente; complementa AGENTS.md (briefing profundo) sem duplicar, e a porta de entrada de 4 linhas. Formato padrao llmstxt.org: H1 + blockquote de 1 linha + bullets para AGENTS.md, CLAUDE.md, README.md, docs/.
+- AVISO UNLOCK: llms.txt e arquivo NOVO -> cai no lock global adicoes-exigem-autorizacao (operations add, files asterisco). O commit (feito pelo humano) precisara da marca: [unlock:adicoes-exigem-autorizacao] motivo: adiciona indice llms.txt para agentes.
+- Fechada apos validacao humana. CHANGELOG ganhou entradas Added (llms.txt) e Fixed (residuo issue em CONTRIBUTING).
 
 ### Validacao feita
 
-- Nenhuma.
+- doctor verde (exit 0). Nao toquei core/ nem manifest, render dispensado.
 
 ### Validacao pendente
 
-- Executar implementacao e validacoes.
-
+- Nenhuma.
 
 ## [D-069] 🧹 Corrigir drift de docs: verbo issue removido
 
