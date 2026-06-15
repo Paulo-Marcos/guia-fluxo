@@ -2,6 +2,35 @@
 
 ---
 
+## [D-072] 🐛 render-skills: include guard usa manifest_dir nao-resolvido (quebra CI Windows)
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-15)
+- **Tipo:** Bug / regressao
+- **Contexto:** CI Windows (GitHub Actions) falhou no primeiro push: tests/test_render_includes.py::GuardTests::test_circular_include_detected estoura ValueError em vez de RenderError. Causa em core/build/render-skills.py:393: ao montar o chain do include circular, p.relative_to(manifest_dir) usa manifest_dir NAO-resolvido, enquanto a stack e o path sao .resolve()d (linha 383). No runner Windows tempfile devolve nome curto 8.3 (RUNNER~1) e .resolve() expande pro longo (runneradmin) -> relative_to compara textos diferentes e estoura. Fix: usar root (= manifest_dir.resolve(), linha 379) no relative_to da linha 393. Nao reproduz em Windows local sem descasamento curto/longo.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/build/render-skills.py`
+- `tests/test_render_includes.py`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Fix: _expand_includes (render-skills.py:393) usa root (=manifest_dir.resolve()) em vez de manifest_dir cru ao montar o chain do include circular. No runner Windows o tempdir vem em nome curto 8.3 (RUNNER~1) e .resolve() expande pro longo -> relative_to comparava textos diferentes e estourava ValueError em vez de RenderError. Adicionado teste de regressao portatil (test_circular_chain_uses_resolved_manifest_dir) que forca cru!=resolvido via componente '..', reproduzindo o bug em qualquer SO.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- pytest 137 passed (Windows); regressao confirmada (falha com ValueError no codigo antigo, passa com o fix); render --check verde; doctor verde
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-071] 🧹 README value-first: o que faz e como usar antes da stack
 
 - **Status:** Validada

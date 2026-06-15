@@ -224,6 +224,33 @@ class GuardTests(unittest.TestCase):
             finally:
                 sys.modules.pop("render_probe_cycle", None)
 
+    def test_circular_chain_uses_resolved_manifest_dir(self) -> None:
+        """Regressao D-072: o chain do ciclo relativiza contra o manifest_dir
+        RESOLVIDO. No runner Windows o tempdir vem em nome curto 8.3 (RUNNER~1)
+        e .resolve() expande pro longo, fazendo manifest_dir cru != paths
+        resolvidos -> relative_to estourava ValueError em vez de RenderError.
+        Forcamos o descasamento de forma portatil com um componente '..' no
+        manifest_dir cru (textualmente != .resolve(), mesmo destino).
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            mdir = Path(tmp) / "manifest"
+            partials = mdir / "bodies" / "_partials"
+            partials.mkdir(parents=True)
+            (partials / "a.md").write_text("{{include: b.md}}", encoding="utf-8")
+            (partials / "b.md").write_text("{{include: a.md}}", encoding="utf-8")
+            module = _load_render_module("render_probe_cycle_unresolved")
+            unresolved = mdir.parent / "x" / ".." / "manifest"
+            try:
+                with self.assertRaises(module.RenderError):
+                    module._expand_includes(
+                        "{{include: _partials/a.md}}\n",
+                        origin=mdir / "bodies" / "seed.md",
+                        manifest_dir=unresolved,
+                        body_cache={},
+                    )
+            finally:
+                sys.modules.pop("render_probe_cycle_unresolved", None)
+
 
 _DUAL_TARGET_MANIFEST = """\
 version: 2

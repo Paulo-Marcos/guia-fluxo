@@ -390,7 +390,7 @@ def _expand_includes(
                 f"Erro: include `{rel}` (em {origin}) nao existe em {path}."
             )
         if path in stack:
-            chain = " -> ".join(str(p.relative_to(manifest_dir)) for p in stack + (path,))
+            chain = " -> ".join(str(p.relative_to(root)) for p in stack + (path,))
             raise RenderError(f"Erro: include circular detectado: {chain}")
         if path not in body_cache:
             body_cache[path] = path.read_text(encoding="utf-8")

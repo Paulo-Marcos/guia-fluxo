@@ -1,6 +1,6 @@
 {
-  "taskId": "D-071",
+  "taskId": "D-072",
   "status": "Validada",
-  "title": "README value-first: o que faz e como usar antes da stack",
-  "chatTitle": "D-071 \ud83e\uddf9 - #FINALIZADO - README value-first: o que faz e como usar antes da stack"
+  "title": "render-skills: include guard usa manifest_dir nao-resolvido (quebra CI Windows)",
+  "chatTitle": "D-072 \ud83d\udc1b - #FINALIZADO - render-skills: include guard usa manifest_dir nao-resolvido (quebra CI Windows)"
 }
