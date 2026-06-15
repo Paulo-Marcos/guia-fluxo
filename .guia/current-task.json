@@ -1,6 +1,6 @@
 {
-  "taskId": "D-072",
+  "taskId": "D-073",
   "status": "Validada",
-  "title": "render-skills: include guard usa manifest_dir nao-resolvido (quebra CI Windows)",
-  "chatTitle": "D-072 \ud83d\udc1b - #FINALIZADO - render-skills: include guard usa manifest_dir nao-resolvido (quebra CI Windows)"
+  "title": "Release v0.2.0: cortar CHANGELOG, bump VERSION, release.yml",
+  "chatTitle": "D-073 \ud83e\uddf9 - #FINALIZADO - Release v0.2.0: cortar CHANGELOG, bump VERSION, release.yml"
 }

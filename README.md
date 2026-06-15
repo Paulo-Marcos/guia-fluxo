@@ -1,5 +1,7 @@
 # guia-fluxo
 
+[![tests](https://github.com/Paulo-Marcos/guia-fluxo/actions/workflows/tests.yml/badge.svg)](https://github.com/Paulo-Marcos/guia-fluxo/actions/workflows/tests.yml) [![render-check](https://github.com/Paulo-Marcos/guia-fluxo/actions/workflows/render-check.yml/badge.svg)](https://github.com/Paulo-Marcos/guia-fluxo/actions/workflows/render-check.yml) [![release](https://img.shields.io/github/v/release/Paulo-Marcos/guia-fluxo)](https://github.com/Paulo-Marcos/guia-fluxo/releases) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 > Transforme pedidos soltos a um agente de IA em **demandas rastreáveis** — e proteja o código já homologado contra "refactor de brinde".
 
 `guia-fluxo` é um processo portátil para agentes de IA (Claude Code, Codex, Antigravity). Ele dá ao agente memória de processo entre turnos e um trilho previsível: todo pedido vira uma demanda com ID, status e histórico, e nada de produção é reescrito sem autorização.

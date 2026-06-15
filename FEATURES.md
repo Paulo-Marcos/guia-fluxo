@@ -2,6 +2,37 @@
 
 ---
 
+## [D-073] 🧹 Release v0.2.0: cortar CHANGELOG, bump VERSION, release.yml
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-15)
+- **Tipo:** Chore
+- **Contexto:** Front #2 do mapeamento Akita. Repo publicado e CI verde. (1) CHANGELOG [Unreleased] -> [0.2.0] - 2026-06-15 consolidando D-068/069/070/071/072. (2) VERSION 0.1.0 -> 0.2.0 (alinha plugin.json/marketplace.json ja em 0.2.0). (3) release.yml: workflow de release por tag v* (render --check + gh release create --generate-notes). Tag v0.2.0 + push e o passo outward-facing final com OK do dev. release.yml e arquivo novo -> commit precisa de [unlock:adicoes-exigem-autorizacao].
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `CHANGELOG.md`
+- `VERSION`
+- `.github/workflows/release.yml`
+- `README.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Release v0.2.0: CHANGELOG [Unreleased]->[0.2.0] 2026-06-15 (consolida D-068..D-072); VERSION 0.1.0->0.2.0; release.yml (release por tag v*: render --check + gh release create --generate-notes); badges de status (tests, render-check, release, MIT) no topo do README.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- doctor verde; render --check verde (53 alvos); release.yml YAML valido
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-072] 🐛 render-skills: include guard usa manifest_dir nao-resolvido (quebra CI Windows)
 
 - **Status:** Validada

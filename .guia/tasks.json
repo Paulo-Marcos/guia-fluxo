@@ -2,6 +2,69 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-073",
+      "kind": "chore",
+      "title": "Release v0.2.0: cortar CHANGELOG, bump VERSION, release.yml",
+      "status": "Validada",
+      "origin": "Guia Fluxo (2026-06-15)",
+      "context": "Front #2 do mapeamento Akita. Repo publicado e CI verde. (1) CHANGELOG [Unreleased] -> [0.2.0] - 2026-06-15 consolidando D-068/069/070/071/072. (2) VERSION 0.1.0 -> 0.2.0 (alinha plugin.json/marketplace.json ja em 0.2.0). (3) release.yml: workflow de release por tag v* (render --check + gh release create --generate-notes). Tag v0.2.0 + push e o passo outward-facing final com OK do dev. release.yml e arquivo novo -> commit precisa de [unlock:adicoes-exigem-autorizacao].",
+      "createdAt": "2026-06-15",
+      "updatedAt": "2026-06-15",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "CHANGELOG.md",
+        "VERSION",
+        ".github/workflows/release.yml",
+        "README.md",
+        ".guia/current-task.json",
+        ".guia/tasks.json"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo.",
+        "Release v0.2.0: CHANGELOG [Unreleased]->[0.2.0] 2026-06-15 (consolida D-068..D-072); VERSION 0.1.0->0.2.0; release.yml (release por tag v*: render --check + gh release create --generate-notes); badges de status (tests, render-check, release, MIT) no topo do README.",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "doctor verde; render --check verde (53 alvos); release.yml YAML valido"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-073",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-073",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [],
+        "checkedAt": "2026-06-15",
+        "skipped": "release cut: o proprio CHANGELOG e o artefato; sem doc adicional"
+      }
+    },
+    {
       "id": "D-072",
       "kind": "bug",
       "title": "render-skills: include guard usa manifest_dir nao-resolvido (quebra CI Windows)",
