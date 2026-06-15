@@ -6,14 +6,14 @@ Desde F-013 (2026-06-02) o pack tem **instalador oficial**: `install.ps1` (Windo
 
 ```powershell
 # Windows
-git clone https://github.com/paulosmarcos/guia-fluxo C:\dev\guia-fluxo
+git clone https://github.com/Paulo-Marcos/guia-fluxo C:\dev\guia-fluxo
 cd C:\dev\meu-projeto
 C:\dev\guia-fluxo\install.ps1
 ```
 
 ```bash
 # Linux/Mac
-git clone https://github.com/paulosmarcos/guia-fluxo /opt/guia-fluxo
+git clone https://github.com/Paulo-Marcos/guia-fluxo /opt/guia-fluxo
 cd /path/to/meu-projeto
 /opt/guia-fluxo/install.sh
 ```

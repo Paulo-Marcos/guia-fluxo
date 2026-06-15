@@ -13,7 +13,7 @@ Versao atual: ver [`VERSION`](../VERSION) e [`CHANGELOG.md`](../CHANGELOG.md).
 
 ## A caminho
 
-- **B-009 (proxima grande)** — Publicar marketplace remoto em `github.com/paulosmarcos/guia-fluxo` para `/plugin marketplace add paulosmarcos/guia-fluxo` direto, sem clonar o repo.
+- **B-009 (proxima grande)** — Publicar marketplace remoto em `github.com/Paulo-Marcos/guia-fluxo` para `/plugin marketplace add Paulo-Marcos/guia-fluxo` direto, sem clonar o repo.
 - **`ai --version`** — leitura de `VERSION` + campo `packVersion` em `process.json` para rastrear qual versao do pack cada projeto consome.
 - **Testes de smoke do CLI** + documento de migracao entre versoes do pack (rumo a v1.0).
 

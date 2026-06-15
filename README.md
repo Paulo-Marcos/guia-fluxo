@@ -1,63 +1,91 @@
 # guia-fluxo
 
-Processo portavel para agentes de IA (Codex, Claude Code, Antigravity) transformarem
-pedidos soltos em demandas rastreaveis: backlog, status, validacao, finalizacao e lock
-de funcionalidades homologadas.
+> Transforme pedidos soltos a um agente de IA em **demandas rastreáveis** — e proteja o código já homologado contra "refactor de brinde".
 
-> **Status:** v0.1.0. Extracao inicial do projeto `gerador-cortes`.
+`guia-fluxo` é um processo portátil para agentes de IA (Claude Code, Codex, Antigravity). Ele dá ao agente memória de processo entre turnos e um trilho previsível: todo pedido vira uma demanda com ID, status e histórico, e nada de produção é reescrito sem autorização.
 
-## Por que existe
+> **Status:** v0.1.0 — em uso real. O próprio repositório roda com o processo (dogfood).
 
-Sem processo, o agente esquece o que esta fazendo entre turnos e nao protege
-funcionalidades homologadas contra refactor de brinde. Este pack centraliza skill
-(interface conversacional), script (`core/src/guia.py`, fonte de verdade) e arquivos
-JSON/YAML (estado e lock), com os mesmos verbos espelhados para os tres agentes
-suportados.
+## O problema que resolve
 
-## Instalacao
+Sem processo, um agente de IA:
 
-O pack segue o **layout oficial de plugin Claude Code**, com fontes em `core/` e build em `dist/` (`dist/.claude-plugin/plugin.json` + `dist/skills/`). O marketplace local (`dist/.claude-plugin/marketplace.json`) e registrado pelo proprio repo via `.claude/settings.json` (path `./dist`). Tres caminhos:
+- **esquece o que estava fazendo** entre um turno e outro;
+- **"melhora" código que você não pediu** e quebra o que já funcionava;
+- não deixa rastro de *o que* foi feito, *por quê* e *se foi validado*.
 
-1. **Dogfood / dev (este repo aberto em Claude Code):** ele prompta pra confirmar o marketplace local e instala o plugin `ai`. Atalhos `/guia:feature`, `/guia:bug`, etc. ficam disponiveis automaticamente. (Fallback se nao aparecer o prompt: `/plugin marketplace add ./dist` + `/plugin install ai@guia-fluxo`, ou `claude --plugin-dir ./dist`.)
-2. **Instalador oficial em qualquer projeto consumidor (Claude Code, Codex CLI ou Antigravity):** desde F-013, `install.ps1` (Windows) e `install.sh` (Linux/Mac) copiam `dist/` para `.guia-fluxo/` no projeto consumidor, criam `.agents/skills/` (Codex+Antigravity) e rodam `ai init`. Idempotente, com `--dry-run` e `--force`. Receita: [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md).
-3. **Marketplace remoto (B-009, planejado):** quando o repo for publicado em `github.com/paulosmarcos/guia-fluxo`, `/plugin marketplace add paulosmarcos/guia-fluxo` + `/plugin install ai@guia-fluxo` substituira o passo de clonar.
+guia-fluxo resolve isso com três ideias simples: **demanda** (todo trabalho tem um ID rastreável), **validação humana** (a IA entrega, você aprova) e **lock** (arquivos homologados só mudam com autorização explícita).
 
-Codex e Antigravity descobrem o pack via `.agents/skills/ai-<verbo>/SKILL.md` (convencao AGENTS.md) — o instalador ja deixa a pasta pronta.
+## Como funciona
+
+O ciclo de uma demanda, do pedido ao fechamento:
+
+1. **Abre** — você pede algo; o agente cria a demanda: `/feature` (capacidade nova), `/bug` (defeito) ou `/chore` (manutenção). Ela ganha um ID neutro `D-NNN`.
+2. **Implementa** — o agente trabalha normalmente. Cada demanda vira um chat rastreável (`NOME DO CHAT: D-042 - #DEV - ...`).
+3. **Pronto pra validar** — ao terminar, o agente dispara o `ready`. *Ele* dispara, não você: é o portão que força a revisão humana.
+4. **Você valida em uso real** — passar nos testes não basta; você usa, confirma e só então pede o fechamento.
+5. **Fecha** — `finish` encerra a demanda e, opcionalmente, **trava** (lock) os arquivos entregues. A partir daí, mexer neles exige `[unlock:...]` na mensagem de commit.
+
+Ideias paralelas vão pro **backlog** sem interromper o fluxo; quando viram prioridade, `promote` as converte em demanda.
+
+## Instalação
+
+Em qualquer projeto (Claude Code, Codex CLI ou Antigravity), rode o instalador a partir do repo do pack:
+
+```powershell
+# Windows
+.\install.ps1 -Target C:\caminho\do\seu\projeto
+```
+
+```bash
+# Linux / macOS
+./install.sh --target /caminho/do/seu/projeto
+```
+
+O instalador copia o pack, registra as skills dos três agentes e roda `ai init`. É idempotente (`--dry-run`, `--force`). Detalhes, upgrade e desinstalação: [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md).
+
+> No Claude Code o pack se instala como **plugin oficial** — atalhos `/guia:feature`, `/guia:bug`, etc. Publicado, `/plugin marketplace add Paulo-Marcos/guia-fluxo` dispensa o clone.
 
 ## Uso
 
+Os verbos do dia a dia (Windows usa o wrapper; em Linux/macOS troque por `python core/src/guia.py <verbo>`):
+
 ```powershell
-.\core\bin\guia.ps1 feature "Titulo curto" --context "Motivo e escopo"
-.\core\bin\guia.ps1 status
-.\core\bin\guia.ps1 ready F-016 --file core/src/guia.py --summary "Implementacao pronta"
-.\core\bin\guia.ps1 docs-check                                          # hook opcional: lista docs vivos a atualizar
-.\core\bin\guia.ps1 finish F-016 --docs-touched docs/reference/cli.md --lock --lock-id guia-fluxo
+.\core\bin\guia.ps1 feature "Titulo curto" --context "Motivo e escopo"   # abre a demanda
+.\core\bin\guia.ps1 status                                               # o que estou fazendo agora?
+.\core\bin\guia.ps1 ready D-001 --file core/src/foo.py --summary "Pronto pra validar"
+.\core\bin\guia.ps1 finish D-001                                         # depois que VOCÊ validar
 ```
 
-Cada comando atualiza `.guia/*.json`, `FEATURES.md` e imprime um titulo sugerido
-(`NOME DO CHAT: F-016 - #DEV - Titulo`) que o agente repete e tenta aplicar via
-API/comando da ferramenta quando disponivel.
+Cada comando atualiza o estado (`.guia/*.json`, `FEATURES.md`) e imprime o `NOME DO CHAT`, que o agente repete pra amarrar o chat à demanda. Referência completa: [`docs/reference/cli.md`](docs/reference/cli.md).
 
-## Documentacao
+## Documentação
 
-Documentacao organizada via [Diataxis](https://diataxis.fr/) - quatro portas por intencao do leitor.
+Organizada via [Diataxis](https://diataxis.fr/) — quatro portas por intenção do leitor:
 
-- [`docs/`](docs/) — indice completo (tutorials, how-to, reference, explanation).
-- [`docs/tutorials/primeiro-uso.md`](docs/tutorials/primeiro-uso.md) — do clone ate finalizar a primeira demanda.
-- [`docs/explanation/visao-geral.md`](docs/explanation/visao-geral.md) — desenho do processo: skill, script, JSON, YAML, hooks.
-- [`docs/reference/cli.md`](docs/reference/cli.md) — todos os comandos de `core/src/guia.py` / `core/bin/guia.ps1`.
-- [`docs/how-to/`](docs/how-to/) — receitas: travar arquivo, promover backlog, renomear chat, etc.
-- [`docs/adr/`](docs/adr/) — Architecture Decision Records (decisoes arquiteturais e o porque).
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — proximas versoes.
-- [`CHANGELOG.md`](CHANGELOG.md) — historico de mudancas.
+- [`docs/tutorials/primeiro-uso.md`](docs/tutorials/primeiro-uso.md) — do clone ao primeiro `finish`.
+- [`docs/how-to/`](docs/how-to/) — receitas (travar arquivo, promover backlog, renomear chat…).
+- [`docs/reference/cli.md`](docs/reference/cli.md) — todos os comandos.
+- [`docs/explanation/visao-geral.md`](docs/explanation/visao-geral.md) — o desenho do processo.
+- [`docs/adr/`](docs/adr/) — decisões arquiteturais (e o porquê).
+- [`docs/`](docs/) — índice completo · [`CHANGELOG.md`](CHANGELOG.md) · [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
+## Como é construído
+
+A stack importa menos que o que está acima — mas pra quem for contribuir, são três camadas:
+
+- **Skill** — a interface conversacional que o agente dispara (`/feature`, `/ready`, …).
+- **Script** — `core/src/guia.py` é a **fonte da verdade**: toda mutação de estado passa por ele (nunca edite `.guia/*.json` à mão).
+- **Estado** — JSON/YAML em `.guia/` (demandas e status) e `features/registry.yaml` (locks).
+
+As fontes ficam em `core/`; o build (`python core/build/render-skills.py`) gera `dist/` — o plugin Claude Code (`dist/.claude-plugin/`) e as skills cross-tool dos demais agentes. Por que assim: [`docs/adr/0006-plugin-oficial-claude-code.md`](docs/adr/0006-plugin-oficial-claude-code.md) e [`docs/explanation/visao-geral.md`](docs/explanation/visao-geral.md).
 
 ## Contribuindo
 
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — pre-requisitos, fluxo de demanda, padrao de commit, PR.
-- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) — Contributor Covenant v2.1.
-- [`SECURITY.md`](SECURITY.md) — como reportar vulnerabilidade em canal privado.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — pré-requisitos, fluxo de demanda, padrão de commit, PR.
 - [`AGENTS.md`](AGENTS.md) / [`CLAUDE.md`](CLAUDE.md) — briefing para agentes que abrirem o repo.
+- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) · [`SECURITY.md`](SECURITY.md).
 
-## Licenca
+## Licença
 
 [MIT](LICENSE). Copyright (c) 2026 Paulo Marcos.

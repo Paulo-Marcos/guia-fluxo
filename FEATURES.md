@@ -2,6 +2,39 @@
 
 ---
 
+## [D-071] 🧹 README value-first: o que faz e como usar antes da stack
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-15)
+- **Tipo:** Chore
+- **Contexto:** Pre-publicacao no GitHub. Aplicar a licao do artigo Akita ('ninguem liga pra sua stack'): o README deve LIDERAR com o que o guia-fluxo faz, o problema que resolve e COMO usar (fluxo + exemplo concreto), e so depois detalhes de stack/arquitetura/instalacao/plugin. Hoje o README mergulha em layout de plugin, marketplace e core/dist antes de mostrar valor. Tambem corrigir handle paulosmarcos -> Paulo-Marcos no README.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `README.md`
+- `dist/.claude-plugin/plugin.json`
+- `dist/.claude-plugin/marketplace.json`
+- `docs/ROADMAP.md`
+- `docs/explanation/visao-geral.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- README reescrito value-first: lidera com o que o pack faz, o problema e o fluxo (abre->ready->valida->finish->lock); stack movida pro fim. Handle paulosmarcos->Paulo-Marcos corrigido em plugin.json, marketplace.json, ROADMAP, visao-geral e instalar-em-outro-projeto.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- doctor verde; render --check verde (53 alvos); git grep sem paulosmarcos fora de .guia/FEATURES
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-070] 🧹 Docs quick wins: residuo CONTRIBUTING + llms.txt
 
 - **Status:** Validada

@@ -2,6 +2,76 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-071",
+      "kind": "chore",
+      "title": "README value-first: o que faz e como usar antes da stack",
+      "status": "Validada",
+      "origin": "Guia Fluxo (2026-06-15)",
+      "context": "Pre-publicacao no GitHub. Aplicar a licao do artigo Akita ('ninguem liga pra sua stack'): o README deve LIDERAR com o que o guia-fluxo faz, o problema que resolve e COMO usar (fluxo + exemplo concreto), e so depois detalhes de stack/arquitetura/instalacao/plugin. Hoje o README mergulha em layout de plugin, marketplace e core/dist antes de mostrar valor. Tambem corrigir handle paulosmarcos -> Paulo-Marcos no README.",
+      "createdAt": "2026-06-15",
+      "updatedAt": "2026-06-15",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "README.md",
+        "dist/.claude-plugin/plugin.json",
+        "dist/.claude-plugin/marketplace.json",
+        "docs/ROADMAP.md",
+        "docs/explanation/visao-geral.md",
+        "docs/how-to/instalar-em-outro-projeto.md",
+        ".guia/current-task.json",
+        ".guia/tasks.json"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo.",
+        "README reescrito value-first: lidera com o que o pack faz, o problema e o fluxo (abre->ready->valida->finish->lock); stack movida pro fim. Handle paulosmarcos->Paulo-Marcos corrigido em plugin.json, marketplace.json, ROADMAP, visao-geral e instalar-em-outro-projeto.",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "doctor verde; render --check verde (53 alvos); git grep sem paulosmarcos fora de .guia/FEATURES"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-071",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-071",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "README.md",
+          "docs/ROADMAP.md",
+          "docs/explanation/visao-geral.md",
+          "docs/how-to/instalar-em-outro-projeto.md"
+        ],
+        "checkedAt": "2026-06-15",
+        "skipped": "CHANGELOG consolidado no corte da v0.2.0 (proximo front); sem mudanca arquitetural"
+      }
+    },
+    {
       "id": "D-070",
       "kind": "chore",
       "title": "Docs quick wins: residuo CONTRIBUTING + llms.txt",
