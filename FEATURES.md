@@ -2,6 +2,34 @@
 
 ---
 
+## [D-074] ✨ B-009: marketplace remoto (.claude-plugin na raiz)
+
+- **Status:** Aguardando validacao
+- **Origem:** Guia Fluxo (2026-06-16)
+- **Tipo:** Feature
+- **Contexto:** Front #3 Akita. Repo publico. /plugin marketplace add Paulo-Marcos/guia-fluxo exige (guia oficial) .claude-plugin/marketplace.json na RAIZ - so existe em dist/. Criar root marketplace.json aditivo, plugin source ./dist (dogfood local segue ./dist via settings). Corrigir snippet install no README (/plugin install guia@guia-fluxo - plugin name e guia). Marcar B-009 entregue em ROADMAP/visao-geral. Drift namespace ai->guia fica chore separado. Validacao final e do dev em sessao Claude Code nova.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `.claude-plugin/marketplace.json`
+- `README.md`
+- `docs/ROADMAP.md`
+- `docs/explanation/visao-geral.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- B-009: criado .claude-plugin/marketplace.json na raiz (plugin guia, source ./dist) habilitando /plugin marketplace add Paulo-Marcos/guia-fluxo remoto (guia oficial exige o manifest na raiz). README install snippet corrigido (/plugin install guia@guia-fluxo). ROADMAP/visao-geral marcam B-009 entregue. Aditivo: dogfood local segue ./dist.
+
+### Validacao feita
+
+- marketplace.json JSON valido; doctor verde; render --check verde (53)
+
+### Validacao pendente
+
+- Humano: validar /plugin marketplace add Paulo-Marcos/guia-fluxo + /plugin install guia@guia-fluxo numa sessao Claude Code nova
+
 ## [D-073] 🧹 Release v0.2.0: cortar CHANGELOG, bump VERSION, release.yml
 
 - **Status:** Validada

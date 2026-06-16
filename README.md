@@ -46,7 +46,14 @@ Em qualquer projeto (Claude Code, Codex CLI ou Antigravity), rode o instalador a
 
 O instalador copia o pack, registra as skills dos três agentes e roda `ai init`. É idempotente (`--dry-run`, `--force`). Detalhes, upgrade e desinstalação: [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md).
 
-> No Claude Code o pack se instala como **plugin oficial** — atalhos `/guia:feature`, `/guia:bug`, etc. Publicado, `/plugin marketplace add Paulo-Marcos/guia-fluxo` dispensa o clone.
+> **No Claude Code, instale direto do marketplace** (dispensa o clone):
+>
+> ```
+> /plugin marketplace add Paulo-Marcos/guia-fluxo
+> /plugin install guia@guia-fluxo
+> ```
+>
+> Pronto — os atalhos `/guia:feature`, `/guia:bug`, etc. ficam disponíveis.
 
 ## Uso
 
