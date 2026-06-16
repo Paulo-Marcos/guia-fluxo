@@ -1,6 +1,6 @@
 {
-  "taskId": "D-074",
-  "status": "Aguardando validacao",
-  "title": "B-009: marketplace remoto (.claude-plugin na raiz)",
-  "chatTitle": "D-074 \u2728 - #VALIDACAO - B-009: marketplace remoto (.claude-plugin na raiz)"
+  "taskId": "D-075",
+  "status": "Planejada",
+  "title": "Plugin autossuficiente: install sem clone (CLAUDE_PLUGIN_ROOT)",
+  "chatTitle": "D-075 \u2728 - #PLANEJADA - Plugin autossuficiente: install sem clone (CLAUDE_PLUGIN_ROOT)"
 }

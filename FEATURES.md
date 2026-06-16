@@ -2,6 +2,30 @@
 
 ---
 
+## [D-075] ✨ Plugin autossuficiente: install sem clone (CLAUDE_PLUGIN_ROOT)
+
+- **Status:** Planejada
+- **Origem:** Guia Fluxo (2026-06-16)
+- **Tipo:** Feature
+- **Contexto:** Tornar /plugin install guia@guia-fluxo suficiente sozinho (sem clone nem install.ps1) para usuarios Claude Code. Hoje as skills mandam rodar .\core\bin\guia.ps1 (relativo ao CWD) - exatamente o que a doc oficial plugin-dev proibe; o certo e a env var CLAUDE_PLUGIN_ROOT. O motor ja esta empacotado standalone em dist/bin/guia.py (F-012) e o plugin source e ./dist, entao CLAUDE_PLUGIN_ROOT = dist instalado -> python no bin do plugin funciona. Escopo Completo: (1) run command host-aware (Claude -> CLAUDE_PLUGIN_ROOT/bin/guia.py; agent Codex/Antigravity mantem deploy install.sh), (2) auto-init do .guia no 1o uso, (3) README/docs do fluxo sem clone + pre-req Python 3.10+. Relaciona spike D-058.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Executar implementacao e validacoes.
+
+
 ## [D-074] ✨ B-009: marketplace remoto (.claude-plugin na raiz)
 
 - **Status:** Aguardando validacao
