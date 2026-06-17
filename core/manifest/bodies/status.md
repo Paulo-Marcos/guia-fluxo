@@ -2,18 +2,11 @@
 
 Show the current Guia Fluxo task and the suggested chat title. Read-only — never mutates state.
 
-Run:
+{{include_per_target: _partials/run_cmd}}
 
-```powershell
-.\core\bin\guia.ps1 status
+```text
+status            # current task
+status <D-NNN>    # a specific task
 ```
-
-Or pass a specific task id:
-
-```powershell
-.\core\bin\guia.ps1 status <D-NNN>
-```
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py status [<D-NNN>]`.
 
 {{include_per_target: _partials/post_cli}}

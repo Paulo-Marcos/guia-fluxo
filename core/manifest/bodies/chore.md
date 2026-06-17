@@ -4,10 +4,10 @@ Create a chore task for maintenance that deserves a trace but is not a new featu
 
 {{include: _partials/title_context_rules.md}}
 
-Run:
+{{include_per_target: _partials/run_cmd}}
 
-```powershell
-.\core\bin\guia.ps1 chore "<title>" --context "<what + why>"
+```text
+chore "<title>" --context "<what + why>"
 ```
 
 Useful flags:
@@ -19,8 +19,6 @@ When to use `chore` vs alternatives:
 - **New feature** (user-visible capability) → use `/feature`.
 - **Bug** (broken/regression) → use `/bug`.
 - **Chore** → everything else: cleanup, dep upgrade, folder organization, config tweak, improving an error message without changing behavior.
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py chore "<title>"`.
 
 {{include_per_target: _partials/post_cli}}
 

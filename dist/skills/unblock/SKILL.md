@@ -7,17 +7,22 @@ description: RESUME a paused task — moves status from `Bloqueada` back to `Em 
 
 **Resume a paused task.** Moves status from `Bloqueada` back to `Em desenvolvimento`. Use after `block` once the dependency/decision blocking the work has been resolved.
 
-Run:
+**Run the engine.** It ships inside the plugin — no repo clone, no manual `init`. Invoke it through `${CLAUDE_PLUGIN_ROOT}` (the plugin install dir), never a path relative to the working directory:
 
-```powershell
-.\core\bin\guia.ps1 unblock <D-NNN> [--note "What unblocked it"]
+```bash
+python "${CLAUDE_PLUGIN_ROOT}/bin/guia.py" <command>      # bash (canonical — you call via the Bash tool)
+python "$env:CLAUDE_PLUGIN_ROOT/bin/guia.py" <command>    # PowerShell
+```
+
+The engine roots itself at the current project and auto-creates `.guia/` there on the first command. Substitute `<command>` with the verb and arguments for this skill:
+
+```text
+unblock <D-NNN> [--note "What unblocked it"]
 ```
 
 `--note` is optional — useful when it is worth recording what unblocked it (decision made, dependency resolved).
 
 Fails if the task was not in `Bloqueada` (preserves the flow states).
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py unblock <D-NNN>`.
 
 ## After running the script
 

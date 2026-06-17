@@ -23,10 +23,17 @@ Example:
 
 If the human-provided phrasing already reads as an imperative under 60 chars, use it as-is. Synthesis is for loose/long phrasings, not a mandatory rewrite.
 
-Run:
+**Run the engine.** It ships inside the plugin — no repo clone, no manual `init`. Invoke it through `${CLAUDE_PLUGIN_ROOT}` (the plugin install dir), never a path relative to the working directory:
 
-```powershell
-.\core\bin\guia.ps1 chore "<title>" --context "<what + why>"
+```bash
+python "${CLAUDE_PLUGIN_ROOT}/bin/guia.py" <command>      # bash (canonical — you call via the Bash tool)
+python "$env:CLAUDE_PLUGIN_ROOT/bin/guia.py" <command>    # PowerShell
+```
+
+The engine roots itself at the current project and auto-creates `.guia/` there on the first command. Substitute `<command>` with the verb and arguments for this skill:
+
+```text
+chore "<title>" --context "<what + why>"
 ```
 
 Useful flags:
@@ -38,8 +45,6 @@ When to use `chore` vs alternatives:
 - **New feature** (user-visible capability) → use `/feature`.
 - **Bug** (broken/regression) → use `/bug`.
 - **Chore** → everything else: cleanup, dep upgrade, folder organization, config tweak, improving an error message without changing behavior.
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py chore "<title>"`.
 
 ## After running the script
 

@@ -7,19 +7,19 @@ description: READ-ONLY — show the current active task and the suggested chat t
 
 Show the current Guia Fluxo task and the suggested chat title. Read-only — never mutates state.
 
-Run:
+**Run the engine.** It ships inside the plugin — no repo clone, no manual `init`. Invoke it through `${CLAUDE_PLUGIN_ROOT}` (the plugin install dir), never a path relative to the working directory:
 
-```powershell
-.\core\bin\guia.ps1 status
+```bash
+python "${CLAUDE_PLUGIN_ROOT}/bin/guia.py" <command>      # bash (canonical — you call via the Bash tool)
+python "$env:CLAUDE_PLUGIN_ROOT/bin/guia.py" <command>    # PowerShell
 ```
 
-Or pass a specific task id:
+The engine roots itself at the current project and auto-creates `.guia/` there on the first command. Substitute `<command>` with the verb and arguments for this skill:
 
-```powershell
-.\core\bin\guia.ps1 status <D-NNN>
+```text
+status            # current task
+status <D-NNN>    # a specific task
 ```
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py status [<D-NNN>]`.
 
 ## After running the script
 

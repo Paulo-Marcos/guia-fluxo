@@ -14,15 +14,22 @@ Process:
 3. Check if title/context are actionable. If information is missing, ask the developer before creating a task.
 4. Propose a short execution plan, impacted areas, lock risks, and tradeoffs.
 5. Ask whether to use a worktree.
-6. After the developer approves, run:
+6. After the developer approves, run the command below.
 
-```powershell
-.\core\bin\guia.ps1 promote B-001 --kind feature --assessment "..." --plan "..."
+**Run the engine.** It ships inside the plugin — no repo clone, no manual `init`. Invoke it through `${CLAUDE_PLUGIN_ROOT}` (the plugin install dir), never a path relative to the working directory:
+
+```bash
+python "${CLAUDE_PLUGIN_ROOT}/bin/guia.py" <command>      # bash (canonical — you call via the Bash tool)
+python "$env:CLAUDE_PLUGIN_ROOT/bin/guia.py" <command>    # PowerShell
+```
+
+The engine roots itself at the current project and auto-creates `.guia/` there on the first command. Substitute `<command>` with the verb and arguments for this skill:
+
+```text
+promote B-001 --kind feature --assessment "..." --plan "..."
 ```
 
 If the developer chose a worktree, include `--worktree` — branch becomes `codex/<slug>` and path `.claude/worktrees/<slug>` (override with `--branch` or `--worktree-path`). `finish` removes the worktree at closing.
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py promote B-001 --kind feature ...`.
 
 ## After running the script
 

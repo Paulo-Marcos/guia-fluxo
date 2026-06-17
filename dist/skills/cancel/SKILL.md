@@ -12,10 +12,17 @@ Typical cases:
 - `promote` errado de um item de backlog.
 - Mudanca de escopo: o que parecia uma feature/bug nao se justifica mais.
 
-Run:
+**Run the engine.** It ships inside the plugin — no repo clone, no manual `init`. Invoke it through `${CLAUDE_PLUGIN_ROOT}` (the plugin install dir), never a path relative to the working directory:
 
-```powershell
-.\core\bin\guia.ps1 cancel <D-NNN> --reason "Motivo curto"
+```bash
+python "${CLAUDE_PLUGIN_ROOT}/bin/guia.py" <command>      # bash (canonical — you call via the Bash tool)
+python "$env:CLAUDE_PLUGIN_ROOT/bin/guia.py" <command>    # PowerShell
+```
+
+The engine roots itself at the current project and auto-creates `.guia/` there on the first command. Substitute `<command>` with the verb and arguments for this skill:
+
+```text
+cancel <D-NNN> --reason "Motivo curto"
 ```
 
 `--reason` is **required** (justification stays in history under `task.cancellations[]` and in `FEATURES.md`).
@@ -25,8 +32,6 @@ Useful flags:
 - `--set-current`: keep the task as current after canceling (default: clear `.guia/current-task.json` if the canceled task was current).
 
 Fails if the task is already in a terminal state (`Validada`, `Finalizada`, `Cancelada`).
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py cancel <D-NNN> --reason "..."`.
 
 ## After running the script
 

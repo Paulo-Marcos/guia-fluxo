@@ -7,17 +7,21 @@ description: RESUME a paused task — moves status from `Bloqueada` back to `Em 
 
 **Resume a paused task.** Moves status from `Bloqueada` back to `Em desenvolvimento`. Use after `block` once the dependency/decision blocking the work has been resolved.
 
-Run:
+**Run the engine** via the repo wrapper (portable fallback on Linux/Mac/no PowerShell: `python core/src/guia.py <command>`):
 
 ```powershell
-.\core\bin\guia.ps1 unblock <D-NNN> [--note "What unblocked it"]
+.\core\bin\guia.ps1 <command>
+```
+
+Substitute `<command>` with the verb and arguments for this skill:
+
+```text
+unblock <D-NNN> [--note "What unblocked it"]
 ```
 
 `--note` is optional — useful when it is worth recording what unblocked it (decision made, dependency resolved).
 
 Fails if the task was not in `Bloqueada` (preserves the flow states).
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py unblock <D-NNN>`.
 
 ## After running the script
 

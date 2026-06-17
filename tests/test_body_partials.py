@@ -80,6 +80,8 @@ class PartialFilesExistTests(unittest.TestCase):
             "lock_protocol.md",
             "post_cli.agent.md",
             "post_cli.claude.md",
+            "run_cmd.agent.md",
+            "run_cmd.claude.md",
         }
         actual = {p.name for p in PARTIALS.glob("*.md") if p.name != "README.md"}
         self.assertEqual(

@@ -133,14 +133,21 @@ class SharedBodyCacheTests(unittest.TestCase):
         agent_out = (dist / ".agents" / "skills" / "guia-feature" / "SKILL.md").read_text(encoding="utf-8")
         claude_out = (dist / "skills" / "feature" / "SKILL.md").read_text(encoding="utf-8")
         # Ambos compostos a partir do mesmo source (bodies/feature.md):
-        # garantia minima de que o comando principal aparece nos dois.
+        # garantia minima de que o comando neutro do verbo aparece nos dois.
         for output in (agent_out, claude_out):
-            self.assertIn("guia.ps1 feature", output)
-        # E divergem no trecho host-aware:
+            self.assertIn('feature "<title>"', output)
+        # Divergem no trecho host-aware de rename (post_cli):
         self.assertIn("codex_app", agent_out)
         self.assertNotIn("codex_app", claude_out)
         self.assertIn("mark_chapter", claude_out)
         self.assertNotIn("mark_chapter", agent_out)
+        # E no trecho host-aware de invocacao (run_cmd, D-075): o agent
+        # chama o wrapper do repo; o claude chama o motor do plugin via
+        # ${CLAUDE_PLUGIN_ROOT}.
+        self.assertIn("core\\bin\\guia.ps1", agent_out)
+        self.assertNotIn("CLAUDE_PLUGIN_ROOT", agent_out)
+        self.assertIn("CLAUDE_PLUGIN_ROOT", claude_out)
+        self.assertNotIn("core\\bin\\guia.ps1", claude_out)
 
 
 if __name__ == "__main__":

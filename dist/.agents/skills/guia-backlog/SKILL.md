@@ -23,25 +23,19 @@ Example:
 
 If the human-provided phrasing already reads as an imperative under 60 chars, use it as-is. Synthesis is for loose/long phrasings, not a mandatory rewrite.
 
-If the user provided a title, run:
+**Run the engine** via the repo wrapper (portable fallback on Linux/Mac/no PowerShell: `python core/src/guia.py <command>`):
 
 ```powershell
-.\core\bin\guia.ps1 backlog add "<title>" --context "<context>"
+.\core\bin\guia.ps1 <command>
 ```
 
-To list parked work:
+Substitute `<command>` with the verb and arguments for this skill:
 
-```powershell
-.\core\bin\guia.ps1 backlog list
+```text
+backlog add "<title>" --context "<context>"    # if the user provided a title
+backlog list                                   # show parked work
+backlog promote B-001                          # promote a backlog item
 ```
-
-To promote a backlog item:
-
-```powershell
-.\core\bin\guia.ps1 backlog promote B-001
-```
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py backlog add|list|promote ...`.
 
 ## After running the script
 

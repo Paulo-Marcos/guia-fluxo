@@ -7,19 +7,24 @@ description: PAUSE an in-flight task — preserves WIP and moves status to `Bloq
 
 **Pause the current task with a mandatory reason.** Moves status to `Bloqueada`, preserves the WIP, and keeps the entry in `FEATURES.md`. Use to stop temporarily: external dependency, waiting on a decision, priority swap. Distinct from `cancel` (terminal, does not return) and `finish` (validated and closed).
 
-Run:
+**Run the engine.** It ships inside the plugin — no repo clone, no manual `init`. Invoke it through `${CLAUDE_PLUGIN_ROOT}` (the plugin install dir), never a path relative to the working directory:
 
-```powershell
-.\core\bin\guia.ps1 block <D-NNN> --reason "Why pausing"
+```bash
+python "${CLAUDE_PLUGIN_ROOT}/bin/guia.py" <command>      # bash (canonical — you call via the Bash tool)
+python "$env:CLAUDE_PLUGIN_ROOT/bin/guia.py" <command>    # PowerShell
+```
+
+The engine roots itself at the current project and auto-creates `.guia/` there on the first command. Substitute `<command>` with the verb and arguments for this skill:
+
+```text
+block <D-NNN> --reason "Why pausing"
 ```
 
 `--reason` is **required** (recorded in `task.blocks[]` for blocked-time auditing).
 
 Fails if the task is already in a terminal state (`Validada`, `Finalizada`, `Cancelada`) or already in `Bloqueada`.
 
-To resume: `.\core\bin\guia.ps1 unblock <D-NNN>`.
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py block <D-NNN> --reason "..."`.
+To resume, use the `unblock` verb (`unblock <D-NNN>`).
 
 ## After running the script
 

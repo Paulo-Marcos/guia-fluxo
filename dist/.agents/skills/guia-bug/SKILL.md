@@ -23,18 +23,22 @@ Example:
 
 If the human-provided phrasing already reads as an imperative under 60 chars, use it as-is. Synthesis is for loose/long phrasings, not a mandatory rewrite.
 
-Run:
+**Run the engine** via the repo wrapper (portable fallback on Linux/Mac/no PowerShell: `python core/src/guia.py <command>`):
 
 ```powershell
-.\core\bin\guia.ps1 bug "<title>" --context "<observed symptom + impact>"
+.\core\bin\guia.ps1 <command>
+```
+
+Substitute `<command>` with the verb and arguments for this skill:
+
+```text
+bug "<title>" --context "<observed symptom + impact>"
 ```
 
 Useful flags:
 - `--context "<symptom + impact>"` — observed behavior vs expected, who is affected.
 - `--status backlog|planned|in-development` (default `in-development`) — `backlog` if not triaged, `planned` if planned but not now.
 - `--origin "<source>"` — alternate origin.
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py bug "<title>"`.
 
 ## After running the script
 

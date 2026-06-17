@@ -23,18 +23,22 @@ Example:
 
 If the human-provided phrasing already reads as an imperative under 60 chars, use it as-is. Synthesis is for loose/long phrasings, not a mandatory rewrite.
 
-Run:
+**Run the engine** via the repo wrapper (portable fallback on Linux/Mac/no PowerShell: `python core/src/guia.py <command>`):
 
 ```powershell
-.\core\bin\guia.ps1 feature "<title>" --context "<context>"
+.\core\bin\guia.ps1 <command>
+```
+
+Substitute `<command>` with the verb and arguments for this skill:
+
+```text
+feature "<title>" --context "<context>"
 ```
 
 Useful flags:
 - `--context "<why>"` — motivation (synthesize per the rules above).
 - `--origin "<source>"` — alternate origin (default: "Guia Fluxo (date)").
 - `--status backlog|planned|in-development` — default `in-development`.
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py feature "<title>"`.
 
 ## After running the script
 

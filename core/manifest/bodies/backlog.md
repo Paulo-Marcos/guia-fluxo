@@ -4,25 +4,13 @@ Manage parked work without starting implementation. `backlog add` creates a `D-N
 
 {{include: _partials/title_context_rules.md}}
 
-If the user provided a title, run:
+{{include_per_target: _partials/run_cmd}}
 
-```powershell
-.\core\bin\guia.ps1 backlog add "<title>" --context "<context>"
+```text
+backlog add "<title>" --context "<context>"    # if the user provided a title
+backlog list                                   # show parked work
+backlog promote B-001                          # promote a backlog item
 ```
-
-To list parked work:
-
-```powershell
-.\core\bin\guia.ps1 backlog list
-```
-
-To promote a backlog item:
-
-```powershell
-.\core\bin\guia.ps1 backlog promote B-001
-```
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py backlog add|list|promote ...`.
 
 {{include_per_target: _partials/post_cli}}
 

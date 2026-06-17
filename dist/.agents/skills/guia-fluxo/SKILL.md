@@ -25,27 +25,34 @@ Slash-command prefix differs by host: Claude Code exposes the plugin namespace (
 
 ## Core Rule
 
-Use repository scripts as the source of truth:
+Use the engine as the source of truth.
+
+**Run the engine** via the repo wrapper (portable fallback on Linux/Mac/no PowerShell: `python core/src/guia.py <command>`):
 
 ```powershell
-.\core\bin\guia.ps1 feature "Short title" --context "Why this matters"
-.\core\bin\guia.ps1 bug "Bug title" --context "Observed failure"
-.\core\bin\guia.ps1 backlog add "Future idea" --context "Useful later"
-.\core\bin\guia.ps1 promote B-001 --kind feature --assessment "Clear feature" --plan "Inspect affected files"
-.\core\bin\guia.ps1 status
-.\core\bin\guia.ps1 ready D-016 --file core/src/guia.py --summary "Implemented Guia Fluxo CLI"
-.\core\bin\guia.ps1 finish D-016 --lock --lock-id guia-fluxo
+.\core\bin\guia.ps1 <command>
 ```
 
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py <command> ...`.
+Substitute `<command>` with the verb and arguments for this skill:
 
-Do not hand-generate IDs, status blocks, backlog records, or current-task records when `core/bin/guia.ps1` can do it.
+```text
+feature "Short title" --context "Why this matters"
+bug "Bug title" --context "Observed failure"
+backlog add "Future idea" --context "Useful later"
+promote B-001 --kind feature --assessment "Clear feature" --plan "Inspect affected files"
+status
+ready D-016 --file core/src/guia.py --summary "Implemented Guia Fluxo CLI"
+finish D-016 --lock --lock-id guia-fluxo
+```
+
+Do not hand-generate IDs, status blocks, backlog records, or current-task records when the engine can do it.
 
 ## Where Behavior Lives
 
 The per-verb action playbook is in each verb's shim body, which composes shared partials:
 
 - `_partials/title_context_rules.md` — how to synthesize `<title>` vs `<context>` (feature, bug, chore, backlog).
+- `_partials/run_cmd.agent.md` / `_partials/run_cmd.claude.md` — host-aware invocation. The agent host (Codex/Antigravity) calls the repo wrapper `core/bin/guia.ps1`; the Claude host calls the plugin-bundled engine via `${CLAUDE_PLUGIN_ROOT}/bin/guia.py` (no repo clone). The include `{{include_per_target: _partials/run_cmd}}` in each verb body picks the right one at build time.
 - `_partials/post_cli.agent.md` / `_partials/post_cli.claude.md` — post-CLI flow per host (read `.guia/current-task.json`, repeat `NOME DO CHAT`, rename chat). The host-aware include `{{include_per_target: _partials/post_cli}}` in each verb body picks the right one at build time.
 - `_partials/lock_protocol.md` — `features/registry.yaml` enforcement and unlock request flow (used by any verb that edits files).
 
@@ -67,20 +74,28 @@ If shell access fails, surface the exact command the developer can run by hand.
 
 ## Portable install
 
-To reuse the pack in another project, copy:
+**Claude Code (recommended — no clone).** The pack is a published plugin; install it straight from the marketplace (requires Python 3.10+ on PATH):
 
-- `.guia/process.json`
-- `core/src/guia.py`
+```text
+/plugin marketplace add Paulo-Marcos/guia-fluxo
+/plugin install guia@guia-fluxo
+```
+
+The bundled engine lives at `${CLAUDE_PLUGIN_ROOT}/bin/guia.py` and roots itself at the project you are working in, auto-creating `.guia/` on the first command. No `init`, no copied files.
+
+**Codex / Antigravity / engine dev (clone-based).** These hosts deploy the pack into the project tree (`.guia-fluxo/` via `install.ps1`/`install.sh`, or the source repo for engine work). Copy:
+
+- `core/src/*.py`
 - `core/bin/guia.ps1`
 - `core/manifest/manifest.yaml`
 - `core/manifest/bodies/` (including `_partials/`)
 - `core/build/render-skills.py`
-- `core/lock/check-lock.py`
+- `core/lock/lock_api.py` + `core/lock/check-lock.py`
 - `core/hooks/commit-msg`
 - `dist/.claude-plugin/plugin.json` + `dist/.claude-plugin/marketplace.json`
 - the generated `dist/.agents/skills/*` and `dist/skills/*` trees
 
-Then run:
+Then seed the project (optional — the engine also auto-inits on first use):
 
 ```powershell
 .\core\bin\guia.ps1 init --project-name "new-project"

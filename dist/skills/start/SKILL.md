@@ -7,10 +7,17 @@ description: START — begin work on a `Planejada` or `Backlog` task (status →
 
 **Start work on a Planejada task (or directly from the Backlog).** Moves status to `Em desenvolvimento`. Assumes triage (kind = feature/bug/chore) is done — if you still need to decide the kind, use `$promote`.
 
-Run:
+**Run the engine.** It ships inside the plugin — no repo clone, no manual `init`. Invoke it through `${CLAUDE_PLUGIN_ROOT}` (the plugin install dir), never a path relative to the working directory:
 
-```powershell
-.\core\bin\guia.ps1 start <D-NNN> [--note "Starting now because..."]
+```bash
+python "${CLAUDE_PLUGIN_ROOT}/bin/guia.py" <command>      # bash (canonical — you call via the Bash tool)
+python "$env:CLAUDE_PLUGIN_ROOT/bin/guia.py" <command>    # PowerShell
+```
+
+The engine roots itself at the current project and auto-creates `.guia/` there on the first command. Substitute `<command>` with the verb and arguments for this skill:
+
+```text
+start <D-NNN> [--note "Starting now because..."]
 ```
 
 Distinct from:
@@ -21,8 +28,6 @@ Distinct from:
 Accepts transition from `Backlog` (shortcut that skips `Planejada`) or `Planejada`. Fails if the task is already `Em desenvolvimento`, in a terminal state (`Validada`, `Finalizada`, `Cancelada`), or `Bloqueada` (use `$unblock`).
 
 Tasks promoted from `Backlog` enter `FEATURES.md`.
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py start <D-NNN>`.
 
 ## After running the script
 

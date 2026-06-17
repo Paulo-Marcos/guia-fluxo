@@ -23,10 +23,16 @@ Example:
 
 If the human-provided phrasing already reads as an imperative under 60 chars, use it as-is. Synthesis is for loose/long phrasings, not a mandatory rewrite.
 
-Run:
+**Run the engine** via the repo wrapper (portable fallback on Linux/Mac/no PowerShell: `python core/src/guia.py <command>`):
 
 ```powershell
-.\core\bin\guia.ps1 chore "<title>" --context "<what + why>"
+.\core\bin\guia.ps1 <command>
+```
+
+Substitute `<command>` with the verb and arguments for this skill:
+
+```text
+chore "<title>" --context "<what + why>"
 ```
 
 Useful flags:
@@ -38,8 +44,6 @@ When to use `chore` vs alternatives:
 - **New feature** (user-visible capability) → use `/feature`.
 - **Bug** (broken/regression) → use `/bug`.
 - **Chore** → everything else: cleanup, dep upgrade, folder organization, config tweak, improving an error message without changing behavior.
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py chore "<title>"`.
 
 ## After running the script
 

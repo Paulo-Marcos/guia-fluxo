@@ -23,25 +23,20 @@ Example:
 
 If the human-provided phrasing already reads as an imperative under 60 chars, use it as-is. Synthesis is for loose/long phrasings, not a mandatory rewrite.
 
-If the user provided a title, run:
+**Run the engine.** It ships inside the plugin — no repo clone, no manual `init`. Invoke it through `${CLAUDE_PLUGIN_ROOT}` (the plugin install dir), never a path relative to the working directory:
 
-```powershell
-.\core\bin\guia.ps1 backlog add "<title>" --context "<context>"
+```bash
+python "${CLAUDE_PLUGIN_ROOT}/bin/guia.py" <command>      # bash (canonical — you call via the Bash tool)
+python "$env:CLAUDE_PLUGIN_ROOT/bin/guia.py" <command>    # PowerShell
 ```
 
-To list parked work:
+The engine roots itself at the current project and auto-creates `.guia/` there on the first command. Substitute `<command>` with the verb and arguments for this skill:
 
-```powershell
-.\core\bin\guia.ps1 backlog list
+```text
+backlog add "<title>" --context "<context>"    # if the user provided a title
+backlog list                                   # show parked work
+backlog promote B-001                          # promote a backlog item
 ```
-
-To promote a backlog item:
-
-```powershell
-.\core\bin\guia.ps1 backlog promote B-001
-```
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py backlog add|list|promote ...`.
 
 ## After running the script
 

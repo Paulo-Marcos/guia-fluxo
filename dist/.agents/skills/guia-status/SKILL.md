@@ -7,19 +7,18 @@ description: READ-ONLY — show the current active task and the suggested chat t
 
 Show the current Guia Fluxo task and the suggested chat title. Read-only — never mutates state.
 
-Run:
+**Run the engine** via the repo wrapper (portable fallback on Linux/Mac/no PowerShell: `python core/src/guia.py <command>`):
 
 ```powershell
-.\core\bin\guia.ps1 status
+.\core\bin\guia.ps1 <command>
 ```
 
-Or pass a specific task id:
+Substitute `<command>` with the verb and arguments for this skill:
 
-```powershell
-.\core\bin\guia.ps1 status <D-NNN>
+```text
+status            # current task
+status <D-NNN>    # a specific task
 ```
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py status [<D-NNN>]`.
 
 ## After running the script
 

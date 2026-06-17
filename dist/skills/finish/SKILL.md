@@ -7,12 +7,21 @@ description: CLOSE an already-validated task — runs the docs-check hook and co
 
 Close an already-validated task. Run **only after** the developer confirms validation in real use — `finish` is the closing gate, not a shortcut.
 
+**Run the engine.** It ships inside the plugin — no repo clone, no manual `init`. Invoke it through `${CLAUDE_PLUGIN_ROOT}` (the plugin install dir), never a path relative to the working directory:
+
+```bash
+python "${CLAUDE_PLUGIN_ROOT}/bin/guia.py" <command>      # bash (canonical — you call via the Bash tool)
+python "$env:CLAUDE_PLUGIN_ROOT/bin/guia.py" <command>    # PowerShell
+```
+
+The engine roots itself at the current project and auto-creates `.guia/` there on the first command. Substitute `<command>` with the verb and arguments for this skill:
+
 ## 1) Docs hook (mandatory when `.guia/docs-map.yaml` exists)
 
 Run the docs check before closing:
 
-```powershell
-.\core\bin\guia.ps1 docs-check
+```text
+docs-check
 ```
 
 For each listed candidate:
@@ -24,15 +33,13 @@ If the project has no `.guia/docs-map.yaml`, the hook is a no-op and `finish` ru
 
 ## 2) Close
 
-```powershell
-.\core\bin\guia.ps1 finish <D-NNN> --docs-touched docs/reference/cli.md --docs-touched CHANGELOG.md
+```text
+finish <D-NNN> --docs-touched docs/reference/cli.md --docs-touched CHANGELOG.md
 # or, when nothing needed touching:
-.\core\bin\guia.ps1 finish <D-NNN> --docs-skip "internal flow, no user-facing change"
+finish <D-NNN> --docs-skip "internal flow, no user-facing change"
 ```
 
 `finish` commits by default. Use `--no-commit` for dry close. Lock with `--lock --lock-id feature-slug --lock-description "..."` only when the developer asks for it.
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py finish <D-NNN> --docs-skip "..."`.
 
 ## After running the script
 

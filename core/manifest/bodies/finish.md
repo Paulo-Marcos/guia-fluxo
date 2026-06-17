@@ -2,12 +2,14 @@
 
 Close an already-validated task. Run **only after** the developer confirms validation in real use — `finish` is the closing gate, not a shortcut.
 
+{{include_per_target: _partials/run_cmd}}
+
 ## 1) Docs hook (mandatory when `.guia/docs-map.yaml` exists)
 
 Run the docs check before closing:
 
-```powershell
-.\core\bin\guia.ps1 docs-check
+```text
+docs-check
 ```
 
 For each listed candidate:
@@ -19,15 +21,13 @@ If the project has no `.guia/docs-map.yaml`, the hook is a no-op and `finish` ru
 
 ## 2) Close
 
-```powershell
-.\core\bin\guia.ps1 finish <D-NNN> --docs-touched docs/reference/cli.md --docs-touched CHANGELOG.md
+```text
+finish <D-NNN> --docs-touched docs/reference/cli.md --docs-touched CHANGELOG.md
 # or, when nothing needed touching:
-.\core\bin\guia.ps1 finish <D-NNN> --docs-skip "internal flow, no user-facing change"
+finish <D-NNN> --docs-skip "internal flow, no user-facing change"
 ```
 
 `finish` commits by default. Use `--no-commit` for dry close. Lock with `--lock --lock-id feature-slug --lock-description "..."` only when the developer asks for it.
-
-Portable fallback (Linux/Mac/no PowerShell): `python core/src/guia.py finish <D-NNN> --docs-skip "..."`.
 
 {{include_per_target: _partials/post_cli}}
 
