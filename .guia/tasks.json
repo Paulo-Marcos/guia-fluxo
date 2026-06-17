@@ -2,23 +2,76 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-076",
+      "kind": "feature",
+      "title": "Plugin global-first + guia:init (ref codex-plugin-cc)",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-17)",
+      "context": "Convergir para arquitetura plugin-global-first espelhando openai/codex-plugin-cc: motor+skills+templates 100% no plugin global (CLAUDE_PLUGIN_ROOT), projeto do cliente so com estado/controle (.guia/ JSONs + FEATURES.md + lock/hook opcionais). Adicionar /guia:init. Limpar o que nao e necessario (provavel: install.ps1/sh, layout .guia-fluxo no consumidor, talvez .agents cross-tool). Decisoes abertas: E1 nome da pasta local (.guia vs .guia-fluxo), E2 fate de Codex/Antigravity, E3 manter core/dist+render ou reestruturar, E4 escopo do guia:init (deploy de templates + hooksPath). Continua o D-075 (que ja poe o motor no plugin global via CLAUDE_PLUGIN_ROOT, auto-init, raiz por CWD).",
+      "createdAt": "2026-06-17",
+      "updatedAt": "2026-06-17",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
       "id": "D-075",
       "kind": "feature",
       "title": "Plugin autossuficiente: install sem clone (CLAUDE_PLUGIN_ROOT)",
-      "status": "Planejada",
+      "status": "Aguardando validacao",
       "origin": "Guia Fluxo (2026-06-16)",
       "context": "Tornar /plugin install guia@guia-fluxo suficiente sozinho (sem clone nem install.ps1) para usuarios Claude Code. Hoje as skills mandam rodar .\\core\\bin\\guia.ps1 (relativo ao CWD) - exatamente o que a doc oficial plugin-dev proibe; o certo e a env var CLAUDE_PLUGIN_ROOT. O motor ja esta empacotado standalone em dist/bin/guia.py (F-012) e o plugin source e ./dist, entao CLAUDE_PLUGIN_ROOT = dist instalado -> python no bin do plugin funciona. Escopo Completo: (1) run command host-aware (Claude -> CLAUDE_PLUGIN_ROOT/bin/guia.py; agent Codex/Antigravity mantem deploy install.sh), (2) auto-init do .guia no 1o uso, (3) README/docs do fluxo sem clone + pre-req Python 3.10+. Relaciona spike D-058.",
       "createdAt": "2026-06-16",
       "updatedAt": "2026-06-16",
       "modifiedFiles": [
-        "FEATURES.md"
+        "FEATURES.md",
+        "core/src/_constants.py",
+        "core/src/_cli_lifecycle.py",
+        "core/src/guia.py",
+        "core/manifest/bodies/_partials/run_cmd.claude.md",
+        "core/manifest/bodies/_partials/run_cmd.agent.md",
+        "core/manifest/bodies/feature.md",
+        "core/manifest/bodies/bug.md",
+        "core/manifest/bodies/chore.md",
+        "core/manifest/bodies/backlog.md",
+        "core/manifest/bodies/block.md",
+        "core/manifest/bodies/cancel.md",
+        "core/manifest/bodies/finish.md",
+        "core/manifest/bodies/plan.md",
+        "core/manifest/bodies/promote.md",
+        "core/manifest/bodies/ready.md",
+        "core/manifest/bodies/start.md",
+        "core/manifest/bodies/status.md",
+        "core/manifest/bodies/unblock.md",
+        "core/manifest/bodies/guia-fluxo.md",
+        "tests/test_auto_init.py",
+        "tests/test_body_partials.py",
+        "tests/test_manifest_layout_b.py",
+        "README.md",
+        "docs/how-to/instalar-em-outro-projeto.md",
+        "docs/adr/0014-plugin-autossuficiente-claude-plugin-root.md",
+        "docs/adr/README.md",
+        "CHANGELOG.md",
+        "dist/ (regenerado por render-skills.py: skills/*, .agents/skills/*, bin/_constants.py, bin/_cli_lifecycle.py, bin/guia.py)"
       ],
       "summary": [
-        "Demanda criada via Guia Fluxo."
+        "Demanda criada via Guia Fluxo.",
+        "Em desenvolvimento desde 2026-06-16.",
+        "Parte 1 (run host-aware): novo partial _partials/run_cmd.{claude,agent}.md incluido via {{include_per_target}} em TODOS os 13 verbos + Core Rule do guia-fluxo. Claude invoca python \"${CLAUDE_PLUGIN_ROOT}/bin/guia.py\" <command> (bash canonico + nota PowerShell $env:); agent mantem core/bin/guia.ps1 + fallback core/src/guia.py (sem regressao). Refs secundarias (block 'To resume', Portable install) neutralizadas.",
+        "Parte 2 (auto-init + raiz CWD): _constants.ROOT agora resolve em camadas (GUIA_PROJECT_ROOT > script_root quando ja tem .guia/ > CWD exato, SEM walk-up ancestral pra nao sequestrar .guia de pai). _cli_lifecycle.initialize_project()+ensure_initialized() extraidos de cmd_init; guia.py chama ensure_initialized() antes do dispatch (denylist init/doctor/render). NECESSARIO porque o plugin instalado vive fora da arvore do projeto: so __file__.parents[2] criaria .guia no cache.",
+        "Parte 3 (docs): README Instalacao lidera com rota sem clone (Python 3.10+); how-to instalar-em-outro-projeto com secao sem-clone; ADR-0014 novo + indice ADR; secao Portable install do body guia-fluxo reescrita; CHANGELOG [Unreleased] com a nuance dogfood (skills ativas vem de ./dist -> agente invoca dist/bin/guia.py; quem dev o motor usa core/bin/guia.ps1).",
+        "ARQUIVOS NOVOS (lock 'adicoes-exigem-autorizacao', op add): run_cmd.claude.md, run_cmd.agent.md, tests/test_auto_init.py, docs/adr/0014-*.md. O COMMIT (feito por voce) vai precisar de [unlock:adicoes-exigem-autorizacao] motivo: <razao>."
       ],
-      "validations": [],
+      "validations": [
+        "python core/build/render-skills.py && --check verde (53 alvos em sincronia)",
+        "python -m pytest: 141 passed (inclui tests/test_auto_init.py novo: roota no CWD, aviso auto-init, doctor nao auto-inicializa, override GUIA_PROJECT_ROOT)",
+        "python core/src/guia.py doctor: Guia Fluxo files OK",
+        "Simulacao real: copiei dist/bin pra fora do repo, rodei de um projeto temp -> auto-init disparou, D-001 fresh criado no projeto, .guia NAO vazou pra pasta do motor"
+      ],
       "pending": [
-        "Executar implementacao e validacoes."
+        "Validacao humana: num projeto NOVO (sem clone) rodar /plugin marketplace add Paulo-Marcos/guia-fluxo + /plugin install guia@guia-fluxo e depois /guia:feature \"teste\" pra confirmar o motor via ${CLAUDE_PLUGIN_ROOT}",
+        "Commit (humano) com [unlock:adicoes-exigem-autorizacao] por causa dos 4 arquivos novos"
       ]
     },
     {
