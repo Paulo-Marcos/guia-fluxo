@@ -78,6 +78,7 @@ from _cli_lifecycle import (  # noqa: E402
     cmd_status,
     cmd_unblock,
     cmd_validate,
+    ensure_initialized,
 )
 from _cli_meta import cmd_docs_check, cmd_render  # noqa: E402
 from _cli_tasks import cmd_tasks_filter, cmd_tasks_list, cmd_tasks_show  # noqa: E402
@@ -386,9 +387,18 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+# Commands that must NOT auto-init the project (D-075). `init` seeds it
+# itself; `doctor` reports `.guia/` health and must not mask a missing dir;
+# `render` is a dev-only build step over the manifest, unrelated to project
+# state.
+_NO_AUTO_INIT = frozenset({"init", "doctor", "render"})
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.command not in _NO_AUTO_INIT:
+        ensure_initialized()
     return args.func(args)
 
 

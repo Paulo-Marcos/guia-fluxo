@@ -10,11 +10,48 @@ without cycles.
 
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[2]
+def _resolve_root() -> Path:
+    """Resolve the project root that holds `.guia/`.
+
+    Three layers, in order:
+
+    1. `GUIA_PROJECT_ROOT` env override (explicit; used by tests and edge
+       cases).
+    2. Script-relative root (`__file__`'s grandparent) when it already
+       contains a `.guia/`. Keeps the historical behavior for layouts where
+       the engine lives inside the project tree: the source repo
+       (`core/src/`), the dogfood `dist/bin/`, and the `install.sh` consumer
+       (`.guia-fluxo/bin/`). Stable regardless of the current directory.
+    3. Caller's working directory otherwise. This is the Claude Code plugin
+       case (D-075): the engine runs from the plugin cache
+       (`${CLAUDE_PLUGIN_ROOT}/bin/`), outside the consumer project, so the
+       root must come from where the command was invoked. A virgin project
+       (no `.guia/` yet) roots at the CWD and the auto-init seeds `.guia/`
+       there.
+
+       Deliberately the CWD exactly, with no walk up to an ancestor
+       `.guia/`: an ancestor search would hijack the root to an unrelated
+       project whose `.guia/` happens to sit above the CWD (e.g. a stray
+       `.guia/` in the temp dir or the user's home), the same footgun
+       `git`'s upward `.git` search has. Run commands from the project root.
+    """
+    override = os.environ.get("GUIA_PROJECT_ROOT")
+    if override:
+        return Path(override).resolve()
+
+    script_root = Path(__file__).resolve().parents[2]
+    if (script_root / ".guia").is_dir():
+        return script_root
+
+    return Path.cwd().resolve()
+
+
+ROOT = _resolve_root()
 
 
 GUIA_DIR = ROOT / ".guia"

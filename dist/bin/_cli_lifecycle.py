@@ -60,18 +60,43 @@ from _validation_runner import run_validation_commands
 from _worktree import cleanup_task_worktree
 
 
-def cmd_init(args: argparse.Namespace) -> int:
-    GUIA_DIR.mkdir(exist_ok=True)
-    write_if_missing(
-        PROCESS_FILE,
-        default_process(args.project_name),
-        force=args.force,
-    )
-    write_if_missing(TASKS_FILE, {"schemaVersion": 1, "tasks": []}, force=args.force)
-    write_if_missing(BACKLOG_FILE, {"schemaVersion": 1, "items": []}, force=args.force)
-    write_if_missing(CURRENT_FILE, {}, force=args.force)
-    if args.force or not CHAT_TITLE_FILE.exists():
+def initialize_project(project_name: str, force: bool = False) -> None:
+    """Create `.guia/` scaffolding (process.json + empty state) at ROOT.
+
+    Idempotent: existing files are preserved unless `force=True`. Shared by
+    the explicit `init` command and by the auto-init path (D-075) so a
+    consumer project that installed the plugin without a clone works on the
+    first command, no manual `init` required.
+    """
+    GUIA_DIR.mkdir(parents=True, exist_ok=True)
+    write_if_missing(PROCESS_FILE, default_process(project_name), force=force)
+    write_if_missing(TASKS_FILE, {"schemaVersion": 1, "tasks": []}, force=force)
+    write_if_missing(BACKLOG_FILE, {"schemaVersion": 1, "items": []}, force=force)
+    write_if_missing(CURRENT_FILE, {}, force=force)
+    if force or not CHAT_TITLE_FILE.exists():
         CHAT_TITLE_FILE.write_text("", encoding="utf-8")
+
+
+def ensure_initialized() -> None:
+    """Auto-init the project on first command if `.guia/` is absent (D-075).
+
+    Runs before state-touching commands so a virgin consumer project works
+    without an explicit `init`. Uses the project directory name as the
+    default project name. Emits a one-line note to stderr for transparency;
+    stays silent once `.guia/process.json` exists.
+    """
+    if PROCESS_FILE.exists():
+        return
+    initialize_project(ROOT.name)
+    print(
+        f"Guia Fluxo: .guia/ ausente em {relative(GUIA_DIR)} - projeto inicializado "
+        f"automaticamente ({ROOT.name}).",
+        file=sys.stderr,
+    )
+
+
+def cmd_init(args: argparse.Namespace) -> int:
+    initialize_project(args.project_name, force=args.force)
     print(f"Guia Fluxo initialized for {args.project_name}.")
     return 0
 
@@ -480,6 +505,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 
 __all__ = [
+    "initialize_project",
+    "ensure_initialized",
     "cmd_init",
     "cmd_status",
     "cmd_ready",
