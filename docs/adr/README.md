@@ -21,6 +21,9 @@ ADR nao se confunde com [`explanation/`](../explanation/): explanation ensina o 
 | [0009](0009-yaml-para-manifest.md) | YAML como formato do manifest (decisao retroativa documentada) | Aceita |
 | [0010](0010-prefixos-trigger-skill-descriptions.md) | Politica de prefixos canonicos nas descriptions das skills | Aceita |
 | [0011](0011-modelo-de-demanda-tipo-x-status.md) | Modelo de demanda: `kind` x `status` ortogonais, backlog vira status, ID neutro `D-NNN` | Aceita |
+| [0012](0012-partials-em-bodies.md) | Partials reutilizaveis nos bodies via `{{include: ...}}` | Aceita |
+| [0013](0013-consolidacao-bodies-por-verbo.md) | Um body por verbo com `{{include_per_target: ...}}` host-aware | Aceita |
+| [0014](0014-plugin-autossuficiente-claude-plugin-root.md) | Plugin autossuficiente: invocacao via `${CLAUDE_PLUGIN_ROOT}` + raiz por CWD + auto-init | Aceita |
 
 ## Como adicionar um ADR novo
 

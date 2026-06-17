@@ -6,6 +6,12 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added
+- **Plugin autossuficiente: install sem clone (ADR-0014, D-075).** No Claude Code o pack agora instala via `/plugin marketplace add Paulo-Marcos/guia-fluxo` + `/plugin install guia@guia-fluxo` (sem clone, Python 3.10+ como pre-requisito) e funciona no primeiro comando. Tres partes: (1) **invocacao host-aware** — novo partial `_partials/run_cmd.{claude,agent}.md`, incluido via `{{include_per_target: _partials/run_cmd}}` em todos os bodies de verbo + na Core Rule do `guia-fluxo`; o target Claude invoca `python "${CLAUDE_PLUGIN_ROOT}/bin/guia.py" <command>` (caminho absoluto a instalacao, nunca relativo ao CWD), o target agent (Codex/Antigravity) mantem `core/bin/guia.ps1` + fallback `python core/src/guia.py`. (2) **Raiz por CWD** — `_constants.ROOT` resolve em camadas (`GUIA_PROJECT_ROOT` > raiz relativa ao script quando ja tem `.guia/` > CWD exato, sem walk-up ancestral); antes era so `__file__.parents[2]`, que num plugin instalado fora da arvore do projeto criaria o `.guia/` no cache do plugin. (3) **Auto-init** — o primeiro comando que toca estado cria o `.guia/` se ausente (`init`/`doctor`/`render` ficam de fora). Testes novos em `tests/test_auto_init.py` (motor fora do projeto roota no CWD; aviso de auto-init; doctor nao auto-inicializa; override `GUIA_PROJECT_ROOT`).
+
+### Changed
+- **Nuance dogfood (D-075).** Neste repo as skills ativas vem de `./dist` (marketplace local), entao apos a mudanca o agente em dogfood passa a invocar `dist/bin/guia.py` (motor buildado) em vez de `core/src`. Funciona e o `render --check` da CI garante o sync. Quem desenvolve o MOTOR continua rodando `core/bin/guia.ps1` direto (AGENTS.md ja diz isso). A secao "Portable install" do body `guia-fluxo`, o `README.md` (Instalacao) e `docs/how-to/instalar-em-outro-projeto.md` passam a liderar com a rota sem clone; `install.ps1`/`install.sh` viram a rota de Codex/Antigravity/dev.
+
 ## [0.2.0] - 2026-06-15
 
 ### Added

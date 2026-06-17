@@ -1,6 +1,19 @@
 # Como instalar em outro projeto
 
-Desde F-013 (2026-06-02) o pack tem **instalador oficial**: `install.ps1` (Windows) e `install.sh` (Linux/Mac). O instalador copia `dist/` (build do repo-mae) para o layout final no projeto consumidor e roda `ai init` pra semear `.guia/`.
+## Claude Code: sem clone (rota recomendada)
+
+Desde D-075 (2026-06-16) o plugin é **autossuficiente** no Claude Code — não precisa clonar o repo nem rodar o instalador. Pré-requisito: **Python 3.10+** no PATH. No projeto consumidor:
+
+```
+/plugin marketplace add Paulo-Marcos/guia-fluxo
+/plugin install guia@guia-fluxo
+```
+
+O motor vai embutido no plugin e as skills o invocam via `${CLAUDE_PLUGIN_ROOT}/bin/guia.py` (caminho absoluto à instalação, não relativo ao CWD). O motor se ancora no projeto onde você está e **cria o `.guia/` sozinho no primeiro comando** — sem `ai init` manual. O resto deste guia (instalador `install.ps1`/`install.sh`, layout `.guia-fluxo/`) é para **Codex/Antigravity** ou para quem desenvolve o motor.
+
+## Codex / Antigravity / dev: via instalador
+
+`install.ps1` (Windows) e `install.sh` (Linux/Mac) copiam `dist/` (build do repo-mae) para o layout final no projeto consumidor e rodam `ai init` pra semear `.guia/`.
 
 ## TL;DR
 

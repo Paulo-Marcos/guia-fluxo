@@ -32,7 +32,20 @@ Ideias paralelas vão pro **backlog** sem interromper o fluxo; quando viram prio
 
 ## Instalação
 
-Em qualquer projeto (Claude Code, Codex CLI ou Antigravity), rode o instalador a partir do repo do pack:
+### Claude Code — sem clone (recomendado)
+
+O pack é um plugin publicado. Pré-requisito: **Python 3.10+** no PATH. No projeto onde você quer usar:
+
+```
+/plugin marketplace add Paulo-Marcos/guia-fluxo
+/plugin install guia@guia-fluxo
+```
+
+Pronto — os atalhos `/guia:feature`, `/guia:bug`, etc. ficam disponíveis. O motor vai embutido no plugin (`${CLAUDE_PLUGIN_ROOT}/bin/guia.py`), se ancora no projeto onde você está e cria o `.guia/` sozinho no primeiro comando. **Nada de clonar o repo nem rodar `init` à mão.**
+
+### Codex / Antigravity — via instalador
+
+Esses agentes recebem o pack copiado para a árvore do projeto. Rode o instalador a partir do clone do repo do pack:
 
 ```powershell
 # Windows
@@ -44,16 +57,7 @@ Em qualquer projeto (Claude Code, Codex CLI ou Antigravity), rode o instalador a
 ./install.sh --target /caminho/do/seu/projeto
 ```
 
-O instalador copia o pack, registra as skills dos três agentes e roda `ai init`. É idempotente (`--dry-run`, `--force`). Detalhes, upgrade e desinstalação: [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md).
-
-> **No Claude Code, instale direto do marketplace** (dispensa o clone):
->
-> ```
-> /plugin marketplace add Paulo-Marcos/guia-fluxo
-> /plugin install guia@guia-fluxo
-> ```
->
-> Pronto — os atalhos `/guia:feature`, `/guia:bug`, etc. ficam disponíveis.
+O instalador copia o pack, registra as skills cross-tool e roda `ai init`. É idempotente (`--dry-run`, `--force`). Detalhes, upgrade e desinstalação: [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md).
 
 ## Uso
 
