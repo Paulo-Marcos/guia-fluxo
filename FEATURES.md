@@ -2,9 +2,89 @@
 
 ---
 
+## [D-076] ✨ Plugin global-first + guia:init (ref codex-plugin-cc)
+
+- **Status:** Validada
+- **Origem:** Backlog D-076 promovido (2026-06-17)
+- **Tipo:** Feature
+- **Contexto:** Convergir para arquitetura plugin-global-first espelhando openai/codex-plugin-cc: motor+skills+templates 100% no plugin global (CLAUDE_PLUGIN_ROOT), projeto do cliente so com estado/controle (.guia/ JSONs + FEATURES.md + lock/hook opcionais). Adicionar /guia:init. Limpar o que nao e necessario (provavel: install.ps1/sh, layout .guia-fluxo no consumidor, talvez .agents cross-tool). Decisoes abertas: E1 nome da pasta local (.guia vs .guia-fluxo), E2 fate de Codex/Antigravity, E3 manter core/dist+render ou reestruturar, E4 escopo do guia:init (deploy de templates + hooksPath). Continua o D-075 (que ja poe o motor no plugin global via CLAUDE_PLUGIN_ROOT, auto-init, raiz por CWD).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_cli_lifecycle.py`
+- `core/src/_state.py`
+- `core/src/guia.py`
+- `core/src/_constants.py`
+- `core/src/_locks.py`
+- `core/lock/lock_api.py`
+- `core/lock/check-lock.py`
+- `core/hooks/commit-msg`
+- `core/build/render-skills.py`
+- `core/bin/guia`
+- `core/manifest/manifest.yaml`
+- `core/manifest/bodies/init.md`
+- `core/manifest/bodies/guia-fluxo.md`
+- `core/manifest/bodies/_partials/README.md`
+- `.claude/settings.json`
+- `.claude-plugin/marketplace.json`
+- `docs/adr/0015-plugin-global-first-guia-init.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/reference/cli.md`
+- `docs/reference/files.md`
+- `README.md`
+- `AGENTS.md`
+- `CLAUDE.md`
+- `CONTRIBUTING.md`
+- `CHANGELOG.md`
+- `tests/test_init_deploy.py`
+- `tests/test_install.py`
+- `tests/test_manifest_layout_b.py`
+- `tests/test_body_partials.py`
+- `tests/test_render_includes.py`
+- `plugins/guia/skills/init/SKILL.md`
+- `plugins/guia/.agents/skills/guia-init/SKILL.md`
+- `plugins/guia/bin/check-lock.py`
+- `plugins/guia/commands/init.md`
+- `plugins/guia/commands/feature.md`
+- `SECURITY.md`
+- `tests/test_render_polish.py`
+- `tests/test_render_hardening.py`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `tests/test_lock_api.py`
+
+### O que foi feito
+
+- Backlog D-076 promovido via guia-fluxo.
+- Avaliacao IA: Demanda valida e bem escopada. O caminho Claude ja e plugin-global-first (D-075: no-clone, motor via CLAUDE_PLUGIN_ROOT, raiz por CWD, auto-init de .guia/). Decisoes fechadas com o dev: E1 manter .guia/; E2 preservar cross-tool (Codex/Antigravity) intacto e tratar em demanda separada; E3 renomear dist/ -> plugins/guia/; E4 /guia:init full. Net-new: /guia:init + rename de layout + docs/ADR-0015. Sem worktree, in-place no main.
+- Convergencia plugin-global-first (espelha codex-plugin-cc). (1) Novo verbo/skill init (/guia:init) FULL: semeia .guia/ + deploya templates de lock (features/registry.yaml, lock-ignore.txt, .githooks/commit-msg) do plugin + git core.hooksPath; idempotente, no-clobber, flag --no-locks. Reusa initialize_project (D-075); fonte dos templates via CLAUDE_PLUGIN_ROOT/templates com fallback <engine>/../templates.
+- (2) Rename dist/ -> plugins/guia/ (git ve como renomeacao): default do Paths.build em render-skills.py, .claude/settings.json (extraKnownMarketplaces ./plugins/guia), .claude-plugin/marketplace.json raiz (source), doctor, e testes que hardcodavam dist (test_install/manifest_layout_b/body_partials/render_includes). marketplace.json dentro do plugin usa source ../ e seguiu valido.
+- (3) Locks funcionais no consumidor plugin-global: lock_api.REPO_ROOT em 3 camadas (GUIA_PROJECT_ROOT > script-se-tem-.guia > CWD, espelha _constants); check-lock.py embarcado no bin do plugin; commit-msg robusto (descobre validador em core/lock OU CLAUDE_PLUGIN_ROOT/bin, degrada exit 0 com aviso se nenhum).
+- (4) Cross-tool Codex/Antigravity (target agent_skill, .agents/skills, install.ps1/.sh, .guia-fluxo/) PRESERVADO intacto e adiado para demanda separada (decisao E2). Docs: ADR-0015 (novo), README, instalar-em-outro-projeto, body guia-fluxo, cli.md, files.md, AGENTS/CLAUDE, CONTRIBUTING, CHANGELOG. visao-geral.md mantido com refs dist/ historicas (F-011/F-012) de proposito.
+- ARQUIVOS NOVOS exigem no commit: [unlock:adicoes-exigem-autorizacao] motivo: <razao> (alem da palavra motivo:). Novos: core/manifest/bodies/init.md, docs/adr/0015-*.md, tests/test_init_deploy.py, plugins/guia/skills/init/SKILL.md, plugins/guia/.agents/skills/guia-init/SKILL.md, plugins/guia/bin/check-lock.py.
+- AJUSTE pos-validacao (skills -> commands): plugin SKILLS surgem bare no menu de slash (/init, /bug) e colidem com built-ins (/init) - confirmado pelo dev no install real. Migrado o target Claude de Agent Skills (skills/<verbo>/SKILL.md) para plugin COMMANDS (commands/<verbo>.md): render-skills.py ganha TargetSpec.emits_command + output flat sem 'name:' (claude_command); manifest key claude_skill->claude_command nos 15 verbos; plugins/guia/skills/ removido; commands/ gerado. Resultado: verbos namespaced /guia:<verbo>, sem colisao, auto-trigger por description preservado. Target agent_skill (Codex/Antigravity, .agents/skills/) intacto.
+- Docs alinhados (claude=commands, agent=skills): CLAUDE.md, AGENTS.md, CONTRIBUTING.md, docs/reference/{cli,files}.md, SECURITY.md, body guia-fluxo, ADR-0015 (decisao #4 + consequencias), CHANGELOG. 6 testes atualizados (body_partials/manifest_layout_b/render_includes/render_polish/render_hardening/install). Revisao adversarial (3 agentes) limpa: so 1 stale real (AGENTS.md:11 skills->commands) corrigido; resto pre-existente fora de escopo.
+- Fechada via finish --no-commit + commit manual unico: o commit_task do motor so cobre task.modifiedFiles e nao injeta o marcador [unlock:adicoes-exigem-autorizacao] que os arquivos novos exigem.
+
+### Validacao feita
+
+- python core/build/render-skills.py --check -> OK 56 alvos em sincronia
+- python -m pytest -> 144 passed (inclui tests/test_init_deploy.py novo: deploy templates + hooksPath + idempotencia/no-clobber + --no-locks)
+- python core/src/guia.py doctor -> Guia Fluxo files OK
+- hook commit-msg testado ao vivo no repo-mae: bloqueia add sem marcador (exit 1), libera com [unlock] + motivo (exit 0)
+- check-lock.py do plugin rodado de tmpdir resolve a raiz por CWD (reporta 'Nenhuma trava ativa' do tmp, nao o registry do repo) -> locks valem no consumidor
+- Dev confirmou no ambiente real (claude --plugin-dir + /reload-plugins): /guia:bug e /guia:init aparecem NAMESPACED, /guia filtra os verbos, /init nativo livre. Screenshots.
+- render --check OK (56 alvos); pytest 144 passed; doctor OK (apos a migracao)
+- render --check OK (56 alvos); pytest 146 passed (inclui lock_api _resolve_repo_root e test_init_deploy); doctor OK; /guia:* namespaced confirmado pelo dev no ambiente real (claude --plugin-dir + reload)
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-075] ✨ Plugin autossuficiente: install sem clone (CLAUDE_PLUGIN_ROOT)
 
-- **Status:** Planejada
+- **Status:** Aguardando validacao
 - **Origem:** Guia Fluxo (2026-06-16)
 - **Tipo:** Feature
 - **Contexto:** Tornar /plugin install guia@guia-fluxo suficiente sozinho (sem clone nem install.ps1) para usuarios Claude Code. Hoje as skills mandam rodar .\core\bin\guia.ps1 (relativo ao CWD) - exatamente o que a doc oficial plugin-dev proibe; o certo e a env var CLAUDE_PLUGIN_ROOT. O motor ja esta empacotado standalone em dist/bin/guia.py (F-012) e o plugin source e ./dist, entao CLAUDE_PLUGIN_ROOT = dist instalado -> python no bin do plugin funciona. Escopo Completo: (1) run command host-aware (Claude -> CLAUDE_PLUGIN_ROOT/bin/guia.py; agent Codex/Antigravity mantem deploy install.sh), (2) auto-init do .guia no 1o uso, (3) README/docs do fluxo sem clone + pre-req Python 3.10+. Relaciona spike D-058.
@@ -12,19 +92,55 @@
 ### Arquivos modificados/criados
 
 - `FEATURES.md`
+- `core/src/_constants.py`
+- `core/src/_cli_lifecycle.py`
+- `core/src/guia.py`
+- `core/manifest/bodies/_partials/run_cmd.claude.md`
+- `core/manifest/bodies/_partials/run_cmd.agent.md`
+- `core/manifest/bodies/feature.md`
+- `core/manifest/bodies/bug.md`
+- `core/manifest/bodies/chore.md`
+- `core/manifest/bodies/backlog.md`
+- `core/manifest/bodies/block.md`
+- `core/manifest/bodies/cancel.md`
+- `core/manifest/bodies/finish.md`
+- `core/manifest/bodies/plan.md`
+- `core/manifest/bodies/promote.md`
+- `core/manifest/bodies/ready.md`
+- `core/manifest/bodies/start.md`
+- `core/manifest/bodies/status.md`
+- `core/manifest/bodies/unblock.md`
+- `core/manifest/bodies/guia-fluxo.md`
+- `tests/test_auto_init.py`
+- `tests/test_body_partials.py`
+- `tests/test_manifest_layout_b.py`
+- `README.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/adr/0014-plugin-autossuficiente-claude-plugin-root.md`
+- `docs/adr/README.md`
+- `CHANGELOG.md`
+- `dist/ (regenerado por render-skills.py: skills/*, .agents/skills/*, bin/_constants.py, bin/_cli_lifecycle.py, bin/guia.py)`
 
 ### O que foi feito
 
 - Demanda criada via Guia Fluxo.
+- Em desenvolvimento desde 2026-06-16.
+- Parte 1 (run host-aware): novo partial _partials/run_cmd.{claude,agent}.md incluido via {{include_per_target}} em TODOS os 13 verbos + Core Rule do guia-fluxo. Claude invoca python "${CLAUDE_PLUGIN_ROOT}/bin/guia.py" <command> (bash canonico + nota PowerShell $env:); agent mantem core/bin/guia.ps1 + fallback core/src/guia.py (sem regressao). Refs secundarias (block 'To resume', Portable install) neutralizadas.
+- Parte 2 (auto-init + raiz CWD): _constants.ROOT agora resolve em camadas (GUIA_PROJECT_ROOT > script_root quando ja tem .guia/ > CWD exato, SEM walk-up ancestral pra nao sequestrar .guia de pai). _cli_lifecycle.initialize_project()+ensure_initialized() extraidos de cmd_init; guia.py chama ensure_initialized() antes do dispatch (denylist init/doctor/render). NECESSARIO porque o plugin instalado vive fora da arvore do projeto: so __file__.parents[2] criaria .guia no cache.
+- Parte 3 (docs): README Instalacao lidera com rota sem clone (Python 3.10+); how-to instalar-em-outro-projeto com secao sem-clone; ADR-0014 novo + indice ADR; secao Portable install do body guia-fluxo reescrita; CHANGELOG [Unreleased] com a nuance dogfood (skills ativas vem de ./dist -> agente invoca dist/bin/guia.py; quem dev o motor usa core/bin/guia.ps1).
+- ARQUIVOS NOVOS (lock 'adicoes-exigem-autorizacao', op add): run_cmd.claude.md, run_cmd.agent.md, tests/test_auto_init.py, docs/adr/0014-*.md. O COMMIT (feito por voce) vai precisar de [unlock:adicoes-exigem-autorizacao] motivo: <razao>.
 
 ### Validacao feita
 
-- Nenhuma.
+- python core/build/render-skills.py && --check verde (53 alvos em sincronia)
+- python -m pytest: 141 passed (inclui tests/test_auto_init.py novo: roota no CWD, aviso auto-init, doctor nao auto-inicializa, override GUIA_PROJECT_ROOT)
+- python core/src/guia.py doctor: Guia Fluxo files OK
+- Simulacao real: copiei dist/bin pra fora do repo, rodei de um projeto temp -> auto-init disparou, D-001 fresh criado no projeto, .guia NAO vazou pra pasta do motor
 
 ### Validacao pendente
 
-- Executar implementacao e validacoes.
-
+- Validacao humana: num projeto NOVO (sem clone) rodar /plugin marketplace add Paulo-Marcos/guia-fluxo + /plugin install guia@guia-fluxo e depois /guia:feature "teste" pra confirmar o motor via ${CLAUDE_PLUGIN_ROOT}
+- Commit (humano) com [unlock:adicoes-exigem-autorizacao] por causa dos 4 arquivos novos
 
 ## [D-074] ✨ B-009: marketplace remoto (.claude-plugin na raiz)
 

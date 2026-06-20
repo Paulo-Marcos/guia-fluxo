@@ -24,7 +24,7 @@ from pathlib import Path
 from conftest_paths import REPO_ROOT
 
 RENDER = REPO_ROOT / "core" / "build" / "render-skills.py"
-DIST = REPO_ROOT / "dist"
+DIST = REPO_ROOT / "plugins" / "guia"
 
 
 def _load_render_module(module_name: str):
@@ -89,7 +89,7 @@ verbs:
     description: |
       Test description.
     targets:
-      claude_skill:
+      claude_command:
         body_file: bodies/test.claude.md
 """
 
@@ -261,7 +261,7 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/test.md
-      claude_skill:
+      claude_command:
         body_file: bodies/test.md
 """
 
@@ -284,7 +284,7 @@ class IncludePerTargetTests(unittest.TestCase):
             )
             outputs = _render_in_sandbox(mdir, mfile, "render_probe_pertarget_agent")
             agent_out = next(o for o in outputs if o.target == "agent_skill")
-            claude_out = next(o for o in outputs if o.target == "claude_skill")
+            claude_out = next(o for o in outputs if o.target == "claude_command")
             self.assertIn("AGENT-specific.", agent_out.content)
             self.assertNotIn("CLAUDE-specific.", agent_out.content)
             self.assertIn("CLAUDE-specific.", claude_out.content)
@@ -308,7 +308,7 @@ class IncludePerTargetTests(unittest.TestCase):
             for output in outputs:
                 self.assertIn("SHARED-PROSE.", output.content)
             agent_out = next(o for o in outputs if o.target == "agent_skill")
-            claude_out = next(o for o in outputs if o.target == "claude_skill")
+            claude_out = next(o for o in outputs if o.target == "claude_command")
             self.assertNotEqual(agent_out.content, claude_out.content)
 
     def test_missing_host_specific_partial_aborts(self) -> None:
@@ -356,9 +356,14 @@ class DistInvariantTests(unittest.TestCase):
 
     def _all_dist_skill_files(self) -> list[Path]:
         candidates: list[Path] = []
-        for root in (DIST / "skills", DIST / ".agents" / "skills"):
-            if root.exists():
-                candidates.extend(root.rglob("SKILL.md"))
+        # Agent skills: .agents/skills/<guia-verb>/SKILL.md
+        agent_root = DIST / ".agents" / "skills"
+        if agent_root.exists():
+            candidates.extend(agent_root.rglob("SKILL.md"))
+        # Claude commands: commands/<verb>.md (flat)
+        cmd_root = DIST / "commands"
+        if cmd_root.exists():
+            candidates.extend(cmd_root.glob("*.md"))
         return candidates
 
     def test_no_unexpanded_include_in_dist(self) -> None:

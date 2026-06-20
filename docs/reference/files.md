@@ -17,16 +17,16 @@ FEATURES.md          Historico legivel por humano. Espelha tasks.json em prosa.
 core/
   src/guia.py                CLI portavel, Python puro.
   bin/guia.ps1               Wrapper Windows que localiza Python e invoca core/src/guia.py.
-  build/render-skills.py   Regenera dist/skills/ e dist/.agents/skills/ a partir do manifest.
+  build/render-skills.py   Regenera plugins/guia/commands/ e plugins/guia/.agents/skills/ a partir do manifest.
   manifest/manifest.yaml   Fonte unica das skills (Codex, Claude, Antigravity).
   lock/check-lock.py       CLI de locks: list, lock, unlock, audit, check.
   hooks/commit-msg         Hook que valida marcas [unlock:<id>] (`git config core.hooksPath core/hooks`).
   templates/               Snippets enviados pro consumidor durante install.
 
-dist/
-  .claude-plugin/plugin.json       Manifest oficial Claude Code (name=ai). Define namespace dos skills.
-  .claude-plugin/marketplace.json  Catalogo do marketplace local (source `../`, plugin root = dist/).
-  skills/<verbo>/SKILL.md          Saida do render para Claude Code (plugin oficial). NAO editar a mao.
+plugins/guia/
+  .claude-plugin/plugin.json       Manifest oficial Claude Code (name=guia). Define namespace dos skills.
+  .claude-plugin/marketplace.json  Catalogo do marketplace local (source `../`, plugin root = plugins/guia/).
+  commands/<verbo>.md              Saida do render para Claude Code (plugin command -> /guia:<verbo>). NAO editar a mao.
   .agents/skills/<verbo>/SKILL.md  Saida do render para Codex/Antigravity (convencao AGENTS.md). NAO editar a mao.
 
 features/
@@ -94,19 +94,19 @@ O script reescreve este arquivo a cada operacao. Nao edite a mao - voce sera sob
 
 Lista de paths/globs que **nunca** devem ser travados. Hoje inclui `.gitignore` e o proprio `features/lock-ignore.txt`. Existe para evitar lock global acidental em arquivos triviais.
 
-## `dist/.claude-plugin/plugin.json`
+## `plugins/guia/.claude-plugin/plugin.json`
 
 Manifest oficial do plugin Claude Code (spec: <https://code.claude.com/docs/en/plugins>). Define `name` (`ai`, vira namespace dos atalhos: `/guia:feature`, `/guia:bug`, ...), `description`, `version` e metadados (author, homepage, repository, license). Mudar so para bump de versao ou ajuste de metadados.
 
 ## `core/manifest/manifest.yaml`
 
-Fonte unica das skills do pack. Estrutura por verbo + targets (`agent_skill` para Codex/Antigravity, `claude_skill` para Claude Code). Editado a mao; consumido pelo `core/build/render-skills.py`.
+Fonte unica das skills do pack. Estrutura por verbo + targets (`agent_skill` para Codex/Antigravity, `claude_command` para Claude Code). Editado a mao; consumido pelo `core/build/render-skills.py`.
 
-## `dist/skills/<verbo>/SKILL.md`
+## `plugins/guia/commands/<verbo>.md`
 
-Saida do `core/build/render-skills.py` para Claude Code (layout oficial de plugin). Cada verbo do manifest produz um arquivo. Nao editar manualmente. Edite `core/manifest/manifest.yaml` e rode `render-skills.py`.
+Saida do `core/build/render-skills.py` para Claude Code (plugin **command**, surge namespaced como `/guia:<verbo>` - plugin skills surgiriam bare). Cada verbo do manifest produz um arquivo flat. Nao editar manualmente. Edite `core/manifest/manifest.yaml` e rode `render-skills.py`.
 
-## `dist/.agents/skills/<verbo>/SKILL.md`
+## `plugins/guia/.agents/skills/<verbo>/SKILL.md`
 
 Saida do `core/build/render-skills.py` para Codex + Antigravity (convencao AGENTS.md cross-tool, <https://agents.md/>). Cada verbo do manifest produz um arquivo. Nao editar manualmente. Edite `core/manifest/manifest.yaml` e rode `render-skills.py`.
 

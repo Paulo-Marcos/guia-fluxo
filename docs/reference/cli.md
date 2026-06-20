@@ -7,10 +7,15 @@ Wrapper PowerShell `core/bin/guia.ps1` localiza o Python adequado e invoca `core
 ### `init`
 
 ```powershell
-.\core\bin\guia.ps1 init --project-name "nome-do-projeto"
+.\core\bin\guia.ps1 init [--project-name "nome-do-projeto"] [--no-locks] [--force]
 ```
 
-Cria os JSONs vazios em `.guia/`, escreve `process.json` com o nome do projeto e zera `chat-title.txt`.
+Inicializa o Guia Fluxo no projeto atual. Sempre semeia `.guia/` (JSONs vazios, `process.json` com o nome do projeto, `chat-title.txt` zerado). Por padrao tambem deploya, a partir do `templates/` do plugin (`${CLAUDE_PLUGIN_ROOT}/templates/`), a config de lock por-projeto e o hook:
+
+- `features/registry.yaml`, `features/lock-ignore.txt`
+- `.githooks/commit-msg` + `git config core.hooksPath .githooks` (so se ainda nao definido)
+
+Idempotente e **nunca clobbera** arquivos existentes (imprime `+` para escritos e `=` para preservados). `--no-locks` faz so o seed de `.guia/`; `--force` sobrescreve. No Claude Code o auto-init ja cria `.guia/` no primeiro comando — rode `init` para optar pelos locks.
 
 ### `doctor`
 
@@ -195,16 +200,16 @@ Ainda existe como subcomando do CLI por compatibilidade. Nao ha mais skill para 
 
 Wrapper de `core/build/render-skills.py`. Regenera as skills a partir de `core/manifest/manifest.yaml` em dois destinos:
 
-- `dist/skills/<verbo>/SKILL.md` - output oficial do plugin Claude Code (`dist/.claude-plugin/plugin.json`, namespace `ai`). Atalhos saem como `/guia:feature`, `/guia:bug`, `/guia:chore`, etc.
-- `dist/.agents/skills/<verbo>/SKILL.md` - convencao AGENTS.md cross-tool para Codex + Antigravity.
+- `plugins/guia/commands/<verbo>.md` - plugin command do Claude Code (`plugins/guia/.claude-plugin/plugin.json`, namespace `guia`). Surgem namespaced como `/guia:feature`, `/guia:bug`, `/guia:chore`, etc. (commands namespaceiam; skills surgiriam bare).
+- `plugins/guia/.agents/skills/<verbo>/SKILL.md` - convencao AGENTS.md cross-tool para Codex + Antigravity.
 
 Cada verbo do manifest emite dois arquivos. `--check` sai com codigo != 0 se qualquer um estiver fora de sincronia. `--verb <nome>` limita o render a um verbo especifico.
 
-Os dois destinos sao distribuiveis: ao instalar o pack em outro projeto, copie `dist/skills/` (Claude) e/ou `dist/.agents/skills/` (Codex/Antigravity) junto com `dist/.claude-plugin/plugin.json`, `core/manifest/manifest.yaml`, `core/src/guia.py`, `core/bin/guia.ps1` e `.guia/`. Decisao arquitetural em [`docs/adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md).
+Os dois destinos sao distribuiveis: ao instalar o pack em outro projeto, copie `plugins/guia/commands/` (Claude) e/ou `plugins/guia/.agents/skills/` (Codex/Antigravity) junto com `plugins/guia/.claude-plugin/plugin.json`, `core/manifest/manifest.yaml`, `core/src/guia.py`, `core/bin/guia.ps1` e `.guia/`. Decisao arquitetural em [`docs/adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md).
 
 ## Aliases conversacionais
 
-Os comandos acima sao expostos para agentes via skills/shims. No Claude Code (plugin oficial, namespace `ai`) os atalhos saem namespaced; em Codex/Antigravity (via `dist/.agents/skills/`) o nome curto continua valendo:
+Os comandos acima sao expostos para agentes via skills/shims. No Claude Code (plugin oficial, namespace `guia`) os atalhos saem namespaced; em Codex/Antigravity (via `plugins/guia/.agents/skills/`) o nome curto continua valendo:
 
 | Alias Claude | Alias Codex/Antigravity | Subcomando | Emoji |
 | --- | --- | --- | --- |

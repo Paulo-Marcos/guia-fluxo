@@ -1,6 +1,6 @@
 {
-  "taskId": "D-075",
-  "status": "Planejada",
-  "title": "Plugin autossuficiente: install sem clone (CLAUDE_PLUGIN_ROOT)",
-  "chatTitle": "D-075 \u2728 - #PLANEJADA - Plugin autossuficiente: install sem clone (CLAUDE_PLUGIN_ROOT)"
+  "taskId": "D-076",
+  "status": "Validada",
+  "title": "Plugin global-first + guia:init (ref codex-plugin-cc)",
+  "chatTitle": "D-076 \u2728 - #FINALIZADO - Plugin global-first + guia:init (ref codex-plugin-cc)"
 }

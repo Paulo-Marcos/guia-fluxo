@@ -9,11 +9,21 @@ Desde D-075 (2026-06-16) o plugin é **autossuficiente** no Claude Code — não
 /plugin install guia@guia-fluxo
 ```
 
-O motor vai embutido no plugin e as skills o invocam via `${CLAUDE_PLUGIN_ROOT}/bin/guia.py` (caminho absoluto à instalação, não relativo ao CWD). O motor se ancora no projeto onde você está e **cria o `.guia/` sozinho no primeiro comando** — sem `ai init` manual. O resto deste guia (instalador `install.ps1`/`install.sh`, layout `.guia-fluxo/`) é para **Codex/Antigravity** ou para quem desenvolve o motor.
+O motor vai embutido no plugin e as skills o invocam via `${CLAUDE_PLUGIN_ROOT}/bin/guia.py` (caminho absoluto à instalação, não relativo ao CWD). O motor se ancora no projeto onde você está e **cria o `.guia/` sozinho no primeiro comando** — sem `init` manual. Os únicos arquivos que aparecem no consumidor são o estado `.guia/`. O resto deste guia (instalador `install.ps1`/`install.sh`, layout `.guia-fluxo/`) é para **Codex/Antigravity** ou para quem desenvolve o motor.
+
+### Ativando locks no Claude (opcional): `/guia:init`
+
+Por padrão o plugin só cria o `.guia/`. Para ligar os **locks** de arquivo, rode `/guia:init` uma vez no projeto consumidor. Ele:
+
+1. semeia o `.guia/` (idempotente);
+2. deploya `features/registry.yaml`, `features/lock-ignore.txt` e `.githooks/commit-msg` a partir do `templates/` do plugin (`${CLAUDE_PLUGIN_ROOT}/templates/`), sem sobrescrever o que já existir;
+3. configura `git core.hooksPath .githooks` (só se ainda não estiver definido).
+
+`--no-locks` faz só o seed do `.guia/`; `--force` sobrescreve. O `commit-msg` instalado é robusto: acha o validador no plugin (`${CLAUDE_PLUGIN_ROOT}/bin/check-lock.py`) quando o commit roda dentro de uma sessão Claude e degrada com aviso (libera o commit) se não achar nenhum validador.
 
 ## Codex / Antigravity / dev: via instalador
 
-`install.ps1` (Windows) e `install.sh` (Linux/Mac) copiam `dist/` (build do repo-mae) para o layout final no projeto consumidor e rodam `ai init` pra semear `.guia/`.
+`install.ps1` (Windows) e `install.sh` (Linux/Mac) copiam `plugins/guia/` (build do repo-mae) para o layout final no projeto consumidor e rodam `ai init` pra semear `.guia/`.
 
 ## TL;DR
 
@@ -100,7 +110,7 @@ Esperado: `Guia Fluxo files OK.`
 ```powershell
 cd C:\dev\guia-fluxo
 git pull
-python core/build/render-skills.py    # rebuilda dist/
+python core/build/render-skills.py    # rebuilda plugins/guia/
 cd C:\dev\meu-projeto
 C:\dev\guia-fluxo\install.ps1    # re-instala (substitui .guia-fluxo/ e .agents/)
 ```
@@ -134,15 +144,15 @@ Detalhes da decisao em [`../adr/0006-plugin-oficial-claude-code.md`](../adr/0006
 
 Se voce nao quiser usar `install.ps1`/`install.sh` (ex.: ambiente sem PowerShell e sem bash), faca a copia manual seguindo o mapa:
 
-| Origem (em `dist/`) | Destino (no consumidor) |
+| Origem (em `plugins/guia/`) | Destino (no consumidor) |
 | --- | --- |
-| `dist/.claude-plugin/` | `.guia-fluxo/.claude-plugin/` |
-| `dist/skills/` | `.guia-fluxo/skills/` |
-| `dist/bin/` | `.guia-fluxo/bin/` |
-| `dist/.agents/skills/` | `.agents/skills/` |
-| `dist/templates/.githooks/commit-msg` | `.githooks/commit-msg` |
-| `dist/templates/features/registry.yaml` | `features/registry.yaml` |
-| `dist/templates/features/lock-ignore.txt` | `features/lock-ignore.txt` |
+| `plugins/guia/.claude-plugin/` | `.guia-fluxo/.claude-plugin/` |
+| `plugins/guia/commands/` | `.guia-fluxo/commands/` |
+| `plugins/guia/bin/` | `.guia-fluxo/bin/` |
+| `plugins/guia/.agents/skills/` | `.agents/skills/` |
+| `plugins/guia/templates/.githooks/commit-msg` | `.githooks/commit-msg` |
+| `plugins/guia/templates/features/registry.yaml` | `features/registry.yaml` |
+| `plugins/guia/templates/features/lock-ignore.txt` | `features/lock-ignore.txt` |
 
 Depois rode `python .guia-fluxo/bin/guia.py init --project-name <nome>` no consumidor.
 
@@ -151,8 +161,8 @@ Depois rode `python .guia-fluxo/bin/guia.py init --project-name <nome>` no consu
 Skills sao geradas a partir de `core/manifest/manifest.yaml` no repo-mae. Para alterar:
 
 1. Edite `core/manifest/manifest.yaml` (no repo do pack, nao no consumidor).
-2. Rode `python core/build/render-skills.py` (regenera `dist/skills/`, `dist/.agents/skills/`, `dist/bin/`, `dist/templates/`).
+2. Rode `python core/build/render-skills.py` (regenera `plugins/guia/commands/`, `plugins/guia/.agents/skills/`, `plugins/guia/bin/`, `plugins/guia/templates/`).
 3. Em CI, use `python core/build/render-skills.py --check` para barrar drift.
 4. Re-instale no consumidor com `install.ps1`/`install.sh`.
 
-Nao edite arquivos sob `dist/` a mao — sao sobrescritos pelo render. No consumidor, nunca edite `.guia-fluxo/` a mao — sobrescritos pelo installer.
+Nao edite arquivos sob `plugins/guia/` a mao — sao sobrescritos pelo render. No consumidor, nunca edite `.guia-fluxo/` a mao — sobrescritos pelo installer.

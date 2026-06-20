@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import importlib
+import os
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from conftest_paths import ensure_core_importable
 
@@ -138,6 +140,28 @@ class EventsTests(_SandboxedLockApi):
         existing = "README.md"
         events = lock_api.events_from_paths([existing])
         self.assertEqual(events[0].operation, "modify")
+
+
+class ResolveRepoRootTests(unittest.TestCase):
+    """_resolve_repo_root (D-076): GUIA_PROJECT_ROOT > script-se-tem-.guia > CWD.
+
+    Faz o lock do consumidor plugin-global mirar o registry do projeto e
+    nao o diretorio do plugin (uma copia de lock_api.py embarcada no plugin
+    resolveria `parents[2]` para o dir do plugin sem este override)."""
+
+    def test_env_override_wins(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(os.environ):
+            os.environ["GUIA_PROJECT_ROOT"] = tmp
+            self.assertEqual(lock_api._resolve_repo_root(), Path(tmp).resolve())
+
+    def test_without_env_uses_script_root_when_it_has_guia(self) -> None:
+        # core/lock/lock_api.py -> parents[2] = repo-mae, que tem .guia/.
+        with mock.patch.dict(os.environ):
+            os.environ.pop("GUIA_PROJECT_ROOT", None)
+            self.assertEqual(
+                lock_api._resolve_repo_root(),
+                Path(lock_api.__file__).resolve().parents[2],
+            )
 
 
 if __name__ == "__main__":

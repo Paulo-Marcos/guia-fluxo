@@ -2,7 +2,7 @@
 
 Trechos de markdown reutilizaveis incluidos em bodies de skill via
 `{{include: _partials/<arquivo>.md}}`. O `render-skills.py` expande os
-includes em build-time; o `SKILL.md` final em `dist/` fica
+includes em build-time; o `SKILL.md` final em `plugins/guia/` fica
 self-contained (nenhuma indirecao em runtime para o agente).
 
 ## Convencoes

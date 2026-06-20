@@ -32,7 +32,7 @@ Em escopo (reporte privado):
 
 - Falhas no `core/src/guia.py` / `core/bin/guia.ps1` que permitem corromper `.guia/*.json`, `FEATURES.md` ou `features/registry.yaml` de fora do fluxo previsto.
 - Bypass do hook `commit-msg` / `core/lock/check-lock.py` (commitar em arquivo travado sem marca `[unlock:...]`).
-- Falhas no `core/build/render-skills.py` que permitem injetar conteudo em `dist/skills/<verbo>/SKILL.md` ou `dist/.agents/skills/<verbo>/SKILL.md` divergente do manifest (`core/manifest/manifest.yaml`).
+- Falhas no `core/build/render-skills.py` que permitem injetar conteudo em `plugins/guia/commands/<verbo>.md` ou `plugins/guia/.agents/skills/<verbo>/SKILL.md` divergente do manifest (`core/manifest/manifest.yaml`).
 - Injecao em mensagens de commit, paths, ou inputs de CLI que escapem para shell/Python.
 - Vazamento de credenciais ou paths sensiveis em logs/output do CLI.
 

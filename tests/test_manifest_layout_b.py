@@ -112,11 +112,11 @@ class SharedBodyCacheTests(unittest.TestCase):
     selecionado em build-time pelo `{{include_per_target:}}`."""
 
     def test_all_verbs_use_consolidated_single_body(self) -> None:
-        """Para cada verbo, agent_skill.body_file == claude_skill.body_file."""
+        """Para cada verbo, agent_skill.body_file == claude_command.body_file."""
         manifest = _load_manifest()
         for verb, spec in (manifest.get("verbs") or {}).items():
             agent_bf = spec["targets"]["agent_skill"]["body_file"]
-            claude_bf = spec["targets"]["claude_skill"]["body_file"]
+            claude_bf = spec["targets"]["claude_command"]["body_file"]
             self.assertEqual(
                 agent_bf,
                 claude_bf,
@@ -124,14 +124,14 @@ class SharedBodyCacheTests(unittest.TestCase):
             )
 
     def test_consolidated_body_produces_host_aware_outputs(self) -> None:
-        """O ponto da consolidacao: 1 body source, 2 dist outputs que
-        diferem no trecho host-aware. Pega feature: o dist do agent_skill
-        deve mencionar codex_app; o claude_skill deve mencionar
-        mark_chapter; o resto deve ser identico (ou quase)."""
+        """O ponto da consolidacao: 1 body source, 2 outputs que diferem no
+        trecho host-aware. Pega feature: o output do agent_skill deve
+        mencionar codex_app; o claude_command deve mencionar mark_chapter;
+        o resto deve ser identico (ou quase)."""
         from conftest_paths import REPO_ROOT
-        dist = REPO_ROOT / "dist"
+        dist = REPO_ROOT / "plugins" / "guia"
         agent_out = (dist / ".agents" / "skills" / "guia-feature" / "SKILL.md").read_text(encoding="utf-8")
-        claude_out = (dist / "skills" / "feature" / "SKILL.md").read_text(encoding="utf-8")
+        claude_out = (dist / "commands" / "feature.md").read_text(encoding="utf-8")
         # Ambos compostos a partir do mesmo source (bodies/feature.md):
         # garantia minima de que o comando neutro do verbo aparece nos dois.
         for output in (agent_out, claude_out):

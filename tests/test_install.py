@@ -17,13 +17,13 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DIST = REPO_ROOT / "dist"
+DIST = REPO_ROOT / "plugins" / "guia"
 
 
-# Origem (dentro de dist/) -> destino relativo ao consumer.
+# Origem (dentro de plugins/guia/) -> destino relativo ao consumer.
 PLUGIN_COPIES = [
     (".claude-plugin", ".guia-fluxo/.claude-plugin"),
-    ("skills", ".guia-fluxo/skills"),
+    ("commands", ".guia-fluxo/commands"),
     ("bin", ".guia-fluxo/bin"),
     (".agents/skills", ".agents/skills"),
 ]
@@ -62,7 +62,7 @@ def install_into(target: Path) -> None:
 class InstallSmokeTest(unittest.TestCase):
     def setUp(self) -> None:
         if not DIST.exists():
-            self.skipTest("dist/ ausente - rode 'python core/build/render-skills.py' antes")
+            self.skipTest("plugins/guia/ ausente - rode 'python core/build/render-skills.py' antes")
 
     def test_layout_consumidor(self) -> None:
         """Apos install, layout esperado deve existir e doctor passar."""
@@ -72,7 +72,7 @@ class InstallSmokeTest(unittest.TestCase):
 
             # Plugin no .guia-fluxo/
             self.assertTrue((target / ".guia-fluxo/.claude-plugin/plugin.json").is_file())
-            self.assertTrue((target / ".guia-fluxo/skills/feature/SKILL.md").is_file())
+            self.assertTrue((target / ".guia-fluxo/commands/feature.md").is_file())
             self.assertTrue((target / ".guia-fluxo/bin/guia.py").is_file())
             self.assertTrue((target / ".guia-fluxo/bin/guia.ps1").is_file())
             self.assertTrue((target / ".guia-fluxo/bin/guia").is_file())
@@ -111,14 +111,14 @@ class InstallSmokeTest(unittest.TestCase):
             self.assertIn("Guia Fluxo files OK", result.stdout)
 
     def test_shim_posix_e_lf(self) -> None:
-        """dist/bin/guia (shim bash) precisa de LF puro para rodar em Linux/Mac."""
+        """plugins/guia/bin/guia (shim bash) precisa de LF puro para Linux/Mac."""
         shim = (DIST / "bin/guia").read_bytes()
         self.assertNotIn(b"\r\n", shim,
-                         "shim POSIX dist/bin/guia contem CRLF - bash quebra em Linux/Mac")
+                         "shim POSIX plugins/guia/bin/guia contem CRLF - bash quebra em Linux/Mac")
 
     def test_wrapper_ps1_aponta_para_guia_py_local(self) -> None:
-        """dist/bin/guia.ps1 deve resolver guia.py na mesma pasta (layout flat),
-        nao via ..\\src\\guia.py que so existe no repo-mae."""
+        """plugins/guia/bin/guia.ps1 deve resolver guia.py na mesma pasta (layout
+        flat), nao via ..\\src\\guia.py que so existe no repo-mae."""
         wrapper = (DIST / "bin/guia.ps1").read_text(encoding="utf-8")
         self.assertIn('Join-Path $PSScriptRoot "guia.py"', wrapper)
         self.assertNotIn("..\\src\\guia.py", wrapper)

@@ -4,10 +4,10 @@
 Source of truth:
     core/manifest/manifest.yaml   (skills index: verbs + descriptions + body refs)
     core/manifest/bodies/*.md     (skill bodies - Layout B, F-016)
-    core/src/*.py                 (motor + helpers - todos copiados para dist/bin/)
-    core/lock/lock_api.py         (modulo de locks reutilizavel - tambem em dist/bin/)
-    core/bin/guia.ps1             (wrapper PowerShell copiado para dist/bin/)
-    core/templates/...            (templates copiados para dist/templates/)
+    core/src/*.py                 (motor + helpers - todos copiados para plugins/guia/bin/)
+    core/lock/lock_api.py         (modulo de locks reutilizavel - tambem em plugins/guia/bin/)
+    core/bin/guia.ps1             (wrapper PowerShell copiado para plugins/guia/bin/)
+    core/templates/...            (templates copiados para plugins/guia/templates/)
 
 Manifest schema:
     version: 2
@@ -20,33 +20,33 @@ Manifest schema:
             body_file: bodies/<verb>.agent.md    # path relativo a core/manifest/
             # ou body: |  (legacy v1, ainda aceito)
             #   ...inline markdown...
-          claude_skill:
+          claude_command:
             body_file: bodies/<verb>.claude.md
 
     Para shared body entre targets, aponte ambos para o mesmo arquivo.
 
 Generated targets (por verbo):
-    dist/skills/<verb>/SKILL.md                 (Claude Code - layout oficial de plugin)
-    dist/.agents/skills/guia-<verb>/SKILL.md    (Codex + Antigravity - prefixo `guia-`)
+    plugins/guia/commands/<verb>.md                     (Claude Code - plugin command -> /guia:<verb>)
+    plugins/guia/.agents/skills/guia-<verb>/SKILL.md    (Codex + Antigravity - prefixo `guia-`)
 
 Generated bin/ (motor standalone do plugin):
-    dist/bin/guia.py      (entry point, copia exata de core/src/guia.py)
-    dist/bin/_*.py        (modulos sibling: _constants, _state, _tasks, etc.)
-    dist/bin/lock_api.py  (lock domain - copiado de core/lock/lock_api.py)
-    dist/bin/guia.ps1     (copia de core/bin/guia.ps1 com path adaptado para layout flat)
-    dist/bin/guia         (shim POSIX que chama python3 guia.py "$@")
+    plugins/guia/bin/guia.py      (entry point, copia exata de core/src/guia.py)
+    plugins/guia/bin/_*.py        (modulos sibling: _constants, _state, _tasks, etc.)
+    plugins/guia/bin/lock_api.py  (lock domain - copiado de core/lock/lock_api.py)
+    plugins/guia/bin/guia.ps1     (copia de core/bin/guia.ps1 com path adaptado para layout flat)
+    plugins/guia/bin/guia         (shim POSIX que chama python3 guia.py "$@")
 
 Generated templates/:
-    dist/templates/.githooks/commit-msg
-    dist/templates/features/registry.yaml
-    dist/templates/features/lock-ignore.txt
+    plugins/guia/templates/.githooks/commit-msg
+    plugins/guia/templates/features/registry.yaml
+    plugins/guia/templates/features/lock-ignore.txt
 
 Hardening (F-015):
 - TEMPLATE_FILES validado: --check detecta arquivos em core/templates/ nao listados.
 - Renderer aborta (exit 2) se o marcador `..\\src\\guia.py` sumir do wrapper.
 - YAML dos templates e validado via yaml.safe_load antes de copiar.
 - dataclass Output substitui a tupla de 4 elementos.
-- --check-orphans lista arquivos em dist/bin/ ou dist/skills/ sem correspondente.
+- --check-orphans lista arquivos em plugins/guia/bin/, commands/ ou .agents/skills/ sem correspondente.
 - Description vazia gera erro explicito em vez de SKILL.md silenciosamente quebrado.
 
 Design (D-059):
@@ -109,45 +109,47 @@ class Paths:
     manifest: Path
     bodies_dir: Path
     dist_dir: Path
-    claude_skill_dir: Path
+    command_dir: Path
     agent_skill_dir: Path
     bin_dir: Path
     templates_dir: Path
     core_src_dir: Path
     engine_src: Path
     lock_api_src: Path
+    check_lock_src: Path
     wrapper_src: Path
     templates_src: Path
 
     @classmethod
     def build(cls, root: Path, dist_dir: Path | None = None) -> "Paths":
         manifest_dir = root / "core" / "manifest"
-        dist = (dist_dir if dist_dir is not None else root / "dist").resolve()
+        dist = (dist_dir if dist_dir is not None else root / "plugins" / "guia").resolve()
         return cls(
             root=root,
             manifest_dir=manifest_dir,
             manifest=manifest_dir / "manifest.yaml",
             bodies_dir=manifest_dir / "bodies",
             dist_dir=dist,
-            claude_skill_dir=dist / "skills",
+            command_dir=dist / "commands",
             agent_skill_dir=dist / ".agents" / "skills",
             bin_dir=dist / "bin",
             templates_dir=dist / "templates",
             core_src_dir=root / "core" / "src",
             engine_src=root / "core" / "src" / "guia.py",
             lock_api_src=root / "core" / "lock" / "lock_api.py",
+            check_lock_src=root / "core" / "lock" / "check-lock.py",
             wrapper_src=root / "core" / "bin" / "guia.ps1",
             templates_src=root / "core" / "templates",
         )
 
 
-# Marcador usado por core/bin/guia.ps1 para resolver o motor. No dist/, o
+# Marcador usado por core/bin/guia.ps1 para resolver o motor. No plugins/guia/, o
 # layout vira flat (guia.py vizinho do wrapper), entao o marcador e
 # reescrito. Aborta se ausente: o renderer presume invariante.
 WRAPPER_MARKER = "..\\src\\guia.py"
 WRAPPER_REPLACEMENT = "guia.py"
 
-# Templates copiados byte-a-byte para dist/templates/. Validacao
+# Templates copiados byte-a-byte para plugins/guia/templates/. Validacao
 # estrutural por extensao: arquivos .yaml passam por yaml.safe_load.
 TEMPLATE_FILES: list[tuple[str, str]] = [
     ("features/registry.yaml", "features/registry.yaml"),
@@ -156,7 +158,7 @@ TEMPLATE_FILES: list[tuple[str, str]] = [
 
 # Templates "promovidos" a partir de outros lugares do core/. F-018
 # consolidou `core/hooks/commit-msg` como fonte unica - o renderer
-# replica em `dist/templates/.githooks/commit-msg` para o instalador
+# replica em `plugins/guia/templates/.githooks/commit-msg` para o instalador
 # usar no consumer. Fonte como tupla relativa a paths.root.
 PROMOTED_TEMPLATES: list[tuple[tuple[str, ...], str]] = [
     (("core", "hooks", "commit-msg"), ".githooks/commit-msg"),
@@ -198,11 +200,19 @@ class TargetSpec:
     label: str
     name_of: Callable[[str], str]
     dir_of: Callable[[Paths], Path]
+    # Quando True, o alvo e um plugin *command* do Claude Code: arquivo flat
+    # `<dir>/<verb>.md` sem `name:` no frontmatter (o stem do arquivo vira o
+    # nome). Comandos surgem namespaced (`/guia:<verb>`); skills surgem bare.
+    # Quando False (default), e um Agent Skill: `<dir>/<name>/SKILL.md` com
+    # `name:` no frontmatter (convencao AGENTS.md, Codex/Antigravity).
+    emits_command: bool = False
 
     def skill_name(self, verb: str) -> str:
         return self.name_of(verb)
 
     def output_path(self, verb: str, paths: Paths) -> Path:
+        if self.emits_command:
+            return self.dir_of(paths) / f"{self.skill_name(verb)}.md"
         return self.dir_of(paths) / self.skill_name(verb) / "SKILL.md"
 
 
@@ -210,16 +220,17 @@ TARGETS: dict[str, TargetSpec] = {
     "agent_skill": TargetSpec(
         key="agent_skill",
         host_suffix="agent",
-        label="dist/.agents/skills/guia-<verb>/SKILL.md",
+        label="plugins/guia/.agents/skills/guia-<verb>/SKILL.md",
         name_of=_agent_skill_name,
         dir_of=lambda p: p.agent_skill_dir,
     ),
-    "claude_skill": TargetSpec(
-        key="claude_skill",
+    "claude_command": TargetSpec(
+        key="claude_command",
         host_suffix="claude",
-        label="dist/skills/<verb>/SKILL.md",
+        label="plugins/guia/commands/<verb>.md",
         name_of=lambda verb: verb,
-        dir_of=lambda p: p.claude_skill_dir,
+        dir_of=lambda p: p.command_dir,
+        emits_command=True,
     ),
 }
 
@@ -278,6 +289,7 @@ def render_skill_md(
     body: str,
     verb: str,
     extras: dict | None = None,
+    include_name: bool = True,
 ) -> str:
     desc = description.strip()
     if not desc:
@@ -288,7 +300,12 @@ def render_skill_md(
     body_text = dedent(body).strip("\n")
     if not body_text:
         sys.stderr.write(f"Aviso: body vazio para verbo `{verb}`. SKILL.md sera so frontmatter.\n")
-    lines = ["---", f"name: {name}", f"description: {desc}"]
+    # Plugin commands do Claude derivam o nome do stem do arquivo, entao nao
+    # levam `name:` no frontmatter; Agent Skills levam (include_name=True).
+    lines = ["---"]
+    if include_name:
+        lines.append(f"name: {name}")
+    lines.append(f"description: {desc}")
     if extras:
         for key, value in extras.items():
             if key in RESERVED_FRONTMATTER_KEYS:
@@ -312,19 +329,27 @@ def render_target(
     body: str,
     extras: dict | None = None,
 ) -> str:
-    return render_skill_md(_target(target).skill_name(verb), description, body, verb, extras)
+    spec = _target(target)
+    return render_skill_md(
+        spec.skill_name(verb),
+        description,
+        body,
+        verb,
+        extras,
+        include_name=not spec.emits_command,
+    )
 
 
 # Match `{{include: path/to/file.md}}` on its own line. Partials sao
-# resolvidos em build-time pelo renderer: o output em dist/ fica
+# resolvidos em build-time pelo renderer: o output em plugins/guia/ fica
 # self-contained (nenhuma indirecao em runtime do agente).
 INCLUDE_RE = re.compile(r"^\{\{include:\s*([^}\s][^}]*?)\s*\}\}$", re.MULTILINE)
 
 # Match `{{include_per_target: path/to/base}}` on its own line. Resolvido
 # em pre-processamento (antes do INCLUDE_RE) para um `{{include: ...}}`
 # concreto baseado no target sendo renderizado:
-#   agent_skill  -> base.agent.md
-#   claude_skill -> base.claude.md
+#   agent_skill    -> base.agent.md
+#   claude_command -> base.claude.md
 # Permite consolidar bodies de verbo em um arquivo so quando o unico
 # bit host-specific e qual partial de rename incluir (D-050).
 INCLUDE_PER_TARGET_RE = re.compile(
@@ -483,7 +508,7 @@ def _adapt_wrapper_for_plugin(text: str) -> str:
     """Reescreve o wrapper para o layout flat do plugin.
 
     No repo-mae, `core/bin/guia.ps1` resolve o motor via `..\\src\\guia.py`.
-    No plugin/consumidor, `dist/bin/guia.ps1` e `dist/bin/guia.py` vivem
+    No plugin/consumidor, `plugins/guia/bin/guia.ps1` e `plugins/guia/bin/guia.py` vivem
     lado a lado, entao o path vira `guia.py`. ABORTA se o marcador sumir,
     em vez do warning silencioso de antes (achado 4.3).
     """
@@ -501,7 +526,7 @@ def _python_source_files(paths: Paths) -> list[Path]:
     """All .py files in core/src/ (ai.py + helpers _*.py).
 
     Excludes __pycache__/ and the like. The whole pack is shipped flat to
-    dist/bin/ so imports work side-by-side.
+    plugins/guia/bin/ so imports work side-by-side.
     """
     if not paths.core_src_dir.exists():
         raise RenderError(f"Erro: pasta de motor nao encontrada em {paths.core_src_dir}")
@@ -519,12 +544,21 @@ def collect_bin_outputs(paths: Paths) -> list[Output]:
         raise RenderError(f"Erro: wrapper nao encontrado em {paths.wrapper_src}")
     if not paths.lock_api_src.exists():
         raise RenderError(f"Erro: lock_api nao encontrado em {paths.lock_api_src}")
+    if not paths.check_lock_src.exists():
+        raise RenderError(f"Erro: check-lock nao encontrado em {paths.check_lock_src}")
 
     outputs: list[Output] = []
     for src in _python_source_files(paths):
         outputs.append(Output(paths.bin_dir / src.name, "bin", src.name, src.read_text(encoding="utf-8")))
     outputs.append(
         Output(paths.bin_dir / "lock_api.py", "bin", "lock_api.py", paths.lock_api_src.read_text(encoding="utf-8"))
+    )
+    # check-lock.py ships next to lock_api.py so the commit-msg hook of a
+    # plugin-global consumer can run the validator from the plugin (D-076).
+    # Kept as a verbatim copy; hyphen in the name is fine (run as a script,
+    # never imported).
+    outputs.append(
+        Output(paths.bin_dir / "check-lock.py", "bin", "check-lock.py", paths.check_lock_src.read_text(encoding="utf-8"))
     )
     wrapper = _adapt_wrapper_for_plugin(paths.wrapper_src.read_text(encoding="utf-8"))
     outputs.append(Output(paths.bin_dir / "guia.ps1", "bin", "guia.ps1", wrapper))
@@ -606,14 +640,14 @@ def check_outputs(outputs: list[Output]) -> list[Path]:
 # --- Orphan detection (--check-orphans) -----------------------------------
 
 
-# Caches/artefatos transientes que aparecem em dist/ por uso (ex.: rodar
+# Caches/artefatos transientes que aparecem em plugins/guia/ por uso (ex.: rodar
 # o motor standalone gera __pycache__) e nao devem ser tratados como
 # orfaos do renderer.
 ORPHAN_IGNORE_DIR_NAMES = frozenset({"__pycache__", ".pytest_cache", ".mypy_cache"})
 
 # Partials viven em core/manifest/bodies/_partials/ - sao usados via
 # `{{include: ...}}` mas nao sao alvos diretos de render. O renderer
-# nao copia partials para dist/ (eles ja foram expandidos in-place no
+# nao copia partials para plugins/guia/ (eles ja foram expandidos in-place no
 # body do verbo que os consumiu). Esse marcador documenta a convencao.
 PARTIAL_DIR_NAME = "_partials"
 
@@ -623,15 +657,15 @@ def _is_ignored_for_orphan(path: Path) -> bool:
 
 
 def find_orphans(outputs: list[Output], paths: Paths) -> list[Path]:
-    """List files in dist/bin/ and dist/skills/ that are not part of outputs.
+    """List files in plugins/guia/bin/, commands/ and .agents/skills/ not part of outputs.
 
     Useful to detect verb removals or renamed helpers that left stale
-    files in dist/. Renderer itself does not delete unless --clean.
+    files in plugins/guia/. Renderer itself does not delete unless --clean.
     Ignora __pycache__/.pytest_cache/.mypy_cache.
     """
     expected = {output.path.resolve() for output in outputs}
     orphans: list[Path] = []
-    for root in (paths.bin_dir, paths.claude_skill_dir, paths.agent_skill_dir, paths.templates_dir):
+    for root in (paths.bin_dir, paths.command_dir, paths.agent_skill_dir, paths.templates_dir):
         if not root.exists():
             continue
         for path in root.rglob("*"):
@@ -648,8 +682,8 @@ def clean_orphans(outputs: list[Output], paths: Paths) -> list[Path]:
     """Apaga arquivos orfaos retornados por `find_orphans` (achado 4.Q3).
 
     Tambem remove diretorios que ficaram vazios apos a limpeza para que
-    `dist/skills/<verbo-removido>/` desapareca quando seu unico SKILL.md
-    e removido.
+    `plugins/guia/.agents/skills/<guia-verbo-removido>/` desapareca quando seu
+    unico SKILL.md e removido (os commands do Claude sao arquivos flat).
 
     Retorna a lista de paths apagados.
     """
@@ -662,7 +696,7 @@ def clean_orphans(outputs: list[Output], paths: Paths) -> list[Path]:
         except OSError as exc:
             sys.stderr.write(f"Aviso: nao consegui apagar {path}: {exc}\n")
     # Limpeza de diretorios vazios (bottom-up)
-    for root in (paths.claude_skill_dir, paths.agent_skill_dir, paths.templates_dir, paths.bin_dir):
+    for root in (paths.command_dir, paths.agent_skill_dir, paths.templates_dir, paths.bin_dir):
         if not root.exists():
             continue
         # Bottom-up: rglob retorna nested-first quando reverse-sort
@@ -697,9 +731,9 @@ def collect_all_outputs(paths: Paths, only_verb: str | None) -> list[Output]:
 def _run_check_orphans(outputs: list[Output], paths: Paths) -> int:
     orphans = find_orphans(outputs, paths)
     if not orphans:
-        print("OK: nenhum orfao em dist/.")
+        print("OK: nenhum orfao em plugins/guia/.")
         return 0
-    print("Arquivos orfaos (em dist/ sem origem no manifest/motor):\n", file=sys.stderr)
+    print("Arquivos orfaos (em plugins/guia/ sem origem no manifest/motor):\n", file=sys.stderr)
     for path in orphans:
         print(f"  - {_rel(path, paths.root)}", file=sys.stderr)
     return 1
@@ -740,22 +774,22 @@ def _run_render(outputs: list[Output], paths: Paths, do_clean: bool) -> int:
 def _build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="Exit 1 se algum alvo estiver stale.")
-    parser.add_argument("--verb", help="Renderiza apenas um verbo do manifest (pula dist/bin/).")
+    parser.add_argument("--verb", help="Renderiza apenas um verbo do manifest (pula plugins/guia/bin/).")
     parser.add_argument(
         "--check-orphans",
         action="store_true",
-        help="Lista arquivos em dist/ sem correspondente no manifest/motor (nao apaga).",
+        help="Lista arquivos em plugins/guia/ sem correspondente no manifest/motor (nao apaga).",
     )
     parser.add_argument(
         "--clean",
         action="store_true",
-        help="Apaga arquivos orfaos em dist/ apos renderizar (cuidado).",
+        help="Apaga arquivos orfaos em plugins/guia/ apos renderizar (cuidado).",
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
         default=None,
-        help="Sobrescreve destino dist/ (default: <repo>/dist/).",
+        help="Sobrescreve destino plugins/guia/ (default: <repo>/plugins/guia/).",
     )
     return parser
 

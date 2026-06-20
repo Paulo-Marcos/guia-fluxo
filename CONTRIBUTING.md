@@ -53,10 +53,10 @@ Detalhes de cada subcomando: [`docs/reference/cli.md`](docs/reference/cli.md).
 Skills sao geradas a partir de `core/manifest/manifest.yaml` (fonte unica para Claude Code, Codex e Antigravity). Para alterar:
 
 1. Edite `core/manifest/manifest.yaml`.
-2. Rode `python core/build/render-skills.py` para regenerar `dist/skills/<verbo>/SKILL.md` (output do plugin Claude Code, `dist/.claude-plugin/plugin.json`, namespace `ai`) e `dist/.agents/skills/<verbo>/SKILL.md` (Codex + Antigravity, convencao AGENTS.md cross-tool).
+2. Rode `python core/build/render-skills.py` para regenerar `plugins/guia/commands/<verbo>.md` (plugin command do Claude Code -> `/guia:<verbo>`; `plugins/guia/.claude-plugin/plugin.json`, namespace `guia`) e `plugins/guia/.agents/skills/<verbo>/SKILL.md` (Codex + Antigravity, convencao AGENTS.md cross-tool).
 3. Em CI/hook, rode `python core/build/render-skills.py --check` para barrar drift.
 
-**Nao edite arquivos sob `dist/skills/<verbo>/` ou `dist/.agents/skills/<verbo>/` a mao** - eles sao sobrescritos. Decisao do layout em [`docs/adr/0006-plugin-oficial-claude-code.md`](docs/adr/0006-plugin-oficial-claude-code.md). Mais contexto em [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md#editando-skills-geradas).
+**Nao edite arquivos sob `plugins/guia/commands/` ou `plugins/guia/.agents/skills/<verbo>/` a mao** - eles sao sobrescritos. Decisao do layout em [`docs/adr/0006-plugin-oficial-claude-code.md`](docs/adr/0006-plugin-oficial-claude-code.md). Mais contexto em [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md#editando-skills-geradas).
 
 ## Documentacao
 

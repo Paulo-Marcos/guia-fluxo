@@ -54,7 +54,7 @@ class CleanIsOptInTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "out"
             self.assertEqual(_run("--output-dir", str(out)).returncode, 0)
-            orphan_dir = out / "skills" / "verbo-fantasma"
+            orphan_dir = out / ".agents" / "skills" / "guia-verbo-fantasma"
             orphan_dir.mkdir(parents=True)
             orphan = orphan_dir / "SKILL.md"
             orphan.write_text("fantasma", encoding="utf-8")

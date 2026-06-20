@@ -6,9 +6,9 @@ Pointer fino para Claude Code. **O briefing canonico esta em [`AGENTS.md`](AGENT
 
 Windows, PowerShell. Use sintaxe PowerShell nos comandos: `$null`, `$env:VAR`, backtick para continuacao, `if ($?)` em vez de `&&`. Bash continua disponivel via tool para scripts POSIX, mas docs e exemplos usam PowerShell. CLI principal: `.\core\bin\guia.ps1 <sub>`.
 
-## Skills do plugin (namespace `ai`)
+## Skills do plugin (namespace `guia`)
 
-Este repo **e um plugin Claude Code oficial**: `dist/.claude-plugin/plugin.json` expoe as skills sob namespace `ai`. Quando o usuario digitar uma das shims abaixo, dispare a skill correspondente em `dist/skills/<verbo>/SKILL.md`. **Nao reimplemente a logica inline** - cada shim ja chama `core/src/guia.py` corretamente via `core/bin/guia.ps1`.
+Este repo **e um plugin Claude Code oficial**: `plugins/guia/.claude-plugin/plugin.json` (name `guia`) expoe cada verbo como um **command** de plugin em `plugins/guia/commands/<verbo>.md`, namespaced como `/guia:<verbo>`. Quando o usuario digitar uma das shims abaixo, dispare o command correspondente. **Nao reimplemente a logica inline** - cada command ja chama o motor corretamente via `${CLAUDE_PLUGIN_ROOT}/bin/guia.py` (sem clone). (Plugin *skills* surgiriam bare, ex.: `/init` colidindo com o nativo - por isso usamos `commands/`.)
 
 | Atalho | Skill | Emoji | Quando usar |
 | --- | --- | --- | --- |
@@ -25,14 +25,15 @@ Este repo **e um plugin Claude Code oficial**: `dist/.claude-plugin/plugin.json`
 | `/guia:cancel` | `cancel` | — | Encerrar task como Cancelada (terminal). Exige `--reason`. |
 | `/guia:block` | `block` | — | Pausar task preservando WIP. Exige `--reason`. |
 | `/guia:unblock` | `unblock` | — | Retomar task pausada. |
+| `/guia:init` | `init` | — | Setup do projeto: semeia `.guia/` + deploya lock config (`features/registry.yaml`, `lock-ignore.txt`) + `.githooks/commit-msg` + `hooksPath`. Opcional (auto-init ja cobre `.guia/`); `--no-locks` so semeia estado. |
 
 > **Removido na Fase 4 do ADR-0011 (2026-06-07):** `/guia:issue` deixou de existir; use `/guia:bug`. Tasks antigas com `kind=issue` continuam navegaveis (renderizam como "Bug (legacy)" 🐛). IDs novos sao `D-NNN` neutros (ADR-0011); legacy `F-NNN`/`I-NNN`/`B-NNN` continuam aceitos como entrada.
 
-A skill mae `guia-fluxo` em `dist/skills/guia-fluxo/SKILL.md` carrega contexto compartilhado. Descriptions foram diferenciadas em F-003 para evitar trigger collision - confie no roteador e nao force uma skill diferente da que o usuario invocou.
+A referencia `guia-fluxo` em `plugins/guia/commands/guia-fluxo.md` carrega contexto compartilhado. Descriptions foram diferenciadas em F-003 para evitar trigger collision - confie no roteador e nao force uma skill diferente da que o usuario invocou.
 
 ### Descoberta automatica
 
-O repo tem `dist/.claude-plugin/marketplace.json` (catalogo) + `.claude/settings.json` com `extraKnownMarketplaces` apontando para `./dist`. Ao abrir o repo em Claude Code (primeira vez), confirme o prompt de trust + instalacao do marketplace local. Depois disso, `/guia:feature` e cia ficam disponiveis em todas as sessoes futuras sem flag. Alternativas pra primeira vez: `claude --plugin-dir ./dist` ou `/plugin marketplace add ./dist` + `/plugin install ai@guia-fluxo` manualmente. Decisao em [`docs/adr/0006-plugin-oficial-claude-code.md`](docs/adr/0006-plugin-oficial-claude-code.md).
+O repo tem `plugins/guia/.claude-plugin/marketplace.json` (catalogo) + `.claude/settings.json` com `extraKnownMarketplaces` apontando para `./plugins/guia`. Ao abrir o repo em Claude Code (primeira vez), confirme o prompt de trust + instalacao do marketplace local. Depois disso, `/guia:feature` e cia ficam disponiveis em todas as sessoes futuras sem flag. Alternativas pra primeira vez: `claude --plugin-dir ./plugins/guia` ou `/plugin marketplace add ./plugins/guia` + `/plugin install guia@guia-fluxo` manualmente. Decisao em [`docs/adr/0006-plugin-oficial-claude-code.md`](docs/adr/0006-plugin-oficial-claude-code.md).
 
 ## Especificidades Claude Code
 

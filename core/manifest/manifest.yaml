@@ -4,12 +4,13 @@
 #   - Este arquivo declara os verbos, suas `description`s e referencia o
 #     body markdown em `core/manifest/bodies/<verb>.md`.
 #   - Cada verbo tem **um unico body file** apontado pelos dois targets
-#     (agent_skill e claude_skill). O bit host-especifico fica em
+#     (agent_skill e claude_command). O bit host-especifico fica em
 #     `core/manifest/bodies/_partials/post_cli.<host>.md` e e selecionado
 #     pelo renderer via `{{include_per_target: _partials/post_cli}}` no
 #     body do verbo (D-050).
-#   - `core/build/render-skills.py` resolve `body_file` (le do disco) e
-#     gera `dist/skills/<verb>/SKILL.md` + `dist/.agents/skills/guia-<verb>/SKILL.md`.
+#   - `core/build/render-skills.py` resolve `body_file` (le do disco) e gera
+#     `plugins/guia/commands/<verb>.md` (Claude, plugin command -> /guia:<verb>)
+#     + `plugins/guia/.agents/skills/guia-<verb>/SKILL.md` (Codex/Antigravity).
 #
 # `description` continua inline porque e o gatilho que cada host (Claude,
 # Codex, Antigravity) usa pra escolher a skill - manter junto reduz a
@@ -18,7 +19,7 @@
 # Convencao de description (D-051):
 #   1. Comeca com o prefixo canonico (PRIMARY TRIGGER, HANDOFF, READ-ONLY,
 #      DEFER-AND-PARK, EVALUATE-AND-CONVERT, REFERENCE/BACKGROUND ONLY,
-#      CLOSE, TERMINAL CANCEL, PAUSE, RESUME, PLAN, START).
+#      CLOSE, TERMINAL CANCEL, PAUSE, RESUME, PLAN, START, SETUP).
 #   2. Definicao curta do que o verbo faz.
 #   3. Opcoes/flags reais (--context, --reason, --status, --file, etc.).
 #   4. Disambiguacao breve (1-2 alternativas, nao 5).
@@ -37,7 +38,7 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/guia-fluxo.md
-      claude_skill:
+      claude_command:
         body_file: bodies/guia-fluxo.md
 
   feature:
@@ -46,7 +47,7 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/feature.md
-      claude_skill:
+      claude_command:
         body_file: bodies/feature.md
 
   bug:
@@ -55,7 +56,7 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/bug.md
-      claude_skill:
+      claude_command:
         body_file: bodies/bug.md
 
   chore:
@@ -64,7 +65,7 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/chore.md
-      claude_skill:
+      claude_command:
         body_file: bodies/chore.md
 
   backlog:
@@ -73,7 +74,7 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/backlog.md
-      claude_skill:
+      claude_command:
         body_file: bodies/backlog.md
 
   promote:
@@ -82,7 +83,7 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/promote.md
-      claude_skill:
+      claude_command:
         body_file: bodies/promote.md
 
   ready:
@@ -91,7 +92,7 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/ready.md
-      claude_skill:
+      claude_command:
         body_file: bodies/ready.md
 
   finish:
@@ -100,7 +101,7 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/finish.md
-      claude_skill:
+      claude_command:
         body_file: bodies/finish.md
 
   status:
@@ -109,7 +110,7 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/status.md
-      claude_skill:
+      claude_command:
         body_file: bodies/status.md
 
   cancel:
@@ -118,7 +119,7 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/cancel.md
-      claude_skill:
+      claude_command:
         body_file: bodies/cancel.md
 
   block:
@@ -127,7 +128,7 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/block.md
-      claude_skill:
+      claude_command:
         body_file: bodies/block.md
 
   unblock:
@@ -136,7 +137,7 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/unblock.md
-      claude_skill:
+      claude_command:
         body_file: bodies/unblock.md
 
   plan:
@@ -145,7 +146,7 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/plan.md
-      claude_skill:
+      claude_command:
         body_file: bodies/plan.md
 
   start:
@@ -154,5 +155,14 @@ verbs:
     targets:
       agent_skill:
         body_file: bodies/start.md
-      claude_skill:
+      claude_command:
         body_file: bodies/start.md
+
+  init:
+    description: |
+      SETUP — initialize Guia Fluxo in the CURRENT project: seed `.guia/` state and deploy the per-project lock config (`features/registry.yaml`, `features/lock-ignore.txt`) + `.githooks/commit-msg`, then set `git core.hooksPath`. Idempotent and never clobbers existing state. Options: `--no-locks` (seed `.guia/` only), `--force` (overwrite), `--project-name "<name>"`. Often optional — the engine auto-creates `.guia/` on the first task command; run `init` to opt into file locks. To create a demand use `feature`/`bug`/`chore`.
+    targets:
+      agent_skill:
+        body_file: bodies/init.md
+      claude_command:
+        body_file: bodies/init.md

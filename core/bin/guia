@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# core/bin/guia - POSIX shim simetrico ao dist/bin/guia.
+# core/bin/guia - POSIX shim simetrico ao plugins/guia/bin/guia.
 # Resolve um interpretador Python 3.10+ e dispara core/src/guia.py.
 # Cobre achado 3.Q1 (faltava simetria POSIX no repo-mae).
 

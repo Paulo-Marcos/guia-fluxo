@@ -2,18 +2,200 @@
   "schemaVersion": 1,
   "tasks": [
     {
-      "id": "D-076",
+      "id": "D-078",
       "kind": "feature",
-      "title": "Plugin global-first + guia:init (ref codex-plugin-cc)",
+      "title": "Atualizar placeholders legados I-NNN/F-NNN para D-NNN em docs vivos",
       "status": "Backlog",
-      "origin": "Backlog (2026-06-17)",
-      "context": "Convergir para arquitetura plugin-global-first espelhando openai/codex-plugin-cc: motor+skills+templates 100% no plugin global (CLAUDE_PLUGIN_ROOT), projeto do cliente so com estado/controle (.guia/ JSONs + FEATURES.md + lock/hook opcionais). Adicionar /guia:init. Limpar o que nao e necessario (provavel: install.ps1/sh, layout .guia-fluxo no consumidor, talvez .agents cross-tool). Decisoes abertas: E1 nome da pasta local (.guia vs .guia-fluxo), E2 fate de Codex/Antigravity, E3 manter core/dist+render ou reestruturar, E4 escopo do guia:init (deploy de templates + hooksPath). Continua o D-075 (que ja poe o motor no plugin global via CLAUDE_PLUGIN_ROOT, auto-init, raiz por CWD).",
-      "createdAt": "2026-06-17",
-      "updatedAt": "2026-06-17",
+      "origin": "Backlog (2026-06-19)",
+      "context": "CONTRIBUTING.md (linhas ~36,47: 'ready I-NNN', 'finish I-NNN') e docs/reference/cli.md (varias linhas: 'ready F-NNN', 'finish/cancel/docs-check F-NNN', 'output F-NNN') usam os prefixos legados I-NNN/F-NNN como placeholder de EXEMPLO. ADR-0011 Fase 4 tornou D-NNN o ID neutro padrao; os exemplos deviam usar D-NNN. Staleness de doc, nao relacionada a D-076; flagada pela revisao adversarial da migracao skills->commands. Preservar mencoes legitimas: aceitacao de F-NNN/I-NNN/B-NNN como INPUT continua valida, e exemplos historicos em ADRs/auditorias ficam.",
+      "createdAt": "2026-06-19",
+      "updatedAt": "2026-06-19",
       "modifiedFiles": [],
       "summary": [],
       "validations": [],
       "pending": []
+    },
+    {
+      "id": "D-077",
+      "kind": "feature",
+      "title": "Corrigir source '../' no marketplace.json interno do plugin (alinhar codex-plugin-cc)",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-19)",
+      "context": "plugins/guia/.claude-plugin/marketplace.json declara o plugin com source: '../', mas a doc do Claude Code recomenda NAO usar '../' em source de plugin (deve ser caminho relativo ao marketplace root comecando com './'). Latente: so morde no install por marketplace LOCAL directory (que a versao atual do Claude do dev nem suporta); o caminho GitHub usa o marketplace.json da raiz (source './plugins/guia', correto). Opcao: alinhar 1:1 ao codex-plugin-cc - marketplace.json so na raiz, settings.json do repo apontando para '.' em vez de './plugins/guia', e remover/ajustar o marketplace.json interno. Descoberto na D-076 ao diagnosticar erro de install local (source type not supported).",
+      "createdAt": "2026-06-19",
+      "updatedAt": "2026-06-19",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-076",
+      "kind": "feature",
+      "title": "Plugin global-first + guia:init (ref codex-plugin-cc)",
+      "status": "Validada",
+      "origin": "Backlog D-076 promovido (2026-06-17)",
+      "context": "Convergir para arquitetura plugin-global-first espelhando openai/codex-plugin-cc: motor+skills+templates 100% no plugin global (CLAUDE_PLUGIN_ROOT), projeto do cliente so com estado/controle (.guia/ JSONs + FEATURES.md + lock/hook opcionais). Adicionar /guia:init. Limpar o que nao e necessario (provavel: install.ps1/sh, layout .guia-fluxo no consumidor, talvez .agents cross-tool). Decisoes abertas: E1 nome da pasta local (.guia vs .guia-fluxo), E2 fate de Codex/Antigravity, E3 manter core/dist+render ou reestruturar, E4 escopo do guia:init (deploy de templates + hooksPath). Continua o D-075 (que ja poe o motor no plugin global via CLAUDE_PLUGIN_ROOT, auto-init, raiz por CWD).",
+      "createdAt": "2026-06-17",
+      "updatedAt": "2026-06-20",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "core/src/_cli_lifecycle.py",
+        "core/src/_state.py",
+        "core/src/guia.py",
+        "core/src/_constants.py",
+        "core/src/_locks.py",
+        "core/lock/lock_api.py",
+        "core/lock/check-lock.py",
+        "core/hooks/commit-msg",
+        "core/build/render-skills.py",
+        "core/bin/guia",
+        "core/manifest/manifest.yaml",
+        "core/manifest/bodies/init.md",
+        "core/manifest/bodies/guia-fluxo.md",
+        "core/manifest/bodies/_partials/README.md",
+        ".claude/settings.json",
+        ".claude-plugin/marketplace.json",
+        "docs/adr/0015-plugin-global-first-guia-init.md",
+        "docs/how-to/instalar-em-outro-projeto.md",
+        "docs/reference/cli.md",
+        "docs/reference/files.md",
+        "README.md",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "CONTRIBUTING.md",
+        "CHANGELOG.md",
+        "tests/test_init_deploy.py",
+        "tests/test_install.py",
+        "tests/test_manifest_layout_b.py",
+        "tests/test_body_partials.py",
+        "tests/test_render_includes.py",
+        "plugins/guia/skills/init/SKILL.md",
+        "plugins/guia/.agents/skills/guia-init/SKILL.md",
+        "plugins/guia/bin/check-lock.py",
+        "plugins/guia/commands/init.md",
+        "plugins/guia/commands/feature.md",
+        "SECURITY.md",
+        "tests/test_render_polish.py",
+        "tests/test_render_hardening.py",
+        ".guia/current-task.json",
+        ".guia/tasks.json",
+        "tests/test_lock_api.py"
+      ],
+      "summary": [
+        "Backlog D-076 promovido via guia-fluxo.",
+        "Avaliacao IA: Demanda valida e bem escopada. O caminho Claude ja e plugin-global-first (D-075: no-clone, motor via CLAUDE_PLUGIN_ROOT, raiz por CWD, auto-init de .guia/). Decisoes fechadas com o dev: E1 manter .guia/; E2 preservar cross-tool (Codex/Antigravity) intacto e tratar em demanda separada; E3 renomear dist/ -> plugins/guia/; E4 /guia:init full. Net-new: /guia:init + rename de layout + docs/ADR-0015. Sem worktree, in-place no main.",
+        "Convergencia plugin-global-first (espelha codex-plugin-cc). (1) Novo verbo/skill init (/guia:init) FULL: semeia .guia/ + deploya templates de lock (features/registry.yaml, lock-ignore.txt, .githooks/commit-msg) do plugin + git core.hooksPath; idempotente, no-clobber, flag --no-locks. Reusa initialize_project (D-075); fonte dos templates via CLAUDE_PLUGIN_ROOT/templates com fallback <engine>/../templates.",
+        "(2) Rename dist/ -> plugins/guia/ (git ve como renomeacao): default do Paths.build em render-skills.py, .claude/settings.json (extraKnownMarketplaces ./plugins/guia), .claude-plugin/marketplace.json raiz (source), doctor, e testes que hardcodavam dist (test_install/manifest_layout_b/body_partials/render_includes). marketplace.json dentro do plugin usa source ../ e seguiu valido.",
+        "(3) Locks funcionais no consumidor plugin-global: lock_api.REPO_ROOT em 3 camadas (GUIA_PROJECT_ROOT > script-se-tem-.guia > CWD, espelha _constants); check-lock.py embarcado no bin do plugin; commit-msg robusto (descobre validador em core/lock OU CLAUDE_PLUGIN_ROOT/bin, degrada exit 0 com aviso se nenhum).",
+        "(4) Cross-tool Codex/Antigravity (target agent_skill, .agents/skills, install.ps1/.sh, .guia-fluxo/) PRESERVADO intacto e adiado para demanda separada (decisao E2). Docs: ADR-0015 (novo), README, instalar-em-outro-projeto, body guia-fluxo, cli.md, files.md, AGENTS/CLAUDE, CONTRIBUTING, CHANGELOG. visao-geral.md mantido com refs dist/ historicas (F-011/F-012) de proposito.",
+        "ARQUIVOS NOVOS exigem no commit: [unlock:adicoes-exigem-autorizacao] motivo: <razao> (alem da palavra motivo:). Novos: core/manifest/bodies/init.md, docs/adr/0015-*.md, tests/test_init_deploy.py, plugins/guia/skills/init/SKILL.md, plugins/guia/.agents/skills/guia-init/SKILL.md, plugins/guia/bin/check-lock.py.",
+        "AJUSTE pos-validacao (skills -> commands): plugin SKILLS surgem bare no menu de slash (/init, /bug) e colidem com built-ins (/init) - confirmado pelo dev no install real. Migrado o target Claude de Agent Skills (skills/<verbo>/SKILL.md) para plugin COMMANDS (commands/<verbo>.md): render-skills.py ganha TargetSpec.emits_command + output flat sem 'name:' (claude_command); manifest key claude_skill->claude_command nos 15 verbos; plugins/guia/skills/ removido; commands/ gerado. Resultado: verbos namespaced /guia:<verbo>, sem colisao, auto-trigger por description preservado. Target agent_skill (Codex/Antigravity, .agents/skills/) intacto.",
+        "Docs alinhados (claude=commands, agent=skills): CLAUDE.md, AGENTS.md, CONTRIBUTING.md, docs/reference/{cli,files}.md, SECURITY.md, body guia-fluxo, ADR-0015 (decisao #4 + consequencias), CHANGELOG. 6 testes atualizados (body_partials/manifest_layout_b/render_includes/render_polish/render_hardening/install). Revisao adversarial (3 agentes) limpa: so 1 stale real (AGENTS.md:11 skills->commands) corrigido; resto pre-existente fora de escopo.",
+        "Fechada via finish --no-commit + commit manual unico: o commit_task do motor so cobre task.modifiedFiles e nao injeta o marcador [unlock:adicoes-exigem-autorizacao] que os arquivos novos exigem."
+      ],
+      "validations": [
+        "python core/build/render-skills.py --check -> OK 56 alvos em sincronia",
+        "python -m pytest -> 144 passed (inclui tests/test_init_deploy.py novo: deploy templates + hooksPath + idempotencia/no-clobber + --no-locks)",
+        "python core/src/guia.py doctor -> Guia Fluxo files OK",
+        "hook commit-msg testado ao vivo no repo-mae: bloqueia add sem marcador (exit 1), libera com [unlock] + motivo (exit 0)",
+        "check-lock.py do plugin rodado de tmpdir resolve a raiz por CWD (reporta 'Nenhuma trava ativa' do tmp, nao o registry do repo) -> locks valem no consumidor",
+        "Dev confirmou no ambiente real (claude --plugin-dir + /reload-plugins): /guia:bug e /guia:init aparecem NAMESPACED, /guia filtra os verbos, /init nativo livre. Screenshots.",
+        "render --check OK (56 alvos); pytest 144 passed; doctor OK (apos a migracao)",
+        "render --check OK (56 alvos); pytest 146 passed (inclui lock_api _resolve_repo_root e test_init_deploy); doctor OK; /guia:* namespaced confirmado pelo dev no ambiente real (claude --plugin-dir + reload)"
+      ],
+      "pending": [],
+      "assessment": [
+        "Demanda valida e bem escopada. O caminho Claude ja e plugin-global-first (D-075: no-clone, motor via CLAUDE_PLUGIN_ROOT, raiz por CWD, auto-init de .guia/). Decisoes fechadas com o dev: E1 manter .guia/; E2 preservar cross-tool (Codex/Antigravity) intacto e tratar em demanda separada; E3 renomear dist/ -> plugins/guia/; E4 /guia:init full. Net-new: /guia:init + rename de layout + docs/ADR-0015. Sem worktree, in-place no main."
+      ],
+      "executionPlan": [
+        "Verbo/skill init: novo verbo no manifest (2 targets) + bodies/init.md enxuto (run_cmd, sem post_cli) + render gera skills/init e .agents/skills/guia-init.",
+        "Motor: estender cmd_init/initialize_project p/ copiar templates do plugin global (features/registry.yaml, lock-ignore.txt, .githooks/commit-msg) idempotente sem clobber + git config core.hooksPath; fonte via CLAUDE_PLUGIN_ROOT/templates com fallback <engine>/../templates; flag --no-locks.",
+        "E3: renomear dist/ -> plugins/guia/ (render Paths, .claude/settings.json, marketplace.json raiz+plugin, testes, docs); re-validar marketplace de dogfood.",
+        "Docs+ADR: ADR-0015 (global-first + guia:init, cross-tool preservado/adiado), README, instalar-em-outro-projeto.md, body guia-fluxo Portable install, CHANGELOG [Unreleased].",
+        "Testes: novos do init (deploy templates + hooksPath + idempotencia/no-clobber) + ajustes do rename; manter test_install.py. Verde: render --check, pytest, doctor."
+      ],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-076",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-076",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "README.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo padrao ou os comandos da capa mudaram, atualize.",
+            "purpose": "Porta de entrada do projeto."
+          },
+          {
+            "path": "docs/reference/cli.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se voce adicionou/mudou subcomando ou flag, documente aqui.",
+            "purpose": "Referencia completa de subcomandos do core/src/guia.py / core/bin/guia.ps1."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py, core/manifest/manifest.yaml",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py, core/manifest/manifest.yaml",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          },
+          {
+            "path": "CONTRIBUTING.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo humano mudou (novo passo, nova checagem), atualize.",
+            "purpose": "Guia pra humanos contribuirem."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md",
+          "README.md",
+          "docs/reference/cli.md",
+          "docs/reference/files.md",
+          "docs/adr/0015-plugin-global-first-guia-init.md",
+          "CLAUDE.md",
+          "AGENTS.md",
+          "CONTRIBUTING.md",
+          "SECURITY.md",
+          "docs/how-to/instalar-em-outro-projeto.md"
+        ],
+        "checkedAt": "2026-06-20",
+        "skipped": "visao-geral.md mantido historico (narrativa F-011/F-012; refs dist/.guia-fluxo/ai sao registro de epoca); refresh arquitetural amplo fica para demanda separada - a decisao desta demanda esta no ADR-0015 novo"
+      }
     },
     {
       "id": "D-075",

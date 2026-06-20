@@ -1,3 +1,8 @@
+---
+name: guia-fluxo
+description: REFERENCE/BACKGROUND ONLY — overview of the Guia Fluxo task-process pipeline (D-NNN tasks, status states, locks, chat-rename, worktree). Use directly when the developer asks for the process overview ("explain Guia Fluxo", "how does this pipeline work"), the installation guide, or the portability checklist. Not a competitor to the action verbs — those route to their own shims first.
+---
+
 # Guia Fluxo
 
 Reference for the repository's task-process pipeline. Use this skill when the developer wants the **process overview** — what verbs exist, who triggers what, how the moving parts fit. The action playbook for each verb lives in the verb's own shim plus shared partials in `core/manifest/bodies/_partials/`.
@@ -23,7 +28,13 @@ Slash-command prefix differs by host: Claude Code exposes the plugin namespace (
 
 Use the engine as the source of truth.
 
-{{include_per_target: _partials/run_cmd}}
+**Run the engine** via the repo wrapper (portable fallback on Linux/Mac/no PowerShell: `python core/src/guia.py <command>`):
+
+```powershell
+.\core\bin\guia.ps1 <command>
+```
+
+Substitute `<command>` with the verb and arguments for this skill:
 
 ```text
 feature "Short title" --context "Why this matters"

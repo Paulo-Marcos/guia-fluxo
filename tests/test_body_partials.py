@@ -1,8 +1,9 @@
 """D-047: testes de composicao real dos bodies via partials.
 
 Diferente de test_render_includes (que testa o mecanismo), aqui testa
-o RESULTADO: os SKILL.md gerados em dist/ tem o conteudo esperado de
-cada partial nos verbos certos, e nao nos verbos errados.
+o RESULTADO: os arquivos gerados em plugins/guia/ (commands/ do Claude e
+.agents/skills/ do agente) tem o conteudo esperado de cada partial nos
+verbos certos, e nao nos verbos errados.
 
 Mapa de inclusao (intent design):
     title_context_rules.md → feature, bug, chore, backlog
@@ -27,8 +28,8 @@ from conftest_paths import REPO_ROOT
 
 RENDER = REPO_ROOT / "core" / "build" / "render-skills.py"
 PARTIALS = REPO_ROOT / "core" / "manifest" / "bodies" / "_partials"
-CLAUDE_DIST = REPO_ROOT / "dist" / "skills"
-AGENT_DIST = REPO_ROOT / "dist" / ".agents" / "skills"
+CLAUDE_COMMANDS = REPO_ROOT / "plugins" / "guia" / "commands"
+AGENT_DIST = REPO_ROOT / "plugins" / "guia" / ".agents" / "skills"
 
 
 # Marcadores estaveis dentro de cada partial - se alguem reescrever um
@@ -41,8 +42,8 @@ CLAUDE_RENAME_MARKER = "mark_chapter"
 AGENT_RENAME_MARKER = "codex_app.set_thread_title"
 
 
-def _claude_skill(verb: str) -> Path:
-    return CLAUDE_DIST / verb / "SKILL.md"
+def _claude_command(verb: str) -> Path:
+    return CLAUDE_COMMANDS / f"{verb}.md"
 
 
 def _agent_skill(verb: str) -> Path:
@@ -102,7 +103,7 @@ class TitleContextCompositionTests(unittest.TestCase):
 
     def test_create_verbs_have_title_context(self) -> None:
         for verb in ("feature", "bug", "chore", "backlog"):
-            for skill_path in (_claude_skill(verb), _agent_skill(verb)):
+            for skill_path in (_claude_command(verb), _agent_skill(verb)):
                 text = skill_path.read_text(encoding="utf-8")
                 self.assertIn(
                     TITLE_CONTEXT_MARKER,
@@ -112,7 +113,7 @@ class TitleContextCompositionTests(unittest.TestCase):
 
     def test_lifecycle_verbs_do_not_have_title_context(self) -> None:
         for verb in ("promote", "ready", "finish"):
-            for skill_path in (_claude_skill(verb), _agent_skill(verb)):
+            for skill_path in (_claude_command(verb), _agent_skill(verb)):
                 text = skill_path.read_text(encoding="utf-8")
                 self.assertNotIn(
                     TITLE_CONTEXT_MARKER,
@@ -133,7 +134,7 @@ class LockProtocolCompositionTests(unittest.TestCase):
 
     def test_editing_verbs_have_lock_protocol(self) -> None:
         for verb in ("feature", "bug", "chore", "promote", "finish"):
-            for skill_path in (_claude_skill(verb), _agent_skill(verb)):
+            for skill_path in (_claude_command(verb), _agent_skill(verb)):
                 text = skill_path.read_text(encoding="utf-8")
                 self.assertIn(
                     LOCK_PROTOCOL_MARKER,
@@ -143,7 +144,7 @@ class LockProtocolCompositionTests(unittest.TestCase):
 
     def test_non_editing_verbs_lack_lock_protocol(self) -> None:
         for verb in ("backlog", "ready"):
-            for skill_path in (_claude_skill(verb), _agent_skill(verb)):
+            for skill_path in (_claude_command(verb), _agent_skill(verb)):
                 text = skill_path.read_text(encoding="utf-8")
                 self.assertNotIn(
                     LOCK_PROTOCOL_MARKER,
@@ -154,8 +155,8 @@ class LockProtocolCompositionTests(unittest.TestCase):
 
 class PostCliCompositionTests(unittest.TestCase):
     """post_cli.<host>.md deve aparecer em todos os 7 verbos shim. E o
-    host certo: mark_chapter so em claude_skill, codex_app so em
-    agent_skill (cross-contaminacao seria bug grave)."""
+    host certo: mark_chapter so no claude command, codex_app so na
+    agent skill (cross-contaminacao seria bug grave)."""
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -165,7 +166,7 @@ class PostCliCompositionTests(unittest.TestCase):
 
     def test_all_verbs_have_post_cli(self) -> None:
         for verb in self.VERBS:
-            for skill_path in (_claude_skill(verb), _agent_skill(verb)):
+            for skill_path in (_claude_command(verb), _agent_skill(verb)):
                 text = skill_path.read_text(encoding="utf-8")
                 self.assertIn(
                     POST_CLI_MARKER,
@@ -175,11 +176,11 @@ class PostCliCompositionTests(unittest.TestCase):
 
     def test_claude_targets_use_mark_chapter(self) -> None:
         for verb in self.VERBS:
-            text = _claude_skill(verb).read_text(encoding="utf-8")
+            text = _claude_command(verb).read_text(encoding="utf-8")
             self.assertIn(
                 CLAUDE_RENAME_MARKER,
                 text,
-                msg=f"{_claude_skill(verb).relative_to(REPO_ROOT)} sem '{CLAUDE_RENAME_MARKER}'",
+                msg=f"{_claude_command(verb).relative_to(REPO_ROOT)} sem '{CLAUDE_RENAME_MARKER}'",
             )
 
     def test_agent_targets_use_codex_app(self) -> None:
@@ -196,12 +197,12 @@ class PostCliCompositionTests(unittest.TestCase):
         nao deve mencionar mark_chapter. Caso contrario um partial foi
         incluido no host errado em algum body."""
         for verb in self.VERBS:
-            claude_text = _claude_skill(verb).read_text(encoding="utf-8")
+            claude_text = _claude_command(verb).read_text(encoding="utf-8")
             agent_text = _agent_skill(verb).read_text(encoding="utf-8")
             self.assertNotIn(
                 AGENT_RENAME_MARKER,
                 claude_text,
-                msg=f"{_claude_skill(verb).relative_to(REPO_ROOT)} contaminado com instrucao Codex App",
+                msg=f"{_claude_command(verb).relative_to(REPO_ROOT)} contaminado com instrucao Codex App",
             )
             self.assertNotIn(
                 CLAUDE_RENAME_MARKER,
@@ -211,11 +212,12 @@ class PostCliCompositionTests(unittest.TestCase):
 
 
 class FrontmatterAndTitleTests(unittest.TestCase):
-    """Garantias do frontmatter dos SKILL.md gerados:
-    - Comecam com `---`
-    - Tem `name:` batendo com o nome esperado (claude target usa o verbo
-      cru; agent target usa o prefixo `guia-<verbo>`).
-    - Tem `description:` nao vazia.
+    """Garantias do frontmatter dos arquivos gerados:
+    - Comecam com `---`.
+    - Claude target = plugin *command* `commands/<verb>.md`: SEM `name:` no
+      frontmatter (o nome vem do stem do arquivo -> surge como `/guia:<verb>`).
+    - Agent target = Agent Skill `guia-<verb>/SKILL.md`: COM `name: guia-<verbo>`.
+    - Tem `description:` nao vazia em ambos.
     """
 
     @classmethod
@@ -224,14 +226,19 @@ class FrontmatterAndTitleTests(unittest.TestCase):
 
     VERBS = ("feature", "bug", "chore", "backlog", "promote", "ready", "finish", "status")
 
-    def test_claude_skill_name_matches_verb(self) -> None:
+    def test_claude_command_file_per_verb_without_name(self) -> None:
         for verb in self.VERBS:
-            path = _claude_skill(verb)
+            path = _claude_command(verb)
             if not path.exists():
                 continue  # `status` pode nao estar listado em todos os layouts
             text = path.read_text(encoding="utf-8")
             self.assertTrue(text.startswith("---\n"), msg=f"{path} sem frontmatter")
-            self.assertIn(f"\nname: {verb}\n", text, msg=f"{path} sem `name: {verb}`")
+            # Command flat: o nome vem do stem do arquivo (<verb>.md), entao
+            # NAO deve haver `name:` no frontmatter (senao surgiria duplicado).
+            head = text.split("\n---\n", 1)[0]
+            self.assertNotIn(
+                "\nname:", head, msg=f"{path} nao deveria ter `name:` (command usa o stem)"
+            )
 
     def test_agent_skill_name_has_guia_prefix(self) -> None:
         for verb in self.VERBS:
@@ -248,7 +255,7 @@ class FrontmatterAndTitleTests(unittest.TestCase):
 
     def test_description_present_and_nonempty(self) -> None:
         for verb in self.VERBS:
-            for path in (_claude_skill(verb), _agent_skill(verb)):
+            for path in (_claude_command(verb), _agent_skill(verb)):
                 if not path.exists():
                     continue
                 text = path.read_text(encoding="utf-8")

@@ -47,9 +47,9 @@ class OutputDirTests(unittest.TestCase):
             out = Path(tmp) / "out"
             result = _run("--output-dir", str(out))
             self.assertEqual(result.returncode, 0, msg=result.stderr)
-            # Pelo menos 1 SKILL.md + guia.py em bin/
+            # Pelo menos 1 command + 1 SKILL.md + guia.py em bin/
             self.assertTrue((out / "bin" / "guia.py").is_file())
-            self.assertTrue((out / "skills" / "feature" / "SKILL.md").is_file())
+            self.assertTrue((out / "commands" / "feature.md").is_file())
             self.assertTrue((out / ".agents" / "skills" / "guia-feature" / "SKILL.md").is_file())
 
     def test_check_with_custom_output_dir_compares_against_that_dir(self) -> None:
@@ -67,8 +67,9 @@ class CleanTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "out"
             _run("--output-dir", str(out))
-            # Plantar um orfao
-            orphan_dir = out / "skills" / "verbo-fantasma"
+            # Plantar um orfao (o target agent ainda usa subdir/SKILL.md,
+            # entao serve para exercitar tambem a remocao de dir vazio)
+            orphan_dir = out / ".agents" / "skills" / "guia-verbo-fantasma"
             orphan_dir.mkdir(parents=True)
             (orphan_dir / "SKILL.md").write_text("fantasma", encoding="utf-8")
             # --clean deve apagar
@@ -108,7 +109,7 @@ class FrontmatterExtrasTests(unittest.TestCase):
                 "      allowed-tools: [Read, Edit]\n"
                 "      model: opus\n"
                 "    targets:\n"
-                "      claude_skill:\n"
+                "      claude_command:\n"
                 "        body_file: bodies/test.claude.md\n",
                 encoding="utf-8",
             )
@@ -128,11 +129,13 @@ class FrontmatterExtrasTests(unittest.TestCase):
                 paths = _sandbox_paths(module, tmp_manifest_dir, tmp_manifest)
                 manifest_data = module.load_manifest(paths)
                 outputs = module.collect_outputs(manifest_data, paths)
-                test_output = next(o for o in outputs if o.name == "test" and o.target == "claude_skill")
+                test_output = next(o for o in outputs if o.name == "test" and o.target == "claude_command")
                 content = test_output.content
                 self.assertIn("allowed-tools: [Read, Edit]", content)
                 self.assertIn("model: opus", content)
-                self.assertIn("name: test", content)
+                # claude_command e um plugin command flat: sem `name:` (vem do
+                # stem do arquivo). O frontmatter leva description + extras.
+                self.assertNotIn("name: test", content)
                 self.assertIn("description: Test description.", content)
             finally:
                 sys.modules.pop("render_skills_probe", None)
@@ -156,7 +159,7 @@ class SharedBodyExplicitTests(unittest.TestCase):
                 "    shared_body: bodies/shared.md\n"
                 "    targets:\n"
                 "      agent_skill: {}\n"
-                "      claude_skill: {}\n",
+                "      claude_command: {}\n",
                 encoding="utf-8",
             )
             from conftest_paths import ensure_core_importable
@@ -195,7 +198,7 @@ class SharedBodyExplicitTests(unittest.TestCase):
                 "    shared_body: bodies/shared.md\n"
                 "    targets:\n"
                 "      agent_skill: {}\n"
-                "      claude_skill:\n"
+                "      claude_command:\n"
                 "        body_file: bodies/specific.md\n",
                 encoding="utf-8",
             )
@@ -212,7 +215,7 @@ class SharedBodyExplicitTests(unittest.TestCase):
                 paths = _sandbox_paths(module, tmp_manifest_dir, tmp_manifest)
                 outputs = module.collect_outputs(module.load_manifest(paths), paths)
                 agent_out = next(o for o in outputs if o.target == "agent_skill")
-                claude_out = next(o for o in outputs if o.target == "claude_skill")
+                claude_out = next(o for o in outputs if o.target == "claude_command")
                 self.assertIn("# Shared", agent_out.content)
                 self.assertIn("# Specific", claude_out.content)
                 self.assertNotIn("# Shared", claude_out.content)
