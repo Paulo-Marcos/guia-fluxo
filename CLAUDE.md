@@ -33,7 +33,7 @@ A referencia `guia-fluxo` em `plugins/guia/commands/guia-fluxo.md` carrega conte
 
 ### Descoberta automatica
 
-O repo tem `plugins/guia/.claude-plugin/marketplace.json` (catalogo) + `.claude/settings.json` com `extraKnownMarketplaces` apontando para `./plugins/guia`. Ao abrir o repo em Claude Code (primeira vez), confirme o prompt de trust + instalacao do marketplace local. Depois disso, `/guia:feature` e cia ficam disponiveis em todas as sessoes futuras sem flag. Alternativas pra primeira vez: `claude --plugin-dir ./plugins/guia` ou `/plugin marketplace add ./plugins/guia` + `/plugin install guia@guia-fluxo` manualmente. Decisao em [`docs/adr/0006-plugin-oficial-claude-code.md`](docs/adr/0006-plugin-oficial-claude-code.md).
+O repo tem `.claude-plugin/marketplace.json` na **raiz** (catalogo, `source: ./plugins/guia`) + `.claude/settings.json` com `extraKnownMarketplaces` apontando para `.` (a raiz). Ao abrir o repo em Claude Code (primeira vez), confirme o prompt de trust + instalacao do marketplace local. Depois disso, `/guia:feature` e cia ficam disponiveis em todas as sessoes futuras sem flag. Alternativas pra primeira vez: `claude --plugin-dir ./plugins/guia` (carrega o plugin direto, sem marketplace) ou `/plugin marketplace add .` + `/plugin install guia@guia-fluxo` manualmente. (D-077 removeu o `marketplace.json` interno duplicado de `plugins/guia/.claude-plugin/`, que usava `source: '../'` desaconselhado; ver `docs/adr/0015-plugin-global-first-guia-init.md`.) Decisao em [`docs/adr/0006-plugin-oficial-claude-code.md`](docs/adr/0006-plugin-oficial-claude-code.md).
 
 ## Especificidades Claude Code
 

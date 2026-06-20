@@ -4,7 +4,7 @@
     "guia-fluxo": {
       "source": {
         "source": "directory",
-        "path": "./plugins/guia"
+        "path": "."
       }
     }
   }
