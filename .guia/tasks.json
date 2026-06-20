@@ -2,32 +2,259 @@
   "schemaVersion": 1,
   "tasks": [
     {
-      "id": "D-078",
+      "id": "D-080",
       "kind": "feature",
-      "title": "Atualizar placeholders legados I-NNN/F-NNN para D-NNN em docs vivos",
+      "title": "Forcar finish como acao exclusivamente humana (gate na ferramenta)",
       "status": "Backlog",
-      "origin": "Backlog (2026-06-19)",
-      "context": "CONTRIBUTING.md (linhas ~36,47: 'ready I-NNN', 'finish I-NNN') e docs/reference/cli.md (varias linhas: 'ready F-NNN', 'finish/cancel/docs-check F-NNN', 'output F-NNN') usam os prefixos legados I-NNN/F-NNN como placeholder de EXEMPLO. ADR-0011 Fase 4 tornou D-NNN o ID neutro padrao; os exemplos deviam usar D-NNN. Staleness de doc, nao relacionada a D-076; flagada pela revisao adversarial da migracao skills->commands. Preservar mencoes legitimas: aceitacao de F-NNN/I-NNN/B-NNN como INPUT continua valida, e exemplos historicos em ADRs/auditorias ficam.",
-      "createdAt": "2026-06-19",
-      "updatedAt": "2026-06-19",
+      "origin": "Backlog (2026-06-20)",
+      "context": "Hoje 'finish' e so convencao (AGENTS.md): nada tecnico impede a IA de rodar finish/commit. O dono exige que finish seja sempre humano e que isso esteja PREVISTO NA FERRAMENTA. Avaliar: (a) flag/env exigindo confirmacao humana (ex: GUIA_HUMAN_FINISH=1 ou --i-am-human) que a IA nao deve setar; (b) hook/guard que detecta contexto de agente; (c) no minimo, doc explicita. Relacionado: finish tambem nao injeta [unlock:] para arquivos novos, forcando commit manual - avaliar --unlock no finish junto (cruza com D-054 enriquecer commit).",
+      "createdAt": "2026-06-20",
+      "updatedAt": "2026-06-20",
       "modifiedFiles": [],
       "summary": [],
       "validations": [],
       "pending": []
     },
     {
-      "id": "D-077",
+      "id": "D-079",
+      "kind": "chore",
+      "title": "Subcomando backlog resolve para retirar item de backlog ja entregue",
+      "status": "Validada",
+      "origin": "Guia Fluxo (2026-06-20)",
+      "context": "Nao ha caminho oficial para retirar do backlog um item ja entregue por outra demanda (skill backlog so tem add/list/migrate/promote). Resultado: itens zumbis poluindo backlog list. Criar subcomando deterministico 'backlog resolve <id> [--reason]' que marca o item (tasks.json status=Backlog OU backlog.json legacy) como Resolvida + resolvedAt + resolution, e some do backlog list. Usar para fechar B-009/B-011/B-017 (ja entregues: marketplace remoto, cancel, plan).",
+      "createdAt": "2026-06-20",
+      "updatedAt": "2026-06-20",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "core/src/_constants.py",
+        "core/src/_cli_creation.py",
+        "core/src/guia.py",
+        "plugins/guia/bin/_constants.py",
+        "plugins/guia/bin/_cli_creation.py",
+        "plugins/guia/bin/guia.py",
+        "tests/test_backlog_resolve.py",
+        "docs/reference/cli.md",
+        ".guia/backlog.json",
+        "core/src/_cli_lifecycle.py",
+        "plugins/guia/bin/_cli_lifecycle.py",
+        "CONTRIBUTING.md",
+        "tests/test_status_all.py",
+        ".claude/settings.json",
+        ".guia/current-task.json",
+        ".guia/tasks.json",
+        "CLAUDE.md"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo.",
+        "Novo subcomando deterministico 'backlog resolve <id> [--reason]' (status STATUS_RESOLVED=Resolvida) que retira do backlog ativo item ja entregue/obsoleto nas duas fontes (tasks.json D-NNN + backlog.json legacy B-NNN), preservando para historico. backlog list filtra resolvidos. Usado para fechar B-009/B-011/B-017.",
+        "BUNDLE Onda 1 (3 itens). (1) D-079 backlog resolve: subcomando deterministico 'backlog resolve <id> [--reason]' (STATUS_RESOLVED) nas 2 fontes; fechou B-009/B-011/B-017. (2) B-014 status --all: quadro de tasks Em desenvolvimento + aviso de concorrencia B-018 quando ha 2+ ativas. (3) D-078: F-NNN/I-NNN->D-NNN nos exemplos de CONTRIBUTING.md e cli.md (legacy statements preservados).",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "pytest tests/test_backlog_resolve.py: 4 passed",
+        "pytest tests/ (suite completa): 150 passed",
+        "guia doctor: exit 0 / render-skills.py --check: 56 alvos em sincronia",
+        "pytest tests/: 153 passed",
+        "guia doctor: exit 0; render-skills.py --check: 56 alvos OK"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-079",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-079",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "README.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo padrao ou os comandos da capa mudaram, atualize.",
+            "purpose": "Porta de entrada do projeto."
+          },
+          {
+            "path": "docs/reference/cli.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se voce adicionou/mudou subcomando ou flag, documente aqui.",
+            "purpose": "Referencia completa de subcomandos do core/src/guia.py / core/bin/guia.ps1."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          },
+          {
+            "path": "CONTRIBUTING.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo humano mudou (novo passo, nova checagem), atualize.",
+            "purpose": "Guia pra humanos contribuirem."
+          }
+        ],
+        "touched": [
+          "docs/reference/cli.md",
+          "CONTRIBUTING.md"
+        ],
+        "checkedAt": "2026-06-20"
+      }
+    },
+    {
+      "id": "D-078",
       "kind": "feature",
-      "title": "Corrigir source '../' no marketplace.json interno do plugin (alinhar codex-plugin-cc)",
-      "status": "Backlog",
+      "title": "Atualizar placeholders legados I-NNN/F-NNN para D-NNN em docs vivos",
+      "status": "Resolvida",
       "origin": "Backlog (2026-06-19)",
-      "context": "plugins/guia/.claude-plugin/marketplace.json declara o plugin com source: '../', mas a doc do Claude Code recomenda NAO usar '../' em source de plugin (deve ser caminho relativo ao marketplace root comecando com './'). Latente: so morde no install por marketplace LOCAL directory (que a versao atual do Claude do dev nem suporta); o caminho GitHub usa o marketplace.json da raiz (source './plugins/guia', correto). Opcao: alinhar 1:1 ao codex-plugin-cc - marketplace.json so na raiz, settings.json do repo apontando para '.' em vez de './plugins/guia', e remover/ajustar o marketplace.json interno. Descoberto na D-076 ao diagnosticar erro de install local (source type not supported).",
+      "context": "CONTRIBUTING.md (linhas ~36,47: 'ready I-NNN', 'finish I-NNN') e docs/reference/cli.md (varias linhas: 'ready F-NNN', 'finish/cancel/docs-check F-NNN', 'output F-NNN') usam os prefixos legados I-NNN/F-NNN como placeholder de EXEMPLO. ADR-0011 Fase 4 tornou D-NNN o ID neutro padrao; os exemplos deviam usar D-NNN. Staleness de doc, nao relacionada a D-076; flagada pela revisao adversarial da migracao skills->commands. Preservar mencoes legitimas: aceitacao de F-NNN/I-NNN/B-NNN como INPUT continua valida, e exemplos historicos em ADRs/auditorias ficam.",
       "createdAt": "2026-06-19",
-      "updatedAt": "2026-06-19",
+      "updatedAt": "2026-06-20",
       "modifiedFiles": [],
       "summary": [],
       "validations": [],
-      "pending": []
+      "pending": [],
+      "resolvedAt": "2026-06-20",
+      "resolution": "Entregue no lote Onda 1 (bundle D-079): F-NNN/I-NNN->D-NNN em CONTRIBUTING.md e docs/reference/cli.md"
+    },
+    {
+      "id": "D-077",
+      "kind": "feature",
+      "title": "Corrigir source '../' no marketplace.json interno do plugin (alinhar codex-plugin-cc)",
+      "status": "Validada",
+      "origin": "Backlog (2026-06-19)",
+      "context": "plugins/guia/.claude-plugin/marketplace.json declara o plugin com source: '../', mas a doc do Claude Code recomenda NAO usar '../' em source de plugin (deve ser caminho relativo ao marketplace root comecando com './'). Latente: so morde no install por marketplace LOCAL directory (que a versao atual do Claude do dev nem suporta); o caminho GitHub usa o marketplace.json da raiz (source './plugins/guia', correto). Opcao: alinhar 1:1 ao codex-plugin-cc - marketplace.json so na raiz, settings.json do repo apontando para '.' em vez de './plugins/guia', e remover/ajustar o marketplace.json interno. Descoberto na D-076 ao diagnosticar erro de install local (source type not supported).",
+      "createdAt": "2026-06-19",
+      "updatedAt": "2026-06-20",
+      "modifiedFiles": [
+        "FEATURES.md",
+        ".claude/settings.json",
+        "CLAUDE.md",
+        "plugins/guia/.claude-plugin/marketplace.json",
+        ".guia/backlog.json",
+        ".guia/current-task.json",
+        ".guia/tasks.json",
+        "CONTRIBUTING.md",
+        "core/src/_cli_creation.py",
+        "core/src/_cli_lifecycle.py",
+        "core/src/_constants.py",
+        "core/src/guia.py",
+        "docs/reference/cli.md",
+        "plugins/guia/bin/_cli_creation.py",
+        "plugins/guia/bin/_cli_lifecycle.py",
+        "plugins/guia/bin/_constants.py",
+        "plugins/guia/bin/guia.py"
+      ],
+      "summary": [
+        "Em desenvolvimento desde 2026-06-20: Onda 1: limpar marketplace interno (dev-loop).",
+        "Dev-loop: removido o marketplace.json interno de plugins/guia/.claude-plugin/ (usava source '../' desaconselhado). settings.json extraKnownMarketplaces repontado de ./plugins/guia para '.' (le o marketplace.json da raiz). CLAUDE.md atualizado. Teste local agora: abrir o repo (descoberta via raiz) ou claude --plugin-dir ./plugins/guia (carrega direto, sem marketplace).",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "render-skills.py --check: 56 alvos OK (marketplace interno nao e gerado)"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-077",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-077",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "README.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo padrao ou os comandos da capa mudaram, atualize.",
+            "purpose": "Porta de entrada do projeto."
+          },
+          {
+            "path": "docs/reference/cli.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se voce adicionou/mudou subcomando ou flag, documente aqui.",
+            "purpose": "Referencia completa de subcomandos do core/src/guia.py / core/bin/guia.ps1."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          },
+          {
+            "path": "CONTRIBUTING.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo humano mudou (novo passo, nova checagem), atualize.",
+            "purpose": "Guia pra humanos contribuirem."
+          }
+        ],
+        "touched": [
+          "CLAUDE.md"
+        ],
+        "checkedAt": "2026-06-20"
+      }
     },
     {
       "id": "D-076",

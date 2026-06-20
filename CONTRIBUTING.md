@@ -33,7 +33,7 @@ Toda contribuicao passa pelo proprio processo do pack (dogfooding). Nao edite `.
 2. **Implemente.** Edite arquivos. Se algum estiver travado em `features/registry.yaml`, siga [`docs/how-to/editar-arquivo-travado.md`](docs/how-to/editar-arquivo-travado.md).
 3. **Marque pronto para validacao:**
    ```powershell
-   .\core\bin\guia.ps1 ready I-NNN `
+   .\core\bin\guia.ps1 ready D-NNN `
        --file <caminho> [--file <outro>] `
        --summary "Resumo do que foi feito" `
        --validation "Comando ou check executado"
@@ -44,7 +44,7 @@ Toda contribuicao passa pelo proprio processo do pack (dogfooding). Nao edite `.
    .\core\bin\guia.ps1 docs-check
    ```
    Le `.guia/docs-map.yaml` e lista docs vivos que podem precisar de atualizacao. Atualize o que fizer sentido. Sem mapa, vira no-op com aviso. Detalhes em [`docs/how-to/manter-docs-atualizados.md`](docs/how-to/manter-docs-atualizados.md).
-6. **Feche:** `.\core\bin\guia.ps1 finish I-NNN --docs-touched <path>...` ou `--docs-skip "<motivo>"`. Para travar arquivos homologados, use `--lock --lock-id <slug>`.
+6. **Feche:** `.\core\bin\guia.ps1 finish D-NNN --docs-touched <path>...` ou `--docs-skip "<motivo>"`. Para travar arquivos homologados, use `--lock --lock-id <slug>`.
 
 Detalhes de cada subcomando: [`docs/reference/cli.md`](docs/reference/cli.md).
 
@@ -98,7 +98,7 @@ O hook `commit-msg` (instalado por `git config core.hooksPath core/hooks`) rejei
 
 ## Pull Requests
 
-- Um PR por demanda (`F-NNN` ou `I-NNN`). Mantem revisao focada e rollback trivial.
+- Um PR por demanda (`D-NNN`). Mantem revisao focada e rollback trivial.
 - Inclua o ID da demanda no titulo do PR.
 - Verifique antes de abrir:
   ```powershell

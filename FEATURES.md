@@ -2,6 +2,94 @@
 
 ---
 
+## [D-077] ✨ Corrigir source '../' no marketplace.json interno do plugin (alinhar codex-plugin-cc)
+
+- **Status:** Validada
+- **Origem:** Backlog (2026-06-19)
+- **Tipo:** Feature
+- **Contexto:** plugins/guia/.claude-plugin/marketplace.json declara o plugin com source: '../', mas a doc do Claude Code recomenda NAO usar '../' em source de plugin (deve ser caminho relativo ao marketplace root comecando com './'). Latente: so morde no install por marketplace LOCAL directory (que a versao atual do Claude do dev nem suporta); o caminho GitHub usa o marketplace.json da raiz (source './plugins/guia', correto). Opcao: alinhar 1:1 ao codex-plugin-cc - marketplace.json so na raiz, settings.json do repo apontando para '.' em vez de './plugins/guia', e remover/ajustar o marketplace.json interno. Descoberto na D-076 ao diagnosticar erro de install local (source type not supported).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `.claude/settings.json`
+- `CLAUDE.md`
+- `plugins/guia/.claude-plugin/marketplace.json`
+- `.guia/backlog.json`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CONTRIBUTING.md`
+- `core/src/_cli_creation.py`
+- `core/src/_cli_lifecycle.py`
+- `core/src/_constants.py`
+- `core/src/guia.py`
+- `docs/reference/cli.md`
+- `plugins/guia/bin/_cli_creation.py`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/bin/guia.py`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-20: Onda 1: limpar marketplace interno (dev-loop).
+- Dev-loop: removido o marketplace.json interno de plugins/guia/.claude-plugin/ (usava source '../' desaconselhado). settings.json extraKnownMarketplaces repontado de ./plugins/guia para '.' (le o marketplace.json da raiz). CLAUDE.md atualizado. Teste local agora: abrir o repo (descoberta via raiz) ou claude --plugin-dir ./plugins/guia (carrega direto, sem marketplace).
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- render-skills.py --check: 56 alvos OK (marketplace interno nao e gerado)
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-079] 🧹 Subcomando backlog resolve para retirar item de backlog ja entregue
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-20)
+- **Tipo:** Chore
+- **Contexto:** Nao ha caminho oficial para retirar do backlog um item ja entregue por outra demanda (skill backlog so tem add/list/migrate/promote). Resultado: itens zumbis poluindo backlog list. Criar subcomando deterministico 'backlog resolve <id> [--reason]' que marca o item (tasks.json status=Backlog OU backlog.json legacy) como Resolvida + resolvedAt + resolution, e some do backlog list. Usar para fechar B-009/B-011/B-017 (ja entregues: marketplace remoto, cancel, plan).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_constants.py`
+- `core/src/_cli_creation.py`
+- `core/src/guia.py`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/bin/_cli_creation.py`
+- `plugins/guia/bin/guia.py`
+- `tests/test_backlog_resolve.py`
+- `docs/reference/cli.md`
+- `.guia/backlog.json`
+- `core/src/_cli_lifecycle.py`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `CONTRIBUTING.md`
+- `tests/test_status_all.py`
+- `.claude/settings.json`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CLAUDE.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Novo subcomando deterministico 'backlog resolve <id> [--reason]' (status STATUS_RESOLVED=Resolvida) que retira do backlog ativo item ja entregue/obsoleto nas duas fontes (tasks.json D-NNN + backlog.json legacy B-NNN), preservando para historico. backlog list filtra resolvidos. Usado para fechar B-009/B-011/B-017.
+- BUNDLE Onda 1 (3 itens). (1) D-079 backlog resolve: subcomando deterministico 'backlog resolve <id> [--reason]' (STATUS_RESOLVED) nas 2 fontes; fechou B-009/B-011/B-017. (2) B-014 status --all: quadro de tasks Em desenvolvimento + aviso de concorrencia B-018 quando ha 2+ ativas. (3) D-078: F-NNN/I-NNN->D-NNN nos exemplos de CONTRIBUTING.md e cli.md (legacy statements preservados).
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- pytest tests/test_backlog_resolve.py: 4 passed
+- pytest tests/ (suite completa): 150 passed
+- guia doctor: exit 0 / render-skills.py --check: 56 alvos em sincronia
+- pytest tests/: 153 passed
+- guia doctor: exit 0; render-skills.py --check: 56 alvos OK
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-076] ✨ Plugin global-first + guia:init (ref codex-plugin-cc)
 
 - **Status:** Validada

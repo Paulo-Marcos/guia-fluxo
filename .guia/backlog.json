@@ -21,33 +21,41 @@
       "id": "B-017",
       "title": "Permitir criar demanda em estado Planejada (cadastrar sem iniciar)",
       "context": "Hoje feature/issue entram em Em desenvolvimento na criacao (new_task carimba STATUS_IN_DEVELOPMENT). STATUS_PLANNED='Planejada' + tag #PLANEJADA existem sem caminho. Permitir criar demanda ja triada (sabe-se feature/bug, tem numero) mas nao iniciada - diferente do backlog (ideia nao triada, sem decisao feature-vs-bug). DEPENDE do ADR de modelo de demanda (tipo x status).",
-      "status": "Backlog",
+      "status": "Resolvida",
       "createdAt": "2026-06-06",
-      "updatedAt": "2026-06-06"
+      "updatedAt": "2026-06-06",
+      "resolvedAt": "2026-06-20",
+      "resolution": "Entregue: criar demanda Planejada existe (commands/plan.md + feature --status planned)"
     },
     {
       "id": "B-014",
       "title": "Visao de quadro: status --all listando todas as tasks em andamento",
       "context": "status hoje mostra UMA task (current ou por id). Listar varias ja existe via tasks list --status Em desenvolvimento (F-017), mas falta porta de entrada obvia. Adicionar status --all reusando _tasks.list_tasks e format_task_line. Custo baixo.",
-      "status": "Backlog",
+      "status": "Resolvida",
       "createdAt": "2026-06-06",
-      "updatedAt": "2026-06-06"
+      "updatedAt": "2026-06-06",
+      "resolvedAt": "2026-06-20",
+      "resolution": "Entregue no lote Onda 1 (bundle D-079): status --all + aviso de concorrencia B-018"
     },
     {
       "id": "B-011",
       "title": "Adicionar subcomando cancel/abandon ao CLI para reverter promote/feature/issue criados por engano",
       "context": "Quando um item de backlog e promovido (ou feature/issue e criado) por engano e o usuario quer reverter, hoje nao ha caminho oficial: nao existe subcomando 'cancel' nem 'abandon'. Resultado: ou (a) deixa task zumbi em tasks.json com status 'Em desenvolvimento' poluindo status/historico; ou (b) re-adiciona conteudo ao backlog com novo ID (perde rastreio); ou (c) edita .guia/tasks.json + .guia/backlog.json + .guia/current-task.json + FEATURES.md na mao - violando a regra nao-negociavel 1 do CLAUDE.md. Caso real: 2026-06-02, promote de B-009 -> F-014 revertido manualmente porque user decidiu adiar a feature. Proposta: subcomando 'ai cancel <ID> [--reason ...]' que (1) muda status da task pra 'Cancelada' (novo estado) ou remove de tasks.json; (2) se a task veio de backlog (backlogId presente), devolve item ao backlog.json preservando ID original e content; (3) limpa current-task.json se aponta pra ela; (4) remove entrada de FEATURES.md ou marca como cancelada; (5) registra motivo. Considerar tambem soft-delete (status Cancelada visivel no historico) vs hard-delete (some de tudo). Decisao de UX: cancelar feature/issue diretamente criada (sem backlog origin) vs promovida - comportamentos podem diferir.",
-      "status": "Backlog",
+      "status": "Resolvida",
       "createdAt": "2026-06-02",
-      "updatedAt": "2026-06-02"
+      "updatedAt": "2026-06-02",
+      "resolvedAt": "2026-06-20",
+      "resolution": "Entregue: subcomando cancel existe (commands/cancel.md, /guia:cancel)"
     },
     {
       "id": "B-009",
       "title": "Passo 3 - Publicar marketplace em github.com/paulosmarcos/guia-fluxo",
       "context": "Substituir marketplace local (source: directory) por marketplace remoto (source: github, repo: paulosmarcos/guia-fluxo). Vantagem: cache global do plugin Anthropic (~/.claude/plugins/cache/) elimina .guia-fluxo/ do projeto consumidor inteiro. Sobra so .agents/skills/ai-* (Codex/Antigravity) + .claude/settings.json + .guia/ + FEATURES.md no projeto consumidor. Cobre auto-update via /plugin marketplace update + auto-update do Claude. Requer publicar repo, configurar marketplace.json apontando pra subdir /dist (output do build do repo), documentar fluxo de versionamento. Depende de B-007 e B-008.",
-      "status": "Backlog",
+      "status": "Resolvida",
       "createdAt": "2026-06-01",
-      "updatedAt": "2026-06-01"
+      "updatedAt": "2026-06-01",
+      "resolvedAt": "2026-06-20",
+      "resolution": "Entregue: marketplace publicado e usado oficialmente via GitHub (root marketplace.json source ./plugins/guia)"
     },
     {
       "id": "B-004",

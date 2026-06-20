@@ -80,6 +80,9 @@ STATUS_BACKLOG = "Backlog"
 STATUS_PLANNED = "Planejada"
 STATUS_BLOCKED = "Bloqueada"
 STATUS_CANCELLED = "Cancelada"
+# Item de backlog ja entregue por outra demanda (ou obsoleto): retirado da
+# lista ativa via `backlog resolve`, mas preservado no arquivo para historico.
+STATUS_RESOLVED = "Resolvida"
 
 
 STATUS_TAGS: dict[str, str] = {
@@ -92,6 +95,7 @@ STATUS_TAGS: dict[str, str] = {
     STATUS_PLANNED: "PLANEJADA",
     STATUS_BLOCKED: "BLOQUEADA",
     STATUS_CANCELLED: "CANCELADA",
+    STATUS_RESOLVED: "RESOLVIDA",
 }
 
 
@@ -119,6 +123,8 @@ TASK_PREFIXES_FOR_NUMBERING = (PREFIX_DEMANDA, PREFIX_FEATURE, PREFIX_ISSUE)
 MSG_TASK_NOT_FOUND = "Task not found: {id}"
 MSG_NO_CURRENT_TASK = "No task id provided and no current task set."
 MSG_BACKLOG_ITEM_NOT_FOUND = "Backlog item not found: {id}"
+MSG_BACKLOG_ALREADY_RESOLVED = "{id} ja esta resolvido (status=Resolvida)."
+MSG_BACKLOG_RESOLVED = "{id} resolvido e retirado do backlog ativo."
 MSG_LOCK_ID_REQUIRED = "--lock-id is required when using --lock."
 MSG_NO_FILES_TO_LOCK = "No files to lock. Add files with --file."
 MSG_LOCK_ALREADY_EXISTS = "Lock already exists: {id}"

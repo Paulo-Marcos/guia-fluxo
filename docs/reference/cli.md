@@ -60,13 +60,16 @@ Cria `D-NNN` com `kind=chore` (emoji 🧹). Use para manutencao que merece rastr
 .\core\bin\guia.ps1 backlog add "Ideia futura" --context "Quando pode ser util"
 .\core\bin\guia.ps1 backlog list
 .\core\bin\guia.ps1 backlog migrate [--dry-run] [--force]
+.\core\bin\guia.ps1 backlog resolve D-NNN [--reason "Por que saiu do backlog"]
 ```
 
 `add` cria `D-NNN` com `kind=feature` (default) e `status=Backlog` em `.guia/tasks.json` (ADR-0011 Fase 2: backlog.json deixou de ser source-of-truth para novas entradas). Nao entra em `FEATURES.md` ate ser promovido.
 
-`list` une fontes: `tasks.json` com `status=Backlog` primeiro, depois itens legacy de `backlog.json` (`B-NNN`).
+`list` une fontes: `tasks.json` com `status=Backlog` primeiro, depois itens legacy de `backlog.json` (`B-NNN`). Itens resolvidos (`resolve`) nao aparecem.
 
 `migrate` (Fase 2): copia itens `B-NNN` legacy de `backlog.json` para `tasks.json` preservando o ID. `--dry-run` (default) so lista o plano; `--force` aplica e esvazia `backlog.json`. Idempotente: pula itens cujo ID ja existe em `tasks.json`.
+
+`resolve` retira do backlog ativo um item ja entregue por outra demanda (ou obsoleto), sem promover: marca `status=Resolvida` + `resolvedAt` (+ `resolution` se `--reason`) e o item some de `list`, preservado no arquivo para historico. Funciona nas duas fontes (`D-NNN` em `tasks.json` e `B-NNN` legacy). Idempotente. Diferente de `cancel` (que e para task em andamento) e de `promote` (que inicia o trabalho).
 
 ### `promote`
 
@@ -106,25 +109,28 @@ Move task para `Em desenvolvimento`. Aceita transicao de `Backlog` (atalho que p
 
 ```powershell
 .\core\bin\guia.ps1 status
+.\core\bin\guia.ps1 status --all
 ```
 
 Mostra a tarefa atual e o titulo sugerido para o chat.
 
+`--all` (B-014) imprime o quadro de todas as tasks `Em desenvolvimento`, marcando a `current`. Se houver mais de uma ativa ao mesmo tempo, avisa sobre a ambiguidade do `current-task.json` global (B-018) — comandos sem id explicito podem pegar a task errada.
+
 ### `ready`
 
 ```powershell
-.\core\bin\guia.ps1 ready F-NNN `
+.\core\bin\guia.ps1 ready D-NNN `
     --file <caminho> [--file <outro>] `
     --summary "Resumo do que foi feito" `
     --validation "Comando ou check feito"
 ```
 
-Move a task para `Aguardando validacao`. Gera relatorio em `.guia/reports/`. Imprime `NOME DO CHAT: F-NNN - #VALIDACAO - ...`.
+Move a task para `Aguardando validacao`. Gera relatorio em `.guia/reports/`. Imprime `NOME DO CHAT: D-NNN - #VALIDACAO - ...`.
 
 ### `finish`
 
 ```powershell
-.\core\bin\guia.ps1 finish F-NNN `
+.\core\bin\guia.ps1 finish D-NNN `
     [--lock --lock-id <slug>] `
     [--docs-touched <path> ...] `
     [--docs-skip "<motivo>"]
@@ -143,7 +149,7 @@ O resultado fica em `task.docsReview` no `.guia/tasks.json`. Quando `.guia/docs-
 ### `docs-check`
 
 ```powershell
-.\core\bin\guia.ps1 docs-check [F-NNN] [--json]
+.\core\bin\guia.ps1 docs-check [D-NNN] [--json]
 ```
 
 Lista docs candidatos a atualizacao para a task indicada (ou a task corrente, se omitida). Le `.guia/docs-map.yaml` e aplica triggers contra `task.modifiedFiles` + `git diff --name-only HEAD`. Nao muda estado, e seguro de rodar a qualquer momento.
@@ -156,7 +162,7 @@ Quando o mapa nao existe, retorna `{"hasMap": false, "candidates": []}` (JSON) o
 ### `cancel`
 
 ```powershell
-.\core\bin\guia.ps1 cancel F-NNN --reason "Motivo curto" `
+.\core\bin\guia.ps1 cancel D-NNN --reason "Motivo curto" `
     [--keep-worktree] `
     [--set-current]
 ```
@@ -166,27 +172,27 @@ Encerra a task como `Cancelada` (estado terminal). `--reason` e **obrigatorio** 
 - `--keep-worktree`: nao remove a worktree associada. Default: remove se a task tinha worktree.
 - `--set-current`: mantem a task como current apos cancelar. Default: limpa `.guia/current-task.json` se a task cancelada era a current.
 
-Bloqueia se a task ja esta em estado terminal (`Validada`, `Finalizada`, `Cancelada`). Imprime `NOME DO CHAT: F-NNN - #CANCELADA - ...`.
+Bloqueia se a task ja esta em estado terminal (`Validada`, `Finalizada`, `Cancelada`). Imprime `NOME DO CHAT: D-NNN - #CANCELADA - ...`.
 
 ### `block`
 
 ```powershell
-.\core\bin\guia.ps1 block F-NNN --reason "Por que esta pausando"
+.\core\bin\guia.ps1 block D-NNN --reason "Por que esta pausando"
 ```
 
 Pausa a task: status -> `Bloqueada`, preserva WIP, registra `task.blocks[] = [{reason, at}, ...]`. `--reason` e **obrigatorio**. Para retomar, use `unblock`.
 
-Bloqueia se a task ja esta em estado terminal ou ja em `Bloqueada`. Imprime `NOME DO CHAT: F-NNN - #BLOQUEADA - ...`.
+Bloqueia se a task ja esta em estado terminal ou ja em `Bloqueada`. Imprime `NOME DO CHAT: D-NNN - #BLOQUEADA - ...`.
 
 ### `unblock`
 
 ```powershell
-.\core\bin\guia.ps1 unblock F-NNN [--note "O que destravou"]
+.\core\bin\guia.ps1 unblock D-NNN [--note "O que destravou"]
 ```
 
 Retoma uma task pausada: status `Bloqueada` -> `Em desenvolvimento`. Fecha `task.blocks[-1].unblockedAt`. `--note` e opcional.
 
-Falha se a task nao estava em `Bloqueada`. Imprime `NOME DO CHAT: F-NNN - #DEV - ...`.
+Falha se a task nao estava em `Bloqueada`. Imprime `NOME DO CHAT: D-NNN - #DEV - ...`.
 
 ### `validate` (deprecado)
 

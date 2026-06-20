@@ -53,6 +53,8 @@ from _reports import write_report
 from _state import copy_if_missing, read_json, write_if_missing, write_json
 from _tasks import (
     find_task_or_current,
+    format_task_line,
+    list_tasks,
     merge_list,
     print_chat_title,
     save_task,
@@ -227,9 +229,39 @@ def cmd_init(args: argparse.Namespace) -> int:
 def cmd_status(args: argparse.Namespace) -> int:
     import json
 
+    if getattr(args, "all", False):
+        return _status_board()
+
     task = find_task_or_current(args.task_id)
     print(json.dumps(task, ensure_ascii=False, indent=2))
     print_chat_title(task)
+    return 0
+
+
+def _status_board() -> int:
+    """Visao de quadro (B-014): lista todas as tasks `Em desenvolvimento`.
+
+    Quando ha mais de uma task ativa ao mesmo tempo, avisa sobre a
+    ambiguidade do `current-task.json` global (B-018): comandos sem id
+    explicito caem em find_task_or_current(None) e podem pegar a task
+    errada. O aviso e informativo - o fix estrutural fica para B-018.
+    """
+    active = list_tasks(status=STATUS_IN_DEVELOPMENT)
+    if not active:
+        print("Nenhuma task em desenvolvimento.")
+        return 0
+    current_id = read_json(CURRENT_FILE, {}).get("taskId")
+    for task in active:
+        line = format_task_line(task)
+        if task.get("id") == current_id:
+            line += "  <- current"
+        print(line)
+    if len(active) > 1:
+        print(
+            f"\nAviso: {len(active)} tasks em desenvolvimento ao mesmo tempo. "
+            "Comandos sem id explicito usam o current-task.json global e podem "
+            "pegar a task errada (B-018) - passe o id (ex: `ready D-079`)."
+        )
     return 0
 
 

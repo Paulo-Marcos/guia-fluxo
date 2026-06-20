@@ -21,11 +21,15 @@ from typing import Any
 from _clock import today
 from _constants import (
     BACKLOG_FILE,
+    CURRENT_FILE,
     KIND_FEATURE,
+    MSG_BACKLOG_ALREADY_RESOLVED,
     MSG_BACKLOG_ITEM_NOT_FOUND,
+    MSG_BACKLOG_RESOLVED,
     STATUS_BACKLOG,
     STATUS_IN_DEVELOPMENT,
     STATUS_PLANNED,
+    STATUS_RESOLVED,
     TASKS_FILE,
 )
 
@@ -105,11 +109,67 @@ def cmd_backlog_list(_args: argparse.Namespace) -> int:
         print(f"{task['id']} {marker} [Backlog] {task['title']}")
 
     # Legacy: backlog.json (B-NNN). Permanece read-only ate `backlog migrate`.
-    # Itens legacy nao tem `kind` salvo - usa fallback do marker.
+    # Itens legacy nao tem `kind` salvo - usa fallback do marker. Itens
+    # resolvidos (`backlog resolve`) ficam no arquivo para historico mas
+    # somem da lista ativa.
     legacy = read_json(BACKLOG_FILE, {"schemaVersion": 1, "items": []})
     for item in legacy.get("items", []):
+        if item.get("status") == STATUS_RESOLVED:
+            continue
         marker = kind_marker(item.get("kind", ""))
         print(f"{item['id']} {marker} [{item['status']}] {item['title']}")
+    return 0
+
+
+def cmd_backlog_resolve(args: argparse.Namespace) -> int:
+    """Retira do backlog ativo um item ja entregue por outra demanda (ou
+    obsoleto), preservando-o no arquivo para historico (soft-resolve,
+    espelhando como `cancel` faz com task).
+
+    Funciona nas duas fontes que `backlog list` une: tasks.json com
+    `status=Backlog` (D-NNN) e backlog.json legacy (B-NNN). Marca
+    `status=Resolvida` + `resolvedAt` + `resolution` (se `--reason`). Itens
+    resolvidos somem de `backlog list`. Idempotente: re-resolver avisa e sai 0.
+    """
+    found = _find_backlog_source(args.backlog_id)
+    if found is None:
+        raise SystemExit(MSG_BACKLOG_ITEM_NOT_FOUND.format(id=args.backlog_id))
+
+    source, item = found
+    if item.get("status") == STATUS_RESOLVED:
+        print(MSG_BACKLOG_ALREADY_RESOLVED.format(id=args.backlog_id))
+        return 0
+
+    reason = (args.reason or "").strip()
+    if source == "tasks":
+        tasks_data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
+        for task in tasks_data.get("tasks", []):
+            if task.get("id") == args.backlog_id:
+                task["status"] = STATUS_RESOLVED
+                task["updatedAt"] = today()
+                task["resolvedAt"] = today()
+                if reason:
+                    task["resolution"] = reason
+                break
+        write_json(TASKS_FILE, tasks_data)
+        # Limpa current-task.json se apontava para o item resolvido.
+        current = read_json(CURRENT_FILE, {})
+        if current.get("taskId") == args.backlog_id:
+            write_json(CURRENT_FILE, {})
+    else:
+        legacy = read_json(BACKLOG_FILE, {"schemaVersion": 1, "items": []})
+        for entry in legacy.get("items", []):
+            if entry.get("id") == args.backlog_id:
+                entry["status"] = STATUS_RESOLVED
+                entry["resolvedAt"] = today()
+                if reason:
+                    entry["resolution"] = reason
+                break
+        write_json(BACKLOG_FILE, legacy)
+
+    print(MSG_BACKLOG_RESOLVED.format(id=args.backlog_id))
+    if reason:
+        print(f"  motivo: {reason}")
     return 0
 
 
@@ -294,6 +354,7 @@ __all__ = [
     "cmd_backlog_add",
     "cmd_backlog_list",
     "cmd_backlog_migrate",
+    "cmd_backlog_resolve",
     "cmd_promote",
     "STATUS_CLI_CHOICES",
 ]

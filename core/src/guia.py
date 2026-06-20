@@ -63,6 +63,7 @@ from _cli_creation import (  # noqa: E402
     cmd_backlog_add,
     cmd_backlog_list,
     cmd_backlog_migrate,
+    cmd_backlog_resolve,
     cmd_create_task,
     cmd_promote,
 )
@@ -178,6 +179,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_status = sub.add_parser("status", help="Show current task or a given task.")
     p_status.add_argument("task_id", nargs="?")
+    p_status.add_argument(
+        "--all",
+        action="store_true",
+        help="Quadro: lista todas as tasks Em desenvolvimento (avisa se houver mais de uma ativa).",
+    )
     p_status.set_defaults(func=cmd_status)
 
     p_ready = sub.add_parser("ready", help="Move task to developer validation stage.")
@@ -340,6 +346,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_backlog_promote.add_argument("--kind", choices=_KIND_CHOICES_NEW, default=KIND_FEATURE)
     _add_promote_args(p_backlog_promote)
     p_backlog_promote.set_defaults(func=cmd_promote)
+    p_backlog_resolve = backlog_sub.add_parser(
+        "resolve",
+        help="Retira do backlog ativo um item ja entregue/obsoleto (status -> Resolvida).",
+    )
+    p_backlog_resolve.add_argument("backlog_id")
+    p_backlog_resolve.add_argument(
+        "--reason",
+        help="Motivo/origem da resolucao (ex: demanda que entregou o item).",
+    )
+    p_backlog_resolve.set_defaults(func=cmd_backlog_resolve)
 
     p_promote = sub.add_parser("promote", help="Promote a backlog item to feature or issue.")
     p_promote.add_argument("backlog_id")
