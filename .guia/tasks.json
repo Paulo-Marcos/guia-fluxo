@@ -2,6 +2,20 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-081",
+      "kind": "feature",
+      "title": "finish/commit nao lida com delecao de arquivo e nao faz rollback do status ao falhar",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-20)",
+      "context": "Bug real (mordeu no finish D-077, 2026-06-20): _commit.py git_commit usa 'git add -- <files>', que falha em arquivo DELETADO ('pathspec did not match any files') -> finish aborta sem commitar. Pior: o status ja foi mudado para Validada ANTES do commit, sem rollback, deixando estado inconsistente (task Validada mas nada commitado). Corrigir: (a) stage de delecoes (git add -A -- <path> ou git rm) em git_commit; (b) tornar a transicao de status atomica com o commit (so marca Validada se o commit suceder) ou reverter no erro. Cruza com a lacuna de finish nao injetar [unlock:] para arquivos novos (ver D-080 e D-054).",
+      "createdAt": "2026-06-20",
+      "updatedAt": "2026-06-20",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
       "id": "D-080",
       "kind": "feature",
       "title": "Forcar finish como acao exclusivamente humana (gate na ferramenta)",
