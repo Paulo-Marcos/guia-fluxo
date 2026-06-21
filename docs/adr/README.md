@@ -24,6 +24,8 @@ ADR nao se confunde com [`explanation/`](../explanation/): explanation ensina o 
 | [0012](0012-partials-em-bodies.md) | Partials reutilizaveis nos bodies via `{{include: ...}}` | Aceita |
 | [0013](0013-consolidacao-bodies-por-verbo.md) | Um body por verbo com `{{include_per_target: ...}}` host-aware | Aceita |
 | [0014](0014-plugin-autossuficiente-claude-plugin-root.md) | Plugin autossuficiente: invocacao via `${CLAUDE_PLUGIN_ROOT}` + raiz por CWD + auto-init | Aceita |
+| [0015](0015-plugin-global-first-guia-init.md) | Plugin global-first: marketplace na raiz + `/guia:init` deploya locks por-projeto (layout `dist/` -> `plugins/guia/`) | Aceita |
+| [0016](0016-primitiva-de-servicos.md) | Camada de servicos (`guia service`) considerada e recusada — usar skills + plugin proprio | Recusada |
 
 ## Como adicionar um ADR novo
 
@@ -37,6 +39,6 @@ ADR nao se confunde com [`explanation/`](../explanation/): explanation ensina o 
 
 - Numeracao monotonica crescente, comecando em 0001. Nunca reaproveite numero.
 - Nome do arquivo em kebab-case, descritivo: `0007-cache-em-memoria.md`.
-- Status possiveis: **Proposta**, **Aceita**, **Substituida**, **Depreciada**.
+- Status possiveis: **Proposta**, **Aceita**, **Recusada**, **Substituida**, **Depreciada**.
 - Datas em ISO (YYYY-MM-DD).
 - Linguagem objetiva. Sem prosa motivacional - quem chega aqui ja sabe que precisa entender uma decisao especifica.

@@ -2,6 +2,245 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-089",
+      "kind": "feature",
+      "title": "Skill orquestradora por tema: aciona um bolo de skills",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-21)",
+      "context": "Reativa D-066 (Resolvida; ADR-0016 concluiu que registry e desnecessario). Em vez de um registro, uma skill orquestradora unica (ex: revisao-completa) cujo corpo aciona um conjunto de skills sobre o alvo. Cobre o caso de 'acionar skills por tema/evento' sem catalogo.",
+      "createdAt": "2026-06-21",
+      "updatedAt": "2026-06-21",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-088",
+      "kind": "feature",
+      "title": "Feature guia: avaliar arquitetura (DDD/SOLID) ao criar lock",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-21)",
+      "context": "Reativa D-062 (Resolvida indevidamente; ADR-0016). DIFERENTE das outras: e do CORE do guia (integrada ao lock), nao do plugin pessoal. Ao travar (lock), dispara uma skill que avalia a funcionalidade sob DDD/Clean/SOLID e verifica se os arquivos isolam mesmo a feature (responsabilidade unica); sugere patterns pra separar e travar so o que pertence a feature. Abordagem detalhada a definir.",
+      "createdAt": "2026-06-21",
+      "updatedAt": "2026-06-21",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-087",
+      "kind": "feature",
+      "title": "Skill commits-funcionais: agrupar working tree por funcionalidade (plugin proprio)",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-21)",
+      "context": "Reativa D-063 (Resolvida indevidamente; ADR-0016). Skill que le o working tree nao commitado, agrupa por funcionalidade e estrutura commits funcionais (um por funcao logica). Parte determinista (ler git status/diff) pode usar a CLI. Plugin do usuario.",
+      "createdAt": "2026-06-21",
+      "updatedAt": "2026-06-21",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-086",
+      "kind": "feature",
+      "title": "Skill avalia-tema: tema/metodologia vs projeto (plugin proprio)",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-21)",
+      "context": "Reativa D-064 (Resolvida indevidamente; ADR-0016). Skill que avalia um tema/padrao/conceito, relaciona com o projeto, diz se ja atende / nao atende / o que adaptar, e propoe acoes. Plugin do usuario.",
+      "createdAt": "2026-06-21",
+      "updatedAt": "2026-06-21",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-085",
+      "kind": "feature",
+      "title": "Skill valida-pasta: auditar pasta/feature com nota (plugin proprio)",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-21)",
+      "context": "Reativa D-065 (que ficou Resolvida 'absorvida por servico'; ADR-0016 recusou a camada). Abordagem: skill consultiva (SKILL.md) que recebe um alvo, levanta o que faz/por que/se faz sentido, da nota 0-10 e lista melhorias/problemas, reusando skills de qualidade existentes. Mora no plugin de skills do usuario, nao no core do guia.",
+      "createdAt": "2026-06-21",
+      "updatedAt": "2026-06-21",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-084",
+      "kind": "feature",
+      "title": "Implementar primitiva de servicos Fase 1 (MVP): _services.py + CRUD + /guia:service + servico valida-pasta",
+      "status": "Resolvida",
+      "origin": "Backlog (2026-06-20)",
+      "context": "Fase 1 do ADR-0016: modulo core/src/_services.py (irmao de _locks.py) + CRUD guia service add/edit/remove/list/show + catalogo .guia/services.yaml + command /guia:service (runner generico via manifest->render) + UM servico real ponta-a-ponta (valida-pasta, ex D-065). Fase 2+ cresce o catalogo (avalia-tema, avalia-arquitetura, commits-funcionais) e o disparo no lock.",
+      "createdAt": "2026-06-20",
+      "updatedAt": "2026-06-21",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": [],
+      "resolvedAt": "2026-06-21",
+      "resolution": "Cancelada: camada de servico recusada (ADR-0016 Recusada). Rotinas viram skills (plugin proprio); D-062 (arquitetura no lock) re-abre como skill simples se priorizada."
+    },
+    {
+      "id": "D-083",
+      "kind": "feature",
+      "title": "Primitiva de servicos (guia service): ADR + design do 3o dominio",
+      "status": "Validada",
+      "origin": "Guia Fluxo (2026-06-20)",
+      "context": "Design+ADR de uma primitiva de servicos que unifica D-062/064/065/066/063 (todas sao 'orquestrar um conjunto configurado de skills com prompt/criterio'). Formaliza o modelo de dominio do Guia Fluxo em 3 grandes grupos: Demandas, Locks, Servicos. Servico = receita de orquestracao (quais skills, ordem, prompt de config, saida); skills vivem externas (Claude/Codex); guia e dono da receita. CRUD deterministico (guia service add/edit/remove/list/show/run) espelhando locks; catalogo .guia/services.yaml = dado do consumidor (plugin fica com a cara dele); execucao agent-driven via /guia:service <nome>. Estrategia: ADR primeiro, depois construir pequeno (CRUD + 1 servico real). Esta demanda entrega o ADR; implementacao vira demanda separada.",
+      "createdAt": "2026-06-20",
+      "updatedAt": "2026-06-20",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "docs/adr/0016-primitiva-de-servicos.md",
+        "docs/adr/README.md",
+        ".guia/current-task.json",
+        ".guia/tasks.json",
+        "CHANGELOG.md",
+        "README.md",
+        "core/manifest/bodies/guia-fluxo.md",
+        "core/src/_constants.py",
+        "docs/ROADMAP.md",
+        "docs/explanation/visao-geral.md",
+        "docs/how-to/instalar-em-outro-projeto.md",
+        "docs/tutorials/primeiro-uso.md",
+        "plugins/guia/.agents/skills/guia-fluxo/SKILL.md",
+        "plugins/guia/bin/_constants.py",
+        "plugins/guia/commands/guia-fluxo.md"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo.",
+        "ADR-0016 (Proposta): primitiva de servicos como 3o dominio (Demandas/Locks/Servicos). Servico = receita de orquestracao (skills externas + prompt + saida); CRUD deterministico guia service espelhando locks; catalogo .guia/services.yaml do consumidor; execucao agent-driven /guia:service; cross-tool via manifest->render. Mapeia D-066=primitiva, D-065/064/062/063=servicos. Estrategia faseada (MVP: CRUD + valida-pasta). Tambem adicionei ao indice o 0015 que faltava (drift do D-076).",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "Sem codigo (so docs/adr). ADR segue o template (Contexto/Decisao/Consequencias/Alternativas/Links)."
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-083",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-083",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "docs/adr/0016-primitiva-de-servicos.md",
+          "docs/adr/README.md"
+        ],
+        "checkedAt": "2026-06-20"
+      }
+    },
+    {
+      "id": "D-082",
+      "kind": "feature",
+      "title": "install.ps1 e install.sh quebrados: apontam dist/ (removido no D-076)",
+      "status": "Validada",
+      "origin": "Backlog (2026-06-20)",
+      "context": "Confirmado no spike D-058 (2026-06-20): install.ps1 (linha 66 DistRoot=repo/dist + throw 68-70) e install.sh (DIST_ROOT linha 70 + exit 1 73-74) abortam com 'dist/ nao encontrado' porque o D-076 renomeou dist/ -> plugins/guia/. install.ps1 -DryRun aborta na hora. A rota install.* (Codex/Antigravity/dev, conforme CHANGELOG D-075) esta morta. Decidir: (a) corrigir DistRoot -> plugins/guia e ajustar o layout copiado + doc embutida (o consumidor copiaria plugins/guia em vez de dist); OU (b) deprecar formalmente os installers, ja que o global-first (/plugin install + auto-init + /guia:init) e o caminho canonico. Relacionado a D-056 (estrutura de pastas) e D-060.",
+      "createdAt": "2026-06-20",
+      "updatedAt": "2026-06-20",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "install.ps1",
+        "install.sh",
+        "tests/test_install.py",
+        "README.md",
+        "docs/how-to/instalar-em-outro-projeto.md",
+        "docs/tutorials/primeiro-uso.md",
+        "docs/ROADMAP.md",
+        "docs/explanation/visao-geral.md",
+        "core/manifest/bodies/guia-fluxo.md",
+        "core/src/_constants.py",
+        "plugins/guia/bin/_constants.py",
+        "plugins/guia/commands/guia-fluxo.md",
+        "plugins/guia/.agents/skills/guia-fluxo/SKILL.md",
+        "CHANGELOG.md",
+        ".guia/backlog.json",
+        ".guia/current-task.json",
+        ".guia/tasks.json",
+        "docs/adr/README.md"
+      ],
+      "summary": [
+        "Em desenvolvimento desde 2026-06-20: Deprecar install.ps1/.sh (quebrados, apontam dist/); global-first + copia-manual cobrem; cross-tool formaliza no B-004.",
+        "Deprecados install.ps1/.sh (quebrados desde D-076, confirmado no spike D-058). Removidos os 2 scripts + tests/test_install.py. Docs reescritos p/ global-first (Claude) + copia-manual (Codex/Antigravity, automacao em aberto B-004): README, how-to (reescrito), tutorial, manifest body (re-render), anotacoes historicas ROADMAP/visao-geral. Corrigido tambem stale do marketplace.json interno no body (removido no D-077). Resolvidos D-060 (hooksPath ja guardado por init) e D-061 (bug original resolvido; gap residual no relatorio do spike).",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "render --check OK; doctor OK; pytest 150 passed (test_install.py removido)"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-082",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-082",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "README.md",
+          "docs/how-to/instalar-em-outro-projeto.md",
+          "docs/tutorials/primeiro-uso.md",
+          "CHANGELOG.md"
+        ],
+        "checkedAt": "2026-06-20"
+      }
+    },
+    {
       "id": "D-081",
       "kind": "feature",
       "title": "finish/commit nao lida com delecao de arquivo e nao faz rollback do status ao falhar",
@@ -952,99 +1191,113 @@
       "id": "D-066",
       "kind": "feature",
       "title": "Registro de skills do projeto por tema",
-      "status": "Backlog",
+      "status": "Resolvida",
       "origin": "Backlog (2026-06-11)",
       "context": "Funcionalidade para cadastrar as skills necessarias do projeto e a forma de aciona-las em grupo. O usuario define que o projeto usa skills x, y, z e esse bolo e acionado por tema/evento conforme necessidade, evitando chamar cada skill manualmente toda hora. Base para a auditoria de pasta/feature consumir as skills de qualidade e arquitetura.",
       "createdAt": "2026-06-11",
-      "updatedAt": "2026-06-11",
+      "updatedAt": "2026-06-20",
       "modifiedFiles": [],
       "summary": [],
       "validations": [],
-      "pending": []
+      "pending": [],
+      "resolvedAt": "2026-06-20",
+      "resolution": "Absorvido pela primitiva de servicos (ADR-0016 aceito, D-083): vira servico no catalogo .guia/services.yaml"
     },
     {
       "id": "D-065",
       "kind": "feature",
       "title": "Skill de auditoria de pasta/feature com nota",
-      "status": "Backlog",
+      "status": "Resolvida",
       "origin": "Backlog (2026-06-11)",
       "context": "Skill onde o usuario aponta uma funcionalidade ou pasta e ela levanta o que faz, por que faz, se faz sentido, da uma nota, e identifica melhorias e problemas. Usa as skills de qualidade e arquitetura cadastradas pelo registro de skills do projeto (depende do item Registro de skills por tema) para avaliar aquela parte do projeto.",
       "createdAt": "2026-06-11",
-      "updatedAt": "2026-06-11",
+      "updatedAt": "2026-06-20",
       "modifiedFiles": [],
       "summary": [],
       "validations": [],
-      "pending": []
+      "pending": [],
+      "resolvedAt": "2026-06-20",
+      "resolution": "Absorvido pela primitiva de servicos (ADR-0016 aceito, D-083): vira servico no catalogo .guia/services.yaml"
     },
     {
       "id": "D-064",
       "kind": "feature",
       "title": "Skill de avaliacao tema vs projeto",
-      "status": "Backlog",
+      "status": "Resolvida",
       "origin": "Backlog (2026-06-11)",
       "context": "Skill que avalia um tema/contexto/estrutura (ex: um padrao, metodologia ou conceito), relaciona com o projeto do usuario, explica e detalha, e propoe acoes para o projeto atender ao proposto. Deve dizer se o projeto ja atende, nao atende, ou quais adaptacoes sao necessarias.",
       "createdAt": "2026-06-11",
-      "updatedAt": "2026-06-11",
+      "updatedAt": "2026-06-20",
       "modifiedFiles": [],
       "summary": [],
       "validations": [],
-      "pending": []
+      "pending": [],
+      "resolvedAt": "2026-06-20",
+      "resolution": "Absorvido pela primitiva de servicos (ADR-0016 aceito, D-083): vira servico no catalogo .guia/services.yaml"
     },
     {
       "id": "D-063",
       "kind": "feature",
       "title": "Skill de commits funcionais por feature",
-      "status": "Backlog",
+      "status": "Resolvida",
       "origin": "Backlog (2026-06-11)",
       "context": "Skill que levanta tudo que esta sem commitar (working tree), agrupa as mudancas por funcionalidade/feature, estrutura e explica cada grupo, e gerencia commits funcionais - um commit por funcao logica em vez de um commit unico com tudo junto. Objetivo: facilitar revisao e historico limpo.",
       "createdAt": "2026-06-11",
-      "updatedAt": "2026-06-11",
+      "updatedAt": "2026-06-20",
       "modifiedFiles": [],
       "summary": [],
       "validations": [],
-      "pending": []
+      "pending": [],
+      "resolvedAt": "2026-06-20",
+      "resolution": "Absorvido pela primitiva de servicos (ADR-0016 aceito, D-083): vira servico no catalogo .guia/services.yaml"
     },
     {
       "id": "D-062",
       "kind": "feature",
       "title": "Avaliar arquitetura (DDD/SOLID) ao criar lock",
-      "status": "Backlog",
+      "status": "Resolvida",
       "origin": "Backlog (2026-06-11)",
       "context": "Disparar uma skill ao travar (lock) que avalia a funcionalidade sob DDD, Clean Architecture e SOLID, verificando se os arquivos realmente isolam a funcionalidade (responsabilidade unica). Hoje a trava e por caminho de arquivo, entao o grao minimo e o arquivo inteiro; se um arquivo acumula varias responsabilidades, travar protege coisas nao relacionadas. A skill avaliaria a coesao e, quando um arquivo tem responsabilidades misturadas, sugeriria design patterns para separa-las em modulos de responsabilidade unica, permitindo travar apenas o que pertence aquela funcionalidade. Objetivo: alinhar feature de negocio (id do lock) com os arquivos travados. Abordagem detalhada fica para depois.",
       "createdAt": "2026-06-11",
-      "updatedAt": "2026-06-11",
+      "updatedAt": "2026-06-20",
       "modifiedFiles": [],
       "summary": [],
       "validations": [],
-      "pending": []
+      "pending": [],
+      "resolvedAt": "2026-06-20",
+      "resolution": "Absorvido pela primitiva de servicos (ADR-0016 aceito, D-083): vira servico no catalogo .guia/services.yaml"
     },
     {
       "id": "D-061",
       "kind": "feature",
       "title": "Corrigir path do check-lock no hook do consumidor",
-      "status": "Backlog",
+      "status": "Resolvida",
       "origin": "Backlog (2026-06-10)",
       "context": "O template dist/templates/.githooks/commit-msg termina com: exec PY ROOT/core/lock/check-lock.py hook 1. Mas no projeto consumidor nao existe core/lock/check-lock.py. O install.ps1 copia o motor de dist/bin/ para .guia-fluxo/bin/, que tem lock_api.py e guia.py mas NENHUM check-lock.py, e o consumidor nao tem pasta core/ alguma. O hook resolve a raiz via git rev-parse --show-toplevel e procura core/lock/check-lock.py a partir dela, entao no consumidor o commit-msg falha por caminho inexistente.\n\nDecidir a correcao: (a) gerar um template de hook especifico para o consumidor apontando para .guia-fluxo/bin/ com um entrypoint de lock equivalente; ou (b) expor um subcomando tipo guia lock hook no motor (guia.py) e o template chamar isso em vez de check-lock.py. Verificar tambem install.sh e a rota copia-manual da doc. Confirmar se o hook do consumidor algum dia rodou de fato (pode estar quebrado desde a adocao do layout .guia-fluxo/).\n\nOrigem: descoberto durante explicacao do fluxo de hooks git (2026-06-10).",
       "createdAt": "2026-06-10",
-      "updatedAt": "2026-06-10",
+      "updatedAt": "2026-06-20",
       "modifiedFiles": [],
       "summary": [],
       "validations": [],
-      "pending": []
+      "pending": [],
+      "resolvedAt": "2026-06-20",
+      "resolution": "Bug original (check-lock path) RESOLVIDO pelo global-first D-076; confirmado no spike D-058 (hook acha check-lock.py via CLAUDE_PLUGIN_ROOT e bloqueia/libera certo). Gap residual (locks nao valem fora de sessao Claude) documentado no relatorio do spike."
     },
     {
       "id": "D-060",
       "kind": "feature",
       "title": "Documentar colisao de core.hooksPath no install",
-      "status": "Backlog",
+      "status": "Resolvida",
       "origin": "Backlog (2026-06-10)",
       "context": "O guia de instalacao no consumidor (docs/how-to/instalar-em-outro-projeto.md, secao Ativando o hook git no consumidor) e o install.ps1 mandam rodar: git config core.hooksPath .githooks. Problema: se o consumidor JA tem core.hooksPath apontando para outra pasta (Husky, pasta propria, etc.), esse comando SOBRESCREVE o config e desliga silenciosamente os hooks existentes dele, porque core.hooksPath aceita uma unica pasta (override total de .git/hooks/).\n\nFalta orientacao para esse caso: detectar hooksPath ja existente e, em vez de sobrescrever, copiar/mover o .githooks/commit-msg para a pasta que o consumidor ja usa. Acao sugerida: (a) atualizar a doc com essa ressalva; (b) talvez install.ps1/install.sh imprimir um aviso quando git config --get core.hooksPath ja retorna algo diferente de .githooks.\n\nOrigem: descoberto durante explicacao do fluxo de hooks git (2026-06-10).",
       "createdAt": "2026-06-10",
-      "updatedAt": "2026-06-10",
+      "updatedAt": "2026-06-20",
       "modifiedFiles": [],
       "summary": [],
       "validations": [],
-      "pending": []
+      "pending": [],
+      "resolvedAt": "2026-06-20",
+      "resolution": "Coberto no D-082: /guia:init ja seta hooksPath so se nao houver (nao atropela Husky); doc reescrita; installers (que mandavam o comando cru) removidos. Confirmado no spike D-058."
     },
     {
       "id": "D-059",
@@ -1120,15 +1373,73 @@
       "id": "D-058",
       "kind": "feature",
       "title": "Spike: instalar em projeto-teste e mapear experiencia real do consumidor",
-      "status": "Backlog",
+      "status": "Validada",
       "origin": "Backlog (2026-06-10)",
       "context": "Objetivo: antes de implementar D-055 (renomear FEATURES.md), D-056 (mover features/ para .guia/) e D-057 (rename de chat), criar um projeto-teste vazio e rodar install.ps1 nele para ver exatamente o que o usuario recebe hoje. Isso serve dois propositos: (1) Validar o que funciona e o que esta estranho na visao do consumidor - quais pastas aparecem, o que o Claude Code detecta, se o doctor passa, se as skills disparam, se o fluxo feature -> ready -> finish funciona end-to-end. (2) Usar a experiencia real para priorizar e detalhar os backlogs estruturais (D-053, D-055, D-056) com evidencias concretas em vez de suposicoes. Passos sugeridos: (a) criar pasta vazia em algum lugar fora do repo-mae (ex: C:/dev/guia-teste); (b) rodar: .\\install.ps1 -Target C:/dev/guia-teste -DryRun para previa; (c) rodar sem DryRun; (d) abrir o projeto no Claude Code e verificar se o plugin e detectado; (e) criar uma demanda de teste, rodar ready + finish; (f) documentar o que ficou confuso, o que estava faltando, o que soou errado no nome/layout. Resultado esperado: lista de ajustes priorizados que alimenta D-053/D-055/D-056 com contexto real.",
       "createdAt": "2026-06-10",
-      "updatedAt": "2026-06-10",
-      "modifiedFiles": [],
-      "summary": [],
-      "validations": [],
-      "pending": []
+      "updatedAt": "2026-06-20",
+      "modifiedFiles": [
+        "FEATURES.md",
+        ".guia/reports/D-058-spike-consumidor.md",
+        ".guia/current-task.json",
+        ".guia/tasks.json",
+        "CHANGELOG.md",
+        "README.md",
+        "core/manifest/bodies/guia-fluxo.md",
+        "core/src/_constants.py",
+        "docs/ROADMAP.md",
+        "docs/adr/README.md",
+        "docs/explanation/visao-geral.md",
+        "docs/how-to/instalar-em-outro-projeto.md",
+        "docs/tutorials/primeiro-uso.md",
+        "plugins/guia/.agents/skills/guia-fluxo/SKILL.md",
+        "plugins/guia/bin/_constants.py",
+        "plugins/guia/commands/guia-fluxo.md"
+      ],
+      "summary": [
+        "Em desenvolvimento desde 2026-06-20: Spike: instalar em projeto-teste vazio e mapear a experiencia real do consumidor pos-global-first (D-076).",
+        "Spike empirico: plugin isolado + projeto vazio, simulando o consumidor global-first. RESULTADO: o fluxo global-first FUNCIONA end-to-end (auto-init, /guia:init deploya locks/hook, doctor OK, feature->ready->finish, hook bloqueia/libera corretamente com CLAUDE_PLUGIN_ROOT). 3 achados: (1) install.ps1/.sh QUEBRADOS (apontam dist/ removido no D-076) -> D-082; (2) D-061 bug original RESOLVIDO pelo global-first, resta so o gap de locks nao valerem fora de sessao Claude; (3) D-060 ja coberto por init (so falta doc). Warts: doctor pre-init cospe FAIL com exit 0.",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "Testado em projeto isolado: doctor, feature, init (locks+hooksPath), ready, finish; hook commit-msg nos 2 modos (com/sem CLAUDE_PLUGIN_ROOT) + unlock"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-058",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-058",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [],
+        "checkedAt": "2026-06-20",
+        "skipped": "Spike de investigacao; relatorio em .guia/reports/, nenhum doc vivo a tocar"
+      }
     },
     {
       "id": "D-057",

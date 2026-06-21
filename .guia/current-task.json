@@ -1,6 +1,6 @@
 {
-  "taskId": "D-079",
+  "taskId": "D-083",
   "status": "Validada",
-  "title": "Subcomando backlog resolve para retirar item de backlog ja entregue",
-  "chatTitle": "D-079 \ud83e\uddf9 - #FINALIZADO - Subcomando backlog resolve para retirar item de backlog ja entregue"
+  "title": "Primitiva de servicos (guia service): ADR + design do 3o dominio",
+  "chatTitle": "D-083 \u2728 - #FINALIZADO - Primitiva de servicos (guia service): ADR + design do 3o dominio"
 }

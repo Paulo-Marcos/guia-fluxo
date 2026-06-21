@@ -2,6 +2,129 @@
 
 ---
 
+## [D-083] ✨ Primitiva de servicos (guia service): ADR + design do 3o dominio
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-20)
+- **Tipo:** Feature
+- **Contexto:** Design+ADR de uma primitiva de servicos que unifica D-062/064/065/066/063 (todas sao 'orquestrar um conjunto configurado de skills com prompt/criterio'). Formaliza o modelo de dominio do Guia Fluxo em 3 grandes grupos: Demandas, Locks, Servicos. Servico = receita de orquestracao (quais skills, ordem, prompt de config, saida); skills vivem externas (Claude/Codex); guia e dono da receita. CRUD deterministico (guia service add/edit/remove/list/show/run) espelhando locks; catalogo .guia/services.yaml = dado do consumidor (plugin fica com a cara dele); execucao agent-driven via /guia:service <nome>. Estrategia: ADR primeiro, depois construir pequeno (CRUD + 1 servico real). Esta demanda entrega o ADR; implementacao vira demanda separada.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `docs/adr/0016-primitiva-de-servicos.md`
+- `docs/adr/README.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CHANGELOG.md`
+- `README.md`
+- `core/manifest/bodies/guia-fluxo.md`
+- `core/src/_constants.py`
+- `docs/ROADMAP.md`
+- `docs/explanation/visao-geral.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/tutorials/primeiro-uso.md`
+- `plugins/guia/.agents/skills/guia-fluxo/SKILL.md`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/commands/guia-fluxo.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- ADR-0016 (Proposta): primitiva de servicos como 3o dominio (Demandas/Locks/Servicos). Servico = receita de orquestracao (skills externas + prompt + saida); CRUD deterministico guia service espelhando locks; catalogo .guia/services.yaml do consumidor; execucao agent-driven /guia:service; cross-tool via manifest->render. Mapeia D-066=primitiva, D-065/064/062/063=servicos. Estrategia faseada (MVP: CRUD + valida-pasta). Tambem adicionei ao indice o 0015 que faltava (drift do D-076).
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- Sem codigo (so docs/adr). ADR segue o template (Contexto/Decisao/Consequencias/Alternativas/Links).
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-082] ✨ install.ps1 e install.sh quebrados: apontam dist/ (removido no D-076)
+
+- **Status:** Validada
+- **Origem:** Backlog (2026-06-20)
+- **Tipo:** Feature
+- **Contexto:** Confirmado no spike D-058 (2026-06-20): install.ps1 (linha 66 DistRoot=repo/dist + throw 68-70) e install.sh (DIST_ROOT linha 70 + exit 1 73-74) abortam com 'dist/ nao encontrado' porque o D-076 renomeou dist/ -> plugins/guia/. install.ps1 -DryRun aborta na hora. A rota install.* (Codex/Antigravity/dev, conforme CHANGELOG D-075) esta morta. Decidir: (a) corrigir DistRoot -> plugins/guia e ajustar o layout copiado + doc embutida (o consumidor copiaria plugins/guia em vez de dist); OU (b) deprecar formalmente os installers, ja que o global-first (/plugin install + auto-init + /guia:init) e o caminho canonico. Relacionado a D-056 (estrutura de pastas) e D-060.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `install.ps1`
+- `install.sh`
+- `tests/test_install.py`
+- `README.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/tutorials/primeiro-uso.md`
+- `docs/ROADMAP.md`
+- `docs/explanation/visao-geral.md`
+- `core/manifest/bodies/guia-fluxo.md`
+- `core/src/_constants.py`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/commands/guia-fluxo.md`
+- `plugins/guia/.agents/skills/guia-fluxo/SKILL.md`
+- `CHANGELOG.md`
+- `.guia/backlog.json`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `docs/adr/README.md`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-20: Deprecar install.ps1/.sh (quebrados, apontam dist/); global-first + copia-manual cobrem; cross-tool formaliza no B-004.
+- Deprecados install.ps1/.sh (quebrados desde D-076, confirmado no spike D-058). Removidos os 2 scripts + tests/test_install.py. Docs reescritos p/ global-first (Claude) + copia-manual (Codex/Antigravity, automacao em aberto B-004): README, how-to (reescrito), tutorial, manifest body (re-render), anotacoes historicas ROADMAP/visao-geral. Corrigido tambem stale do marketplace.json interno no body (removido no D-077). Resolvidos D-060 (hooksPath ja guardado por init) e D-061 (bug original resolvido; gap residual no relatorio do spike).
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- render --check OK; doctor OK; pytest 150 passed (test_install.py removido)
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-058] ✨ Spike: instalar em projeto-teste e mapear experiencia real do consumidor
+
+- **Status:** Validada
+- **Origem:** Backlog (2026-06-10)
+- **Tipo:** Feature
+- **Contexto:** Objetivo: antes de implementar D-055 (renomear FEATURES.md), D-056 (mover features/ para .guia/) e D-057 (rename de chat), criar um projeto-teste vazio e rodar install.ps1 nele para ver exatamente o que o usuario recebe hoje. Isso serve dois propositos: (1) Validar o que funciona e o que esta estranho na visao do consumidor - quais pastas aparecem, o que o Claude Code detecta, se o doctor passa, se as skills disparam, se o fluxo feature -> ready -> finish funciona end-to-end. (2) Usar a experiencia real para priorizar e detalhar os backlogs estruturais (D-053, D-055, D-056) com evidencias concretas em vez de suposicoes. Passos sugeridos: (a) criar pasta vazia em algum lugar fora do repo-mae (ex: C:/dev/guia-teste); (b) rodar: .\install.ps1 -Target C:/dev/guia-teste -DryRun para previa; (c) rodar sem DryRun; (d) abrir o projeto no Claude Code e verificar se o plugin e detectado; (e) criar uma demanda de teste, rodar ready + finish; (f) documentar o que ficou confuso, o que estava faltando, o que soou errado no nome/layout. Resultado esperado: lista de ajustes priorizados que alimenta D-053/D-055/D-056 com contexto real.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `.guia/reports/D-058-spike-consumidor.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CHANGELOG.md`
+- `README.md`
+- `core/manifest/bodies/guia-fluxo.md`
+- `core/src/_constants.py`
+- `docs/ROADMAP.md`
+- `docs/adr/README.md`
+- `docs/explanation/visao-geral.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/tutorials/primeiro-uso.md`
+- `plugins/guia/.agents/skills/guia-fluxo/SKILL.md`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/commands/guia-fluxo.md`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-20: Spike: instalar em projeto-teste vazio e mapear a experiencia real do consumidor pos-global-first (D-076).
+- Spike empirico: plugin isolado + projeto vazio, simulando o consumidor global-first. RESULTADO: o fluxo global-first FUNCIONA end-to-end (auto-init, /guia:init deploya locks/hook, doctor OK, feature->ready->finish, hook bloqueia/libera corretamente com CLAUDE_PLUGIN_ROOT). 3 achados: (1) install.ps1/.sh QUEBRADOS (apontam dist/ removido no D-076) -> D-082; (2) D-061 bug original RESOLVIDO pelo global-first, resta so o gap de locks nao valerem fora de sessao Claude; (3) D-060 ja coberto por init (so falta doc). Warts: doctor pre-init cospe FAIL com exit 0.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- Testado em projeto isolado: doctor, feature, init (locks+hooksPath), ready, finish; hook commit-msg nos 2 modos (com/sem CLAUDE_PLUGIN_ROOT) + unlock
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-077] ✨ Corrigir source '../' no marketplace.json interno do plugin (alinhar codex-plugin-cc)
 
 - **Status:** Validada
