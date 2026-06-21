@@ -39,5 +39,5 @@ labels: bug
 
 <!--
 Trechos uteis: .guia/current-task.json, mensagem do commit que falhou, conteudo
-relevante de features/registry.yaml, saida de `python core/src/guia.py doctor`.
+relevante de .guia/locks/registry.yaml, saida de `python core/src/guia.py doctor`.
 -->

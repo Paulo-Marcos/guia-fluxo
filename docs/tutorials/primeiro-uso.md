@@ -79,7 +79,7 @@ Voce (ou o agente) deve **repetir a linha `NOME DO CHAT: ...` no chat**. Se a fe
 
 Edite os arquivos do projeto normalmente.
 
-> **Antes de editar qualquer arquivo, confira [`features/registry.yaml`](../reference/registry-yaml.md).** Se o arquivo estiver travado, siga [how-to/editar-arquivo-travado.md](../how-to/editar-arquivo-travado.md).
+> **Antes de editar qualquer arquivo, confira [`.guia/locks/registry.yaml`](../reference/registry-yaml.md).** Se o arquivo estiver travado, siga [how-to/editar-arquivo-travado.md](../how-to/editar-arquivo-travado.md).
 
 ## 4. Marque como pronta para validacao
 

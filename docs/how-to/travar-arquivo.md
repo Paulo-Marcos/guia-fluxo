@@ -19,7 +19,7 @@ O script:
 
 ## Manualmente
 
-Abra [`features/registry.yaml`](../reference/registry-yaml.md) no editor e adicione:
+Abra [`.guia/locks/registry.yaml`](../reference/registry-yaml.md) no editor e adicione:
 
 ```yaml
 locks:

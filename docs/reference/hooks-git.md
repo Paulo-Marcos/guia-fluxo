@@ -4,7 +4,7 @@
 
 ### `commit-msg`
 
-Valida travas declaradas em [`features/registry.yaml`](registry-yaml.md). Rejeita commits que modifiquem arquivos travados sem a marca `[unlock:<feature-id>] motivo: <razao>` na mensagem.
+Valida travas declaradas em [`.guia/locks/registry.yaml`](registry-yaml.md). Rejeita commits que modifiquem arquivos travados sem a marca `[unlock:<feature-id>] motivo: <razao>` na mensagem.
 
 Implementacao: chama `python core/lock/check-lock.py`.
 
@@ -34,7 +34,7 @@ Nao recomendado. O workflow `.github/workflows/lock-check.yml` re-checa no PR e 
 O pack atualmente expoe apenas `commit-msg`. Hooks adicionais sao opcionais e devem ser tratados como guarda-corpo, nao como substituto do script:
 
 - `UserPromptSubmit`: lembrar de rodar `/feature` ou `/bug` se nao houver task ativa.
-- `PreToolUse`: checar `features/registry.yaml` antes de editar.
+- `PreToolUse`: checar `.guia/locks/registry.yaml` antes de editar.
 - `PostToolUse`: sugerir registrar arquivos na demanda atual.
 - `Stop`: avisar se houve mudanca sem `/ready` ou sem `finish`.
 

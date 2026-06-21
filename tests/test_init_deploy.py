@@ -4,7 +4,7 @@ The Claude-plugin consumer gets the engine from the plugin (reached via
 `${CLAUDE_PLUGIN_ROOT}`) and only `.guia/` state + lock config in its own
 tree. These tests pin the explicit `init` contract:
 
-  1. Seeds `.guia/` AND deploys features/registry.yaml, features/lock-ignore.txt
+  1. Seeds `.guia/` AND deploys .guia/locks/registry.yaml, .guia/locks/lock-ignore.txt
      and .githooks/commit-msg from the plugin templates dir, then points
      git core.hooksPath at .githooks/.
   2. Idempotent + non-clobbering: a second run preserves edited files.
@@ -42,10 +42,10 @@ def _seed_engine_flat(bin_dir: Path) -> None:
 
 def _seed_templates(plugin_root: Path) -> None:
     """Replicate the shipped templates dir (plugins/guia/templates/)."""
-    features = plugin_root / "templates" / "features"
-    features.mkdir(parents=True)
-    shutil.copy2(TEMPLATES_SRC / "features" / "registry.yaml", features / "registry.yaml")
-    shutil.copy2(TEMPLATES_SRC / "features" / "lock-ignore.txt", features / "lock-ignore.txt")
+    locks = plugin_root / "templates" / "locks"
+    locks.mkdir(parents=True)
+    shutil.copy2(TEMPLATES_SRC / "locks" / "registry.yaml", locks / "registry.yaml")
+    shutil.copy2(TEMPLATES_SRC / "locks" / "lock-ignore.txt", locks / "lock-ignore.txt")
     githooks = plugin_root / "templates" / ".githooks"
     githooks.mkdir(parents=True)
     shutil.copy2(HOOK_SRC, githooks / "commit-msg")
@@ -85,8 +85,8 @@ class InitDeployTest(unittest.TestCase):
             self.assertTrue((project / ".guia" / "process.json").is_file())
             self.assertTrue((project / ".guia" / "tasks.json").is_file())
             # lock config + hook deployed from the plugin templates
-            self.assertTrue((project / "features" / "registry.yaml").is_file())
-            self.assertTrue((project / "features" / "lock-ignore.txt").is_file())
+            self.assertTrue((project / ".guia" / "locks" / "registry.yaml").is_file())
+            self.assertTrue((project / ".guia" / "locks" / "lock-ignore.txt").is_file())
             self.assertTrue((project / ".githooks" / "commit-msg").is_file())
             # engine code does NOT land in the consumer (plugin-global)
             self.assertFalse((project / "bin").exists())
@@ -109,7 +109,7 @@ class InitDeployTest(unittest.TestCase):
 
             self.assertEqual(_run_init(plugin_root, project).returncode, 0)
             # Developer customizes the registry afterwards.
-            registry = project / "features" / "registry.yaml"
+            registry = project / ".guia" / "locks" / "registry.yaml"
             registry.write_text("version: 1\nlocks: []\n# custom\n", encoding="utf-8")
 
             self.assertEqual(_run_init(plugin_root, project).returncode, 0)
@@ -131,7 +131,7 @@ class InitDeployTest(unittest.TestCase):
             self.assertEqual(result.returncode, 0, msg=result.stderr)
 
             self.assertTrue((project / ".guia" / "process.json").is_file())
-            self.assertFalse((project / "features").exists())
+            self.assertFalse((project / ".guia" / "locks").exists())
             self.assertFalse((project / ".githooks").exists())
 
 

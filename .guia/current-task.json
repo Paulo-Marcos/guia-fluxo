@@ -1,6 +1,6 @@
 {
-  "taskId": "D-083",
+  "taskId": "D-056",
   "status": "Validada",
-  "title": "Primitiva de servicos (guia service): ADR + design do 3o dominio",
-  "chatTitle": "D-083 \u2728 - #FINALIZADO - Primitiva de servicos (guia service): ADR + design do 3o dominio"
+  "title": "Racionalizar estrutura de pastas: features/ para dentro de .guia/, clarificar separacao ferramenta-vs-dados",
+  "chatTitle": "D-056 \u2728 - #FINALIZADO - Racionalizar estrutura de pastas: features/ para dentro de .guia/, clarificar separacao ferramenta-vs-dados"
 }

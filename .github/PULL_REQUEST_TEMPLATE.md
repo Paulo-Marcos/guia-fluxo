@@ -19,7 +19,7 @@ Veja docs/how-to/ antes de abrir o PR.
 - [ ] Documentacao (`docs/` ou `README.md`)
 - [ ] Skills (`core/manifest/manifest.yaml` + `dist/skills/` + `dist/.agents/skills/`)
 - [ ] Templates de bootstrap (`core/templates/`)
-- [ ] Lock (`features/registry.yaml`)
+- [ ] Lock (`.guia/locks/registry.yaml`)
 - [ ] Outro: <!-- ... -->
 
 ## Como testei
@@ -34,7 +34,7 @@ python core/build/render-skills.py --check
 ## Locks tocados
 
 <!--
-Se o PR modifica arquivo travado em features/registry.yaml, cada commit
+Se o PR modifica arquivo travado em .guia/locks/registry.yaml, cada commit
 relevante precisa ter [unlock:<feature-id>] motivo: ... na mensagem.
 O workflow .github/workflows/lock-check.yml re-checa no PR e barra merge.
 Liste aqui quais features foram desbloqueadas e por que.

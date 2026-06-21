@@ -12,7 +12,7 @@ Wrapper PowerShell `core/bin/guia.ps1` localiza o Python adequado e invoca `core
 
 Inicializa o Guia Fluxo no projeto atual. Sempre semeia `.guia/` (JSONs vazios, `process.json` com o nome do projeto, `chat-title.txt` zerado). Por padrao tambem deploya, a partir do `templates/` do plugin (`${CLAUDE_PLUGIN_ROOT}/templates/`), a config de lock por-projeto e o hook:
 
-- `features/registry.yaml`, `features/lock-ignore.txt`
+- `.guia/locks/registry.yaml`, `.guia/locks/lock-ignore.txt`
 - `.githooks/commit-msg` + `git config core.hooksPath .githooks` (so se ainda nao definido)
 
 Idempotente e **nunca clobbera** arquivos existentes (imprime `+` para escritos e `=` para preservados). `--no-locks` faz so o seed de `.guia/`; `--force` sobrescreve. No Claude Code o auto-init ja cria `.guia/` no primeiro comando — rode `init` para optar pelos locks.
@@ -136,7 +136,7 @@ Move a task para `Aguardando validacao`. Gera relatorio em `.guia/reports/`. Imp
     [--docs-skip "<motivo>"]
 ```
 
-Marca como `Validada`, sugere `#FINALIZADO` e commita por padrao. Com `--lock`, registra os arquivos da task em `features/registry.yaml` sob o slug informado.
+Marca como `Validada`, sugere `#FINALIZADO` e commita por padrao. Com `--lock`, registra os arquivos da task em `.guia/locks/registry.yaml` sob o slug informado.
 
 **Hook de docs (F-010).** Antes do fechamento, `finish` consulta `.guia/docs-map.yaml` (se existir) e computa candidatos de doc a atualizar. Quando ha candidatos, voce precisa registrar um dos flags abaixo, senao o comando aborta:
 

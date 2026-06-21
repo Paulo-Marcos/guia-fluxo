@@ -42,7 +42,7 @@ except ImportError as exc:  # pragma: no cover - import-time guard
 
 
 def _resolve_repo_root() -> Path:
-    """Repo root that owns `features/registry.yaml`.
+    """Repo root that owns `.guia/locks/registry.yaml`.
 
     Mirrors `_constants._resolve_root` so the lock domain finds the same
     project root the engine does, in three layers:
@@ -69,8 +69,8 @@ def _resolve_repo_root() -> Path:
 
 
 REPO_ROOT = _resolve_repo_root()
-REGISTRY = REPO_ROOT / "features" / "registry.yaml"
-LOCK_IGNORE = REPO_ROOT / "features" / "lock-ignore.txt"
+REGISTRY = REPO_ROOT / ".guia" / "locks" / "registry.yaml"
+LOCK_IGNORE = REPO_ROOT / ".guia" / "locks" / "lock-ignore.txt"
 ALL_OPERATIONS: tuple[str, ...] = ("add", "modify", "delete", "rename")
 OPERATION_ADD, OPERATION_MODIFY, OPERATION_DELETE, OPERATION_RENAME = ALL_OPERATIONS
 

@@ -38,8 +38,8 @@ Generated bin/ (motor standalone do plugin):
 
 Generated templates/:
     plugins/guia/templates/.githooks/commit-msg
-    plugins/guia/templates/features/registry.yaml
-    plugins/guia/templates/features/lock-ignore.txt
+    plugins/guia/templates/locks/registry.yaml
+    plugins/guia/templates/locks/lock-ignore.txt
 
 Hardening (F-015):
 - TEMPLATE_FILES validado: --check detecta arquivos em core/templates/ nao listados.
@@ -152,8 +152,8 @@ WRAPPER_REPLACEMENT = "guia.py"
 # Templates copiados byte-a-byte para plugins/guia/templates/. Validacao
 # estrutural por extensao: arquivos .yaml passam por yaml.safe_load.
 TEMPLATE_FILES: list[tuple[str, str]] = [
-    ("features/registry.yaml", "features/registry.yaml"),
-    ("features/lock-ignore.txt", "features/lock-ignore.txt"),
+    ("locks/registry.yaml", "locks/registry.yaml"),
+    ("locks/lock-ignore.txt", "locks/lock-ignore.txt"),
 ]
 
 # Templates "promovidos" a partir de outros lugares do core/. F-018

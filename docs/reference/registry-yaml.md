@@ -1,4 +1,4 @@
-# Reference: `features/registry.yaml`
+# Reference: `.guia/locks/registry.yaml`
 
 Fonte da verdade da lista de travas.
 
@@ -74,7 +74,7 @@ Lista de paths que **nunca** devem ser travados. Um path por linha. Default:
 
 ```text
 .gitignore
-features/lock-ignore.txt
+.guia/locks/lock-ignore.txt
 ```
 
 Isso garante que mesmo o lock global `adicoes-exigem-autorizacao` nao bloqueie esses arquivos.

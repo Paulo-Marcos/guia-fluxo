@@ -43,7 +43,7 @@ O pack é um plugin publicado. Pré-requisito: **Python 3.10+** no PATH. No proj
 
 Pronto — os atalhos `/guia:feature`, `/guia:bug`, etc. ficam disponíveis. O motor vai embutido no plugin (`${CLAUDE_PLUGIN_ROOT}/bin/guia.py`), se ancora no projeto onde você está e cria o `.guia/` sozinho no primeiro comando. **Nada de clonar o repo nem rodar `init` à mão** — os únicos arquivos que aparecem no seu projeto são o estado `.guia/`.
 
-Opcional: rode `/guia:init` uma vez para ativar os **locks**. Ele semeia o `.guia/`, instala a config de lock (`features/registry.yaml`, `features/lock-ignore.txt`) e o hook `commit-msg`, e aponta o `git core.hooksPath` para `.githooks/`. É idempotente e nunca sobrescreve o que já existe; pule (ou passe `--no-locks`) se não quiser locks.
+Opcional: rode `/guia:init` uma vez para ativar os **locks**. Ele semeia o `.guia/`, instala a config de lock (`.guia/locks/registry.yaml`, `.guia/locks/lock-ignore.txt`) e o hook `commit-msg`, e aponta o `git core.hooksPath` para `.githooks/`. É idempotente e nunca sobrescreve o que já existe; pule (ou passe `--no-locks`) se não quiser locks.
 
 ### Codex / Antigravity — cópia manual
 
@@ -79,7 +79,7 @@ A stack importa menos que o que está acima — mas pra quem for contribuir, sã
 
 - **Skill** — a interface conversacional que o agente dispara (`/feature`, `/ready`, …).
 - **Script** — `core/src/guia.py` é a **fonte da verdade**: toda mutação de estado passa por ele (nunca edite `.guia/*.json` à mão).
-- **Estado** — JSON/YAML em `.guia/` (demandas e status) e `features/registry.yaml` (locks).
+- **Estado** — JSON/YAML em `.guia/` (demandas e status) e `.guia/locks/registry.yaml` (locks).
 
 As fontes ficam em `core/`; o build (`python core/build/render-skills.py`) gera `plugins/guia/` — o plugin Claude Code (`plugins/guia/.claude-plugin/`) e as skills cross-tool dos demais agentes. Por que assim: [`docs/adr/0006-plugin-oficial-claude-code.md`](docs/adr/0006-plugin-oficial-claude-code.md) e [`docs/explanation/visao-geral.md`](docs/explanation/visao-geral.md).
 

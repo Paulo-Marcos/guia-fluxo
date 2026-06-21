@@ -44,7 +44,7 @@ import lock_api  # noqa: E402
 
 
 def print_block(blocked: list[lock_api.LockMatch], stream) -> None:
-    print("Arquivos travados em features/registry.yaml:\n", file=stream)
+    print("Arquivos travados em .guia/locks/registry.yaml:\n", file=stream)
     for match in blocked:
         desc = match.lock.get("description") or "sem descricao"
         print(f"  - {match.path}", file=stream)
@@ -232,7 +232,7 @@ def cmd_lock(args: argparse.Namespace) -> int:
                     raise lock_api.LockIgnoredPath(raw)
         except lock_api.LockIgnoredPath as exc:
             print(
-                f"[dry-run] FAIL: {exc.args[0]} esta em features/lock-ignore.txt.",
+                f"[dry-run] FAIL: {exc.args[0]} esta em .guia/locks/lock-ignore.txt.",
                 file=sys.stderr,
             )
             return 1
@@ -249,7 +249,7 @@ def cmd_lock(args: argparse.Namespace) -> int:
         return 1
     except lock_api.LockIgnoredPath as exc:
         print(
-            f"Erro: arquivo nao pode ser travado por features/lock-ignore.txt: {exc.args[0]}",
+            f"Erro: arquivo nao pode ser travado por .guia/locks/lock-ignore.txt: {exc.args[0]}",
             file=sys.stderr,
         )
         return 1

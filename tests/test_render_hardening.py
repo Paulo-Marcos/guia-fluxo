@@ -145,7 +145,7 @@ class TemplateSetValidationTests(unittest.TestCase):
                     target = templates_src / rel
                     target.parent.mkdir(parents=True, exist_ok=True)
                     target.write_text("ok\n", encoding="utf-8")
-                bogus = templates_src / "features" / "nao-declarado.txt"
+                bogus = templates_src / "locks" / "nao-declarado.txt"
                 bogus.write_text("surpresa\n", encoding="utf-8")
                 paths = replace(module.Paths.build(REPO_ROOT), templates_src=templates_src)
                 with self.assertRaises(module.RenderError):

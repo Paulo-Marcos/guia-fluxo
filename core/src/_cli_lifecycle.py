@@ -105,8 +105,8 @@ def ensure_initialized() -> None:
 # process-guarded one. Auto-init (D-075) seeds `.guia/` only; the lock
 # setup is opt-in via `init` (skip with `init --no-locks`).
 _LOCK_TEMPLATES: list[tuple[str, str]] = [
-    ("features/registry.yaml", "features/registry.yaml"),
-    ("features/lock-ignore.txt", "features/lock-ignore.txt"),
+    ("locks/registry.yaml", ".guia/locks/registry.yaml"),
+    ("locks/lock-ignore.txt", ".guia/locks/lock-ignore.txt"),
     (".githooks/commit-msg", ".githooks/commit-msg"),
 ]
 
@@ -220,7 +220,7 @@ def cmd_init(args: argparse.Namespace) -> int:
             print(f"  = git core.hooksPath ja definido ({configured}) - preservado")
     if written:
         print(
-            "Locks ativos: arquivos travados em features/registry.yaml exigem "
+            "Locks ativos: arquivos travados em .guia/locks/registry.yaml exigem "
             "[unlock:<id>] motivo: <razao> na mensagem de commit."
         )
     return 0
@@ -321,7 +321,7 @@ def cmd_finish(args: argparse.Namespace) -> int:
 
     if args.lock or finish_config.get("lockOnFinish", False):
         lock_task_files(task, args.lock_id, args.lock_description)
-        merge_list(task, "modifiedFiles", ["features/registry.yaml"])
+        merge_list(task, "modifiedFiles", [".guia/locks/registry.yaml"])
         merge_list(task, "summary", [f"Lock `{args.lock_id}` registrado para os arquivos finalizados."])
 
     commit_requested = args.commit

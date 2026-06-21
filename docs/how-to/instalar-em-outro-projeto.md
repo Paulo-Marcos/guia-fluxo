@@ -18,7 +18,7 @@ O motor vai embutido no plugin e as skills o invocam via `${CLAUDE_PLUGIN_ROOT}/
 Por padrão o plugin só cria o `.guia/`. Para ligar os **locks** de arquivo, rode `/guia:init` uma vez. Ele:
 
 1. semeia o `.guia/` (idempotente);
-2. deploya `features/registry.yaml`, `features/lock-ignore.txt` e `.githooks/commit-msg` do `templates/` do plugin (`${CLAUDE_PLUGIN_ROOT}/templates/`), sem sobrescrever o que já existir;
+2. deploya `.guia/locks/registry.yaml`, `.guia/locks/lock-ignore.txt` e `.githooks/commit-msg` do `templates/` do plugin (`${CLAUDE_PLUGIN_ROOT}/templates/`), sem sobrescrever o que já existir;
 3. configura `git core.hooksPath .githooks` — **só se ainda não estiver definido**.
 
 `--no-locks` faz só o seed do `.guia/`; `--force` sobrescreve. O `commit-msg` é robusto: acha o validador em `${CLAUDE_PLUGIN_ROOT}/bin/check-lock.py` quando o commit roda dentro de uma sessão Claude e **degrada com aviso** (libera o commit sem checar) se não achar — ou seja, os locks valem dentro do Claude Code; num terminal puro fora da sessão eles não são aplicados.
@@ -36,8 +36,8 @@ Os instaladores `install.ps1`/`install.sh` foram **descontinuados** (D-082): apo
 | `plugins/guia/bin/` | `.guia-fluxo/bin/` |
 | `plugins/guia/.agents/skills/` | `.agents/skills/` |
 | `plugins/guia/templates/.githooks/commit-msg` | `.githooks/commit-msg` (opcional, locks) |
-| `plugins/guia/templates/features/registry.yaml` | `features/registry.yaml` (opcional, locks) |
-| `plugins/guia/templates/features/lock-ignore.txt` | `features/lock-ignore.txt` (opcional, locks) |
+| `plugins/guia/templates/locks/registry.yaml` | `.guia/locks/registry.yaml` (opcional, locks) |
+| `plugins/guia/templates/locks/lock-ignore.txt` | `.guia/locks/lock-ignore.txt` (opcional, locks) |
 
 Depois rode `python .guia-fluxo/bin/guia.py init --project-name <nome>` no consumidor para semear `.guia/` e (se copiou os templates de lock) ativar o hook. A automação dessa rota cross-tool (substituta dos installers) está **em aberto** — ver B-004.
 
@@ -51,7 +51,7 @@ No Claude (global-first) basta rodar `/guia:status` ou qualquer verbo — o `.gu
 
 ## Como desinstalar
 
-Estado do processo (`.guia/`, `FEATURES.md`) e dados seus — apague à mão se quiser zerar. No Claude: `/plugin uninstall guia@guia-fluxo`. Na rota cópia-manual: remova `.guia-fluxo/`, `.agents/skills/` e, se ativou locks, `.githooks/commit-msg` + `features/` + `git config --unset core.hooksPath`.
+Estado do processo (`.guia/`, `FEATURES.md`) e dados seus — apague à mão se quiser zerar. No Claude: `/plugin uninstall guia@guia-fluxo`. Na rota cópia-manual: remova `.guia-fluxo/`, `.agents/skills/` e, se ativou locks, `.githooks/commit-msg` + `.guia/locks/` + `git config --unset core.hooksPath`.
 
 ## Quem descobre o que
 

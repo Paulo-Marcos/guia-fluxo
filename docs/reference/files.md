@@ -29,7 +29,7 @@ plugins/guia/
   commands/<verbo>.md              Saida do render para Claude Code (plugin command -> /guia:<verbo>). NAO editar a mao.
   .agents/skills/<verbo>/SKILL.md  Saida do render para Codex/Antigravity (convencao AGENTS.md). NAO editar a mao.
 
-features/
+.guia/locks/
   registry.yaml      Fonte da verdade da lista de travas.
   lock-ignore.txt    Arquivos que nunca devem ser travados.
 ```
@@ -90,9 +90,9 @@ Historico humano-legivel. Cada secao tem:
 
 O script reescreve este arquivo a cada operacao. Nao edite a mao - voce sera sobrescrito.
 
-## `features/lock-ignore.txt`
+## `.guia/locks/lock-ignore.txt`
 
-Lista de paths/globs que **nunca** devem ser travados. Hoje inclui `.gitignore` e o proprio `features/lock-ignore.txt`. Existe para evitar lock global acidental em arquivos triviais.
+Lista de paths/globs que **nunca** devem ser travados. Hoje inclui `.gitignore` e o proprio `.guia/locks/lock-ignore.txt`. Existe para evitar lock global acidental em arquivos triviais.
 
 ## `plugins/guia/.claude-plugin/plugin.json`
 

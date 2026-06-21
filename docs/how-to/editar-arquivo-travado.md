@@ -1,6 +1,6 @@
 # Como editar um arquivo travado
 
-Voce decidiu autorizar uma alteracao pontual em algo travado em [`features/registry.yaml`](../reference/registry-yaml.md).
+Voce decidiu autorizar uma alteracao pontual em algo travado em [`.guia/locks/registry.yaml`](../reference/registry-yaml.md).
 
 ## Checagem antes de editar
 

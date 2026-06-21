@@ -1459,27 +1459,148 @@
       "id": "D-056",
       "kind": "feature",
       "title": "Racionalizar estrutura de pastas: features/ para dentro de .guia/, clarificar separacao ferramenta-vs-dados",
-      "status": "Backlog",
+      "status": "Validada",
       "origin": "Backlog (2026-06-09)",
       "context": "Tres problemas identificados: (1) features/ (registry.yaml + lock-ignore.txt) esta na raiz do projeto consumidor, mas e dado do processo da ferramenta - deveria estar em .guia/features/ ou .guia/locks/ junto do restante do processo. Hoje REGISTRY_FILE = ROOT / 'features' / 'registry.yaml' em _constants.py. Mover exige: atualizar _constants.py, atualizar install.ps1, atualizar docs/reference/files.md, migrar projetos existentes. (2) Confusao sobre o que e ferramenta vs dados: no repo-fonte, dist/ serve diretamente como plugin via extraKnownMarketplaces - o usuario-dev nao ve .guia-fluxo/ porque esta dentro do proprio repo. No projeto consumidor, install.ps1 cria .guia-fluxo/ (ferramenta) e .guia/ (dados). Essa distincao nao esta documentada claramente no README/CONTRIBUTING. (3) Suficiencia para operacao: .agents/skills/ + .claude-plugin/ nao sao suficientes sozinhos - bin/ (motor Python) e obrigatorio para execucao real. O doctor deveria checar se bin/ existe no layout consumidor e alertar quando falta. Escopo da tarefa: mover features/ para .guia/features/, atualizar todos os caminhos, adicionar verificacao no doctor, atualizar docs descrevendo os dois contextos (dev vs consumidor).",
       "createdAt": "2026-06-09",
-      "updatedAt": "2026-06-09",
-      "modifiedFiles": [],
-      "summary": [],
-      "validations": [],
-      "pending": []
+      "updatedAt": "2026-06-21",
+      "modifiedFiles": [
+        "FEATURES.md",
+        "core/src/_constants.py",
+        "core/lock/lock_api.py",
+        "core/src/_cli_lifecycle.py",
+        "core/src/_locks.py",
+        "core/lock/check-lock.py",
+        "core/build/render-skills.py",
+        "core/hooks/commit-msg",
+        "core/manifest/manifest.yaml",
+        ".guia/locks/registry.yaml",
+        ".guia/locks/lock-ignore.txt",
+        ".github/ISSUE_TEMPLATE/bug_report.md",
+        ".github/PULL_REQUEST_TEMPLATE.md",
+        ".guia/current-task.json",
+        ".guia/tasks.json",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "CONTRIBUTING.md",
+        "README.md",
+        "SECURITY.md",
+        "core/manifest/bodies/_partials/lock_protocol.md",
+        "core/manifest/bodies/guia-fluxo.md",
+        "core/templates/locks/lock-ignore.txt",
+        "core/templates/locks/registry.yaml",
+        "docs/explanation/por-que-lock.md",
+        "docs/explanation/visao-geral.md",
+        "docs/how-to/editar-arquivo-travado.md",
+        "docs/how-to/instalar-em-outro-projeto.md",
+        "docs/how-to/travar-arquivo.md",
+        "docs/reference/cli.md",
+        "docs/reference/files.md",
+        "docs/reference/hooks-git.md",
+        "docs/reference/registry-yaml.md",
+        "docs/tutorials/primeiro-uso.md",
+        "plugins/guia/.agents/skills/guia-bug/SKILL.md",
+        "plugins/guia/.agents/skills/guia-chore/SKILL.md",
+        "plugins/guia/.agents/skills/guia-feature/SKILL.md",
+        "plugins/guia/.agents/skills/guia-finish/SKILL.md",
+        "plugins/guia/.agents/skills/guia-fluxo/SKILL.md",
+        "plugins/guia/.agents/skills/guia-init/SKILL.md",
+        "plugins/guia/.agents/skills/guia-promote/SKILL.md",
+        "plugins/guia/bin/_cli_lifecycle.py",
+        "plugins/guia/bin/_constants.py",
+        "plugins/guia/bin/_locks.py",
+        "plugins/guia/bin/check-lock.py",
+        "plugins/guia/bin/lock_api.py",
+        "plugins/guia/commands/bug.md",
+        "plugins/guia/commands/chore.md",
+        "plugins/guia/commands/feature.md",
+        "plugins/guia/commands/finish.md",
+        "plugins/guia/commands/guia-fluxo.md",
+        "plugins/guia/commands/init.md",
+        "plugins/guia/commands/promote.md",
+        "plugins/guia/templates/.githooks/commit-msg",
+        "tests/test_init_deploy.py",
+        "tests/test_render_hardening.py"
+      ],
+      "summary": [
+        "Em desenvolvimento desde 2026-06-21: Step 1 do par estrutural: features/ -> .guia/locks/.",
+        "Step 1 do par estrutural: features/ -> .guia/locks/ (decisao: nome 'locks' mais honesto). Paths em _constants.REGISTRY_FILE, lock_api.REGISTRY/LOCK_IGNORE, init deploy (_cli_lifecycle), TEMPLATE_FILES (render). Movidos via git mv: features/{registry.yaml,lock-ignore.txt} -> .guia/locks/, e core/templates/features/ -> core/templates/locks/. Strings funcionais (_locks exclude, modifiedFiles) e display (check-lock, mensagens) corrigidas. Re-render. Varredura de ~18 docs vivos + manifest (subagente). Testes test_init_deploy + test_render_hardening ajustados.",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "LOCK testado no novo path: bloqueia add sem unlock (exit 1), libera com [unlock:] (exit 0). pytest 150 passed. render --check OK. doctor OK. grep: zero refs vivas a features/."
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": "FEATURES.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-056",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo de features e issues entregues (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-056",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: core/manifest/manifest.yaml",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: core/manifest/manifest.yaml",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          }
+        ],
+        "touched": [
+          "docs/reference/files.md",
+          "docs/reference/registry-yaml.md",
+          "README.md",
+          "AGENTS.md",
+          "docs/how-to/instalar-em-outro-projeto.md"
+        ],
+        "checkedAt": "2026-06-21"
+      }
     },
     {
       "id": "D-055",
       "kind": "feature",
       "title": "Renomear FEATURES.md e implementar arquivamento de demandas antigas",
-      "status": "Backlog",
+      "status": "Em desenvolvimento",
       "origin": "Backlog (2026-06-09)",
       "context": "Dois problemas: (1) Nome 'FEATURES.md' nao reflete a realidade atual - o arquivo guarda features, bugs e chores (o guarda-chuva e 'demanda'). Candidatos: DEMANDAS.md, HISTORICO.md, DEMANDS.md. (2) Tamanho: o arquivo cresce indefinidamente. Hoje tem 122KB com 52+ demandas e vai piorar. Custo real: agente carregando o arquivo inteiro no contexto a cada operacao. Solucao proposta: manter somente as N ultimas demandas (parametro em process.json, default 20-30) no arquivo ativo; mover demandas mais antigas para DEMANDAS.archive.md (ou .guia/historico/YYYY-MM.md). Para o bloqueio de leitura por IA: adicionar uma linha no topo do arquivo de arquivo como '<!-- guia-fluxo: archive=true ai-skip=true -->' que o agente pode verificar antes de carregar. Impacto tecnico: _features_md.py (upsert_features_entry), _tasks.py (format/display), _constants.py (path do arquivo). Avaliar se FEATURES.md fica na raiz ou vai para .guia/ junto dos outros arquivos de processo.",
       "createdAt": "2026-06-09",
-      "updatedAt": "2026-06-09",
-      "modifiedFiles": [],
-      "summary": [],
+      "updatedAt": "2026-06-21",
+      "modifiedFiles": [
+        "FEATURES.md"
+      ],
+      "summary": [
+        "Em desenvolvimento desde 2026-06-21: Onda 2 (destravada pelo spike D-058): renomear FEATURES.md + arquivamento; coordenar com D-056 (mover features/ -> .guia/)."
+      ],
       "validations": [],
       "pending": []
     },

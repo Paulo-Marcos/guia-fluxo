@@ -6,16 +6,16 @@ Briefing canonico para qualquer agente de IA (Codex, Cursor, Antigravity, Claude
 
 `guia-fluxo` e um pack portavel de processo para agentes transformarem pedidos soltos em demandas rastreaveis (backlog, ready, finish) e protegerem arquivos homologados contra refactor de brinde. **Este repo aplica seu proprio processo (dogfood)** - voce trabalha aqui igual trabalharia em qualquer projeto que tenha o pack instalado.
 
-Camadas: skill (interface conversacional) -> script (`core/src/guia.py`, fonte de verdade) -> arquivos JSON/YAML (`.guia/`, `features/registry.yaml`). Detalhe em [`docs/explanation/visao-geral.md`](docs/explanation/visao-geral.md).
+Camadas: skill (interface conversacional) -> script (`core/src/guia.py`, fonte de verdade) -> arquivos JSON/YAML (`.guia/`, `.guia/locks/registry.yaml`). Detalhe em [`docs/explanation/visao-geral.md`](docs/explanation/visao-geral.md).
 
 Layout do repo-mae: **fontes** em `core/` (src, build, manifest, lock, hooks, templates) e **buildado** em `plugins/guia/` (`.claude-plugin/`, `commands/` para Claude, `.agents/skills/` para Codex/Antigravity, `bin/`, `templates/` - gerados por `python core/build/render-skills.py`). Wrapper `core/bin/guia.ps1` segue como entry point documentado e roteia pra `core/src/guia.py`.
 
 ## Regras nao-negociaveis
 
-1. **Toda mutacao de estado passa pelo script.** Nunca edite `.guia/*.json`, `FEATURES.md`, `features/registry.yaml` ou `.guia/chat-title.txt` a mao. Use `core/bin/guia.ps1` (Windows) ou `python core/src/guia.py` (qualquer SO).
+1. **Toda mutacao de estado passa pelo script.** Nunca edite `.guia/*.json`, `FEATURES.md`, `.guia/locks/registry.yaml` ou `.guia/chat-title.txt` a mao. Use `core/bin/guia.ps1` (Windows) ou `python core/src/guia.py` (qualquer SO).
 2. **Toda demanda nasce de `feature`, `bug`, `chore` ou `backlog`.** Antes de editar codigo a pedido do usuario, abra a demanda (ADR-0011 Fase 4: `issue` foi substituido por `bug`). Sem demanda ativa, nao ha rastreabilidade.
 3. **Nao edite arquivos gerados.** `plugins/guia/commands/<verbo>.md` (plugin command do Claude oficial, surge como `/guia:<verbo>`) e `plugins/guia/.agents/skills/<verbo>/SKILL.md` (cross-tool Codex+Antigravity, convencao AGENTS.md) sao saida de `core/build/render-skills.py` a partir de `core/manifest/manifest.yaml`. Mude o manifest e rode `python core/build/render-skills.py`. Edicao direta e sobrescrita na proxima render e quebra o `--check` da CI. `plugins/guia/.claude-plugin/plugin.json` so muda pra bump de versao ou ajuste de metadados (name/description/author). Decisao do layout em [`docs/adr/0006-plugin-oficial-claude-code.md`](docs/adr/0006-plugin-oficial-claude-code.md).
-4. **Respeite o lock.** `features/registry.yaml` lista arquivos travados. Se voce precisa editar um deles, a mensagem de commit precisa de `[unlock:<feature-id>] motivo: <razao curta>`. Receita: [`docs/how-to/editar-arquivo-travado.md`](docs/how-to/editar-arquivo-travado.md). O hook `commit-msg` rejeita commits sem a marca.
+4. **Respeite o lock.** `.guia/locks/registry.yaml` lista arquivos travados. Se voce precisa editar um deles, a mensagem de commit precisa de `[unlock:<feature-id>] motivo: <razao curta>`. Receita: [`docs/how-to/editar-arquivo-travado.md`](docs/how-to/editar-arquivo-travado.md). O hook `commit-msg` rejeita commits sem a marca.
 5. **Nao use `--no-verify`** para escapar do hook. Se a trava parece errada, investigue antes - normalmente significa que o usuario nao autorizou aquela edicao.
 
 ## Fluxo padrao por turno
@@ -28,7 +28,7 @@ Layout do repo-mae: **fontes** em `core/` (src, build, manifest, lock, hooks, te
 
    Todas aceitam `--status backlog|planned|in-development` (ADR-0011 Fase 3). IDs novos sao `D-NNN`. Cada kind tem emoji nas listagens e chat-titles: ✨ feature, 🐛 bug, 🧹 chore.
 2. **Repita o NOME DO CHAT.** Todo subcomando que cria ou avanca demanda imprime `NOME DO CHAT: <ID> - #<etapa> - <titulo>`. Voce **deve** ecoar essa linha ao usuario - e o sinal de rastreabilidade entre chat e demanda. Se sua plataforma expoe API de renomeacao de sessao, aplique.
-3. **Implemente.** Edicoes normais. Se o arquivo aparecer em `features/registry.yaml`, pare e siga o how-to do unlock.
+3. **Implemente.** Edicoes normais. Se o arquivo aparecer em `.guia/locks/registry.yaml`, pare e siga o how-to do unlock.
 4. **Marque pronto:**
    ```powershell
    .\core\bin\guia.ps1 ready <ID> `
@@ -82,7 +82,7 @@ Em Linux/Mac: `python core/src/guia.py doctor` e o mesmo `render-skills.py --che
 
 - **Pedido vago** ("limpa esse codigo aqui") - abra `/bug`, `/feature` ou `/chore` com contexto curto antes de comecar.
 - **Pedido enorme** ("reestrutura tudo") - proponha quebrar em demandas menores. Cada demanda = um chat. Backlog absorve as ideias paralelas.
-- **Pedido que toca arquivo travado** - pare e mostre o que `features/registry.yaml` declara antes de tentar editar.
+- **Pedido que toca arquivo travado** - pare e mostre o que `.guia/locks/registry.yaml` declara antes de tentar editar.
 - **Pedido para mexer em `.guia/*.json` direto** - recuse e pergunte o que ele quer alcancar. Provavelmente existe subcomando.
 
 ## O que nao fazer

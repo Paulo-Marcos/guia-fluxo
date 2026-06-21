@@ -1,5 +1,5 @@
 #!/bin/sh
-# Git hook commit-msg - valida travas em features/registry.yaml.
+# Git hook commit-msg - valida travas em .guia/locks/registry.yaml.
 #
 # Repo-mae (clone do pack): usa core/lock/check-lock.py.
 #     git config core.hooksPath core/hooks

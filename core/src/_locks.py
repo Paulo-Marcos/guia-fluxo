@@ -51,10 +51,10 @@ def lock_task_files(
 
     Files excluded from the registry block:
       - FEATURES.md (auto-managed)
-      - features/registry.yaml (the registry itself)
+      - .guia/locks/registry.yaml (the registry itself)
       - the "Nenhuma." placeholder
     """
-    excluded = {FEATURES_FILE.name, "features/registry.yaml", MSG_NONE_PLACEHOLDER}
+    excluded = {FEATURES_FILE.name, ".guia/locks/registry.yaml", MSG_NONE_PLACEHOLDER}
     files = [value for value in task.get("modifiedFiles", []) if value not in excluded]
     if not lock_id:
         raise SystemExit(MSG_LOCK_ID_REQUIRED)
@@ -71,7 +71,7 @@ def lock_task_files(
         raise SystemExit(MSG_LOCK_ALREADY_EXISTS.format(id=lock_id))
     except lock_api.LockIgnoredPath as exc:
         raise SystemExit(
-            f"Lock recusado: {exc.args[0]} esta em features/lock-ignore.txt"
+            f"Lock recusado: {exc.args[0]} esta em .guia/locks/lock-ignore.txt"
         )
     except lock_api.LockOutsideRepo as exc:
         raise SystemExit(f"Lock recusado: path traversal ({exc.args[0]})")

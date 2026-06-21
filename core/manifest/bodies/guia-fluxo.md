@@ -44,7 +44,7 @@ The per-verb action playbook is in each verb's shim body, which composes shared 
 - `_partials/title_context_rules.md` — how to synthesize `<title>` vs `<context>` (feature, bug, chore, backlog).
 - `_partials/run_cmd.agent.md` / `_partials/run_cmd.claude.md` — host-aware invocation. The agent host (Codex/Antigravity) calls the repo wrapper `core/bin/guia.ps1`; the Claude host calls the plugin-bundled engine via `${CLAUDE_PLUGIN_ROOT}/bin/guia.py` (no repo clone). The include `{{include_per_target: _partials/run_cmd}}` in each verb body picks the right one at build time.
 - `_partials/post_cli.agent.md` / `_partials/post_cli.claude.md` — post-CLI flow per host (read `.guia/current-task.json`, repeat `NOME DO CHAT`, rename chat). The host-aware include `{{include_per_target: _partials/post_cli}}` in each verb body picks the right one at build time.
-- `_partials/lock_protocol.md` — `features/registry.yaml` enforcement and unlock request flow (used by any verb that edits files).
+- `_partials/lock_protocol.md` — `.guia/locks/registry.yaml` enforcement and unlock request flow (used by any verb that edits files).
 
 Editing a partial changes every shim that uses it. This skill (`guia-fluxo`) is intentionally **not** part of that action chain — it stays as reference.
 
@@ -73,7 +73,7 @@ If shell access fails, surface the exact command the developer can run by hand.
 
 The bundled engine lives at `${CLAUDE_PLUGIN_ROOT}/bin/guia.py` and roots itself at the project you are working in, auto-creating `.guia/` on the first command — no clone, no copied engine. The only files that land in your project are the `.guia/` state.
 
-Run `/guia:init` once to opt into file locks: it seeds `.guia/` and deploys the per-project lock config (`features/registry.yaml`, `features/lock-ignore.txt`) plus the `commit-msg` hook, then points `git core.hooksPath` at `.githooks/`. Idempotent and never clobbers existing files; skip it (or pass `--no-locks`) if you don't want locks.
+Run `/guia:init` once to opt into file locks: it seeds `.guia/` and deploys the per-project lock config (`.guia/locks/registry.yaml`, `.guia/locks/lock-ignore.txt`) plus the `commit-msg` hook, then points `git core.hooksPath` at `.githooks/`. Idempotent and never clobbers existing files; skip it (or pass `--no-locks`) if you don't want locks.
 
 **Codex / Antigravity / engine dev (manual copy).** These hosts deploy the pack into the project tree by manual copy (the `install.ps1`/`install.sh` scripts were retired in D-082), or use the source repo for engine work. Copy:
 

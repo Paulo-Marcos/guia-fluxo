@@ -50,7 +50,7 @@ Useful flags:
 
 ## File locks
 
-Before editing files, honor `features/registry.yaml`. If a target file is locked:
+Before editing files, honor `.guia/locks/registry.yaml`. If a target file is locked:
 
 1. **Stop** before the edit.
 2. **Explain to the developer**, in this order:

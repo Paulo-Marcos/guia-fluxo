@@ -1,5 +1,0 @@
-# Paths that must never be locked in features/registry.yaml.
-# These files are shared process/config surfaces and must stay editable.
-
-.gitignore
-features/lock-ignore.txt

@@ -1,5 +1,5 @@
 ---
-description: SETUP — initialize Guia Fluxo in the CURRENT project: seed `.guia/` state and deploy the per-project lock config (`features/registry.yaml`, `features/lock-ignore.txt`) + `.githooks/commit-msg`, then set `git core.hooksPath`. Idempotent and never clobbers existing state. Options: `--no-locks` (seed `.guia/` only), `--force` (overwrite), `--project-name "<name>"`. Often optional — the engine auto-creates `.guia/` on the first task command; run `init` to opt into file locks. To create a demand use `feature`/`bug`/`chore`.
+description: SETUP — initialize Guia Fluxo in the CURRENT project: seed `.guia/` state and deploy the per-project lock config (`.guia/locks/registry.yaml`, `.guia/locks/lock-ignore.txt`) + `.githooks/commit-msg`, then set `git core.hooksPath`. Idempotent and never clobbers existing state. Options: `--no-locks` (seed `.guia/` only), `--force` (overwrite), `--project-name "<name>"`. Often optional — the engine auto-creates `.guia/` on the first task command; run `init` to opt into file locks. To create a demand use `feature`/`bug`/`chore`.
 ---
 
 # Init

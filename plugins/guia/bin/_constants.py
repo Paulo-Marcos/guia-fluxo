@@ -63,7 +63,7 @@ CHAT_TITLE_FILE = GUIA_DIR / "chat-title.txt"
 DOCS_MAP_FILE = GUIA_DIR / "docs-map.yaml"
 REPORTS_DIR = GUIA_DIR / "reports"
 FEATURES_FILE = ROOT / "FEATURES.md"
-REGISTRY_FILE = ROOT / "features" / "registry.yaml"
+REGISTRY_FILE = GUIA_DIR / "locks" / "registry.yaml"
 
 
 # Aceita IDs novos (D-NNN per ADR-0011) e legacy (F-NNN, I-NNN).

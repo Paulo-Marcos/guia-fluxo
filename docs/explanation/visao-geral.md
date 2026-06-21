@@ -10,7 +10,7 @@ O guia-fluxo transforma pedidos soltos em demandas rastreaveis usando script det
 | **Script** (`core/src/guia.py`) | Fonte de verdade e automacao. Todas as mutacoes passam por aqui. |
 | **`.guia/*.json`** | Estado legivel por programas. Tasks, backlog, current, reports. |
 | **`FEATURES.md`** | Historico legivel por humano. Espelha o JSON em prosa. |
-| **`features/registry.yaml`** | Lock de arquivos homologados. |
+| **`.guia/locks/registry.yaml`** | Lock de arquivos homologados. |
 | **Hooks** | Guarda-corpo opcional para lembrar ou bloquear desvios. |
 
 Cada uma tem responsabilidade distinta e nenhuma sobrepoe a outra. A skill nunca escreve no JSON diretamente - ela chama o script. O JSON nunca e editado a mao - quem altera e o script.

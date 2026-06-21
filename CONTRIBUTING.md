@@ -30,7 +30,7 @@ Toda contribuicao passa pelo proprio processo do pack (dogfooding). Nao edite `.
    - Bug ou regressao: `.\core\bin\guia.ps1 bug "Titulo curto" --context "Sintoma e impacto"`
    - Nova capacidade: `.\core\bin\guia.ps1 feature "Titulo curto" --context "Motivo e escopo"`
    - Ideia futura, sem prazo: `.\core\bin\guia.ps1 backlog add "Ideia" --context "Quando pode ser util"`
-2. **Implemente.** Edite arquivos. Se algum estiver travado em `features/registry.yaml`, siga [`docs/how-to/editar-arquivo-travado.md`](docs/how-to/editar-arquivo-travado.md).
+2. **Implemente.** Edite arquivos. Se algum estiver travado em `.guia/locks/registry.yaml`, siga [`docs/how-to/editar-arquivo-travado.md`](docs/how-to/editar-arquivo-travado.md).
 3. **Marque pronto para validacao:**
    ```powershell
    .\core\bin\guia.ps1 ready D-NNN `
@@ -88,7 +88,7 @@ chore: initial extraction from gerador-cortes (v0.1.0)
 
 ### Editando arquivos travados
 
-Se a edicao toca arquivo travado em `features/registry.yaml`, a mensagem **precisa** conter:
+Se a edicao toca arquivo travado em `.guia/locks/registry.yaml`, a mensagem **precisa** conter:
 
 ```
 [unlock:<feature-id>] motivo: <razao curta>
