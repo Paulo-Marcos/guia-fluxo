@@ -67,6 +67,6 @@ Caminho do roadmap a partir daqui:
 2. ~~Extrair para um repo Git~~ (feito - `guia-fluxo`).
 3. ~~Adotar layout oficial de plugin Claude Code~~ (feito em F-009).
 4. ~~Reorganizar repo-mae em `core/` + `dist/`~~ (feito em F-011, prepara B-008/B-009).
-5. ~~Layout `.guia-fluxo/` no consumidor (B-008)~~ (feito: F-012 entregou renderer + bin standalone; F-013 entregou `install.ps1`/`install.sh`, templates em `dist/templates/`, e smoke test do consumer). Pendente apenas o dogfood Codex/Antigravity do proprio repo-mae (`.agents/skills/` so existe em `dist/`, nao na raiz).
+5. ~~Layout `.guia-fluxo/` no consumidor (B-008)~~ (feito: F-012 entregou renderer + bin standalone; F-013 entregou `install.ps1`/`install.sh`, templates em `dist/templates/`, e smoke test do consumer). _Installers depreciados no D-082 (global-first + copia manual); `dist/` -> `plugins/guia/` no D-076._ Pendente apenas o dogfood Codex/Antigravity do proprio repo-mae.
 6. ~~Publicar marketplace remoto~~ (feito na v0.2.0, B-009): `.claude-plugin/marketplace.json` na raiz (`source: ./dist`) habilita `/plugin marketplace add Paulo-Marcos/guia-fluxo`.
 7. Opcional: adicionar hooks (`core/hooks/hooks.json`) pra automacao de eventos; adicionar MCP server pra exposicao programatica do estado das tasks.

@@ -25,8 +25,8 @@ def _resolve_root() -> Path:
     2. Script-relative root (`__file__`'s grandparent) when it already
        contains a `.guia/`. Keeps the historical behavior for layouts where
        the engine lives inside the project tree: the source repo
-       (`core/src/`), the dogfood `plugins/guia/bin/`, and the `install.sh` consumer
-       (`.guia-fluxo/bin/`). Stable regardless of the current directory.
+       (`core/src/`), the dogfood `plugins/guia/bin/`, and the manual-copy
+       consumer (`.guia-fluxo/bin/`). Stable regardless of the current directory.
     3. Caller's working directory otherwise. This is the Claude Code plugin
        case (D-075): the engine runs from the plugin cache
        (`${CLAUDE_PLUGIN_ROOT}/bin/`), outside the consumer project, so the

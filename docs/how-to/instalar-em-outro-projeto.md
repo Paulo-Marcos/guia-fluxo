@@ -2,147 +2,32 @@
 
 ## Claude Code: sem clone (rota recomendada)
 
-Desde D-075 (2026-06-16) o plugin é **autossuficiente** no Claude Code — não precisa clonar o repo nem rodar o instalador. Pré-requisito: **Python 3.10+** no PATH. No projeto consumidor:
+Desde D-075 (2026-06-16) o plugin é **autossuficiente** no Claude Code — não precisa clonar o repo nem rodar instalador. Pré-requisito: **Python 3.10+** no PATH. No projeto consumidor:
 
 ```
 /plugin marketplace add Paulo-Marcos/guia-fluxo
 /plugin install guia@guia-fluxo
 ```
 
-O motor vai embutido no plugin e as skills o invocam via `${CLAUDE_PLUGIN_ROOT}/bin/guia.py` (caminho absoluto à instalação, não relativo ao CWD). O motor se ancora no projeto onde você está e **cria o `.guia/` sozinho no primeiro comando** — sem `init` manual. Os únicos arquivos que aparecem no consumidor são o estado `.guia/`. O resto deste guia (instalador `install.ps1`/`install.sh`, layout `.guia-fluxo/`) é para **Codex/Antigravity** ou para quem desenvolve o motor.
+O motor vai embutido no plugin e as skills o invocam via `${CLAUDE_PLUGIN_ROOT}/bin/guia.py` (caminho absoluto à instalação, não relativo ao CWD). Ele se ancora no projeto onde você está e **cria o `.guia/` sozinho no primeiro comando** — sem `init` manual. Os únicos arquivos que aparecem no consumidor são o estado `.guia/` (+ `FEATURES.md`).
+
+**Atualizar** para uma nova versão: `/plugin marketplace update guia-fluxo` + `/plugin update guia@guia-fluxo`. O Claude detecta a atualização pela **versão** do plugin, então o pack precisa ter bumpado `VERSION`/`plugin.json`/`marketplace.json` para a nova versão ser puxada.
 
 ### Ativando locks no Claude (opcional): `/guia:init`
 
-Por padrão o plugin só cria o `.guia/`. Para ligar os **locks** de arquivo, rode `/guia:init` uma vez no projeto consumidor. Ele:
+Por padrão o plugin só cria o `.guia/`. Para ligar os **locks** de arquivo, rode `/guia:init` uma vez. Ele:
 
 1. semeia o `.guia/` (idempotente);
-2. deploya `features/registry.yaml`, `features/lock-ignore.txt` e `.githooks/commit-msg` a partir do `templates/` do plugin (`${CLAUDE_PLUGIN_ROOT}/templates/`), sem sobrescrever o que já existir;
-3. configura `git core.hooksPath .githooks` (só se ainda não estiver definido).
+2. deploya `features/registry.yaml`, `features/lock-ignore.txt` e `.githooks/commit-msg` do `templates/` do plugin (`${CLAUDE_PLUGIN_ROOT}/templates/`), sem sobrescrever o que já existir;
+3. configura `git core.hooksPath .githooks` — **só se ainda não estiver definido**.
 
-`--no-locks` faz só o seed do `.guia/`; `--force` sobrescreve. O `commit-msg` instalado é robusto: acha o validador no plugin (`${CLAUDE_PLUGIN_ROOT}/bin/check-lock.py`) quando o commit roda dentro de uma sessão Claude e degrada com aviso (libera o commit) se não achar nenhum validador.
+`--no-locks` faz só o seed do `.guia/`; `--force` sobrescreve. O `commit-msg` é robusto: acha o validador em `${CLAUDE_PLUGIN_ROOT}/bin/check-lock.py` quando o commit roda dentro de uma sessão Claude e **degrada com aviso** (libera o commit sem checar) se não achar — ou seja, os locks valem dentro do Claude Code; num terminal puro fora da sessão eles não são aplicados.
 
-## Codex / Antigravity / dev: via instalador
+> **Já usa `core.hooksPath` próprio (Husky etc.)?** O `init` **não** sobrescreve — ele só configura o hooksPath se ainda não houver um. Nesse caso, copie o `.githooks/commit-msg` do plugin para a sua pasta de hooks à mão para somar a checagem de locks.
 
-`install.ps1` (Windows) e `install.sh` (Linux/Mac) copiam `plugins/guia/` (build do repo-mae) para o layout final no projeto consumidor e rodam `ai init` pra semear `.guia/`.
+## Codex / Antigravity / dev: cópia manual
 
-## TL;DR
-
-```powershell
-# Windows
-git clone https://github.com/Paulo-Marcos/guia-fluxo C:\dev\guia-fluxo
-cd C:\dev\meu-projeto
-C:\dev\guia-fluxo\install.ps1
-```
-
-```bash
-# Linux/Mac
-git clone https://github.com/Paulo-Marcos/guia-fluxo /opt/guia-fluxo
-cd /path/to/meu-projeto
-/opt/guia-fluxo/install.sh
-```
-
-## Layout final no consumidor
-
-```
-<projeto-consumidor>/
-├── .guia-fluxo/                    plugin Claude (tudo numa pasta, seguro pra rm -rf)
-│   ├── .claude-plugin/             manifest do plugin + marketplace
-│   ├── bin/                        motor standalone (guia, guia.ps1, guia.py) - vira PATH no Claude
-│   └── skills/                     skills do plugin (namespace ai:)
-├── .agents/                        externo ao .guia-fluxo/ (convencao AGENTS.md)
-│   └── skills/ai-*/                cross-tool Codex + Antigravity (prefixo ai-)
-├── .githooks/commit-msg            hook git para validar [unlock:<id>] (opcional)
-├── features/registry.yaml          lock de arquivos homologados (opcional)
-├── features/lock-ignore.txt        excecoes do lock (opcional)
-├── .guia/                            estado da maquina (process, tasks, backlog)
-└── FEATURES.md                     catalogo legivel (criado no primeiro `feature`)
-```
-
-## Flags do instalador
-
-| Flag (PS) | Flag (sh) | Efeito |
-| --- | --- | --- |
-| `-Target <path>` | `--target <path>` | Onde instalar. Default: diretorio atual. |
-| `-DryRun` | `--dry-run` | Mostra o que seria copiado, nao escreve nada. |
-| `-Force` | `--force` | Sobrescreve `.githooks/`, `features/registry.yaml` e `features/lock-ignore.txt` se ja existirem. Por padrao, **preserva** customizacoes do consumidor. |
-| `-SkipInit` | `--skip-init` | Nao chama `ai init` no final. Use se for rodar manualmente com flags. |
-
-`-DryRun` recomendado na primeira tentativa, pra revisar o mapa de copia antes.
-
-## O que e idempotente
-
-Re-rodar o installer e seguro:
-
-- `.guia-fluxo/` e `.agents/skills/` sao **substituidos** pelo build atual (sao "produto", nao customizaveis).
-- `.githooks/commit-msg` e `features/*` sao **preservados** se ja existirem (use `-Force` pra sobrescrever).
-- `.guia/*.json` e `FEATURES.md` sao preservados pelo proprio `ai init` (que nao destroi estado existente).
-
-## Ativando o hook git no consumidor
-
-Apos o install:
-
-```powershell
-git config core.hooksPath .githooks
-```
-
-Isso ativa o `commit-msg` que valida `[unlock:<id>]` antes de aceitar commits que mexem em arquivos travados.
-
-## Verificacao
-
-```powershell
-# Windows
-python .guia-fluxo/bin/guia.py doctor
-# ou direto via shim se .guia-fluxo/bin/ estiver no PATH (Claude faz automatico)
-ai doctor
-```
-
-```bash
-# Linux/Mac
-python3 .guia-fluxo/bin/guia.py doctor
-# ou
-.guia-fluxo/bin/ai doctor
-```
-
-Esperado: `Guia Fluxo files OK.`
-
-## Como atualizar para uma nova versao do pack
-
-```powershell
-cd C:\dev\guia-fluxo
-git pull
-python core/build/render-skills.py    # rebuilda plugins/guia/
-cd C:\dev\meu-projeto
-C:\dev\guia-fluxo\install.ps1    # re-instala (substitui .guia-fluxo/ e .agents/)
-```
-
-Suas customizacoes em `.githooks/commit-msg`, `features/registry.yaml`, `features/lock-ignore.txt` e `.guia/` sao preservadas.
-
-## Como desinstalar
-
-```powershell
-Remove-Item -Recurse -Force .guia-fluxo
-Remove-Item -Recurse -Force .agents/skills
-# opcional, se quiser remover hook git e lock:
-git config --unset core.hooksPath
-Remove-Item .githooks/commit-msg
-Remove-Item -Recurse features
-```
-
-Estado do processo (`.guia/`, `FEATURES.md`) e dados seus — apague separadamente se quiser zerar tudo.
-
-## Quem descobre o que
-
-| Agente | Como descobre o pack | Comandos |
-| --- | --- | --- |
-| Claude Code | Plugin em `.guia-fluxo/.claude-plugin/plugin.json` (auto-detectado quando abre o projeto). | `/guia:feature`, `/guia:bug`, `/guia:status`, etc. |
-| Codex CLI | Convencao AGENTS.md: le `.agents/skills/ai-*/SKILL.md`. | `/ai-feature`, `/ai-bug`, etc. |
-| Antigravity | Mesma convencao do Codex (AGENTS.md). | `$ai-feature`, `$ai-bug`, etc. |
-
-Detalhes da decisao em [`../adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md).
-
-## Sem instalador (rota copia-manual, ainda suportada)
-
-Se voce nao quiser usar `install.ps1`/`install.sh` (ex.: ambiente sem PowerShell e sem bash), faca a copia manual seguindo o mapa:
+Os instaladores `install.ps1`/`install.sh` foram **descontinuados** (D-082): apontavam para o antigo `dist/` (renomeado para `plugins/guia/` no D-076) e o modelo copia-pro-projeto contraria o global-first. Para hosts que leem `.agents/skills/` (Codex, Antigravity) ou para desenvolver o motor, copie manualmente a partir do clone do pack:
 
 | Origem (em `plugins/guia/`) | Destino (no consumidor) |
 | --- | --- |
@@ -150,19 +35,40 @@ Se voce nao quiser usar `install.ps1`/`install.sh` (ex.: ambiente sem PowerShell
 | `plugins/guia/commands/` | `.guia-fluxo/commands/` |
 | `plugins/guia/bin/` | `.guia-fluxo/bin/` |
 | `plugins/guia/.agents/skills/` | `.agents/skills/` |
-| `plugins/guia/templates/.githooks/commit-msg` | `.githooks/commit-msg` |
-| `plugins/guia/templates/features/registry.yaml` | `features/registry.yaml` |
-| `plugins/guia/templates/features/lock-ignore.txt` | `features/lock-ignore.txt` |
+| `plugins/guia/templates/.githooks/commit-msg` | `.githooks/commit-msg` (opcional, locks) |
+| `plugins/guia/templates/features/registry.yaml` | `features/registry.yaml` (opcional, locks) |
+| `plugins/guia/templates/features/lock-ignore.txt` | `features/lock-ignore.txt` (opcional, locks) |
 
-Depois rode `python .guia-fluxo/bin/guia.py init --project-name <nome>` no consumidor.
+Depois rode `python .guia-fluxo/bin/guia.py init --project-name <nome>` no consumidor para semear `.guia/` e (se copiou os templates de lock) ativar o hook. A automação dessa rota cross-tool (substituta dos installers) está **em aberto** — ver B-004.
 
-## Editando skills (so faz sentido se voce e o mantenedor do pack)
+## Verificação
 
-Skills sao geradas a partir de `core/manifest/manifest.yaml` no repo-mae. Para alterar:
+```
+python .guia-fluxo/bin/guia.py doctor        # rota cópia-manual
+```
 
-1. Edite `core/manifest/manifest.yaml` (no repo do pack, nao no consumidor).
+No Claude (global-first) basta rodar `/guia:status` ou qualquer verbo — o `.guia/` é criado no primeiro comando e o `doctor` passa depois disso. Esperado: `Guia Fluxo files OK.` (Antes de qualquer comando, num projeto ainda não inicializado, o `doctor` lista os arquivos de `.guia/` como ausentes — é esperado; rode um verbo primeiro.)
+
+## Como desinstalar
+
+Estado do processo (`.guia/`, `FEATURES.md`) e dados seus — apague à mão se quiser zerar. No Claude: `/plugin uninstall guia@guia-fluxo`. Na rota cópia-manual: remova `.guia-fluxo/`, `.agents/skills/` e, se ativou locks, `.githooks/commit-msg` + `features/` + `git config --unset core.hooksPath`.
+
+## Quem descobre o que
+
+| Agente | Como descobre o pack | Comandos |
+| --- | --- | --- |
+| Claude Code | Plugin via marketplace (`/plugin install guia@guia-fluxo`). | `/guia:feature`, `/guia:bug`, `/guia:status`, etc. |
+| Codex CLI | Convenção AGENTS.md: lê `.agents/skills/guia-*/SKILL.md`. | skills `guia-feature`, `guia-bug`, etc. |
+| Antigravity | Mesma convenção do Codex (AGENTS.md). | idem |
+
+Detalhes da decisão em [`../adr/0006-plugin-oficial-claude-code.md`](../adr/0006-plugin-oficial-claude-code.md) e [`../adr/0015-plugin-global-first-guia-init.md`](../adr/0015-plugin-global-first-guia-init.md).
+
+## Editando skills (só faz sentido se você é o mantenedor do pack)
+
+Skills são geradas a partir de `core/manifest/manifest.yaml` no repo-mãe. Para alterar:
+
+1. Edite `core/manifest/manifest.yaml` (no repo do pack, não no consumidor).
 2. Rode `python core/build/render-skills.py` (regenera `plugins/guia/commands/`, `plugins/guia/.agents/skills/`, `plugins/guia/bin/`, `plugins/guia/templates/`).
 3. Em CI, use `python core/build/render-skills.py --check` para barrar drift.
-4. Re-instale no consumidor com `install.ps1`/`install.sh`.
 
-Nao edite arquivos sob `plugins/guia/` a mao — sao sobrescritos pelo render. No consumidor, nunca edite `.guia-fluxo/` a mao — sobrescritos pelo installer.
+Não edite arquivos sob `plugins/guia/` à mão — são sobrescritos pelo render.

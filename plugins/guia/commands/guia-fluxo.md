@@ -86,7 +86,7 @@ The bundled engine lives at `${CLAUDE_PLUGIN_ROOT}/bin/guia.py` and roots itself
 
 Run `/guia:init` once to opt into file locks: it seeds `.guia/` and deploys the per-project lock config (`features/registry.yaml`, `features/lock-ignore.txt`) plus the `commit-msg` hook, then points `git core.hooksPath` at `.githooks/`. Idempotent and never clobbers existing files; skip it (or pass `--no-locks`) if you don't want locks.
 
-**Codex / Antigravity / engine dev (clone-based).** These hosts deploy the pack into the project tree (`.guia-fluxo/` via `install.ps1`/`install.sh`, or the source repo for engine work). Copy:
+**Codex / Antigravity / engine dev (manual copy).** These hosts deploy the pack into the project tree by manual copy (the `install.ps1`/`install.sh` scripts were retired in D-082), or use the source repo for engine work. Copy:
 
 - `core/src/*.py`
 - `core/bin/guia.ps1`
@@ -95,7 +95,7 @@ Run `/guia:init` once to opt into file locks: it seeds `.guia/` and deploys the 
 - `core/build/render-skills.py`
 - `core/lock/lock_api.py` + `core/lock/check-lock.py`
 - `core/hooks/commit-msg`
-- `plugins/guia/.claude-plugin/plugin.json` + `plugins/guia/.claude-plugin/marketplace.json`
+- `plugins/guia/.claude-plugin/plugin.json`
 - the generated `plugins/guia/.agents/skills/*` (agent skills) and `plugins/guia/commands/*` (Claude commands) trees
 
 Then seed the project (optional — the engine also auto-inits on first use):

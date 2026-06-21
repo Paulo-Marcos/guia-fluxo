@@ -6,6 +6,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Removed
+- **Instaladores `install.ps1`/`install.sh` descontinuados (D-082).** Apontavam para `dist/` (renomeado para `plugins/guia/` no D-076) e davam throw — confirmado quebrado no spike **D-058**, e o modelo copia-pro-projeto contraria o global-first. Removidos os dois scripts + `tests/test_install.py`. Docs reescritos para Claude global-first (`/plugin install` + auto-init + `/guia:init`) com a rota **cópia-manual** cobrindo Codex/Antigravity (automação cross-tool em aberto, B-004): README, `docs/how-to/instalar-em-outro-projeto.md`, `docs/tutorials/primeiro-uso.md`, o body `guia-fluxo` do manifest e anotações históricas em ROADMAP/visão-geral. Fecha **D-060** (a doc do `hooksPath` agora reflete que `/guia:init` só seta se ainda não houver — não atropela Husky) e **D-061** (o bug original do `check-lock.py` foi resolvido pelo global-first; o spike confirmou que resta só o gap de locks não valerem fora de uma sessão Claude).
+
 ## [0.3.0] - 2026-06-20
 
 ### Added

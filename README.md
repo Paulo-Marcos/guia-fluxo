@@ -45,21 +45,9 @@ Pronto — os atalhos `/guia:feature`, `/guia:bug`, etc. ficam disponíveis. O m
 
 Opcional: rode `/guia:init` uma vez para ativar os **locks**. Ele semeia o `.guia/`, instala a config de lock (`features/registry.yaml`, `features/lock-ignore.txt`) e o hook `commit-msg`, e aponta o `git core.hooksPath` para `.githooks/`. É idempotente e nunca sobrescreve o que já existe; pule (ou passe `--no-locks`) se não quiser locks.
 
-### Codex / Antigravity — via instalador
+### Codex / Antigravity — cópia manual
 
-Esses agentes recebem o pack copiado para a árvore do projeto. Rode o instalador a partir do clone do repo do pack:
-
-```powershell
-# Windows
-.\install.ps1 -Target C:\caminho\do\seu\projeto
-```
-
-```bash
-# Linux / macOS
-./install.sh --target /caminho/do/seu/projeto
-```
-
-O instalador copia o pack, registra as skills cross-tool e roda `ai init`. É idempotente (`--dry-run`, `--force`). Detalhes, upgrade e desinstalação: [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md).
+Esses agentes leem `.agents/skills/` (convenção AGENTS.md) e precisam do pack na árvore do projeto. Como os instaladores `install.ps1`/`install.sh` foram **descontinuados** (D-082), a rota atual é a cópia manual: copie `plugins/guia/` e `plugins/guia/.agents/skills/` para o consumidor e rode `python .guia-fluxo/bin/guia.py init`. Passo a passo: [`docs/how-to/instalar-em-outro-projeto.md`](docs/how-to/instalar-em-outro-projeto.md). A automação dessa rota cross-tool está em aberto (B-004).
 
 ## Uso
 
