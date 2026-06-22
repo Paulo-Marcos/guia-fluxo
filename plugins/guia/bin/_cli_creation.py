@@ -23,6 +23,7 @@ from _constants import (
     BACKLOG_FILE,
     CURRENT_FILE,
     FEATURES_REL,
+    KIND_EPIC,
     KIND_FEATURE,
     MSG_BACKLOG_ALREADY_RESOLVED,
     MSG_BACKLOG_ITEM_NOT_FOUND,
@@ -46,10 +47,12 @@ STATUS_CLI_CHOICES = tuple(_STATUS_FROM_CLI.keys())
 from _features_md import upsert_features_entry
 from _state import read_json, write_json
 from _tasks import (
+    find_task,
     kind_marker,
     list_tasks,
     merge_list,
     new_task,
+    next_epic_id,
     next_task_id,
     pop_item,
     print_task_created,
@@ -59,19 +62,65 @@ from _tasks import (
 from _worktree import attach_worktree
 
 
+def _validate_parent(parent_id: str | None) -> str | None:
+    """D-049: valida que o parent (--under) e um Epic existente.
+
+    Recusa: parent inexistente, parent que nao e epic (sem aninhamento de
+    epics nesta fatia - hierarquia de 2 niveis so). None passa silencioso
+    (a maioria das tasks nao tem pai)."""
+    if not parent_id:
+        return None
+    parent = find_task(parent_id)
+    if parent is None:
+        raise SystemExit(f"Recusado: parent {parent_id} nao existe em tasks.json.")
+    if parent.get("kind") != KIND_EPIC:
+        raise SystemExit(
+            f"Recusado: parent {parent_id} tem kind={parent.get('kind')!r}, "
+            f"deve ser {KIND_EPIC!r}. Sem epics aninhados (hierarquia de 2 niveis)."
+        )
+    return parent_id
+
+
+def cmd_create_epic(args: argparse.Namespace) -> int:
+    """D-049: cria um Epic E-NNN. Numeracao independente de D-NNN
+    (PREFIX_EPIC). Epic comeca em Em desenvolvimento (status agregador,
+    fechara via finish quando todos os filhos forem terminais).
+    Aceita --status como cmd_create_task; --depends-on tambem (um epic
+    pode depender de outras tasks, mas o gate sera o mesmo do D-067)."""
+    status_cli = getattr(args, "status", "in-development") or "in-development"
+    status = _STATUS_FROM_CLI.get(status_cli, STATUS_IN_DEVELOPMENT)
+    data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
+    epic_id = next_epic_id(data.get("tasks", []))
+    task = new_task(
+        epic_id, KIND_EPIC, args.title, args.context, args.origin,
+        status=status,
+        depends_on=getattr(args, "depends_on", None) or None,
+    )
+    data.setdefault("tasks", []).insert(0, task)
+    write_json(TASKS_FILE, data)
+    set_current_task(task)
+    if status != STATUS_BACKLOG:
+        upsert_features_entry(task)
+    print_task_created(task)
+    return 0
+
+
 def cmd_create_task(args: argparse.Namespace, kind: str) -> int:
     """Cria uma task. ADR-0011 Fase 3: aceita `--status backlog|planned|
     in-development` (default in-development). Backlog nao entra em
     .guia/DEMANDAS.md (consistente com cmd_backlog_add); Planejada e
-    Em desenvolvimento entram."""
+    Em desenvolvimento entram. D-049: aceita --under E-NNN para criar
+    como filho de um Epic existente."""
     status_cli = getattr(args, "status", "in-development") or "in-development"
     status = _STATUS_FROM_CLI.get(status_cli, STATUS_IN_DEVELOPMENT)
+    parent_id = _validate_parent(getattr(args, "under", None))
     data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
     task_id = next_task_id(kind, data.get("tasks", []))
     task = new_task(
         task_id, kind, args.title, args.context, args.origin,
         status=status,
         depends_on=getattr(args, "depends_on", None) or None,
+        parent_id=parent_id,
     )
     data.setdefault("tasks", []).insert(0, task)
     write_json(TASKS_FILE, data)
@@ -371,6 +420,7 @@ def cmd_promote(args: argparse.Namespace) -> int:
 
 
 __all__ = [
+    "cmd_create_epic",
     "cmd_create_task",
     "cmd_backlog_add",
     "cmd_backlog_list",

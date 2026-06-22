@@ -64,6 +64,7 @@ from _cli_creation import (  # noqa: E402
     cmd_backlog_list,
     cmd_backlog_migrate,
     cmd_backlog_resolve,
+    cmd_create_epic,
     cmd_create_task,
     cmd_promote,
 )
@@ -123,6 +124,12 @@ def _add_task_args(parser: argparse.ArgumentParser) -> None:
         metavar="D-XYZ",
         help="Declara dependencia de outra demanda (D-067). Repetivel. "
              "start/promote serao bloqueados ate a dependencia ficar Validada/Finalizada/Resolvida/Cancelada.",
+    )
+    parser.add_argument(
+        "--under",
+        metavar="E-NNN",
+        help="Cria a task como filho de um Epic existente (D-049). "
+             "Hierarquia de 2 niveis so (epic -> story, sem aninhar epics).",
     )
     parser.add_argument(
         "--status",
@@ -201,6 +208,25 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_task_args(p_chore)
     p_chore.set_defaults(func=lambda args: cmd_create_task(args, KIND_CHORE))
+
+    p_epic = sub.add_parser(
+        "epic",
+        help="Create an Epic (E-NNN) — orquestrador de stories (D-049).",
+    )
+    p_epic.add_argument("title")
+    p_epic.add_argument("--context", default="")
+    p_epic.add_argument("--origin", default=f"Guia Fluxo ({today()})")
+    p_epic.add_argument(
+        "--status",
+        choices=STATUS_CLI_CHOICES,
+        default="in-development",
+        help="Status inicial do Epic. Default: in-development.",
+    )
+    p_epic.add_argument(
+        "--depends-on", action="append", default=[], metavar="D-XYZ",
+        help="Declara dependencia (D-067). Repetivel.",
+    )
+    p_epic.set_defaults(func=cmd_create_epic)
 
     p_status = sub.add_parser("status", help="Show current task or a given task.")
     p_status.add_argument("task_id", nargs="?")

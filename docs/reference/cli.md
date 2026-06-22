@@ -62,6 +62,17 @@ Cria `D-NNN` com `kind=bug` (emoji 🐛). Substitui o antigo `issue`, removido n
 
 Cria `D-NNN` com `kind=chore` (emoji 🧹). Use para manutencao que merece rastro mas nao e feature nem bug: refactor pequeno, atualizar dependencia, ajustar build/lint, organizar pasta.
 
+### `epic` (D-049)
+
+```powershell
+.\core\bin\guia.ps1 epic "Titulo do epico" --context "Por que isso virou epic"
+.\core\bin\guia.ps1 feature "Sub-tarefa" --under E-001    # cria D-NNN filho de E-001
+.\core\bin\guia.ps1 status E-001                          # arvore agregada
+.\core\bin\guia.ps1 finish E-001                          # SO fecha quando todos os filhos forem terminais
+```
+
+Cria um Epic `E-NNN` (emoji 🎯) — orquestrador de stories. Numeracao independente de `D-NNN`. `--under E-NNN` em feature/bug/chore cria a story como filho. `status E-NNN` imprime arvore agregada (`Progresso: closed/total`). `finish E-NNN` e **recusado** enquanto qualquer filho estiver em status nao-terminal (Validada / Finalizada / Resolvida / Cancelada contam como terminais — mesmo set do D-067). **Hierarquia de 2 niveis** (sem epics aninhados); `parentId` e imutavel apos criacao. `cancel E-NNN` **nao** cascateia: filhos seguem como estao.
+
 ### `backlog`
 
 ```powershell

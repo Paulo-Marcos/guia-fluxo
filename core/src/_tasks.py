@@ -36,6 +36,7 @@ from _constants import (
     MSG_NO_CURRENT_TASK,
     MSG_TASK_NOT_FOUND,
     PREFIX_DEMANDA,
+    PREFIX_EPIC,
     PREFIX_FEATURE,
     PREFIX_ISSUE,
     PROCESS_FILE,
@@ -58,6 +59,7 @@ def new_task(
     origin: str,
     status: str = STATUS_IN_DEVELOPMENT,
     depends_on: list[str] | None = None,
+    parent_id: str | None = None,
 ) -> dict[str, Any]:
     """Build a fresh task dict.
 
@@ -92,6 +94,8 @@ def new_task(
                 deps.append(dep)
         if deps:
             task["dependsOn"] = deps
+    if parent_id:
+        task["parentId"] = parent_id  # D-049
     return task
 
 
@@ -179,6 +183,39 @@ def next_task_id(_kind: str, tasks: list[dict[str, Any]]) -> str:
         numbers.extend(_numbers_from_features(prefix))
     next_number = max(numbers, default=0) + 1
     return f"{PREFIX_DEMANDA}-{next_number:03d}"
+
+
+def next_epic_id(tasks: list[dict[str, Any]]) -> str:
+    """D-049: gera o proximo ID `E-NNN`. Numeracao independente de D-NNN
+    (leitura instantanea: 'E-001 tem filhos D-100/D-101'). Considera tanto
+    tasks.json quanto headings em .guia/DEMANDAS.md (regex inclui E)."""
+    numbers: list[int] = [
+        value
+        for value in (_number_from_id(task.get("id", ""), PREFIX_EPIC) for task in tasks)
+        if value is not None
+    ]
+    numbers.extend(_numbers_from_features(PREFIX_EPIC))
+    next_number = max(numbers, default=0) + 1
+    return f"{PREFIX_EPIC}-{next_number:03d}"
+
+
+def find_children(parent_id: str) -> list[dict[str, Any]]:
+    """D-049: lista filhos diretos de um Epic (tasks com parentId=<id>),
+    ordem de tasks.json (newest first por convencao)."""
+    data = read_json(TASKS_FILE, {"tasks": []})
+    return [t for t in data.get("tasks", []) if t.get("parentId") == parent_id]
+
+
+def epic_open_children(parent_id: str) -> list[dict[str, Any]]:
+    """D-049: filhos do Epic que AINDA bloqueiam o finish do pai.
+
+    'Bloqueia' = status nao-terminal. STATUSES_SATISFY_DEPENDENCY ja inclui
+    Validada/Finalizada/Resolvida/Cancelada - reuso aqui: o gate do finish
+    do epic e o mesmo do gate de dependencia."""
+    return [
+        c for c in find_children(parent_id)
+        if c.get("status") not in STATUSES_SATISFY_DEPENDENCY
+    ]
 
 
 def find_task(task_id: str) -> dict[str, Any] | None:
@@ -336,4 +373,7 @@ __all__ = [
     "format_task_line",
     "unmet_dependencies",
     "dependency_creates_cycle",
+    "next_epic_id",
+    "find_children",
+    "epic_open_children",
 ]

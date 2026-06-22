@@ -76,7 +76,7 @@ REGISTRY_FILE = GUIA_DIR / "locks" / "registry.yaml"
 
 # Aceita IDs novos (D-NNN per ADR-0011) e legacy (F-NNN, I-NNN).
 # B-NNN entra na Fase 2 quando backlog for absorvido em tasks.json.
-TASK_HEADING_RE = re.compile(r"^## \[([DFI])-(\d+)\] (.+)$", re.MULTILINE)
+TASK_HEADING_RE = re.compile(r"^## \[([DFIE])-(\d+)\] (.+)$", re.MULTILINE)
 
 
 STATUS_IN_DEVELOPMENT = "Em desenvolvimento"
@@ -114,6 +114,9 @@ KIND_FEATURE = "feature"
 KIND_BUG = "bug"
 KIND_CHORE = "chore"
 KIND_ISSUE = "issue"  # legacy-read only; nao gerar tasks novas com este kind a partir da Fase 4.
+# D-049: Epic e o agregador de stories. Tem prefixo proprio E-NNN e
+# numeracao independente de D-NNN (leitura instantanea de epico vs story).
+KIND_EPIC = "epic"
 
 # Prefixo neutro do ADR-0011 para todas as tasks novas.
 # PREFIX_FEATURE/ISSUE/BACKLOG permanecem para resolver IDs antigos.
@@ -121,6 +124,7 @@ PREFIX_DEMANDA = "D"
 PREFIX_FEATURE = "F"
 PREFIX_ISSUE = "I"
 PREFIX_BACKLOG = "B"
+PREFIX_EPIC = "E"  # D-049
 
 # Prefixos considerados quando next_task_id calcula o proximo numero.
 # Garante numeracao monotonica unica visualmente (D-030 nao colide com
@@ -170,6 +174,7 @@ KIND_LABELS = {
     KIND_BUG: "Bug / regressao",
     KIND_CHORE: "Chore",
     KIND_ISSUE: "Bug (legacy)",  # Compat para tasks antigas com kind=issue.
+    KIND_EPIC: "Epic",  # D-049: agregador de stories.
 }
 
 # Marcadores visuais (emoji) que aparecem ao lado do ID em todas as
@@ -181,6 +186,7 @@ KIND_MARKERS = {
     KIND_BUG: "🐛",
     KIND_CHORE: "🧹",
     KIND_ISSUE: "🐛",  # legacy = bug.
+    KIND_EPIC: "🎯",  # D-049: epic.
 }
 
 # Fallback para tasks sem kind ou kind desconhecido. Quase nunca dispara
@@ -226,10 +232,12 @@ __all__ = [
     "KIND_BUG",
     "KIND_CHORE",
     "KIND_ISSUE",
+    "KIND_EPIC",
     "PREFIX_DEMANDA",
     "PREFIX_FEATURE",
     "PREFIX_ISSUE",
     "PREFIX_BACKLOG",
+    "PREFIX_EPIC",
     "TASK_PREFIXES_FOR_NUMBERING",
     "MSG_TASK_NOT_FOUND",
     "MSG_NO_CURRENT_TASK",

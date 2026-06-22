@@ -2,6 +2,61 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-093",
+      "kind": "feature",
+      "title": "Rename: parar de imprimir 'NOME DO CHAT'; usar 'NOME DA DEMANDA' (chat pode ter varias demandas)",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-22)",
+      "context": "Hoje todo verbo imprime 'NOME DO CHAT: D-NNN <emoji> - #STATUS - <title>' tentando renomear o chat - mas (a) na pratica o chat NAO eh renomeado automatico (so via /rename manual ou mark_chapter) e (b) com a chegada do epico (D-049) um mesmo chat-pai pode conter VARIAS demandas/stories. Mudar para: imprimir 'NOME DA DEMANDA: ...' (info pura da demanda corrente, sem pretender que e o titulo do chat); deixar a renomeacao do chat como acao OPCIONAL do usuario; quando houver API/comando de rename automatico disponivel (futuro Claude/Codex/Antigravity), oferecer um caminho separado. Tocar: _tasks.print_chat_title (renomear a funcao), MSG/format strings, chat-title.txt (manter o arquivo? avaliar se ainda faz sentido), bodies do manifest que mencionam 'NOME DO CHAT', docs/how-to/renomear-chat.md, ADRs 0004 (chat-title sincronizado) que precisa ser revisado/substituido por novo ADR registrando essa mudanca.",
+      "createdAt": "2026-06-22",
+      "updatedAt": "2026-06-22",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-092",
+      "kind": "feature",
+      "title": "Filho 1",
+      "status": "Em desenvolvimento",
+      "origin": "Guia Fluxo (2026-06-22)",
+      "context": "Filho 1",
+      "createdAt": "2026-06-22",
+      "updatedAt": "2026-06-22",
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo."
+      ],
+      "validations": [],
+      "pending": [
+        "Executar implementacao e validacoes."
+      ],
+      "parentId": "E-001"
+    },
+    {
+      "id": "E-001",
+      "kind": "epic",
+      "title": "Teste",
+      "status": "Em desenvolvimento",
+      "origin": "Guia Fluxo (2026-06-22)",
+      "context": "Teste",
+      "createdAt": "2026-06-22",
+      "updatedAt": "2026-06-22",
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo."
+      ],
+      "validations": [],
+      "pending": [
+        "Executar implementacao e validacoes."
+      ]
+    },
+    {
       "id": "D-091",
       "kind": "feature",
       "title": "guia:upgrade - migrar projetos existentes para o layout atual",
@@ -1950,15 +2005,17 @@
       "id": "D-053",
       "kind": "feature",
       "title": "Reorganizar core/src/ em subpastas por camada (cli/, domain/, infra/, shared/)",
-      "status": "Backlog",
+      "status": "Resolvida",
       "origin": "Backlog (2026-06-09)",
       "context": "Hoje core/src/ tem 19 arquivos flat. Proposta: cli/ (guia.py, _cli_creation, _cli_lifecycle, _cli_tasks, _cli_meta), domain/ (_tasks, _features_md, _docs_hook, _locks, _commit, _worktree, _validation_runner), infra/ (_git_ops, _state, _reports), shared/ (_constants, _clock, _paths, _process_config). Nao trivial: o build render-skills.py copia os arquivos flat para dist/bin/, entao a reorganizacao exige: (1) atualizar todos os imports de 'from _X import' para 'from camada._X import' ou usar __init__.py re-exportando; (2) atualizar o build para copiar recursivamente ou aplanar na copia; (3) garantir que o layout flat do dist/ continue funcionando. Fazer como chore com suite de testes passando antes e depois.",
       "createdAt": "2026-06-09",
-      "updatedAt": "2026-06-09",
+      "updatedAt": "2026-06-22",
       "modifiedFiles": [],
       "summary": [],
       "validations": [],
-      "pending": []
+      "pending": [],
+      "resolvedAt": "2026-06-22",
+      "resolution": "Recusada via ADR-0017 (Manter core/src/ flat). Avaliacao da proposal-architect: over-engineering pelos drivers atuais (single-user CLI, dominio pequeno, sem trocas de infra). Convencao de prefixo ja entrega a clareza por camada sem custo. Gatilho de reabertura documentado no ADR."
     },
     {
       "id": "D-052",
@@ -2226,15 +2283,116 @@
       "id": "D-049",
       "kind": "feature",
       "title": "Hierarquia epic -> stories com chat-pai orquestrador",
-      "status": "Backlog",
+      "status": "Validada",
       "origin": "Backlog (2026-06-08)",
       "context": "Suportar demandas grandes quebradas em sub-features rastreaveis. Mudancas: schema ganha parent_id em task (D-NNN pode apontar pra E-NNN ou outro D-NNN); novos verbos /epic 'Titulo' cria E-NNN e /feature 'Titulo' --under E-001 cria filho; /status E-001 mostra arvore agregada; /finish E-001 falha enquanto algum filho nao estiver Finalizada/Cancelada; naming convention 'E-001/D-100 - #DEV - <child title>' e 'E-001 - #DEV - <epic title>'; cada filho pode ter worktree proprio, finish do pai exige todos worktrees-filho cleanados. Coordenacao cross-chat e async via .guia/*.json (sem IPC ao vivo) - usar lock_api.py existente para evitar race em writes simultaneos. Risco: chat-pai nao sabe automaticamente quando filho terminou; precisa de /status manual ou hook post-finish que atualize flag legivel. NAO implementar especulativamente - promover quando aparecer caso real de epico que justifique.",
       "createdAt": "2026-06-08",
-      "updatedAt": "2026-06-08",
-      "modifiedFiles": [],
-      "summary": [],
-      "validations": [],
-      "pending": []
+      "updatedAt": "2026-06-22",
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md",
+        "core/src/_constants.py",
+        "core/src/_tasks.py",
+        "core/src/_cli_creation.py",
+        "core/src/_cli_lifecycle.py",
+        "core/src/guia.py",
+        "core/manifest/manifest.yaml",
+        "core/manifest/bodies/epic.md",
+        "tests/test_epic.py",
+        "docs/reference/cli.md",
+        "CLAUDE.md",
+        "docs/adr/0017-manter-core-src-flat.md",
+        "docs/adr/README.md",
+        ".guia/current-task.json",
+        ".guia/tasks.json",
+        "plugins/guia/bin/_cli_creation.py",
+        "plugins/guia/bin/_cli_lifecycle.py",
+        "plugins/guia/bin/_constants.py",
+        "plugins/guia/bin/_tasks.py",
+        "plugins/guia/bin/guia.py"
+      ],
+      "summary": [
+        "Em desenvolvimento desde 2026-06-22: Onda 3: epic E-NNN com filhos D-NNN; agregacao no status; finish do pai gated por filhos terminais.",
+        "D-049 entregue de ponta a ponta. Schema: novo kind 'epic' + prefixo proprio 'E-NNN' (numeracao independente de D-NNN); campo parentId em task; hierarquia de 2 niveis (sem aninhar epics). Verbo novo 'guia epic'; flag --under E-NNN em feature/bug/chore valida que parent existe e e Epic. cmd_status detecta Epic e imprime arvore agregada (progresso closed/total + lista de filhos + aviso de bloqueio); cmd_finish recusa Epic com filhos abertos. Cancel NAO cascateia (decisao). STATUSES_SATISFY_DEPENDENCY (D-067) e reusada como definicao de 'filho terminal' - mesmo set Validada/Finalizada/Resolvida/Cancelada. Tambem entrega ADR-0017 (Manter core/src flat / D-053 recusada) - avaliacao da proposal-architect: over-engineering pelos drivers atuais.",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "tests/test_epic.py: 10/10 passed (numeracao independente; --under cria filho; recusa parent inexistente/nao-epic; arvore agregada + epic vazio; finish recusa filhos abertos; libera com cancelados; cancel sem cascata). Suite completa: 176 passed (166 + 10). render --check OK (61 alvos: +commands/epic.md + .agents/skills/guia-epic). doctor OK."
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-049",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-049",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "README.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo padrao ou os comandos da capa mudaram, atualize.",
+            "purpose": "Porta de entrada do projeto."
+          },
+          {
+            "path": "docs/reference/cli.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se voce adicionou/mudou subcomando ou flag, documente aqui.",
+            "purpose": "Referencia completa de subcomandos do core/src/guia.py / core/bin/guia.ps1."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py, core/manifest/manifest.yaml",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py, core/manifest/manifest.yaml",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          },
+          {
+            "path": "CONTRIBUTING.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo humano mudou (novo passo, nova checagem), atualize.",
+            "purpose": "Guia pra humanos contribuirem."
+          }
+        ],
+        "touched": [
+          "docs/reference/cli.md",
+          "CLAUDE.md",
+          "docs/adr/0017-manter-core-src-flat.md",
+          "docs/adr/README.md"
+        ],
+        "checkedAt": "2026-06-22"
+      }
     },
     {
       "id": "D-048",

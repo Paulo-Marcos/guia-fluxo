@@ -2,6 +2,98 @@
 
 ---
 
+## [D-092] ✨ Filho 1
+
+- **Status:** Em desenvolvimento
+- **Origem:** Guia Fluxo (2026-06-22)
+- **Tipo:** Feature
+- **Contexto:** Filho 1
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Executar implementacao e validacoes.
+
+
+## [E-001] 🎯 Teste
+
+- **Status:** Em desenvolvimento
+- **Origem:** Guia Fluxo (2026-06-22)
+- **Tipo:** Epic
+- **Contexto:** Teste
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Executar implementacao e validacoes.
+
+
+## [D-049] ✨ Hierarquia epic -> stories com chat-pai orquestrador
+
+- **Status:** Validada
+- **Origem:** Backlog (2026-06-08)
+- **Tipo:** Feature
+- **Contexto:** Suportar demandas grandes quebradas em sub-features rastreaveis. Mudancas: schema ganha parent_id em task (D-NNN pode apontar pra E-NNN ou outro D-NNN); novos verbos /epic 'Titulo' cria E-NNN e /feature 'Titulo' --under E-001 cria filho; /status E-001 mostra arvore agregada; /finish E-001 falha enquanto algum filho nao estiver Finalizada/Cancelada; naming convention 'E-001/D-100 - #DEV - <child title>' e 'E-001 - #DEV - <epic title>'; cada filho pode ter worktree proprio, finish do pai exige todos worktrees-filho cleanados. Coordenacao cross-chat e async via .guia/*.json (sem IPC ao vivo) - usar lock_api.py existente para evitar race em writes simultaneos. Risco: chat-pai nao sabe automaticamente quando filho terminou; precisa de /status manual ou hook post-finish que atualize flag legivel. NAO implementar especulativamente - promover quando aparecer caso real de epico que justifique.
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+- `core/src/_constants.py`
+- `core/src/_tasks.py`
+- `core/src/_cli_creation.py`
+- `core/src/_cli_lifecycle.py`
+- `core/src/guia.py`
+- `core/manifest/manifest.yaml`
+- `core/manifest/bodies/epic.md`
+- `tests/test_epic.py`
+- `docs/reference/cli.md`
+- `CLAUDE.md`
+- `docs/adr/0017-manter-core-src-flat.md`
+- `docs/adr/README.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `plugins/guia/bin/_cli_creation.py`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/bin/_tasks.py`
+- `plugins/guia/bin/guia.py`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-22: Onda 3: epic E-NNN com filhos D-NNN; agregacao no status; finish do pai gated por filhos terminais.
+- D-049 entregue de ponta a ponta. Schema: novo kind 'epic' + prefixo proprio 'E-NNN' (numeracao independente de D-NNN); campo parentId em task; hierarquia de 2 niveis (sem aninhar epics). Verbo novo 'guia epic'; flag --under E-NNN em feature/bug/chore valida que parent existe e e Epic. cmd_status detecta Epic e imprime arvore agregada (progresso closed/total + lista de filhos + aviso de bloqueio); cmd_finish recusa Epic com filhos abertos. Cancel NAO cascateia (decisao). STATUSES_SATISFY_DEPENDENCY (D-067) e reusada como definicao de 'filho terminal' - mesmo set Validada/Finalizada/Resolvida/Cancelada. Tambem entrega ADR-0017 (Manter core/src flat / D-053 recusada) - avaliacao da proposal-architect: over-engineering pelos drivers atuais.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- tests/test_epic.py: 10/10 passed (numeracao independente; --under cria filho; recusa parent inexistente/nao-epic; arvore agregada + epic vazio; finish recusa filhos abertos; libera com cancelados; cancel sem cascata). Suite completa: 176 passed (166 + 10). render --check OK (61 alvos: +commands/epic.md + .agents/skills/guia-epic). doctor OK.
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-067] ✨ Dependencia entre demandas (so executa apos concluir)
 
 - **Status:** Validada

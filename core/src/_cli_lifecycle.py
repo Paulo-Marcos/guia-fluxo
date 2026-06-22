@@ -35,7 +35,9 @@ from _constants import (
     STATUS_BLOCKED,
     STATUS_CANCELLED,
     STATUS_FINISHED,
+    KIND_EPIC,
     STATUS_IN_DEVELOPMENT,
+    STATUSES_SATISFY_DEPENDENCY,
     STATUS_PLANNED,
     STATUS_VALIDATED,
     TASKS_FILE,
@@ -53,8 +55,11 @@ from _process_config import default_process
 from _reports import write_report
 from _state import copy_if_missing, read_json, write_if_missing, write_json
 from _tasks import (
+    epic_open_children,
+    find_children,
     find_task_or_current,
     format_task_line,
+    kind_marker,
     list_tasks,
     merge_list,
     print_chat_title,
@@ -331,9 +336,45 @@ def cmd_status(args: argparse.Namespace) -> int:
         return _status_board()
 
     task = find_task_or_current(args.task_id)
+    # D-049: Epic ganha visualizacao agregada (arvore + progresso). JSON
+    # cru desaparece para epics, que sao orquestradores; quem quiser o
+    # JSON usa `tasks show <id>`.
+    if task.get("kind") == KIND_EPIC:
+        _print_epic_tree(task)
+        print_chat_title(task)
+        return 0
     print(json.dumps(task, ensure_ascii=False, indent=2))
     print_chat_title(task)
     return 0
+
+
+def _print_epic_tree(epic: dict[str, Any]) -> None:
+    """D-049: imprime arvore do Epic com progresso filhos terminados/total."""
+    children = find_children(epic["id"])
+    open_count = sum(
+        1 for c in children if c.get("status") not in STATUSES_SATISFY_DEPENDENCY
+    )
+    closed_count = len(children) - open_count
+
+    epic_line = format_task_line(epic)
+    print(epic_line)
+    print(f"  Progresso: {closed_count}/{len(children)} filhos terminados")
+    if not children:
+        print("  (sem filhos ainda - adicione com `feature/bug/chore --under " + epic["id"] + "`)")
+        return
+    for index, child in enumerate(children):
+        prefix = "    └─" if index == len(children) - 1 else "    ├─"
+        marker = kind_marker(child.get("kind", ""))
+        print(
+            f"{prefix} {child['id']} {marker} [{child.get('status', '?')}] "
+            f"{child.get('title', '')}"
+        )
+    if open_count:
+        print(
+            f"\nBloqueio: finish {epic['id']} falhara enquanto "
+            f"{open_count} filho(s) nao estiverem em status terminal "
+            "(Validada/Finalizada/Resolvida/Cancelada)."
+        )
 
 
 def _status_board() -> int:
@@ -388,6 +429,22 @@ def cmd_ready(args: argparse.Namespace) -> int:
 
 def cmd_finish(args: argparse.Namespace) -> int:
     task = find_task_or_current(args.task_id)
+    # D-049: Epic so fecha quando todos os filhos forem terminais.
+    if task.get("kind") == KIND_EPIC:
+        open_kids = epic_open_children(task["id"])
+        if open_kids:
+            lines = [
+                f"Epic {task['id']} tem {len(open_kids)} filho(s) abertos - finish recusado:"
+            ]
+            for kid in open_kids:
+                lines.append(
+                    f"  - {kid['id']} [{kid.get('status', '?')}] {kid.get('title', '')}"
+                )
+            lines.append(
+                "Conclua (ou cancele) cada filho e tente novamente. "
+                f"Para ver a arvore: `guia status {task['id']}`."
+            )
+            raise SystemExit("\n".join(lines))
     config = read_json(PROCESS_FILE, default_process(ROOT.name))
     changed_files = args.file or git_changed_files()
 

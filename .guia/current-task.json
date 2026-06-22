@@ -1,6 +1,6 @@
 {
-  "taskId": "D-067",
+  "taskId": "D-049",
   "status": "Validada",
-  "title": "Dependencia entre demandas (so executa apos concluir)",
-  "chatTitle": "D-067 \u2728 - #FINALIZADO - Dependencia entre demandas (so executa apos concluir)"
+  "title": "Hierarquia epic -> stories com chat-pai orquestrador",
+  "chatTitle": "D-049 \u2728 - #FINALIZADO - Hierarquia epic -> stories com chat-pai orquestrador"
 }

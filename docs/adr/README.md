@@ -26,6 +26,7 @@ ADR nao se confunde com [`explanation/`](../explanation/): explanation ensina o 
 | [0014](0014-plugin-autossuficiente-claude-plugin-root.md) | Plugin autossuficiente: invocacao via `${CLAUDE_PLUGIN_ROOT}` + raiz por CWD + auto-init | Aceita |
 | [0015](0015-plugin-global-first-guia-init.md) | Plugin global-first: marketplace na raiz + `/guia:init` deploya locks por-projeto (layout `dist/` -> `plugins/guia/`) | Aceita |
 | [0016](0016-primitiva-de-servicos.md) | Camada de servicos (`guia service`) considerada e recusada — usar skills + plugin proprio | Recusada |
+| [0017](0017-manter-core-src-flat.md) | Manter `core/src/` flat: convencao de prefixo formalizada, D-053 (reorg em 4 camadas) recusada | Aceita |
 
 ## Como adicionar um ADR novo
 

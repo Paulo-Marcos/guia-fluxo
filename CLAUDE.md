@@ -15,6 +15,7 @@ Este repo **e um plugin Claude Code oficial**: `plugins/guia/.claude-plugin/plug
 | `/guia:feature` | `feature` | ✨ | Nova capacidade pedida explicitamente. |
 | `/guia:bug` | `bug` | 🐛 | Defeito, regressao, comportamento incorreto. |
 | `/guia:chore` | `chore` | 🧹 | Manutencao sem mudanca de comportamento (refactor pequeno, deps, build/lint). |
+| `/guia:epic` | `epic` | 🎯 | Cria `E-NNN` orquestrador. Use `feature/bug/chore --under E-NNN` pra criar filhos. `status` agrega arvore; `finish` recusa enquanto filhos abertos. Sem aninhar epics. |
 | `/guia:backlog` | `backlog` | — | Ideia futura. `add` parqueia; `list` une fontes; `migrate` move legacy `B-NNN`. |
 | `/guia:promote` | `promote` | — | Converter item de backlog em demanda triada (avalia kind + plano antes de comecar). |
 | `/guia:plan` | `plan` | — | Marcar task como `Planejada` (triada mas nao iniciada). Aceita transicao de Backlog/Em desenvolvimento. |

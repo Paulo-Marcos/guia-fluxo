@@ -68,6 +68,15 @@ verbs:
       claude_command:
         body_file: bodies/chore.md
 
+  epic:
+    description: |
+      EPIC — create an `E-NNN` epic to orchestrate a large piece of work that breaks down into smaller stories (D-049). The epic itself does no implementation; it aggregates children. Use `feature/bug/chore "..." --under E-NNN` to attach a child story; `status E-NNN` prints the aggregated tree (closed/total children); `finish E-NNN` is REFUSED while any child is in a non-terminal status (Em desenvolvimento / Aguardando validacao / Planejada / Backlog / Bloqueada). No nested epics (2-level hierarchy only). `cancel` on an epic does NOT cascade: children remain as-is.
+    targets:
+      agent_skill:
+        body_file: bodies/epic.md
+      claude_command:
+        body_file: bodies/epic.md
+
   backlog:
     description: |
       DEFER-AND-PARK skill — never starts implementation. Subcommands: `add <title> --context "<why>"` parks an idea (saved to `.guia/tasks.json` with `status=Backlog`); `list` shows all parked items; `promote <id>` delegates to the promote flow. To start work immediately use `feature`/`bug`/`chore`; to evaluate one parked item before converting use `promote`.
