@@ -15,6 +15,6 @@ Distinct from:
 
 Accepts transition from `Backlog` (shortcut that skips `Planejada`) or `Planejada`. Fails if the task is already `Em desenvolvimento`, in a terminal state (`Validada`, `Finalizada`, `Cancelada`), or `Bloqueada` (use `$unblock`).
 
-Tasks promoted from `Backlog` enter `FEATURES.md`.
+Tasks promoted from `Backlog` enter `.guia/DEMANDAS.md`.
 
 {{include_per_target: _partials/post_cli}}

@@ -9,7 +9,7 @@ Desde D-075 (2026-06-16) o plugin é **autossuficiente** no Claude Code — não
 /plugin install guia@guia-fluxo
 ```
 
-O motor vai embutido no plugin e as skills o invocam via `${CLAUDE_PLUGIN_ROOT}/bin/guia.py` (caminho absoluto à instalação, não relativo ao CWD). Ele se ancora no projeto onde você está e **cria o `.guia/` sozinho no primeiro comando** — sem `init` manual. Os únicos arquivos que aparecem no consumidor são o estado `.guia/` (+ `FEATURES.md`).
+O motor vai embutido no plugin e as skills o invocam via `${CLAUDE_PLUGIN_ROOT}/bin/guia.py` (caminho absoluto à instalação, não relativo ao CWD). Ele se ancora no projeto onde você está e **cria o `.guia/` sozinho no primeiro comando** — sem `init` manual. Os únicos arquivos que aparecem no consumidor são o estado `.guia/` (incluindo `.guia/DEMANDAS.md`).
 
 **Atualizar** para uma nova versão: `/plugin marketplace update guia-fluxo` + `/plugin update guia@guia-fluxo`. O Claude detecta a atualização pela **versão** do plugin, então o pack precisa ter bumpado `VERSION`/`plugin.json`/`marketplace.json` para a nova versão ser puxada.
 
@@ -51,7 +51,7 @@ No Claude (global-first) basta rodar `/guia:status` ou qualquer verbo — o `.gu
 
 ## Como desinstalar
 
-Estado do processo (`.guia/`, `FEATURES.md`) e dados seus — apague à mão se quiser zerar. No Claude: `/plugin uninstall guia@guia-fluxo`. Na rota cópia-manual: remova `.guia-fluxo/`, `.agents/skills/` e, se ativou locks, `.githooks/commit-msg` + `.guia/locks/` + `git config --unset core.hooksPath`.
+Estado do processo (`.guia/`, incluindo `.guia/DEMANDAS.md`) e dados seus — apague à mão se quiser zerar. No Claude: `/plugin uninstall guia@guia-fluxo`. Na rota cópia-manual: remova `.guia-fluxo/`, `.agents/skills/` e, se ativou locks, `.githooks/commit-msg` + `.guia/locks/` + `git config --unset core.hooksPath`.
 
 ## Quem descobre o que
 

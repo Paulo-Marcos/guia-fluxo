@@ -11,8 +11,7 @@
   chat-title.txt     Ultimo nome sugerido para o chat.
   docs-map.yaml      Opcional. Declaracao dos docs vivos para o hook do `finish`.
   reports/           Relatorios gerados por ready/finish.
-
-FEATURES.md          Historico legivel por humano. Espelha tasks.json em prosa.
+  DEMANDAS.md        Historico legivel por humano. Espelha tasks.json em prosa.
 
 core/
   src/guia.py                CLI portavel, Python puro.
@@ -44,7 +43,7 @@ Configuracao por projeto. Inclui:
 
 ## `.guia/tasks.json`
 
-Lista todas as demandas (features, bugs e chores) com status. Fonte programatica - leia daqui em vez de fazer parse de `FEATURES.md`.
+Lista todas as demandas (features, bugs e chores) com status. Fonte programatica - leia daqui em vez de fazer parse de `.guia/DEMANDAS.md`.
 
 ## `.guia/current-task.json`
 
@@ -73,9 +72,9 @@ Schema completo em [`docs-map.md`](docs-map.md). Receita de uso em [`docs/how-to
 
 ## `.guia/reports/`
 
-Relatorios gerados por `ready` e `finish`. Nome no formato `<task-id>-<acao>-<timestamp>.md`. Servem como historico granular alem do `FEATURES.md`.
+Relatorios gerados por `ready` e `finish`. Nome no formato `<task-id>-<acao>-<timestamp>.md`. Servem como historico granular alem do `.guia/DEMANDAS.md`.
 
-## `FEATURES.md`
+## `.guia/DEMANDAS.md`
 
 Historico humano-legivel. Cada secao tem:
 

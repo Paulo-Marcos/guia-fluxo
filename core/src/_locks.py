@@ -19,6 +19,7 @@ from typing import Any
 from _clock import today
 from _constants import (
     FEATURES_FILE,
+    FEATURES_REL,
     MSG_LOCK_ALREADY_EXISTS,
     MSG_LOCK_ID_REQUIRED,
     MSG_NO_FILES_TO_LOCK,
@@ -50,11 +51,11 @@ def lock_task_files(
     """Register a lock for files touched by `task`.
 
     Files excluded from the registry block:
-      - FEATURES.md (auto-managed)
+      - .guia/DEMANDAS.md (auto-managed)
       - .guia/locks/registry.yaml (the registry itself)
       - the "Nenhuma." placeholder
     """
-    excluded = {FEATURES_FILE.name, ".guia/locks/registry.yaml", MSG_NONE_PLACEHOLDER}
+    excluded = {FEATURES_REL, ".guia/locks/registry.yaml", MSG_NONE_PLACEHOLDER}
     files = [value for value in task.get("modifiedFiles", []) if value not in excluded]
     if not lock_id:
         raise SystemExit(MSG_LOCK_ID_REQUIRED)

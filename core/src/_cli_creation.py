@@ -22,6 +22,7 @@ from _clock import today
 from _constants import (
     BACKLOG_FILE,
     CURRENT_FILE,
+    FEATURES_REL,
     KIND_FEATURE,
     MSG_BACKLOG_ALREADY_RESOLVED,
     MSG_BACKLOG_ITEM_NOT_FOUND,
@@ -60,7 +61,7 @@ from _worktree import attach_worktree
 def cmd_create_task(args: argparse.Namespace, kind: str) -> int:
     """Cria uma task. ADR-0011 Fase 3: aceita `--status backlog|planned|
     in-development` (default in-development). Backlog nao entra em
-    FEATURES.md (consistente com cmd_backlog_add); Planejada e
+    .guia/DEMANDAS.md (consistente com cmd_backlog_add); Planejada e
     Em desenvolvimento entram."""
     status_cli = getattr(args, "status", "in-development") or "in-development"
     status = _STATUS_FROM_CLI.get(status_cli, STATUS_IN_DEVELOPMENT)
@@ -80,7 +81,7 @@ def cmd_backlog_add(args: argparse.Namespace) -> int:
     """Cria uma task com `status=Backlog` em tasks.json (ADR-0011 Fase 2).
 
     Nao escreve em backlog.json. Nao chama upsert_features_entry - itens
-    em backlog ficam de fora do catalogo de FEATURES.md ate serem
+    em backlog ficam de fora do catalogo de .guia/DEMANDAS.md ate serem
     promovidos (cmd_promote ou ai start).
     """
     data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
@@ -301,7 +302,7 @@ def _promote_existing_task(
     task["origin"] = f"Backlog {task['id']} promovido ({today()})"
     task["assessment"] = args.assessment
     task["executionPlan"] = args.plan
-    task["modifiedFiles"] = list(set(task.get("modifiedFiles", []) + ["FEATURES.md"]))
+    task["modifiedFiles"] = list(set(task.get("modifiedFiles", []) + [FEATURES_REL]))
     merge_list(task, "summary", _promoted_summary(args, task["id"]))
     if args.plan:
         merge_list(task, "pending", ["Executar plano aprovado antes da implementacao."])

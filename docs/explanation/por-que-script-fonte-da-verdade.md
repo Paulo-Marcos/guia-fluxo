@@ -8,7 +8,7 @@ Sem processo, um agente de IA esquece o que esta fazendo entre turnos. Sintomas 
 
 - Reescreve um arquivo que ja estava certo porque nao lembra do contexto.
 - Inventa numeros de task (`F-007`) sem checar se ja existe.
-- Edita `FEATURES.md` a mao com formato divergente do resto.
+- Edita `.guia/DEMANDAS.md` a mao com formato divergente do resto.
 - Cria backlog em comentario de codigo em vez de em arquivo dedicado.
 - Esquece de marcar a task como pronta antes de seguir para outra.
 
@@ -16,14 +16,14 @@ Nenhum desses sintomas e culpa do agente especifico. E inerente a confiar em "le
 
 ## A inversao
 
-O **script** (`core/src/guia.py`) e a unica coisa que escreve em `.guia/*.json` e `FEATURES.md`. O agente nunca toca nesses arquivos diretamente.
+O **script** (`core/src/guia.py`) e a unica coisa que escreve em `.guia/*.json` e `.guia/DEMANDAS.md`. O agente nunca toca nesses arquivos diretamente.
 
 Resultado:
 
 - IDs sao sequenciais e unicos (script controla o contador).
 - Formato e identico independente do agente (Codex, Claude, Antigravity).
 - Estado e auditavel: voce le o JSON e sabe a verdade, sem interpretar prosa.
-- Operacoes sao atomicas: `feature` cria task **e** atualiza current **e** imprime titulo do chat **e** escreve `FEATURES.md` numa unica invocacao.
+- Operacoes sao atomicas: `feature` cria task **e** atualiza current **e** imprime titulo do chat **e** escreve `.guia/DEMANDAS.md` numa unica invocacao.
 
 ## A skill como interface, nao como motor
 
@@ -33,6 +33,6 @@ Isso da paridade entre agentes de graca: trocar Codex por Claude nao muda compor
 
 ## Implicacao pratica
 
-Quando voce duvidar do estado, **leia o JSON** (`.guia/current-task.json`, `.guia/tasks.json`), nao o `FEATURES.md` nem a memoria do agente. O JSON e a verdade. O markdown e um espelho.
+Quando voce duvidar do estado, **leia o JSON** (`.guia/current-task.json`, `.guia/tasks.json`), nao o `.guia/DEMANDAS.md` nem a memoria do agente. O JSON e a verdade. O markdown e um espelho.
 
 Quando precisar mudar comportamento (novo campo, nova validacao, nova fase), edite `core/src/guia.py`. Nao edite a skill - ela so transporta o comando.

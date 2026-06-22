@@ -19,6 +19,7 @@ from _constants import (
     GUIA_DIR,
     CHAT_TITLE_FILE,
     DOCS_MAP_FILE,
+    FEATURES_REL,
     MSG_DEFAULT_FINISH_SUMMARY,
     MSG_DEFAULT_READY_SUMMARY,
     MSG_DEFAULT_VALIDATE_SUMMARY,
@@ -388,11 +389,11 @@ _START_VALID_FROM = frozenset({STATUS_BACKLOG, STATUS_PLANNED})
 
 
 def _attach_features_md(task: dict[str, Any]) -> None:
-    """Inclui FEATURES.md em modifiedFiles quando a task sai do backlog
-    e passa a aparecer no catalogo (idempotente)."""
+    """Inclui o catalogo (.guia/DEMANDAS.md) em modifiedFiles quando a task
+    sai do backlog e passa a aparecer no catalogo (idempotente)."""
     files = list(task.get("modifiedFiles", []))
-    if "FEATURES.md" not in files:
-        files.append("FEATURES.md")
+    if FEATURES_REL not in files:
+        files.append(FEATURES_REL)
     task["modifiedFiles"] = files
 
 

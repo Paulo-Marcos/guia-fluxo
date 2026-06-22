@@ -60,7 +60,7 @@ Os verbos do dia a dia (Windows usa o wrapper; em Linux/macOS troque por `python
 .\core\bin\guia.ps1 finish D-001                                         # depois que VOCÊ validar
 ```
 
-Cada comando atualiza o estado (`.guia/*.json`, `FEATURES.md`) e imprime o `NOME DO CHAT`, que o agente repete pra amarrar o chat à demanda. Referência completa: [`docs/reference/cli.md`](docs/reference/cli.md).
+Cada comando atualiza o estado (`.guia/*.json`, `.guia/DEMANDAS.md`) e imprime o `NOME DO CHAT`, que o agente repete pra amarrar o chat à demanda. Referência completa: [`docs/reference/cli.md`](docs/reference/cli.md).
 
 ## Documentação
 

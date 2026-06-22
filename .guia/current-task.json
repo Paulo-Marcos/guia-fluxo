@@ -1,6 +1,6 @@
 {
-  "taskId": "D-056",
+  "taskId": "D-055",
   "status": "Validada",
-  "title": "Racionalizar estrutura de pastas: features/ para dentro de .guia/, clarificar separacao ferramenta-vs-dados",
-  "chatTitle": "D-056 \u2728 - #FINALIZADO - Racionalizar estrutura de pastas: features/ para dentro de .guia/, clarificar separacao ferramenta-vs-dados"
+  "title": "Renomear FEATURES.md e implementar arquivamento de demandas antigas",
+  "chatTitle": "D-055 \u2728 - #FINALIZADO - Renomear FEATURES.md e implementar arquivamento de demandas antigas"
 }

@@ -1,4 +1,4 @@
-"""FEATURES.md upsert and block rendering.
+""".guia/DEMANDAS.md upsert and block rendering.
 
 Pure transformation + a single write. Reads the existing file, replaces
 the block of `task['id']` if present (or inserts after the header marker)

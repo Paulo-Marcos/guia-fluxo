@@ -1,4 +1,4 @@
-# Features e Issues
+# Demandas
 
 ---
 
@@ -84,7 +84,7 @@
 
 ## [D-055] ✨ Renomear FEATURES.md e implementar arquivamento de demandas antigas
 
-- **Status:** Em desenvolvimento
+- **Status:** Validada
 - **Origem:** Backlog (2026-06-09)
 - **Tipo:** Feature
 - **Contexto:** Dois problemas: (1) Nome 'FEATURES.md' nao reflete a realidade atual - o arquivo guarda features, bugs e chores (o guarda-chuva e 'demanda'). Candidatos: DEMANDAS.md, HISTORICO.md, DEMANDS.md. (2) Tamanho: o arquivo cresce indefinidamente. Hoje tem 122KB com 52+ demandas e vai piorar. Custo real: agente carregando o arquivo inteiro no contexto a cada operacao. Solucao proposta: manter somente as N ultimas demandas (parametro em process.json, default 20-30) no arquivo ativo; mover demandas mais antigas para DEMANDAS.archive.md (ou .guia/historico/YYYY-MM.md). Para o bloqueio de leitura por IA: adicionar uma linha no topo do arquivo de arquivo como '<!-- guia-fluxo: archive=true ai-skip=true -->' que o agente pode verificar antes de carregar. Impacto tecnico: _features_md.py (upsert_features_entry), _tasks.py (format/display), _constants.py (path do arquivo). Avaliar se FEATURES.md fica na raiz ou vai para .guia/ junto dos outros arquivos de processo.
@@ -92,19 +92,72 @@
 ### Arquivos modificados/criados
 
 - `FEATURES.md`
+- `core/src/_constants.py`
+- `core/src/_tasks.py`
+- `core/src/_locks.py`
+- `core/src/_cli_creation.py`
+- `core/src/_cli_lifecycle.py`
+- `core/src/_features_md.py`
+- `.guia/docs-map.yaml`
+- `.guia/DEMANDAS.md`
+- `.github/PULL_REQUEST_TEMPLATE.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `AGENTS.md`
+- `CONTRIBUTING.md`
+- `README.md`
+- `SECURITY.md`
+- `core/manifest/bodies/_partials/title_context_rules.md`
+- `core/manifest/bodies/block.md`
+- `core/manifest/bodies/cancel.md`
+- `core/manifest/bodies/plan.md`
+- `core/manifest/bodies/start.md`
+- `docs/README.md`
+- `docs/explanation/por-que-script-fonte-da-verdade.md`
+- `docs/explanation/visao-geral.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/how-to/manter-docs-atualizados.md`
+- `docs/reference/cli.md`
+- `docs/reference/docs-map.md`
+- `docs/reference/files.md`
+- `docs/tutorials/primeiro-uso.md`
+- `plugins/guia/.agents/skills/guia-backlog/SKILL.md`
+- `plugins/guia/.agents/skills/guia-block/SKILL.md`
+- `plugins/guia/.agents/skills/guia-bug/SKILL.md`
+- `plugins/guia/.agents/skills/guia-cancel/SKILL.md`
+- `plugins/guia/.agents/skills/guia-chore/SKILL.md`
+- `plugins/guia/.agents/skills/guia-feature/SKILL.md`
+- `plugins/guia/.agents/skills/guia-plan/SKILL.md`
+- `plugins/guia/.agents/skills/guia-start/SKILL.md`
+- `plugins/guia/bin/_cli_creation.py`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/bin/_features_md.py`
+- `plugins/guia/bin/_locks.py`
+- `plugins/guia/bin/_tasks.py`
+- `plugins/guia/commands/backlog.md`
+- `plugins/guia/commands/block.md`
+- `plugins/guia/commands/bug.md`
+- `plugins/guia/commands/cancel.md`
+- `plugins/guia/commands/chore.md`
+- `plugins/guia/commands/feature.md`
+- `plugins/guia/commands/plan.md`
+- `plugins/guia/commands/start.md`
+- `tests/test_tasks_domain.py`
 
 ### O que foi feito
 
 - Em desenvolvimento desde 2026-06-21: Onda 2 (destravada pelo spike D-058): renomear FEATURES.md + arquivamento; coordenar com D-056 (mover features/ -> .guia/).
+- Rename+move: FEATURES.md (raiz) -> .guia/DEMANDAS.md (decisao: nome reflete 'demanda', e raiz do consumidor fica so com .guia/, cumprindo o global-first junto do D-056). Constantes FEATURES_FILE/FEATURES_HEADER ajustadas; header do arquivo -> '# Demandas'. Fix funcional: nova const FEATURES_REL (path root-relativo .guia/DEMANDAS.md) usada em new_task/promote/start/exclusao-de-lock - antes era basename, que quebraria o commit (git stageia .guia/DEMANDAS.md). docs-map.yaml e manifest bodies (block/cancel/plan) atualizados; PR template; comentarios de codigo.
+- Demanda finalizada via Guia Fluxo.
 
 ### Validacao feita
 
-- Nenhuma.
+- 150 testes; render --check OK; doctor OK; zero refs vivas a FEATURES.md (so historico/fixtures).
 
 ### Validacao pendente
 
 - Nenhuma.
-
 
 ## [D-083] ✨ Primitiva de servicos (guia service): ADR + design do 3o dominio
 

@@ -27,6 +27,7 @@ from _constants import (
     CHAT_TITLE_FORMAT_DEFAULT,
     CURRENT_FILE,
     FEATURES_FILE,
+    FEATURES_REL,
     KIND_FEATURE,
     KIND_MARKER_FALLBACK,
     KIND_MARKERS,
@@ -74,7 +75,7 @@ def new_task(
         "context": context or title,
         "createdAt": today(),
         "updatedAt": today(),
-        "modifiedFiles": [] if is_backlog else [FEATURES_FILE.name],
+        "modifiedFiles": [] if is_backlog else [FEATURES_REL],
         "summary": [] if is_backlog else [MSG_DEFAULT_TASK_CREATED],
         "validations": [],
         "pending": [] if is_backlog else [MSG_DEFAULT_TASK_PENDING],
@@ -102,7 +103,7 @@ def next_task_id(_kind: str, tasks: list[dict[str, Any]]) -> str:
 
     O parametro `kind` e ignorado: ID e independente do tipo da demanda.
     Numeracao e monotonica considerando todos os prefixos vivos
-    (D, F, I) em `tasks.json` e em `FEATURES.md`, de modo que `D-030`
+    (D, F, I) em `tasks.json` e em `.guia/DEMANDAS.md`, de modo que `D-030`
     nunca colida visualmente com `F-029` ja existente. `B-NNN` fica de
     fora desta contagem ate a Fase 2 (backlog absorvido).
     """

@@ -73,7 +73,7 @@ Tres tipos de trigger no `.guia/docs-map.yaml`:
 
 | Trigger | Quando dispara |
 | --- | --- |
-| `task-finished` | Toda task finalizada (F-NNN ou I-NNN). Use para FEATURES.md, CHANGELOG.md, dashboards. |
+| `task-finished` | Toda task finalizada (F-NNN ou I-NNN). Use para .guia/DEMANDAS.md, CHANGELOG.md, dashboards. |
 | `touched` (com `paths:`) | Quando um dos arquivos modificados pela task casa com algum glob (`fnmatch`). Use para docs acoplados a codigo. |
 | `architectural-decision` | Sempre lista. Cabe ao agente julgar se a feature realmente mexeu em arquitetura. Use para ADRs e docs de visao. |
 

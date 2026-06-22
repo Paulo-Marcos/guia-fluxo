@@ -24,7 +24,7 @@ git config core.hooksPath core/hooks
 
 ## Fluxo de trabalho
 
-Toda contribuicao passa pelo proprio processo do pack (dogfooding). Nao edite `.guia/*.json` nem `FEATURES.md` a mao - quem altera e o script.
+Toda contribuicao passa pelo proprio processo do pack (dogfooding). Nao edite `.guia/*.json` nem `.guia/DEMANDAS.md` a mao - quem altera e o script.
 
 1. **Abra uma demanda.**
    - Bug ou regressao: `.\core\bin\guia.ps1 bug "Titulo curto" --context "Sintoma e impacto"`

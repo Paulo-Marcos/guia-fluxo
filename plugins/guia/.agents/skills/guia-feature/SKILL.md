@@ -12,7 +12,7 @@ Create a new feature task before editing code. Use when the human asks for a NEW
 When the human asks in loose phrasing, **synthesize** — do not pass the raw sentence to the CLI.
 
 - `<title>`: short imperative, 5–8 words, ≤60 chars. Captures the *what*. Title is what shows in `NOME DO CHAT` and in task lists.
-- `<context>`: full motivation, scenario, success criteria. Captures the *why*. Multi-line allowed. Goes into `task.context`, `FEATURES.md`, and search.
+- `<context>`: full motivation, scenario, success criteria. Captures the *why*. Multi-line allowed. Goes into `task.context`, `.guia/DEMANDAS.md`, and search.
 
 Example:
 

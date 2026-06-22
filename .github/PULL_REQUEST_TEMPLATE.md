@@ -9,7 +9,7 @@ Veja docs/how-to/ antes de abrir o PR.
 
 ## Demanda relacionada
 
-<!-- ID do FEATURES.md (F-### ou I-###) e link, se houver. -->
+<!-- ID da demanda (D-###) e link, se houver. -->
 
 - Demanda: F-### / I-###
 
@@ -47,5 +47,5 @@ Liste aqui quais features foram desbloqueadas e por que.
 
 - [ ] `python core/src/guia.py doctor` passa.
 - [ ] `python core/build/render-skills.py --check` passa (se mexeu em skills).
-- [ ] Demanda no `FEATURES.md` atualizada via `ai ready`/`ai finish`.
+- [ ] Demanda no `.guia/DEMANDAS.md` atualizada via `ready`/`finish`.
 - [ ] Documentacao atualizada (se mudou comportamento).

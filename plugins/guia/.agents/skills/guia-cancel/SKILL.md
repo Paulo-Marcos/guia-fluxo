@@ -24,7 +24,7 @@ Substitute `<command>` with the verb and arguments for this skill:
 cancel <D-NNN> --reason "Motivo curto"
 ```
 
-`--reason` is **required** (justification stays in history under `task.cancellations[]` and in `FEATURES.md`).
+`--reason` is **required** (justification stays in history under `task.cancellations[]` and in `.guia/DEMANDAS.md`).
 
 Useful flags:
 - `--keep-worktree`: do not remove the associated worktree (default: remove if present).

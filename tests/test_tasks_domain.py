@@ -31,7 +31,7 @@ class NewTaskTests(unittest.TestCase):
         self.assertEqual(task["id"], "F-001")
         self.assertEqual(task["status"], STATUS_IN_DEVELOPMENT)
         self.assertEqual(task["kind"], KIND_FEATURE)
-        self.assertIn("FEATURES.md", task["modifiedFiles"])
+        self.assertIn(".guia/DEMANDAS.md", task["modifiedFiles"])
 
     def test_falls_back_context_to_title(self) -> None:
         task = _tasks.new_task("I-001", KIND_ISSUE, "MyTitle", "", "x")
@@ -44,7 +44,7 @@ class NextIdTests(unittest.TestCase):
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
         self._original_features = _constants.FEATURES_FILE
-        _tasks.FEATURES_FILE = Path(self._tmp.name) / "FEATURES.md"
+        _tasks.FEATURES_FILE = Path(self._tmp.name) / "DEMANDAS.md"
         _constants.FEATURES_FILE = _tasks.FEATURES_FILE
 
     def tearDown(self) -> None:

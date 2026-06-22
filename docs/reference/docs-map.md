@@ -50,7 +50,7 @@ Use a chave `event:`. Evite `on:` - YAML 1.1 (default do PyYAML) trata `on/off/y
   hint: "Adicione entrada se a mudanca for visivel pro usuario."
 ```
 
-Sempre dispara quando uma F-NNN ou I-NNN entra em `finish`. Use para docs cumulativos (`FEATURES.md`, `CHANGELOG.md`, dashboards de roadmap).
+Sempre dispara quando uma F-NNN ou I-NNN entra em `finish`. Use para docs cumulativos (`.guia/DEMANDAS.md`, `CHANGELOG.md`, dashboards de roadmap).
 
 ### `event: touched`
 

@@ -62,7 +62,15 @@ CURRENT_FILE = GUIA_DIR / "current-task.json"
 CHAT_TITLE_FILE = GUIA_DIR / "chat-title.txt"
 DOCS_MAP_FILE = GUIA_DIR / "docs-map.yaml"
 REPORTS_DIR = GUIA_DIR / "reports"
-FEATURES_FILE = ROOT / "FEATURES.md"
+# Catalogo legivel de demandas. D-055: renomeado de FEATURES.md (nome nao
+# refletia a realidade - guarda feature/bug/chore) e movido para dentro de
+# .guia/ (raiz do consumidor fica so com .guia/). O nome da constante segue
+# FEATURES_FILE por compatibilidade interna.
+FEATURES_FILE = GUIA_DIR / "DEMANDAS.md"
+# Path do catalogo relativo a ROOT (POSIX). D-055: agora que o catalogo vive
+# em .guia/, o basename ("DEMANDAS.md") nao basta para `modifiedFiles` e para
+# a exclusao de lock - o git stageia ".guia/DEMANDAS.md". Use sempre este.
+FEATURES_REL = FEATURES_FILE.relative_to(ROOT).as_posix()
 REGISTRY_FILE = GUIA_DIR / "locks" / "registry.yaml"
 
 
@@ -101,7 +109,7 @@ STATUS_TAGS: dict[str, str] = {
 
 # Kind novos (ADR-0011). KIND_ISSUE preservado para resolver tasks legacy
 # (I-NNN). Fase 4 remove `issue` como verbo/skill; aqui ele continua
-# legivel para que tasks antigas renderizem em FEATURES.md.
+# legivel para que tasks antigas renderizem em .guia/DEMANDAS.md.
 KIND_FEATURE = "feature"
 KIND_BUG = "bug"
 KIND_CHORE = "chore"
@@ -159,7 +167,7 @@ KIND_LABELS = {
 
 # Marcadores visuais (emoji) que aparecem ao lado do ID em todas as
 # superficies de display (chat-title, tasks list, backlog list, headings
-# de FEATURES.md). ID continua neutro (D-NNN) per ADR-0011; o emoji da
+# de .guia/DEMANDAS.md). ID continua neutro (D-NNN) per ADR-0011; o emoji da
 # o sinal visual de qual kind a demanda e.
 KIND_MARKERS = {
     KIND_FEATURE: "✨",
@@ -177,7 +185,7 @@ SECTION_FILES = "### Arquivos modificados/criados"
 SECTION_DONE = "### O que foi feito"
 SECTION_VALIDATION_DONE = "### Validacao feita"
 SECTION_VALIDATION_PENDING = "### Validacao pendente"
-FEATURES_HEADER = "# Features e Issues\n\n---\n\n"
+FEATURES_HEADER = "# Demandas\n\n---\n\n"
 FEATURES_INSERT_MARKER = "---\n\n"
 
 
@@ -196,6 +204,7 @@ __all__ = [
     "DOCS_MAP_FILE",
     "REPORTS_DIR",
     "FEATURES_FILE",
+    "FEATURES_REL",
     "REGISTRY_FILE",
     "TASK_HEADING_RE",
     "STATUS_IN_DEVELOPMENT",

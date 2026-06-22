@@ -23,8 +23,8 @@ version: 1
 # como booleanos. `event:` evita essa armadilha.
 
 docs:
-  - path: FEATURES.md
-    purpose: "Catalogo de features e issues entregues (gerado/mantido por core/src/guia.py)."
+  - path: .guia/DEMANDAS.md
+    purpose: "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
     triggers:
       - event: task-finished
         hint: "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa."
@@ -57,7 +57,7 @@ docs:
 
   - path: docs/reference/files.md
     diataxis: reference
-    purpose: "Mapa dos arquivos de estado (.guia/*, FEATURES.md, registry.yaml)."
+    purpose: "Mapa dos arquivos de estado (.guia/*, .guia/DEMANDAS.md, .guia/locks/registry.yaml)."
     triggers:
       - event: touched
         paths:

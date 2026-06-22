@@ -30,7 +30,7 @@ Se nao houver resposta em 10 dias uteis, voce esta liberado para escalar (issue 
 
 Em escopo (reporte privado):
 
-- Falhas no `core/src/guia.py` / `core/bin/guia.ps1` que permitem corromper `.guia/*.json`, `FEATURES.md` ou `.guia/locks/registry.yaml` de fora do fluxo previsto.
+- Falhas no `core/src/guia.py` / `core/bin/guia.ps1` que permitem corromper `.guia/*.json`, `.guia/DEMANDAS.md` ou `.guia/locks/registry.yaml` de fora do fluxo previsto.
 - Bypass do hook `commit-msg` / `core/lock/check-lock.py` (commitar em arquivo travado sem marca `[unlock:...]`).
 - Falhas no `core/build/render-skills.py` que permitem injetar conteudo em `plugins/guia/commands/<verbo>.md` ou `plugins/guia/.agents/skills/<verbo>/SKILL.md` divergente do manifest (`core/manifest/manifest.yaml`).
 - Injecao em mensagens de commit, paths, ou inputs de CLI que escapem para shell/Python.
@@ -52,5 +52,5 @@ Enquanto o pack esta pre-1.0, apenas a versao corrente do branch `main` recebe f
 Contexto para quem investiga: o pack ja tem tres camadas para o lock de arquivos homologados (`docs/explanation/por-que-lock.md`). Falhas que rompem qualquer uma das tres sao tratadas como seguranca:
 
 1. `commit-msg` local (`core/hooks/commit-msg` -> `core/lock/check-lock.py hook`).
-2. CI remoto (`.github/workflows/lock-check.yml`, planejado em [F-005](FEATURES.md)).
+2. CI remoto (`.github/workflows/lock-check.yml`, planejado em [F-005](.guia/DEMANDAS.md)).
 3. Inspecao manual no PR.

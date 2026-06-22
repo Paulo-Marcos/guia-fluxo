@@ -32,7 +32,7 @@ Sanity check: confirma layout, dependencias e que os arquivos esperados existem.
     [--status backlog|planned|in-development]
 ```
 
-Cria `D-NNN` com `kind=feature` (emoji ✨), atualiza `.guia/tasks.json`, `.guia/current-task.json` e `FEATURES.md`. Imprime `NOME DO CHAT: D-NNN ✨ - #DEV - ...`.
+Cria `D-NNN` com `kind=feature` (emoji ✨), atualiza `.guia/tasks.json`, `.guia/current-task.json` e `.guia/DEMANDAS.md`. Imprime `NOME DO CHAT: D-NNN ✨ - #DEV - ...`.
 
 `--status` (ADR-0011 Fase 3) controla o estado inicial: `backlog` parqueia sem catalogar; `planned` triada mas nao iniciada; `in-development` (default) ja em curso.
 
@@ -63,7 +63,7 @@ Cria `D-NNN` com `kind=chore` (emoji 🧹). Use para manutencao que merece rastr
 .\core\bin\guia.ps1 backlog resolve D-NNN [--reason "Por que saiu do backlog"]
 ```
 
-`add` cria `D-NNN` com `kind=feature` (default) e `status=Backlog` em `.guia/tasks.json` (ADR-0011 Fase 2: backlog.json deixou de ser source-of-truth para novas entradas). Nao entra em `FEATURES.md` ate ser promovido.
+`add` cria `D-NNN` com `kind=feature` (default) e `status=Backlog` em `.guia/tasks.json` (ADR-0011 Fase 2: backlog.json deixou de ser source-of-truth para novas entradas). Nao entra em `.guia/DEMANDAS.md` ate ser promovido.
 
 `list` une fontes: `tasks.json` com `status=Backlog` primeiro, depois itens legacy de `backlog.json` (`B-NNN`). Itens resolvidos (`resolve`) nao aparecem.
 
@@ -167,7 +167,7 @@ Quando o mapa nao existe, retorna `{"hasMap": false, "candidates": []}` (JSON) o
     [--set-current]
 ```
 
-Encerra a task como `Cancelada` (estado terminal). `--reason` e **obrigatorio** (fica em `task.cancellations[]` e no historico em `FEATURES.md`).
+Encerra a task como `Cancelada` (estado terminal). `--reason` e **obrigatorio** (fica em `task.cancellations[]` e no historico em `.guia/DEMANDAS.md`).
 
 - `--keep-worktree`: nao remove a worktree associada. Default: remove se a task tinha worktree.
 - `--set-current`: mantem a task como current apos cancelar. Default: limpa `.guia/current-task.json` se a task cancelada era a current.
@@ -233,4 +233,4 @@ Os comandos acima sao expostos para agentes via skills/shims. No Claude Code (pl
 | `/guia:unblock` | `/unblock` ou `$unblock` | `unblock` | — |
 | `/guia:status` | `/status` ou `$status` | `status` | — |
 
-> **Removido na Fase 4 do ADR-0011 (2026-06-07):** `/guia:issue` e `ai issue` nao existem mais — use `/guia:bug`. Tasks legacy com `kind=issue` (ex.: `I-006`) continuam navegaveis e renderizam como "Bug (legacy)" 🐛 em FEATURES.md.
+> **Removido na Fase 4 do ADR-0011 (2026-06-07):** `/guia:issue` e `ai issue` nao existem mais — use `/guia:bug`. Tasks legacy com `kind=issue` (ex.: `I-006`) continuam navegaveis e renderizam como "Bug (legacy)" 🐛 em `.guia/DEMANDAS.md`.

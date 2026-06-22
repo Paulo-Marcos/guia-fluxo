@@ -9,7 +9,7 @@ O guia-fluxo transforma pedidos soltos em demandas rastreaveis usando script det
 | **Skill** | Interface conversacional. Como o agente entende `/feature`, `/bug`, etc. |
 | **Script** (`core/src/guia.py`) | Fonte de verdade e automacao. Todas as mutacoes passam por aqui. |
 | **`.guia/*.json`** | Estado legivel por programas. Tasks, backlog, current, reports. |
-| **`FEATURES.md`** | Historico legivel por humano. Espelha o JSON em prosa. |
+| **`.guia/DEMANDAS.md`** | Historico legivel por humano. Espelha o JSON em prosa. |
 | **`.guia/locks/registry.yaml`** | Lock de arquivos homologados. |
 | **Hooks** | Guarda-corpo opcional para lembrar ou bloquear desvios. |
 
@@ -34,7 +34,7 @@ Backlog ──┬──> Planejada ──> Em desenvolvimento ──> Aguardando
 ## Fluxo recomendado
 
 1. Comece com `/feature`, `/bug`, `/chore` ou `/backlog add`. Use `--status backlog|planned|in-development` para criar ja parqueado/triado.
-2. O script cria o ID `D-NNN`, atualiza `.guia/tasks.json`, `.guia/current-task.json` e `FEATURES.md` (exceto se `status=Backlog`, que fica fora do catalogo ate ser promovido).
+2. O script cria o ID `D-NNN`, atualiza `.guia/tasks.json`, `.guia/current-task.json` e `.guia/DEMANDAS.md` (exceto se `status=Backlog`, que fica fora do catalogo ate ser promovido).
 3. O script sempre imprime `NOME DO CHAT: D-NNN <emoji> - #<statusTag> - <title>` e grava `.guia/chat-title.txt`.
 4. O agente repete esse nome no chat e executa a renomeacao real quando a ferramenta expuser API ou comando de sessao.
 5. Para itens em backlog: `/promote <id> --kind feature|bug|chore` (avalia + comeca) ou `/start <id>` (atalho, pressupoe triagem feita).

@@ -70,7 +70,7 @@ CHAT_TITLE=F-001 - #DEV - Adicionar comando de export
 O script:
 - Gera o ID `F-001`.
 - Atualiza `.guia/tasks.json` e `.guia/current-task.json`.
-- Acrescenta a entrada em `FEATURES.md`.
+- Acrescenta a entrada em `.guia/DEMANDAS.md`.
 - Imprime e grava em `.guia/chat-title.txt` o titulo sugerido para o chat.
 
 Voce (ou o agente) deve **repetir a linha `NOME DO CHAT: ...` no chat**. Se a ferramenta expor `/rename`, aplique-o. Detalhes por ferramenta: [reference/chat-rename-suporte.md](../reference/chat-rename-suporte.md).
