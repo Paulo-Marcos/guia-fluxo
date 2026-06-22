@@ -166,3 +166,11 @@ verbs:
         body_file: bodies/init.md
       claude_command:
         body_file: bodies/init.md
+  upgrade:
+    description: |
+      MIGRATE — bring an existing project to the current Guia Fluxo layout: move `FEATURES.md` (root) → `.guia/DEMANDAS.md`, `features/registry.yaml` → `.guia/locks/registry.yaml`, `features/lock-ignore.txt` → `.guia/locks/lock-ignore.txt`, and drop `features/` if empty. Uses `git mv` to preserve history when the file is tracked. Idempotent: prints "Layout ja esta atualizado" when there's nothing to do. Options: `--dry-run` lists the plan without mutating. Refuses (exit 1) if any destination already exists — fix by hand. Distinct from `init` (sets up a virgin project), from `/plugin update` (updates the plugin itself), and from `backlog migrate` (legacy `B-NNN` items).
+    targets:
+      agent_skill:
+        body_file: bodies/upgrade.md
+      claude_command:
+        body_file: bodies/upgrade.md

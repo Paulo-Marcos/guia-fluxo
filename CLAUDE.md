@@ -26,6 +26,7 @@ Este repo **e um plugin Claude Code oficial**: `plugins/guia/.claude-plugin/plug
 | `/guia:block` | `block` | — | Pausar task preservando WIP. Exige `--reason`. |
 | `/guia:unblock` | `unblock` | — | Retomar task pausada. |
 | `/guia:init` | `init` | — | Setup do projeto: semeia `.guia/` + deploya lock config (`.guia/locks/registry.yaml`, `lock-ignore.txt`) + `.githooks/commit-msg` + `hooksPath`. Opcional (auto-init ja cobre `.guia/`); `--no-locks` so semeia estado. |
+| `/guia:upgrade` | `upgrade` | — | Migra projeto **existente** do layout antigo (`FEATURES.md` + `features/` na raiz) para o atual (`.guia/DEMANDAS.md` + `.guia/locks/`). Idempotente; `--dry-run` lista o plano sem mutar. |
 
 > **Removido na Fase 4 do ADR-0011 (2026-06-07):** `/guia:issue` deixou de existir; use `/guia:bug`. Tasks antigas com `kind=issue` continuam navegaveis (renderizam como "Bug (legacy)" 🐛). IDs novos sao `D-NNN` neutros (ADR-0011); legacy `F-NNN`/`I-NNN`/`B-NNN` continuam aceitos como entrada.
 

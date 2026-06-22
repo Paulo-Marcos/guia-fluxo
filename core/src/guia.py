@@ -74,6 +74,7 @@ from _cli_lifecycle import (  # noqa: E402
     cmd_finish,
     cmd_init,
     cmd_plan,
+    cmd_upgrade,
     cmd_ready,
     cmd_start,
     cmd_status,
@@ -158,6 +159,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Seed .guia/ only; skip the lock registry, commit-msg hook and hooksPath.",
     )
     p_init.set_defaults(func=cmd_init)
+
+    p_upgrade = sub.add_parser(
+        "upgrade",
+        help="Migra projeto do layout antigo (FEATURES.md + features/) para o atual (.guia/DEMANDAS.md + .guia/locks/).",
+    )
+    p_upgrade.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Lista o plano sem mutar. Default executa.",
+    )
+    p_upgrade.set_defaults(func=cmd_upgrade)
 
     p_feature = sub.add_parser("feature", help="Create a feature task.")
     _add_task_args(p_feature)
@@ -415,7 +427,7 @@ def build_parser() -> argparse.ArgumentParser:
 # itself; `doctor` reports `.guia/` health and must not mask a missing dir;
 # `render` is a dev-only build step over the manifest, unrelated to project
 # state.
-_NO_AUTO_INIT = frozenset({"init", "doctor", "render"})
+_NO_AUTO_INIT = frozenset({"init", "doctor", "render", "upgrade"})
 
 
 def main(argv: list[str] | None = None) -> int:

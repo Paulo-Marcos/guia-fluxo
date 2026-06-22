@@ -227,6 +227,82 @@ def cmd_init(args: argparse.Namespace) -> int:
     return 0
 
 
+# D-091: migracoes do layout antigo (raiz) para o atual (.guia/). Cada
+# entrada e (origem-relativa-ROOT, destino-relativa-ROOT). Ordem importa:
+# o catalogo primeiro, depois os locks - mantem o output legivel.
+_UPGRADE_MOVES: list[tuple[str, str]] = [
+    ("FEATURES.md", ".guia/DEMANDAS.md"),
+    ("features/registry.yaml", ".guia/locks/registry.yaml"),
+    ("features/lock-ignore.txt", ".guia/locks/lock-ignore.txt"),
+]
+
+
+def cmd_upgrade(args: argparse.Namespace) -> int:
+    """D-091: migra o projeto do layout antigo (FEATURES.md + features/) para
+    o layout atual (.guia/DEMANDAS.md + .guia/locks/). Idempotente:
+    nada para mover = NOOP. Move com `git mv` quando o repo e git e o
+    arquivo esta rastreado (preserva historico); cai para `shutil.move`
+    quando nao da. `--dry-run` lista o plano sem mutar.
+    """
+    import shutil
+    import subprocess
+
+    plan: list[tuple[Path, Path]] = []
+    blockers: list[str] = []
+    for src_rel, dst_rel in _UPGRADE_MOVES:
+        src = ROOT / src_rel
+        dst = ROOT / dst_rel
+        if not src.exists():
+            continue
+        if dst.exists():
+            blockers.append(f"  ! {src_rel} -> {dst_rel} (destino ja existe; resolva a mao)")
+            continue
+        plan.append((src, dst))
+
+    if blockers:
+        for line in blockers:
+            print(line, file=sys.stderr)
+        return 1
+
+    if not plan:
+        print("Layout ja esta atualizado. Nada a migrar.")
+        return 0
+
+    print("Plano de migracao:")
+    for src, dst in plan:
+        print(f"  + {src.relative_to(ROOT).as_posix()} -> {dst.relative_to(ROOT).as_posix()}")
+
+    if args.dry_run:
+        print("\n--dry-run: nada foi mutado. Re-rode sem --dry-run para aplicar.")
+        return 0
+
+    git_dir = (ROOT / ".git").is_dir()
+    for src, dst in plan:
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        moved_by_git = False
+        if git_dir:
+            try:
+                subprocess.run(
+                    ["git", "-C", str(ROOT), "mv", str(src.relative_to(ROOT)), str(dst.relative_to(ROOT))],
+                    check=True, capture_output=True, text=True,
+                )
+                moved_by_git = True
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                pass  # arquivo nao rastreado ou git ausente -> fallback
+        if not moved_by_git:
+            shutil.move(str(src), str(dst))
+        print(f"  moved {src.relative_to(ROOT).as_posix()} -> {dst.relative_to(ROOT).as_posix()}")
+
+    # Remove features/ se ficou vazio (clean-up cosmetico).
+    features_dir = ROOT / "features"
+    if features_dir.is_dir() and not any(features_dir.iterdir()):
+        features_dir.rmdir()
+        print("  rmdir features/ (vazio)")
+
+    print(f"\nMigracao concluida: {len(plan)} arquivo(s) movido(s).")
+    return 0
+
+
 def cmd_status(args: argparse.Namespace) -> int:
     import json
 
@@ -672,6 +748,7 @@ __all__ = [
     "cmd_cancel",
     "cmd_block",
     "cmd_unblock",
+    "cmd_upgrade",
     "cmd_plan",
     "cmd_start",
     "cmd_validate",

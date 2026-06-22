@@ -17,6 +17,14 @@ Inicializa o Guia Fluxo no projeto atual. Sempre semeia `.guia/` (JSONs vazios, 
 
 Idempotente e **nunca clobbera** arquivos existentes (imprime `+` para escritos e `=` para preservados). `--no-locks` faz so o seed de `.guia/`; `--force` sobrescreve. No Claude Code o auto-init ja cria `.guia/` no primeiro comando — rode `init` para optar pelos locks.
 
+### `upgrade`
+
+```powershell
+.\core\bin\guia.ps1 upgrade [--dry-run]
+```
+
+Migra um projeto **existente** do layout antigo (pre-D-055/D-056) para o atual: `FEATURES.md` (raiz) → `.guia/DEMANDAS.md`, `features/registry.yaml` → `.guia/locks/registry.yaml`, `features/lock-ignore.txt` → `.guia/locks/lock-ignore.txt`, e remove `features/` se ficou vazio. Usa `git mv` quando o arquivo esta rastreado (preserva historico de rename). Idempotente: NOOP quando nada ha pra mover. `--dry-run` lista o plano sem mutar. Recusa (exit 1) se algum destino ja existe — resolva a mao e re-rode. Distinto de `init` (setup virgem), `/plugin update` (atualiza o plugin) e `backlog migrate` (`B-NNN` legacy).
+
 ### `doctor`
 
 ```powershell

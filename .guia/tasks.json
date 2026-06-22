@@ -2,6 +2,111 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-091",
+      "kind": "feature",
+      "title": "guia:upgrade - migrar projetos existentes para o layout atual",
+      "status": "Validada",
+      "origin": "Guia Fluxo (2026-06-21)",
+      "context": "Comando idempotente que detecta layout antigo e migra: (a) FEATURES.md na raiz -> .guia/DEMANDAS.md; (b) features/registry.yaml -> .guia/locks/registry.yaml; (c) features/lock-ignore.txt -> .guia/locks/lock-ignore.txt; (d) remove features/ se ficou vazio. Sem perder nada (rename, nao copy+delete). --dry-run lista o plano sem mutar; default executa. Distinto de /plugin update (que atualiza o plugin) e de backlog migrate (que mexe em backlog.json). Emite NOOP se ja esta atualizado. Comando determinista no guia.py; teste com fixture do layout antigo + asserts pos-migracao.",
+      "createdAt": "2026-06-21",
+      "updatedAt": "2026-06-21",
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md",
+        "core/src/_cli_lifecycle.py",
+        "core/src/guia.py",
+        "core/manifest/manifest.yaml",
+        "core/manifest/bodies/upgrade.md",
+        "tests/test_upgrade.py",
+        "docs/reference/cli.md",
+        "CLAUDE.md",
+        ".guia/current-task.json",
+        ".guia/tasks.json",
+        "plugins/guia/bin/_cli_lifecycle.py",
+        "plugins/guia/bin/guia.py"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo.",
+        "Step 3 do par estrutural: 'guia upgrade' (verbo + skill /guia:upgrade) migra projetos do layout antigo (FEATURES.md + features/ na raiz) para o atual (.guia/DEMANDAS.md + .guia/locks/). Implementacao: cmd_upgrade em _cli_lifecycle.py com plano + git mv quando possivel (preserva historico de rename) + fallback shutil.move; remove features/ se vazio. Idempotente (NOOP quando nada a mover); --dry-run lista sem mutar; recusa (exit 1) se destino ja existe (resolva a mao). Adicionado a _NO_AUTO_INIT (nao auto-cria .guia/ antes de migrar). Verbo no manifest -> render gerou /guia:upgrade + skill cross-tool. Docs: cli.md (secao 'upgrade'), CLAUDE.md (tabela).",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "tests/test_upgrade.py: 5/5 passed (NOOP, dry-run sem mutacao, migra-preservando-conteudo, idempotente apos migracao, recusa quando destino existe). Suite completa: 155 passed (era 150 + 5). render --check OK (58 alvos). doctor OK."
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-091",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-091",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "README.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo padrao ou os comandos da capa mudaram, atualize.",
+            "purpose": "Porta de entrada do projeto."
+          },
+          {
+            "path": "docs/reference/cli.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se voce adicionou/mudou subcomando ou flag, documente aqui.",
+            "purpose": "Referencia completa de subcomandos do core/src/guia.py / core/bin/guia.ps1."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py, core/manifest/manifest.yaml",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py, core/manifest/manifest.yaml",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          },
+          {
+            "path": "CONTRIBUTING.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo humano mudou (novo passo, nova checagem), atualize.",
+            "purpose": "Guia pra humanos contribuirem."
+          }
+        ],
+        "touched": [
+          "docs/reference/cli.md",
+          "CLAUDE.md"
+        ],
+        "checkedAt": "2026-06-21"
+      }
+    },
+    {
       "id": "D-090",
       "kind": "feature",
       "title": "Arquivamento de demandas antigas em .guia/DEMANDAS.md (keep N + historico + ai-skip)",

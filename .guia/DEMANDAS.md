@@ -2,6 +2,42 @@
 
 ---
 
+## [D-091] ✨ guia:upgrade - migrar projetos existentes para o layout atual
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-21)
+- **Tipo:** Feature
+- **Contexto:** Comando idempotente que detecta layout antigo e migra: (a) FEATURES.md na raiz -> .guia/DEMANDAS.md; (b) features/registry.yaml -> .guia/locks/registry.yaml; (c) features/lock-ignore.txt -> .guia/locks/lock-ignore.txt; (d) remove features/ se ficou vazio. Sem perder nada (rename, nao copy+delete). --dry-run lista o plano sem mutar; default executa. Distinto de /plugin update (que atualiza o plugin) e de backlog migrate (que mexe em backlog.json). Emite NOOP se ja esta atualizado. Comando determinista no guia.py; teste com fixture do layout antigo + asserts pos-migracao.
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+- `core/src/_cli_lifecycle.py`
+- `core/src/guia.py`
+- `core/manifest/manifest.yaml`
+- `core/manifest/bodies/upgrade.md`
+- `tests/test_upgrade.py`
+- `docs/reference/cli.md`
+- `CLAUDE.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `plugins/guia/bin/guia.py`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Step 3 do par estrutural: 'guia upgrade' (verbo + skill /guia:upgrade) migra projetos do layout antigo (FEATURES.md + features/ na raiz) para o atual (.guia/DEMANDAS.md + .guia/locks/). Implementacao: cmd_upgrade em _cli_lifecycle.py com plano + git mv quando possivel (preserva historico de rename) + fallback shutil.move; remove features/ se vazio. Idempotente (NOOP quando nada a mover); --dry-run lista sem mutar; recusa (exit 1) se destino ja existe (resolva a mao). Adicionado a _NO_AUTO_INIT (nao auto-cria .guia/ antes de migrar). Verbo no manifest -> render gerou /guia:upgrade + skill cross-tool. Docs: cli.md (secao 'upgrade'), CLAUDE.md (tabela).
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- tests/test_upgrade.py: 5/5 passed (NOOP, dry-run sem mutacao, migra-preservando-conteudo, idempotente apos migracao, recusa quando destino existe). Suite completa: 155 passed (era 150 + 5). render --check OK (58 alvos). doctor OK.
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-056] ✨ Racionalizar estrutura de pastas: features/ para dentro de .guia/, clarificar separacao ferramenta-vs-dados
 
 - **Status:** Validada
