@@ -54,6 +54,7 @@ from _tasks import (
     pop_item,
     print_task_created,
     set_current_task,
+    unmet_dependencies,
 )
 from _worktree import attach_worktree
 
@@ -67,7 +68,11 @@ def cmd_create_task(args: argparse.Namespace, kind: str) -> int:
     status = _STATUS_FROM_CLI.get(status_cli, STATUS_IN_DEVELOPMENT)
     data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
     task_id = next_task_id(kind, data.get("tasks", []))
-    task = new_task(task_id, kind, args.title, args.context, args.origin, status=status)
+    task = new_task(
+        task_id, kind, args.title, args.context, args.origin,
+        status=status,
+        depends_on=getattr(args, "depends_on", None) or None,
+    )
     data.setdefault("tasks", []).insert(0, task)
     write_json(TASKS_FILE, data)
     set_current_task(task)
@@ -315,6 +320,21 @@ def cmd_promote(args: argparse.Namespace) -> int:
         raise SystemExit(MSG_BACKLOG_ITEM_NOT_FOUND.format(id=args.backlog_id))
 
     source, item = found
+    # D-067: bloqueia promote se a task de backlog ja tem dependencias
+    # abertas. So aplica quando promovendo task ja existente (source=tasks);
+    # item legacy B-NNN nasce sem dependsOn, entao pula.
+    if source == "tasks":
+        unmet = unmet_dependencies(item)
+        if unmet:
+            lines = [f"Task {item['id']} tem dependencia(s) abertas - promote recusado:"]
+            for dep in unmet:
+                status = dep["status"] or "missing"
+                lines.append(f"  - {dep['id']} [{status}]")
+            lines.append(
+                "Conclua (ou cancele) as dependencias e tente novamente. "
+                f"Para inspecionar: `guia depends list {item['id']}`."
+            )
+            raise SystemExit("\n".join(lines))
     if source == "tasks":
         # Build task in-place no tasks.json (preserva ID original).
         task = _promote_existing_task(args, item)

@@ -42,6 +42,7 @@ from _constants import (
     STATUS_BACKLOG,
     STATUS_IN_DEVELOPMENT,
     STATUS_TAGS,
+    STATUSES_SATISFY_DEPENDENCY,
     TASK_HEADING_RE,
     TASK_PREFIXES_FOR_NUMBERING,
     TASKS_FILE,
@@ -56,6 +57,7 @@ def new_task(
     context: str,
     origin: str,
     status: str = STATUS_IN_DEVELOPMENT,
+    depends_on: list[str] | None = None,
 ) -> dict[str, Any]:
     """Build a fresh task dict.
 
@@ -80,7 +82,67 @@ def new_task(
         "validations": [],
         "pending": [] if is_backlog else [MSG_DEFAULT_TASK_PENDING],
     }
+    if depends_on:
+        # Preserva ordem de declaracao, dedup (sem set para nao reordenar).
+        seen: set[str] = set()
+        deps: list[str] = []
+        for dep in depends_on:
+            if dep and dep not in seen:
+                seen.add(dep)
+                deps.append(dep)
+        if deps:
+            task["dependsOn"] = deps
     return task
+
+
+def dependency_creates_cycle(task_id: str, candidate_dep_id: str) -> bool:
+    """D-067: True se declarar `task_id depends on candidate_dep_id` cria ciclo.
+
+    Ciclo existe quando ja ha caminho candidate_dep_id -> ... -> task_id no
+    grafo de `dependsOn`. DFS sem recursao para evitar overflow em cadeias
+    longas; visita cada no no maximo uma vez.
+    """
+    if task_id == candidate_dep_id:
+        return True
+    stack: list[str] = [candidate_dep_id]
+    visited: set[str] = set()
+    while stack:
+        current_id = stack.pop()
+        if current_id in visited:
+            continue
+        visited.add(current_id)
+        current = find_task(current_id)
+        if current is None:
+            continue
+        for dep in current.get("dependsOn", []):
+            if dep == task_id:
+                return True
+            if dep not in visited:
+                stack.append(dep)
+    return False
+
+
+def unmet_dependencies(task: dict[str, Any]) -> list[dict[str, Any]]:
+    """D-067: retorna a lista de deps de `task` que AINDA bloqueiam.
+
+    Uma dep "bloqueia" enquanto a task referenciada nao atinge um status
+    terminal (STATUSES_SATISFY_DEPENDENCY). Dep que aponta para um id
+    inexistente tambem bloqueia (o caller exibe como "missing").
+    Resposta: lista de dicts {id, status?} - status presente quando a
+    task referenciada existe.
+    """
+    deps = list(task.get("dependsOn", []))
+    if not deps:
+        return []
+    unmet: list[dict[str, Any]] = []
+    for dep_id in deps:
+        dep_task = find_task(dep_id)
+        if dep_task is None:
+            unmet.append({"id": dep_id, "status": None})
+            continue
+        if dep_task.get("status") not in STATUSES_SATISFY_DEPENDENCY:
+            unmet.append({"id": dep_id, "status": dep_task.get("status")})
+    return unmet
 
 
 def _number_from_id(value: str, prefix: str) -> int | None:
@@ -272,4 +334,6 @@ __all__ = [
     "recent_task_ids",
     "list_tasks",
     "format_task_line",
+    "unmet_dependencies",
+    "dependency_creates_cycle",
 ]

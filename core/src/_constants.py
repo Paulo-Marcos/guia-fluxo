@@ -133,6 +133,13 @@ MSG_NO_CURRENT_TASK = "No task id provided and no current task set."
 MSG_BACKLOG_ITEM_NOT_FOUND = "Backlog item not found: {id}"
 MSG_BACKLOG_ALREADY_RESOLVED = "{id} ja esta resolvido (status=Resolvida)."
 MSG_BACKLOG_RESOLVED = "{id} resolvido e retirado do backlog ativo."
+# D-067: status que "satisfazem" uma dependencia (a task dependente pode
+# avancar). Inclui terminais nao-Cancelada e Resolvida (D-079). Cancelada
+# tambem satisfaz: a dep foi explicitamente terminada; bloquear a
+# dependente forcaria a re-abrir a dep cancelada (workflow ruim).
+STATUSES_SATISFY_DEPENDENCY = frozenset({
+    "Validada", "Finalizada", "Resolvida", "Cancelada",
+})
 MSG_LOCK_ID_REQUIRED = "--lock-id is required when using --lock."
 MSG_NO_FILES_TO_LOCK = "No files to lock. Add files with --file."
 MSG_LOCK_ALREADY_EXISTS = "Lock already exists: {id}"
@@ -227,6 +234,7 @@ __all__ = [
     "MSG_TASK_NOT_FOUND",
     "MSG_NO_CURRENT_TASK",
     "MSG_BACKLOG_ITEM_NOT_FOUND",
+    "STATUSES_SATISFY_DEPENDENCY",
     "MSG_LOCK_ID_REQUIRED",
     "MSG_NO_FILES_TO_LOCK",
     "MSG_LOCK_ALREADY_EXISTS",

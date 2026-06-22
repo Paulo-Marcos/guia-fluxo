@@ -82,6 +82,11 @@ from _cli_lifecycle import (  # noqa: E402
     cmd_validate,
     ensure_initialized,
 )
+from _cli_deps import (  # noqa: E402
+    cmd_depends_add,
+    cmd_depends_list,
+    cmd_depends_remove,
+)
 from _cli_meta import cmd_docs_check, cmd_render  # noqa: E402
 from _cli_tasks import cmd_tasks_filter, cmd_tasks_list, cmd_tasks_show  # noqa: E402
 from _constants import (  # noqa: E402
@@ -111,6 +116,14 @@ def _add_task_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("title")
     parser.add_argument("--context", default="")
     parser.add_argument("--origin", default=f"Guia Fluxo ({today()})")
+    parser.add_argument(
+        "--depends-on",
+        action="append",
+        default=[],
+        metavar="D-XYZ",
+        help="Declara dependencia de outra demanda (D-067). Repetivel. "
+             "start/promote serao bloqueados ate a dependencia ficar Validada/Finalizada/Resolvida/Cancelada.",
+    )
     parser.add_argument(
         "--status",
         choices=STATUS_CLI_CHOICES,
@@ -411,6 +424,39 @@ def build_parser() -> argparse.ArgumentParser:
     p_tasks_filter.add_argument("--limit", type=int, default=None, help="Limita aos N mais recentes.")
     p_tasks_filter.add_argument("--json", action="store_true", help="Saida em JSON.")
     p_tasks_filter.set_defaults(func=cmd_tasks_filter)
+
+    p_depends = sub.add_parser(
+        "depends",
+        help="Gerencia dependencias entre demandas (D-067): add/remove/list.",
+    )
+    depends_sub = p_depends.add_subparsers(dest="depends_command", required=True)
+    p_depends_add = depends_sub.add_parser(
+        "add",
+        help="Declara dependencia(s) numa task ja existente.",
+    )
+    p_depends_add.add_argument("task_id", nargs="?")
+    p_depends_add.add_argument(
+        "--on", action="append", default=[], required=True, metavar="D-XYZ",
+        help="ID da dependencia. Repetivel.",
+    )
+    p_depends_add.set_defaults(func=cmd_depends_add)
+    p_depends_remove = depends_sub.add_parser(
+        "remove",
+        help="Remove dependencia(s) declaradas.",
+    )
+    p_depends_remove.add_argument("task_id", nargs="?")
+    p_depends_remove.add_argument(
+        "--on", action="append", default=[], required=True, metavar="D-XYZ",
+        help="ID da dependencia a remover. Repetivel.",
+    )
+    p_depends_remove.set_defaults(func=cmd_depends_remove)
+    p_depends_list = depends_sub.add_parser(
+        "list",
+        help="Lista dependencias da task com status atual.",
+    )
+    p_depends_list.add_argument("task_id", nargs="?")
+    p_depends_list.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_depends_list.set_defaults(func=cmd_depends_list)
 
     p_render = sub.add_parser(
         "render",

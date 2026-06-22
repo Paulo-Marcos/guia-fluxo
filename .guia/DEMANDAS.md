@@ -2,6 +2,46 @@
 
 ---
 
+## [D-067] ✨ Dependencia entre demandas (so executa apos concluir)
+
+- **Status:** Validada
+- **Origem:** Backlog (2026-06-11)
+- **Tipo:** Feature
+- **Contexto:** Permitir que uma demanda declare dependencia de outra(s) (ex: D-065 depende de D-066). A demanda dependente fica bloqueada para execucao ate que a demanda da qual depende seja concluida (status Concluida). O start/promote deve recusar iniciar enquanto a dependencia nao fechar, e idealmente listar/visualizar a cadeia de dependencias. Caso de uso real: as 4 skills D-063..D-066 ja tem relacao de pre-requisito entre si.
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+- `core/src/_constants.py`
+- `core/src/_tasks.py`
+- `core/src/_cli_lifecycle.py`
+- `core/src/_cli_creation.py`
+- `core/src/_cli_deps.py`
+- `core/src/guia.py`
+- `tests/test_depends.py`
+- `docs/reference/cli.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `plugins/guia/bin/_cli_creation.py`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/bin/_tasks.py`
+- `plugins/guia/bin/guia.py`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-22: Onda 2 leftover: dependencia entre demandas (bloqueia start/promote ate dep fechar).
+- D-067 implementado de ponta a ponta. Modelo: campo 'dependsOn: [D-XYZ, ...]' por task; STATUSES_SATISFY_DEPENDENCY = {Validada, Finalizada, Resolvida, Cancelada} (Cancelada conta - dep terminada explicitamente nao deve travar a dependente). Bloqueio em start (cmd_start) e promote (cmd_promote, so para source=tasks); ready/finish ficam livres (ja existe). Declaracao: --depends-on D-X (repetivel) em feature/bug/chore. Subcomando dedicado 'depends add/remove/list <id>' com --on D-X (repetivel). Recusa auto-dep, id inexistente e ciclos (DFS sobre o grafo). Novo modulo core/src/_cli_deps.py irmao de _cli_creation.py.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- tests/test_depends.py: 11/11 passed (declaracao com multiplas deps; dedup preservando ordem; bloqueio em start; libera apos finish; cancel da dep tambem libera; add-remove roundtrip; auto-dep recusada; id inexistente recusado; ciclo detectado; list --json marca blocking; lista vazia). Suite completa: 166 passed (155 + 11). render --check OK (59 alvos). doctor OK.
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-091] ✨ guia:upgrade - migrar projetos existentes para o layout atual
 
 - **Status:** Validada

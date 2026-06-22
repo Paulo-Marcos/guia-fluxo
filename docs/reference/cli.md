@@ -206,6 +206,22 @@ Falha se a task nao estava em `Bloqueada`. Imprime `NOME DO CHAT: D-NNN - #DEV -
 
 Ainda existe como subcomando do CLI por compatibilidade. Nao ha mais skill para `/validate`. O fluxo recomendado e `/ready` -> humano testa -> `/finish`.
 
+### `depends` (D-067)
+
+Gerencia dependencias entre demandas. Uma task pode declarar que **depende** de outras; `start`/`promote` ficam **recusados** ate cada dependencia chegar a um status terminal (`Validada`, `Finalizada`, `Resolvida` ou `Cancelada`).
+
+```powershell
+# Declarar na criacao (repetivel):
+.\core\bin\guia.ps1 feature "Titulo" --depends-on D-001 --depends-on D-002
+
+# Pos-criacao:
+.\core\bin\guia.ps1 depends add    [D-NNN] --on D-XYZ [--on D-ABC]
+.\core\bin\guia.ps1 depends remove [D-NNN] --on D-XYZ
+.\core\bin\guia.ps1 depends list   [D-NNN] [--json]
+```
+
+`add` recusa auto-dependencia, id inexistente em `tasks.json`, e qualquer dep que crie **ciclo** no grafo. `remove` e idempotente. `list` mostra cada dependencia com status atual e marca quais ainda bloqueiam.
+
 ### `render`
 
 ```powershell

@@ -60,7 +60,28 @@ from _tasks import (
     print_chat_title,
     save_task,
     set_current_task,
+    unmet_dependencies,
 )
+
+
+def _ensure_dependencies_met(task: dict[str, Any], verb: str) -> None:
+    """D-067: bloqueia start/promote enquanto houver dep aberta.
+
+    Lanca SystemExit com mensagem amigavel listando cada dep aberta e seu
+    status atual (ou 'missing' quando o id nao existe).
+    """
+    unmet = unmet_dependencies(task)
+    if not unmet:
+        return
+    lines = [f"Task {task['id']} tem dependencia(s) abertas - {verb} recusado:"]
+    for dep in unmet:
+        status = dep["status"] or "missing"
+        lines.append(f"  - {dep['id']} [{status}]")
+    lines.append(
+        "Conclua (ou cancele) as dependencias e tente novamente. "
+        "Para inspecionar: `guia depends list " + task["id"] + "`."
+    )
+    raise SystemExit("\n".join(lines))
 from _validation_runner import run_validation_commands
 from _worktree import cleanup_task_worktree
 
@@ -521,6 +542,7 @@ def cmd_start(args: argparse.Namespace) -> int:
             f"Task {task['id']} esta em '{task['status']}' - "
             f"start so aceita transicao de [{valid}]."
         )
+    _ensure_dependencies_met(task, "start")
 
     coming_from_backlog = task["status"] == STATUS_BACKLOG
     task["status"] = STATUS_IN_DEVELOPMENT
