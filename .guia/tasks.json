@@ -446,15 +446,68 @@
       "id": "D-081",
       "kind": "feature",
       "title": "finish/commit nao lida com delecao de arquivo e nao faz rollback do status ao falhar",
-      "status": "Backlog",
+      "status": "Validada",
       "origin": "Backlog (2026-06-20)",
       "context": "Bug real (mordeu no finish D-077, 2026-06-20): _commit.py git_commit usa 'git add -- <files>', que falha em arquivo DELETADO ('pathspec did not match any files') -> finish aborta sem commitar. Pior: o status ja foi mudado para Validada ANTES do commit, sem rollback, deixando estado inconsistente (task Validada mas nada commitado). Corrigir: (a) stage de delecoes (git add -A -- <path> ou git rm) em git_commit; (b) tornar a transicao de status atomica com o commit (so marca Validada se o commit suceder) ou reverter no erro. Cruza com a lacuna de finish nao injetar [unlock:] para arquivos novos (ver D-080 e D-054).",
       "createdAt": "2026-06-20",
-      "updatedAt": "2026-06-20",
-      "modifiedFiles": [],
-      "summary": [],
-      "validations": [],
-      "pending": []
+      "updatedAt": "2026-06-23",
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md",
+        "core/src/_git_ops.py",
+        "core/src/_cli_lifecycle.py",
+        "plugins/guia/bin/_git_ops.py",
+        "plugins/guia/bin/_cli_lifecycle.py",
+        "tests/test_finish_commit.py",
+        ".guia/current-task.json",
+        ".guia/tasks.json",
+        "CHANGELOG.md"
+      ],
+      "summary": [
+        "Em desenvolvimento desde 2026-06-22.",
+        "git_commit usa 'git add -A -- <files>' para stage de delecoes (alem de adds/mods); finish reverte o status pre-commit se commit_task estourar (atomicidade status<->commit). Espelho do plugin regerado.",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "pytest tests/ -> 178 passed (inclui test_finish_commit.py: deletion commita + commit que falha nao deixa status Validada); doctor exit 0; render-skills.py --check exit 0 (61 alvos em sincronia)."
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-081",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-081",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md"
+        ],
+        "checkedAt": "2026-06-23",
+        "skipped": ".guia/DEMANDAS.md mantido pelo script; visao-geral/ADR sem mudanca arquitetural (fix interno de finish/commit)"
+      }
     },
     {
       "id": "D-080",

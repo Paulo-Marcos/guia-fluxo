@@ -460,6 +460,8 @@ def cmd_finish(args: argparse.Namespace) -> int:
         )
 
     finish_config = config.get("finish", {})
+    # D-081: guarda o status pre-finish para reverter caso o commit falhe.
+    previous_status = task.get("status")
     task["status"] = finish_config.get("status", STATUS_VALIDATED)
     merge_list(task, "modifiedFiles", changed_files)
     merge_list(task, "modifiedFiles", args.docs_touched)
@@ -489,7 +491,18 @@ def cmd_finish(args: argparse.Namespace) -> int:
     write_report(task, "finish")
 
     if commit_requested:
-        commit_task(task)
+        # D-081: atomicidade status<->commit. O status `Validada` so deve
+        # persistir se o commit suceder. Se `commit_task` estourar (pathspec,
+        # hook de lock, staged inesperado), revertemos a transicao ja gravada
+        # para nao deixar a task como Validada sem nenhum commit por tras.
+        try:
+            commit_task(task)
+        except BaseException:
+            task["status"] = previous_status
+            save_task(task)
+            set_current_task(task)
+            upsert_features_entry(task)
+            raise
     cleanup_task_worktree(task, commit_requested)
 
     print(f"{task['id']} finished as {task['status']}.")

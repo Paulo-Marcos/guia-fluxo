@@ -2,6 +2,39 @@
 
 ---
 
+## [D-081] ✨ finish/commit nao lida com delecao de arquivo e nao faz rollback do status ao falhar
+
+- **Status:** Validada
+- **Origem:** Backlog (2026-06-20)
+- **Tipo:** Feature
+- **Contexto:** Bug real (mordeu no finish D-077, 2026-06-20): _commit.py git_commit usa 'git add -- <files>', que falha em arquivo DELETADO ('pathspec did not match any files') -> finish aborta sem commitar. Pior: o status ja foi mudado para Validada ANTES do commit, sem rollback, deixando estado inconsistente (task Validada mas nada commitado). Corrigir: (a) stage de delecoes (git add -A -- <path> ou git rm) em git_commit; (b) tornar a transicao de status atomica com o commit (so marca Validada se o commit suceder) ou reverter no erro. Cruza com a lacuna de finish nao injetar [unlock:] para arquivos novos (ver D-080 e D-054).
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+- `core/src/_git_ops.py`
+- `core/src/_cli_lifecycle.py`
+- `plugins/guia/bin/_git_ops.py`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `tests/test_finish_commit.py`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CHANGELOG.md`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-22.
+- git_commit usa 'git add -A -- <files>' para stage de delecoes (alem de adds/mods); finish reverte o status pre-commit se commit_task estourar (atomicidade status<->commit). Espelho do plugin regerado.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- pytest tests/ -> 178 passed (inclui test_finish_commit.py: deletion commita + commit que falha nao deixa status Validada); doctor exit 0; render-skills.py --check exit 0 (61 alvos em sincronia).
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-092] ✨ Filho 1
 
 - **Status:** Em desenvolvimento

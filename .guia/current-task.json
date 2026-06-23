@@ -1,6 +1,6 @@
 {
-  "taskId": "D-049",
+  "taskId": "D-081",
   "status": "Validada",
-  "title": "Hierarquia epic -> stories com chat-pai orquestrador",
-  "chatTitle": "D-049 \u2728 - #FINALIZADO - Hierarquia epic -> stories com chat-pai orquestrador"
+  "title": "finish/commit nao lida com delecao de arquivo e nao faz rollback do status ao falhar",
+  "chatTitle": "D-081 \u2728 - #FINALIZADO - finish/commit nao lida com delecao de arquivo e nao faz rollback do status ao falhar"
 }

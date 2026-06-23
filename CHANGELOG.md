@@ -6,6 +6,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Fixed
+- **`finish`/commit: deleção de arquivo e atomicidade status↔commit (D-081).** Dois defeitos que morderam no finish do D-077. (1) `git_commit` fazia `git add -- <files>`, que falha com `pathspec did not match any files` quando um arquivo da task foi deletado, abortando o commit — trocado por `git add -A -- <files>`, que reconcilia o index com o working tree e cobre adições, modificações **e** deleções no mesmo stage. (2) `cmd_finish` persistia o status `Validada` (`save_task`) **antes** de commitar; se o commit estourava (pathspec, hook de lock, staged inesperado), a task ficava `Validada` sem nenhum commit por trás. Agora o status pré-finish é guardado e, no erro do commit, revertido (status + `save_task`/`set_current`/`upsert`) antes de propagar a exceção — `Validada` só persiste se o commit suceder. Escolhida a abordagem de rollback (não "commitar antes de salvar") para o commit final continuar enxergando o estado `.guia/` já gravado. Testes em `tests/test_finish_commit.py` (2/2: deleção commitada + commit que falha não deixa `Validada`).
+
 ## [0.4.0] - 2026-06-22
 
 ### Added

@@ -79,7 +79,11 @@ def git_staged_files() -> list[str]:
 def git_commit(files: Iterable[str], message: str) -> None:
     _ensure_git()
     files_list = list(files)
-    subprocess.run(git_command("add", "--", *files_list), cwd=ROOT, check=True)
+    # D-081: `git add -- <path>` falha com "pathspec did not match any files"
+    # quando o arquivo da task foi deletado, abortando o commit. `git add -A`
+    # (restrito aos pathspecs da task) reconcilia o index com o working tree,
+    # cobrindo adicoes, modificacoes E delecoes no mesmo stage.
+    subprocess.run(git_command("add", "-A", "--", *files_list), cwd=ROOT, check=True)
     subprocess.run(git_command("commit", "-m", message), cwd=ROOT, check=True)
 
 
