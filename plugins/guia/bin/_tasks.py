@@ -9,7 +9,7 @@ Public surface:
     save_task(task)             upsert in tasks.json
     merge_list(task, key, vals) idempotent list append
     pop_item(items, id)         find+remove from backlog list
-    set_current_task(task)      write current-task.json + chat-title
+    set_current_task(task)      write current-task.json + demand-title
 
 No I/O outside the .guia/ files defined in _constants.
 """
@@ -23,9 +23,9 @@ from typing import Any
 from _clock import today
 from _constants import (
     BACKLOG_FILE,
-    CHAT_TITLE_FILE,
-    CHAT_TITLE_FORMAT_DEFAULT,
     CURRENT_FILE,
+    DEMAND_TITLE_FILE,
+    DEMAND_TITLE_FORMAT_DEFAULT,
     FEATURES_FILE,
     FEATURES_REL,
     KIND_FEATURE,
@@ -316,10 +316,14 @@ def kind_marker(kind: str) -> str:
     return KIND_MARKERS.get(kind or "", KIND_MARKER_FALLBACK)
 
 
-def chat_title(task: dict[str, Any]) -> str:
-    template = read_json(PROCESS_FILE, {}).get(
-        "chatTitleFormat",
-        CHAT_TITLE_FORMAT_DEFAULT,
+def demand_title(task: dict[str, Any]) -> str:
+    # D-093: aceita a chave nova `demandTitleFormat` e cai no legado
+    # `chatTitleFormat` para process.json de projetos ja inicializados antes
+    # da renomeacao; default se nenhuma estiver presente.
+    process = read_json(PROCESS_FILE, {})
+    template = process.get(
+        "demandTitleFormat",
+        process.get("chatTitleFormat", DEMAND_TITLE_FORMAT_DEFAULT),
     )
     return template.format(
         id=task["id"],
@@ -334,23 +338,26 @@ def current_task_payload(task: dict[str, Any]) -> dict[str, str]:
         "taskId": task["id"],
         "status": task["status"],
         "title": task["title"],
-        "chatTitle": chat_title(task),
+        "demandTitle": demand_title(task),
     }
 
 
 def set_current_task(task: dict[str, Any]) -> None:
     write_json(CURRENT_FILE, current_task_payload(task))
-    CHAT_TITLE_FILE.write_text(chat_title(task) + "\n", encoding="utf-8")
+    DEMAND_TITLE_FILE.write_text(demand_title(task) + "\n", encoding="utf-8")
 
 
-def print_chat_title(task: dict[str, Any]) -> None:
-    print(f"\nNOME DO CHAT: {chat_title(task)}")
-    print(f"CHAT_TITLE={chat_title(task)}")
+def print_demand_title(task: dict[str, Any]) -> None:
+    # D-093: imprime a info PURA da demanda corrente. Nao finge renomear o
+    # chat (o chat pode ter varias demandas e nao e renomeado por este print);
+    # a renomeacao do chat e acao opcional/manual do usuario.
+    print(f"\nNOME DA DEMANDA: {demand_title(task)}")
+    print(f"DEMAND_TITLE={demand_title(task)}")
 
 
 def print_task_created(task: dict[str, Any]) -> None:
     print(f"{task['id']} created: {task['title']}")
-    print_chat_title(task)
+    print_demand_title(task)
 
 
 __all__ = [
@@ -363,10 +370,10 @@ __all__ = [
     "merge_list",
     "status_tag",
     "kind_marker",
-    "chat_title",
+    "demand_title",
     "current_task_payload",
     "set_current_task",
-    "print_chat_title",
+    "print_demand_title",
     "print_task_created",
     "recent_task_ids",
     "list_tasks",

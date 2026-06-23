@@ -42,7 +42,7 @@ git config core.hooksPath .githooks
 O `init` cria:
 - `.guia/process.json` com o nome do projeto.
 - `.guia/tasks.json`, `.guia/backlog.json`, `.guia/current-task.json` vazios.
-- `.guia/chat-title.txt` zerado.
+- `.guia/demand-title.txt` zerado.
 
 O `core.hooksPath` ativa o hook `commit-msg` que valida marcas `[unlock:<id>]` em commits que tocam arquivos travados. Em projeto consumidor o caminho e `.githooks` (output do instalador); no repo-mae e `core/hooks`.
 
@@ -61,19 +61,19 @@ Confira:
 Saida tipica:
 
 ```
-F-001 created: Adicionar comando de export
+D-001 created: Adicionar comando de export
 
-NOME DO CHAT: F-001 - #DEV - Adicionar comando de export
-CHAT_TITLE=F-001 - #DEV - Adicionar comando de export
+NOME DA DEMANDA: D-001 ✨ - #DEV - Adicionar comando de export
+DEMAND_TITLE=D-001 ✨ - #DEV - Adicionar comando de export
 ```
 
 O script:
-- Gera o ID `F-001`.
+- Gera o ID `D-001`.
 - Atualiza `.guia/tasks.json` e `.guia/current-task.json`.
 - Acrescenta a entrada em `.guia/DEMANDAS.md`.
-- Imprime e grava em `.guia/chat-title.txt` o titulo sugerido para o chat.
+- Imprime e grava em `.guia/demand-title.txt` o titulo da demanda corrente.
 
-Voce (ou o agente) deve **repetir a linha `NOME DO CHAT: ...` no chat**. Se a ferramenta expor `/rename`, aplique-o. Detalhes por ferramenta: [reference/chat-rename-suporte.md](../reference/chat-rename-suporte.md).
+Voce (ou o agente) deve **repetir a linha `NOME DA DEMANDA: ...` no chat** (rastreabilidade). E info da demanda, nao um titulo de chat — renomear o chat e opcional. Detalhes por ferramenta: [reference/chat-rename-suporte.md](../reference/chat-rename-suporte.md).
 
 ## 3. Implemente
 
@@ -84,7 +84,7 @@ Edite os arquivos do projeto normalmente.
 ## 4. Marque como pronta para validacao
 
 ```powershell
-.\core\bin\guia.ps1 ready F-001 --file scripts/export.py --summary "CLI export criado" --validation "python scripts/export.py --help"
+.\core\bin\guia.ps1 ready D-001 --file scripts/export.py --summary "CLI export criado" --validation "python scripts/export.py --help"
 ```
 
 Isso move a task para `Aguardando validacao` e gera um relatorio em `.guia/reports/`.
@@ -96,15 +96,15 @@ Voce (humano) testa a feature em uso real.
 ## 6. Finalize
 
 ```powershell
-.\core\bin\guia.ps1 finish F-001
+.\core\bin\guia.ps1 finish D-001
 ```
 
-Saida inclui `NOME DO CHAT: F-001 - #FINALIZADO - ...`. Por padrao, `finish` commita as mudancas.
+Saida inclui `NOME DA DEMANDA: D-001 ✨ - #FINALIZADO - ...`. Por padrao, `finish` commita as mudancas.
 
 Para travar a feature contra refactor futuro (opcional):
 
 ```powershell
-.\core\bin\guia.ps1 finish F-001 --lock --lock-id meu-projeto-export
+.\core\bin\guia.ps1 finish D-001 --lock --lock-id meu-projeto-export
 ```
 
 ## Proximos passos

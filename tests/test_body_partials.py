@@ -9,8 +9,8 @@ Mapa de inclusao (intent design):
     title_context_rules.md → feature, bug, chore, backlog
     lock_protocol.md       → feature, bug, chore, promote, finish
     post_cli.<host>.md     → todos os 7 verbos shim (ja que
-                             "ler current-task + repetir NOME DO CHAT
-                             + renomear chat" e universal pos-CLI)
+                             "ler current-task + repetir NOME DA DEMANDA
+                             + rename opcional do chat" e universal pos-CLI)
     nada em ready -> sem lock_protocol (ready nao edita arquivos)
     nada em backlog -> sem lock_protocol (backlog parqueia, nao edita)
 

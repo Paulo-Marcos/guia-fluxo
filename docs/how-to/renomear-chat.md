@@ -1,26 +1,28 @@
-# Como renomear o chat
+# Como renomear o chat (opcional)
 
-Todo comando do CLI (`feature`, `bug`, `chore`, `ready`, `finish`, `status`) imprime um titulo sugerido no formato:
+Todo comando do CLI (`feature`, `bug`, `chore`, `ready`, `finish`, `status`) imprime o titulo da **demanda corrente** no formato:
 
 ```text
-F-016 - #DEV - Titulo
-F-016 - #VALIDACAO - Titulo
-F-016 - #FINALIZADO - Titulo
+NOME DA DEMANDA: D-016 ✨ - #DEV - Titulo
+NOME DA DEMANDA: D-016 ✨ - #VALIDACAO - Titulo
+NOME DA DEMANDA: D-016 ✨ - #FINALIZADO - Titulo
 ```
+
+Isso e **informacao da demanda**, nao um titulo de chat. O print **nao** renomeia a UI, e um mesmo chat pode conter varias demandas (um epico `E-001` com suas stories — ver [ADR-0018](../adr/0018-nome-da-demanda-chat-diferente-de-demanda.md)). Renomear o chat e uma conveniencia **opcional** do usuario.
 
 ## Regra operacional
 
-Depois de qualquer um desses comandos, o agente deve **repetir no chat** a linha `NOME DO CHAT: ...`.
+Depois de qualquer um desses comandos, o agente **repete no chat** a linha `NOME DA DEMANDA: ...` — e o sinal de rastreabilidade entre o trabalho e a demanda.
 
-Isso nao basta para renomear a UI. Sempre que a ferramenta expuser API ou comando de thread/sessao, o agente deve executar o passo de renomeacao real.
+## Renomear o chat na UI (quando ajudar)
 
-## Aplicar a renomeacao na UI
+So vale a pena quando **uma** demanda mapeia limpo para o chat. Se o chat ja agrega varias demandas, renomear para o titulo de uma so engana — nesse caso, nao renomeie.
 
 A forma muda por ferramenta. Ver [reference/chat-rename-suporte.md](../reference/chat-rename-suporte.md) para a lista completa.
 
 Resumo rapido:
 
-- **Claude Code**: `/rename <titulo>` durante a sessao, ou iniciar com `claude -n <titulo>`.
+- **Claude Code**: `mark_chapter` (divisor + entrada na ToC) e/ou `/rename <titulo>` durante a sessao, ou iniciar com `claude -n <titulo>`.
 - **Codex App**: `codex_app.set_thread_title` com o titulo impresso.
 - **Codex CLI/TUI**: `/rename` para a thread atual.
 - **Antigravity CLI**: `/rename <titulo>`.

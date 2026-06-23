@@ -115,7 +115,7 @@ verbs:
 
   status:
     description: |
-      READ-ONLY — show the current active task and the suggested chat title. Optional: `<D-NNN>` to inspect a specific task instead of the current one. Never creates, modifies, advances, or closes a task. To create use `feature`/`bug`/`chore`; for state transitions use `ready`/`finish`/`block`/`unblock`/`cancel`.
+      READ-ONLY — show the current active task and its demand title. Optional: `<D-NNN>` to inspect a specific task instead of the current one. Never creates, modifies, advances, or closes a task. To create use `feature`/`bug`/`chore`; for state transitions use `ready`/`finish`/`block`/`unblock`/`cancel`.
     targets:
       agent_skill:
         body_file: bodies/status.md

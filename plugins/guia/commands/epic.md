@@ -46,4 +46,4 @@ finish E-001                              # SO fecha quando todos os filhos fore
 - A single demand that just needs `--depends-on` to wait for another (use D-067, not D-049).
 - A two-line refactor that doesn't deserve a chat-pai. Just use `chore`.
 
-Reflect the printed `NOME DO CHAT` for the epic itself (`E-NNN ✨ - #DEV - <title>`). Stories get the standard chat title format with their `D-NNN`.
+Reflect the printed `NOME DA DEMANDA` for the epic itself (`E-NNN ✨ - #DEV - <title>`). Stories get the standard demand-title format with their `D-NNN`. The chat is not renamed automatically — a chat-pai holds the epic and several stories, so the line is pure demand info, not a chat title.

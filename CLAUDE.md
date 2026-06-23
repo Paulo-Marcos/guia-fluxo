@@ -40,7 +40,7 @@ O repo tem `.claude-plugin/marketplace.json` na **raiz** (catalogo, `source: ./p
 ## Especificidades Claude Code
 
 - **Edicao de arquivo:** use as tools `Edit`/`Write` (nao bash heredoc). A regra geral de "nao editar gerados" de AGENTS.md se aplica integralmente.
-- **NOME DO CHAT:** sempre que o CLI imprimir essa linha, repita ao usuario. Se a sessao expoe `/rename`, aplique tambem com o titulo sugerido - a maioria das versoes do Claude Code suporta.
+- **NOME DA DEMANDA:** sempre que o CLI imprimir essa linha, repita ao usuario (rastreabilidade). E info da demanda corrente, **nao** um titulo de chat - um mesmo chat pode conter varias demandas (epico D-049). Renomear a sessao e **opcional**: so quando uma demanda mapeia limpo para o chat, via `mark_chapter` e/ou `/rename` (ADR-0018).
 - **Sandbox de hooks:** o sistema ja proibe pular hooks (`--no-verify`, `--no-gpg-sign`). Se o hook bloquear, investigue.
 
 ## O resto

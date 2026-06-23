@@ -17,7 +17,7 @@ from _clock import today
 from _commit import commit_task
 from _constants import (
     GUIA_DIR,
-    CHAT_TITLE_FILE,
+    DEMAND_TITLE_FILE,
     DOCS_MAP_FILE,
     FEATURES_REL,
     MSG_DEFAULT_FINISH_SUMMARY,
@@ -62,7 +62,7 @@ from _tasks import (
     kind_marker,
     list_tasks,
     merge_list,
-    print_chat_title,
+    print_demand_title,
     save_task,
     set_current_task,
     unmet_dependencies,
@@ -104,8 +104,8 @@ def initialize_project(project_name: str, force: bool = False) -> None:
     write_if_missing(TASKS_FILE, {"schemaVersion": 1, "tasks": []}, force=force)
     write_if_missing(BACKLOG_FILE, {"schemaVersion": 1, "items": []}, force=force)
     write_if_missing(CURRENT_FILE, {}, force=force)
-    if force or not CHAT_TITLE_FILE.exists():
-        CHAT_TITLE_FILE.write_text("", encoding="utf-8")
+    if force or not DEMAND_TITLE_FILE.exists():
+        DEMAND_TITLE_FILE.write_text("", encoding="utf-8")
 
 
 def ensure_initialized() -> None:
@@ -341,10 +341,10 @@ def cmd_status(args: argparse.Namespace) -> int:
     # JSON usa `tasks show <id>`.
     if task.get("kind") == KIND_EPIC:
         _print_epic_tree(task)
-        print_chat_title(task)
+        print_demand_title(task)
         return 0
     print(json.dumps(task, ensure_ascii=False, indent=2))
-    print_chat_title(task)
+    print_demand_title(task)
     return 0
 
 
@@ -423,7 +423,7 @@ def cmd_ready(args: argparse.Namespace) -> int:
     write_report(task, "ready")
 
     print(f"{task['id']} moved to {task['status']}.")
-    print_chat_title(task)
+    print_demand_title(task)
     return 0
 
 
@@ -506,7 +506,7 @@ def cmd_finish(args: argparse.Namespace) -> int:
     cleanup_task_worktree(task, commit_requested)
 
     print(f"{task['id']} finished as {task['status']}.")
-    print_chat_title(task)
+    print_demand_title(task)
     return 0
 
 
@@ -517,7 +517,7 @@ def _clear_current_if_matches(task_id: str) -> None:
     current = read_json(CURRENT_FILE, {})
     if current.get("taskId") == task_id:
         write_json(CURRENT_FILE, {})
-        CHAT_TITLE_FILE.write_text("", encoding="utf-8")
+        DEMAND_TITLE_FILE.write_text("", encoding="utf-8")
 
 
 def cmd_cancel(args: argparse.Namespace) -> int:
@@ -547,7 +547,7 @@ def cmd_cancel(args: argparse.Namespace) -> int:
         _clear_current_if_matches(task["id"])
 
     print(f"{task['id']} cancelled: {args.reason}")
-    print_chat_title(task)
+    print_demand_title(task)
     return 0
 
 
@@ -594,7 +594,7 @@ def cmd_plan(args: argparse.Namespace) -> int:
     write_report(task, "plan")
 
     print(f"{task['id']} planned.")
-    print_chat_title(task)
+    print_demand_title(task)
     return 0
 
 
@@ -630,7 +630,7 @@ def cmd_start(args: argparse.Namespace) -> int:
     write_report(task, "start")
 
     print(f"{task['id']} started.")
-    print_chat_title(task)
+    print_demand_title(task)
     return 0
 
 
@@ -654,7 +654,7 @@ def cmd_block(args: argparse.Namespace) -> int:
     write_report(task, "block")
 
     print(f"{task['id']} blocked: {args.reason}")
-    print_chat_title(task)
+    print_demand_title(task)
     return 0
 
 
@@ -680,7 +680,7 @@ def cmd_unblock(args: argparse.Namespace) -> int:
     write_report(task, "unblock")
 
     print(f"{task['id']} unblocked.")
-    print_chat_title(task)
+    print_demand_title(task)
     return 0
 
 
@@ -702,7 +702,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
         lock_task_files(task, args.lock_id, args.lock_description)
 
     print(f"{task['id']} marked as {task['status']}.")
-    print_chat_title(task)
+    print_demand_title(task)
     return 0
 
 

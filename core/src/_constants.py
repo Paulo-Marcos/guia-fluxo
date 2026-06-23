@@ -59,7 +59,11 @@ PROCESS_FILE = GUIA_DIR / "process.json"
 TASKS_FILE = GUIA_DIR / "tasks.json"
 BACKLOG_FILE = GUIA_DIR / "backlog.json"
 CURRENT_FILE = GUIA_DIR / "current-task.json"
-CHAT_TITLE_FILE = GUIA_DIR / "chat-title.txt"
+# D-093: titulo da DEMANDA corrente (nao do chat). O chat pode conter varias
+# demandas (epico D-049) e nao e renomeado automaticamente - a renomeacao virou
+# acao opcional/manual do usuario. Mantido como pointer estavel, host-agnostico,
+# que um helper externo de rename pode ler. Renomeado de chat-title.txt.
+DEMAND_TITLE_FILE = GUIA_DIR / "demand-title.txt"
 DOCS_MAP_FILE = GUIA_DIR / "docs-map.yaml"
 REPORTS_DIR = GUIA_DIR / "reports"
 # Catalogo legivel de demandas. D-055: renomeado de FEATURES.md (nome nao
@@ -166,7 +170,7 @@ MSG_VALIDATE_DEPRECATED = (
 )
 
 
-CHAT_TITLE_FORMAT_DEFAULT = "{id} {kindMarker} - #{statusTag} - {title}"
+DEMAND_TITLE_FORMAT_DEFAULT = "{id} {kindMarker} - #{statusTag} - {title}"
 
 
 KIND_LABELS = {
@@ -178,7 +182,7 @@ KIND_LABELS = {
 }
 
 # Marcadores visuais (emoji) que aparecem ao lado do ID em todas as
-# superficies de display (chat-title, tasks list, backlog list, headings
+# superficies de display (demand-title, tasks list, backlog list, headings
 # de .guia/DEMANDAS.md). ID continua neutro (D-NNN) per ADR-0011; o emoji da
 # o sinal visual de qual kind a demanda e.
 KIND_MARKERS = {
@@ -213,7 +217,7 @@ __all__ = [
     "TASKS_FILE",
     "BACKLOG_FILE",
     "CURRENT_FILE",
-    "CHAT_TITLE_FILE",
+    "DEMAND_TITLE_FILE",
     "DOCS_MAP_FILE",
     "REPORTS_DIR",
     "FEATURES_FILE",
@@ -258,7 +262,7 @@ __all__ = [
     "MSG_DEFAULT_TASK_PENDING",
     "MSG_NONE_PLACEHOLDER",
     "MSG_VALIDATE_DEPRECATED",
-    "CHAT_TITLE_FORMAT_DEFAULT",
+    "DEMAND_TITLE_FORMAT_DEFAULT",
     "KIND_LABELS",
     "KIND_MARKERS",
     "KIND_MARKER_FALLBACK",

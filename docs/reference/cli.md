@@ -10,7 +10,7 @@ Wrapper PowerShell `core/bin/guia.ps1` localiza o Python adequado e invoca `core
 .\core\bin\guia.ps1 init [--project-name "nome-do-projeto"] [--no-locks] [--force]
 ```
 
-Inicializa o Guia Fluxo no projeto atual. Sempre semeia `.guia/` (JSONs vazios, `process.json` com o nome do projeto, `chat-title.txt` zerado). Por padrao tambem deploya, a partir do `templates/` do plugin (`${CLAUDE_PLUGIN_ROOT}/templates/`), a config de lock por-projeto e o hook:
+Inicializa o Guia Fluxo no projeto atual. Sempre semeia `.guia/` (JSONs vazios, `process.json` com o nome do projeto, `demand-title.txt` zerado). Por padrao tambem deploya, a partir do `templates/` do plugin (`${CLAUDE_PLUGIN_ROOT}/templates/`), a config de lock por-projeto e o hook:
 
 - `.guia/locks/registry.yaml`, `.guia/locks/lock-ignore.txt`
 - `.githooks/commit-msg` + `git config core.hooksPath .githooks` (so se ainda nao definido)
@@ -40,7 +40,7 @@ Sanity check: confirma layout, dependencias e que os arquivos esperados existem.
     [--status backlog|planned|in-development]
 ```
 
-Cria `D-NNN` com `kind=feature` (emoji ✨), atualiza `.guia/tasks.json`, `.guia/current-task.json` e `.guia/DEMANDAS.md`. Imprime `NOME DO CHAT: D-NNN ✨ - #DEV - ...`.
+Cria `D-NNN` com `kind=feature` (emoji ✨), atualiza `.guia/tasks.json`, `.guia/current-task.json` e `.guia/DEMANDAS.md`. Imprime `NOME DA DEMANDA: D-NNN ✨ - #DEV - ...`.
 
 `--status` (ADR-0011 Fase 3) controla o estado inicial: `backlog` parqueia sem catalogar; `planned` triada mas nao iniciada; `in-development` (default) ja em curso.
 
@@ -131,7 +131,7 @@ Move task para `Em desenvolvimento`. Aceita transicao de `Backlog` (atalho que p
 .\core\bin\guia.ps1 status --all
 ```
 
-Mostra a tarefa atual e o titulo sugerido para o chat.
+Mostra a tarefa atual e o titulo da demanda corrente (`NOME DA DEMANDA: ...`).
 
 `--all` (B-014) imprime o quadro de todas as tasks `Em desenvolvimento`, marcando a `current`. Se houver mais de uma ativa ao mesmo tempo, avisa sobre a ambiguidade do `current-task.json` global (B-018) — comandos sem id explicito podem pegar a task errada.
 
@@ -144,7 +144,7 @@ Mostra a tarefa atual e o titulo sugerido para o chat.
     --validation "Comando ou check feito"
 ```
 
-Move a task para `Aguardando validacao`. Gera relatorio em `.guia/reports/`. Imprime `NOME DO CHAT: D-NNN - #VALIDACAO - ...`.
+Move a task para `Aguardando validacao`. Gera relatorio em `.guia/reports/`. Imprime `NOME DA DEMANDA: D-NNN - #VALIDACAO - ...`.
 
 ### `finish`
 
@@ -191,7 +191,7 @@ Encerra a task como `Cancelada` (estado terminal). `--reason` e **obrigatorio** 
 - `--keep-worktree`: nao remove a worktree associada. Default: remove se a task tinha worktree.
 - `--set-current`: mantem a task como current apos cancelar. Default: limpa `.guia/current-task.json` se a task cancelada era a current.
 
-Bloqueia se a task ja esta em estado terminal (`Validada`, `Finalizada`, `Cancelada`). Imprime `NOME DO CHAT: D-NNN - #CANCELADA - ...`.
+Bloqueia se a task ja esta em estado terminal (`Validada`, `Finalizada`, `Cancelada`). Imprime `NOME DA DEMANDA: D-NNN - #CANCELADA - ...`.
 
 ### `block`
 
@@ -201,7 +201,7 @@ Bloqueia se a task ja esta em estado terminal (`Validada`, `Finalizada`, `Cancel
 
 Pausa a task: status -> `Bloqueada`, preserva WIP, registra `task.blocks[] = [{reason, at}, ...]`. `--reason` e **obrigatorio**. Para retomar, use `unblock`.
 
-Bloqueia se a task ja esta em estado terminal ou ja em `Bloqueada`. Imprime `NOME DO CHAT: D-NNN - #BLOQUEADA - ...`.
+Bloqueia se a task ja esta em estado terminal ou ja em `Bloqueada`. Imprime `NOME DA DEMANDA: D-NNN - #BLOQUEADA - ...`.
 
 ### `unblock`
 
@@ -211,7 +211,7 @@ Bloqueia se a task ja esta em estado terminal ou ja em `Bloqueada`. Imprime `NOM
 
 Retoma uma task pausada: status `Bloqueada` -> `Em desenvolvimento`. Fecha `task.blocks[-1].unblockedAt`. `--note` e opcional.
 
-Falha se a task nao estava em `Bloqueada`. Imprime `NOME DO CHAT: D-NNN - #DEV - ...`.
+Falha se a task nao estava em `Bloqueada`. Imprime `NOME DA DEMANDA: D-NNN - #DEV - ...`.
 
 ### `validate` (deprecado)
 

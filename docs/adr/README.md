@@ -13,7 +13,7 @@ ADR nao se confunde com [`explanation/`](../explanation/): explanation ensina o 
 | [0001](0001-script-fonte-da-verdade.md) | Script Python e a fonte de verdade, nao o agente | Aceita |
 | [0002](0002-lock-por-commit-message.md) | Unlock por marca no commit-message, nao arquivo separado | Aceita |
 | [0003](0003-json-maquina-markdown-humano.md) | JSON para maquina, Markdown para humano | Aceita |
-| [0004](0004-chat-title-sincronizado.md) | Chat-title sincronizado com a task corrente | Aceita |
+| [0004](0004-chat-title-sincronizado.md) | Chat-title sincronizado com a task corrente | Substituida por [0018](0018-nome-da-demanda-chat-diferente-de-demanda.md) |
 | [0005](0005-docs-hook-no-finish.md) | Hook de docs bloqueante no `/finish` | Aceita |
 | [0006](0006-plugin-oficial-claude-code.md) | Adotar layout oficial de plugin Claude Code com namespace `ai` | Aceita |
 | [0007](0007-arquitetura-modular-core-src.md) | Decompor `core/src/guia.py` em modulos com Clean Architecture | Aceita |
@@ -27,6 +27,7 @@ ADR nao se confunde com [`explanation/`](../explanation/): explanation ensina o 
 | [0015](0015-plugin-global-first-guia-init.md) | Plugin global-first: marketplace na raiz + `/guia:init` deploya locks por-projeto (layout `dist/` -> `plugins/guia/`) | Aceita |
 | [0016](0016-primitiva-de-servicos.md) | Camada de servicos (`guia service`) considerada e recusada — usar skills + plugin proprio | Recusada |
 | [0017](0017-manter-core-src-flat.md) | Manter `core/src/` flat: convencao de prefixo formalizada, D-053 (reorg em 4 camadas) recusada | Aceita |
+| [0018](0018-nome-da-demanda-chat-diferente-de-demanda.md) | `NOME DA DEMANDA` no lugar de `NOME DO CHAT`: chat ≠ demanda, rename opcional (substitui 0004) | Aceita |
 
 ## Como adicionar um ADR novo
 

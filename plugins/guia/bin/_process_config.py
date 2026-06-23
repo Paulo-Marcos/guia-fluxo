@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from _constants import (
-    CHAT_TITLE_FORMAT_DEFAULT,
+    DEMAND_TITLE_FORMAT_DEFAULT,
     KIND_FEATURE,
     PREFIX_BACKLOG,
     PREFIX_FEATURE,
@@ -30,7 +30,7 @@ def default_process(project_name: str) -> dict[str, Any]:
             "backlogPrefix": PREFIX_BACKLOG,
             "digits": 3,
         },
-        "chatTitleFormat": CHAT_TITLE_FORMAT_DEFAULT,
+        "demandTitleFormat": DEMAND_TITLE_FORMAT_DEFAULT,
         "ready": {
             "status": STATUS_AWAITING_VALIDATION,
             "runValidationByDefault": False,

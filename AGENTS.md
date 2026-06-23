@@ -12,7 +12,7 @@ Layout do repo-mae: **fontes** em `core/` (src, build, manifest, lock, hooks, te
 
 ## Regras nao-negociaveis
 
-1. **Toda mutacao de estado passa pelo script.** Nunca edite `.guia/*.json`, `.guia/DEMANDAS.md`, `.guia/locks/registry.yaml` ou `.guia/chat-title.txt` a mao. Use `core/bin/guia.ps1` (Windows) ou `python core/src/guia.py` (qualquer SO).
+1. **Toda mutacao de estado passa pelo script.** Nunca edite `.guia/*.json`, `.guia/DEMANDAS.md`, `.guia/locks/registry.yaml` ou `.guia/demand-title.txt` a mao. Use `core/bin/guia.ps1` (Windows) ou `python core/src/guia.py` (qualquer SO).
 2. **Toda demanda nasce de `feature`, `bug`, `chore` ou `backlog`.** Antes de editar codigo a pedido do usuario, abra a demanda (ADR-0011 Fase 4: `issue` foi substituido por `bug`). Sem demanda ativa, nao ha rastreabilidade.
 3. **Nao edite arquivos gerados.** `plugins/guia/commands/<verbo>.md` (plugin command do Claude oficial, surge como `/guia:<verbo>`) e `plugins/guia/.agents/skills/<verbo>/SKILL.md` (cross-tool Codex+Antigravity, convencao AGENTS.md) sao saida de `core/build/render-skills.py` a partir de `core/manifest/manifest.yaml`. Mude o manifest e rode `python core/build/render-skills.py`. Edicao direta e sobrescrita na proxima render e quebra o `--check` da CI. `plugins/guia/.claude-plugin/plugin.json` so muda pra bump de versao ou ajuste de metadados (name/description/author). Decisao do layout em [`docs/adr/0006-plugin-oficial-claude-code.md`](docs/adr/0006-plugin-oficial-claude-code.md).
 4. **Respeite o lock.** `.guia/locks/registry.yaml` lista arquivos travados. Se voce precisa editar um deles, a mensagem de commit precisa de `[unlock:<feature-id>] motivo: <razao curta>`. Receita: [`docs/how-to/editar-arquivo-travado.md`](docs/how-to/editar-arquivo-travado.md). O hook `commit-msg` rejeita commits sem a marca.
@@ -27,7 +27,7 @@ Layout do repo-mae: **fontes** em `core/` (src, build, manifest, lock, hooks, te
    - Ideia sem prazo: `.\core\bin\guia.ps1 backlog add "Ideia" --context "Quando pode ser util"`.
 
    Todas aceitam `--status backlog|planned|in-development` (ADR-0011 Fase 3). IDs novos sao `D-NNN`. Cada kind tem emoji nas listagens e chat-titles: ✨ feature, 🐛 bug, 🧹 chore.
-2. **Repita o NOME DO CHAT.** Todo subcomando que cria ou avanca demanda imprime `NOME DO CHAT: <ID> - #<etapa> - <titulo>`. Voce **deve** ecoar essa linha ao usuario - e o sinal de rastreabilidade entre chat e demanda. Se sua plataforma expoe API de renomeacao de sessao, aplique.
+2. **Repita o NOME DA DEMANDA.** Todo subcomando que cria ou avanca demanda imprime `NOME DA DEMANDA: <ID> <emoji> - #<etapa> - <titulo>`. Voce **deve** ecoar essa linha ao usuario - e o sinal de rastreabilidade da demanda corrente. E info da demanda, **nao** um titulo de chat (um chat pode conter varias demandas - epico D-049). Renomear a sessao e **opcional**: so quando uma demanda mapeia limpo para o chat e ajuda navegacao (ADR-0018).
 3. **Implemente.** Edicoes normais. Se o arquivo aparecer em `.guia/locks/registry.yaml`, pare e siga o how-to do unlock.
 4. **Marque pronto:**
    ```powershell

@@ -23,7 +23,7 @@ guia-fluxo resolve isso com três ideias simples: **demanda** (todo trabalho tem
 O ciclo de uma demanda, do pedido ao fechamento:
 
 1. **Abre** — você pede algo; o agente cria a demanda: `/feature` (capacidade nova), `/bug` (defeito) ou `/chore` (manutenção). Ela ganha um ID neutro `D-NNN`.
-2. **Implementa** — o agente trabalha normalmente. Cada demanda vira um chat rastreável (`NOME DO CHAT: D-042 - #DEV - ...`).
+2. **Implementa** — o agente trabalha normalmente. Cada comando imprime a demanda corrente (`NOME DA DEMANDA: D-042 ✨ - #DEV - ...`) pra amarrar o trabalho à demanda.
 3. **Pronto pra validar** — ao terminar, o agente dispara o `ready`. *Ele* dispara, não você: é o portão que força a revisão humana.
 4. **Você valida em uso real** — passar nos testes não basta; você usa, confirma e só então pede o fechamento.
 5. **Fecha** — `finish` encerra a demanda e, opcionalmente, **trava** (lock) os arquivos entregues. A partir daí, mexer neles exige `[unlock:...]` na mensagem de commit.
@@ -60,7 +60,7 @@ Os verbos do dia a dia (Windows usa o wrapper; em Linux/macOS troque por `python
 .\core\bin\guia.ps1 finish D-001                                         # depois que VOCÊ validar
 ```
 
-Cada comando atualiza o estado (`.guia/*.json`, `.guia/DEMANDAS.md`) e imprime o `NOME DO CHAT`, que o agente repete pra amarrar o chat à demanda. Referência completa: [`docs/reference/cli.md`](docs/reference/cli.md).
+Cada comando atualiza o estado (`.guia/*.json`, `.guia/DEMANDAS.md`) e imprime o `NOME DA DEMANDA`, que o agente repete pra amarrar o trabalho à demanda. É info da demanda, não um título de chat — renomear o chat é opcional. Referência completa: [`docs/reference/cli.md`](docs/reference/cli.md).
 
 ## Documentação
 

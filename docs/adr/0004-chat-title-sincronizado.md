@@ -1,7 +1,9 @@
 # ADR-0004: Chat-title sincronizado com a task corrente
 
-- **Status:** Aceita
+- **Status:** Substituida por [ADR-0018](0018-nome-da-demanda-chat-diferente-de-demanda.md)
 - **Data:** 2026-05-31
+
+> **Substituida (2026-06-23).** O pressuposto "1 chat = 1 task" caiu com o epico (D-049, um chat-pai com varias demandas) e o print nunca renomeava o chat de fato. A ADR-0018 troca `NOME DO CHAT` por `NOME DA DEMANDA` (info pura da demanda) e torna a renomeacao do chat opcional. O texto abaixo fica como registro historico.
 
 ## Contexto
 

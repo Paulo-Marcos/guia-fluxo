@@ -29,7 +29,7 @@ class PathsTests(unittest.TestCase):
             _constants.TASKS_FILE,
             _constants.BACKLOG_FILE,
             _constants.CURRENT_FILE,
-            _constants.CHAT_TITLE_FILE,
+            _constants.DEMAND_TITLE_FILE,
             _constants.DOCS_MAP_FILE,
             _constants.REPORTS_DIR,
         ):

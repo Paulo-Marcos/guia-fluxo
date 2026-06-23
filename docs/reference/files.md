@@ -8,7 +8,7 @@
   tasks.json         Fonte programatica das demandas.
   backlog.json       Itens futuros, ainda nao iniciados.
   current-task.json  Demanda ativa.
-  chat-title.txt     Ultimo nome sugerido para o chat.
+  demand-title.txt   Titulo da demanda corrente (pointer estavel; rename do chat e opcional).
   docs-map.yaml      Opcional. Declaracao dos docs vivos para o hook do `finish`.
   reports/           Relatorios gerados por ready/finish.
   DEMANDAS.md        Historico legivel por humano. Espelha tasks.json em prosa.
@@ -47,16 +47,16 @@ Lista todas as demandas (features, bugs e chores) com status. Fonte programatica
 
 ## `.guia/current-task.json`
 
-A demanda ativa no momento. Contem `taskId`, `status`, `title`, `chatTitle`.
+A demanda ativa no momento. Contem `taskId`, `status`, `title`, `demandTitle`.
 
 Exemplo:
 
 ```json
 {
-  "taskId": "F-016",
+  "taskId": "D-016",
   "status": "Em desenvolvimento",
   "title": "Adicionar comando de export",
-  "chatTitle": "F-016 - #DEV - Adicionar comando de export"
+  "demandTitle": "D-016 ✨ - #DEV - Adicionar comando de export"
 }
 ```
 
