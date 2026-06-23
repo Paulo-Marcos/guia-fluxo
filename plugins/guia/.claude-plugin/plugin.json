@@ -1,7 +1,7 @@
 {
   "name": "guia",
   "description": "Guia Fluxo: pack portavel de processo para agentes de IA. Transforma pedidos soltos em demandas rastreaveis (D-NNN/B-NNN) com hooks de docs, lock de arquivos homologados e renomeacao de chat sincronizada. Skills sao thin wrappers sobre core/src/guia.py (fonte de verdade).",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": {
     "name": "Paulo Marcos",
     "email": "paulolinhodboa@gmail.com"

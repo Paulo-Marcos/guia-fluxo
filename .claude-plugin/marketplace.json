@@ -10,7 +10,7 @@
       "name": "guia",
       "source": "./plugins/guia",
       "description": "Guia Fluxo: skills /guia:feature, /guia:bug, /guia:chore, /guia:backlog, /guia:promote, /guia:ready, /guia:finish, /guia:status (thin wrappers sobre core/src/guia.py).",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "author": {
         "name": "Paulo Marcos",
         "email": "paulolinhodboa@gmail.com"
