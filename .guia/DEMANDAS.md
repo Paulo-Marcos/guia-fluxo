@@ -2,6 +2,44 @@
 
 ---
 
+## [D-097] 🧹 Consolidar superficie da raiz (D-094): VERSION fonte unica + community-health em .github/ + fix README
+
+- **Status:** Validada
+- **Origem:** D-094 follow-up
+- **Tipo:** Chore
+- **Contexto:** Executa as propostas aprovadas do diagnostico D-094. P1: VERSION vira fonte unica da versao - build (render-skills.py) passa a ler VERSION e preencher plugin.json/marketplace.json (hoje 0.4.0 esta em 3 lugares sem sincronia, VERSION nao e lido por ninguem). P2: mover CONTRIBUTING.md/SECURITY.md/CODE_OF_CONDUCT.md para .github/ e ajustar refs (README, AGENTS, docs-map.yaml, config.yml). Bonus: corrigir README.md:9 v0.1.0->0.4.0. Nao toca core/src interno (ADR-0017) nem paths de descoberta do plugin.
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+- `core/build/render-skills.py`
+- `tests/test_version_sync.py`
+- `docs/adr/0019-version-fonte-unica.md`
+- `AGENTS.md`
+- `README.md`
+- `CHANGELOG.md`
+- `docs/auditorias/D-094-raiz-core-plugin.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- P1 (VERSION fonte unica): render-skills.py le VERSION e propaga o campo version p/ plugin.json + marketplace.json (replace cirurgico, preserva o resto); render --check acusa drift. collect_version_outputs + _sync_version_text + _read_version. ADR-0019 + AGENTS regra 3 + CHANGELOG. Provado ponta-a-ponta (bump 9.9.9 propaga, revert volta 0.4.0).
+- P2 DROPADO por decisao do dono: mover community-health p/ .github/ quebraria ~15 links relativos internos; ganho so cosmetico. Mantidos na raiz; registrado no relatorio D-094.
+- Fix README.md:9 v0.1.0 -> v0.4.0 (estava em drift).
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- python core/src/guia.py doctor -> exit 0
+- python core/build/render-skills.py --check -> exit 0 (63 alvos)
+- python -m pytest tests/ -> 187 passed (inclui test_version_sync.py 6/6)
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-096] ✨ B-018: Tornar current task robusto sob chats concorrentes (hoje e arquivo global, nao por-chat)
 
 - **Status:** Validada

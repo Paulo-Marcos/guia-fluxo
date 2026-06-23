@@ -6,7 +6,7 @@
 
 `guia-fluxo` é um processo portátil para agentes de IA (Claude Code, Codex, Antigravity). Ele dá ao agente memória de processo entre turnos e um trilho previsível: todo pedido vira uma demanda com ID, status e histórico, e nada de produção é reescrito sem autorização.
 
-> **Status:** v0.1.0 — em uso real. O próprio repositório roda com o processo (dogfood).
+> **Status:** v0.4.0 — em uso real. O próprio repositório roda com o processo (dogfood).
 
 ## O problema que resolve
 

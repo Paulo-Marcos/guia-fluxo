@@ -8,6 +8,7 @@ Source of truth:
     core/lock/lock_api.py         (modulo de locks reutilizavel - tambem em plugins/guia/bin/)
     core/bin/guia.ps1             (wrapper PowerShell copiado para plugins/guia/bin/)
     core/templates/...            (templates copiados para plugins/guia/templates/)
+    VERSION                       (fonte unica do numero de versao - D-097/ADR-0019)
 
 Manifest schema:
     version: 2
@@ -40,6 +41,11 @@ Generated templates/:
     plugins/guia/templates/.githooks/commit-msg
     plugins/guia/templates/locks/registry.yaml
     plugins/guia/templates/locks/lock-ignore.txt
+
+Version sync (D-097/ADR-0019):
+    plugins/guia/.claude-plugin/plugin.json  (campo `version` <- VERSION)
+    .claude-plugin/marketplace.json          (campo `version` <- VERSION)
+    Demais campos desses JSONs seguem mantidos a mao; so o numero e propagado.
 
 Hardening (F-015):
 - TEMPLATE_FILES validado: --check detecta arquivos em core/templates/ nao listados.
@@ -119,6 +125,7 @@ class Paths:
     check_lock_src: Path
     wrapper_src: Path
     templates_src: Path
+    version_file: Path
 
     @classmethod
     def build(cls, root: Path, dist_dir: Path | None = None) -> "Paths":
@@ -140,6 +147,7 @@ class Paths:
             check_lock_src=root / "core" / "lock" / "check-lock.py",
             wrapper_src=root / "core" / "bin" / "guia.ps1",
             templates_src=root / "core" / "templates",
+            version_file=root / "VERSION",
         )
 
 
@@ -614,6 +622,61 @@ def collect_template_outputs(paths: Paths) -> list[Output]:
     return outputs
 
 
+# --- version sync (D-097) -------------------------------------------------
+
+
+# VERSION (raiz) e a fonte unica do numero de versao. O renderer propaga esse
+# numero para o campo `version` do plugin.json e do marketplace.json, que de
+# resto seguem mantidos a mao (name/description/metadados). `--check` acusa
+# drift. Antes da D-097 a versao vivia em 3 copias sem sincronia. Ver ADR-0019.
+VERSION_SYNC_FILES: list[tuple[str, ...]] = [
+    ("plugins", "guia", ".claude-plugin", "plugin.json"),
+    (".claude-plugin", "marketplace.json"),
+]
+
+# Casa o campo `"version": "X.Y.Z..."` de um JSON. Exige valor semver-like para
+# nao casar outras chaves; o sync aborta se nao houver exatamente 1 ocorrencia.
+_VERSION_FIELD_RE = re.compile(r'("version"\s*:\s*")(\d+\.\d+\.\d+[^"]*)(")')
+
+
+def _read_version(paths: Paths) -> str:
+    if not paths.version_file.exists():
+        raise RenderError(f"Erro: arquivo VERSION nao encontrado em {paths.version_file}")
+    version = paths.version_file.read_text(encoding="utf-8").strip()
+    if not version:
+        raise RenderError(f"Erro: VERSION ({paths.version_file}) esta vazio.")
+    return version
+
+
+def _sync_version_text(text: str, version: str, where: Path) -> str:
+    matches = _VERSION_FIELD_RE.findall(text)
+    if len(matches) != 1:
+        raise RenderError(
+            f'Erro: esperava exatamente 1 campo "version" semver em {where}, '
+            f"encontrei {len(matches)}. Sync de VERSION abortado."
+        )
+    return _VERSION_FIELD_RE.sub(rf"\g<1>{version}\g<3>", text, count=1)
+
+
+def collect_version_outputs(paths: Paths) -> list[Output]:
+    """Propaga VERSION (raiz) para o campo `version` de plugin.json e marketplace.json.
+
+    Esses arquivos seguem mantidos a mao para todo o resto; o renderer so
+    reescreve o numero de versao a partir do VERSION, eliminando o drift de
+    tres copias do numero. Ver ADR-0019.
+    """
+    version = _read_version(paths)
+    outputs: list[Output] = []
+    for rel in VERSION_SYNC_FILES:
+        path = paths.root.joinpath(*rel)
+        if not path.exists():
+            raise RenderError(f"Erro: alvo de version-sync nao encontrado em {path}")
+        text = path.read_text(encoding="utf-8")
+        synced = _sync_version_text(text, version, path)
+        outputs.append(Output(path, "version", "/".join(rel), synced))
+    return outputs
+
+
 # --- I/O ------------------------------------------------------------------
 
 
@@ -724,7 +787,12 @@ def collect_all_outputs(paths: Paths, only_verb: str | None) -> list[Output]:
     """Skills do manifest + (quando full render) bin/ e templates/."""
     outputs = collect_outputs(load_manifest(paths), paths, only_verb=only_verb)
     if not only_verb:
-        outputs = outputs + collect_bin_outputs(paths) + collect_template_outputs(paths)
+        outputs = (
+            outputs
+            + collect_bin_outputs(paths)
+            + collect_template_outputs(paths)
+            + collect_version_outputs(paths)
+        )
     return outputs
 
 
