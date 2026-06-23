@@ -173,7 +173,7 @@
 
 ## [D-094] ✨ Limpeza: separar core do plugin e justificar expostos
 
-- **Status:** Aguardando validacao
+- **Status:** Validada
 - **Origem:** Backlog (2026-06-22)
 - **Tipo:** Feature
 - **Contexto:** O usuario quer reorganizar a raiz do projeto separando claramente o que e CORE (motor/codigo interno do guia-fluxo) do que e de fato o PLUGIN gerado/exposto para consumo. Percepcao atual: ha arquivos demais expostos na raiz. Objetivo da tarefa: (1) inventariar cada arquivo/pasta exposto na raiz; (2) justificar a razao de existencia/exposicao de cada um; (3) entender os motivos que levaram cada um a estar onde esta; (4) avaliar onde da pra reduzir a superficie exposta, consolidando o que e core num lugar so e deixando exposto apenas o necessario ao plugin. Criterio de sucesso: um mapa raiz->(core|plugin|infra) com justificativa por item e uma proposta de consolidacao que diminua arquivos expostos sem quebrar descoberta do plugin (marketplace.json, .claude-plugin, etc).
@@ -187,6 +187,7 @@
 
 - Em desenvolvimento desde 2026-06-23.
 - Inventario completo da raiz (21 entradas) classificado em CORE/PLUGIN/ESTADO/INFRA-DOCS com justificativa por item; diagnostico de que CORE (core/) e PLUGIN (plugins/) ja estao consolidados e a raiz e quase toda convencao irredutivel; proposta priorizada (P1 VERSION orfao, P2 mover community-health p/ .github/, P3 nao-fazer) respeitando ADR-0017 e a descoberta do plugin.
+- Demanda finalizada via Guia Fluxo.
 
 ### Validacao feita
 
@@ -194,7 +195,7 @@
 
 ### Validacao pendente
 
-- Dono decide P1 (remover/dedupe VERSION) e P2 (mover CONTRIBUTING/SECURITY/CODE_OF_CONDUCT p/ .github/) -> viram demandas-filhas; nenhuma movimentacao executada (diagnostico). Bonus: README.md:9 ainda diz v0.1.0 (atual 0.4.0).
+- Nenhuma.
 
 ## [D-081] ✨ finish/commit nao lida com delecao de arquivo e nao faz rollback do status ao falhar
 

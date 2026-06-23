@@ -167,7 +167,7 @@
       "id": "D-094",
       "kind": "feature",
       "title": "Limpeza: separar core do plugin e justificar expostos",
-      "status": "Aguardando validacao",
+      "status": "Validada",
       "origin": "Backlog (2026-06-22)",
       "context": "O usuario quer reorganizar a raiz do projeto separando claramente o que e CORE (motor/codigo interno do guia-fluxo) do que e de fato o PLUGIN gerado/exposto para consumo. Percepcao atual: ha arquivos demais expostos na raiz. Objetivo da tarefa: (1) inventariar cada arquivo/pasta exposto na raiz; (2) justificar a razao de existencia/exposicao de cada um; (3) entender os motivos que levaram cada um a estar onde esta; (4) avaliar onde da pra reduzir a superficie exposta, consolidando o que e core num lugar so e deixando exposto apenas o necessario ao plugin. Criterio de sucesso: um mapa raiz->(core|plugin|infra) com justificativa por item e uma proposta de consolidacao que diminua arquivos expostos sem quebrar descoberta do plugin (marketplace.json, .claude-plugin, etc).",
       "createdAt": "2026-06-22",
@@ -178,14 +178,48 @@
       ],
       "summary": [
         "Em desenvolvimento desde 2026-06-23.",
-        "Inventario completo da raiz (21 entradas) classificado em CORE/PLUGIN/ESTADO/INFRA-DOCS com justificativa por item; diagnostico de que CORE (core/) e PLUGIN (plugins/) ja estao consolidados e a raiz e quase toda convencao irredutivel; proposta priorizada (P1 VERSION orfao, P2 mover community-health p/ .github/, P3 nao-fazer) respeitando ADR-0017 e a descoberta do plugin."
+        "Inventario completo da raiz (21 entradas) classificado em CORE/PLUGIN/ESTADO/INFRA-DOCS com justificativa por item; diagnostico de que CORE (core/) e PLUGIN (plugins/) ja estao consolidados e a raiz e quase toda convencao irredutivel; proposta priorizada (P1 VERSION orfao, P2 mover community-health p/ .github/, P3 nao-fazer) respeitando ADR-0017 e a descoberta do plugin.",
+        "Demanda finalizada via Guia Fluxo."
       ],
       "validations": [
         "doctor -> exit 0; render-skills --check -> exit 0 (61 alvos em sincronia)"
       ],
-      "pending": [
-        "Dono decide P1 (remover/dedupe VERSION) e P2 (mover CONTRIBUTING/SECURITY/CODE_OF_CONDUCT p/ .github/) -> viram demandas-filhas; nenhuma movimentacao executada (diagnostico). Bonus: README.md:9 ainda diz v0.1.0 (atual 0.4.0)."
-      ]
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-094",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-094",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [],
+        "checkedAt": "2026-06-23",
+        "skipped": "Diagnostico/auditoria: deliverable e docs/auditorias/D-094-raiz-core-plugin.md (fora do docs-map). Sem mudanca de comportamento propria; o desfecho executavel (P1) ja tem entrada no CHANGELOG via D-097, e visao-geral/ADRs seguem cobertos (ADR-0017 flat, ADR-0019 version)"
+      }
     },
     {
       "id": "D-093",

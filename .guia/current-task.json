@@ -1,6 +1,6 @@
 {
-  "taskId": "D-097",
+  "taskId": "D-094",
   "status": "Validada",
-  "title": "Consolidar superficie da raiz (D-094): VERSION fonte unica + community-health em .github/ + fix README",
-  "chatTitle": "D-097 \ud83e\uddf9 - #FINALIZADO - Consolidar superficie da raiz (D-094): VERSION fonte unica + community-health em .github/ + fix README"
+  "title": "Limpeza: separar core do plugin e justificar expostos",
+  "chatTitle": "D-094 \u2728 - #FINALIZADO - Limpeza: separar core do plugin e justificar expostos"
 }
