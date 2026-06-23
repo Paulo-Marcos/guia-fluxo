@@ -2,6 +2,34 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-095",
+      "kind": "feature",
+      "title": "finish: gate de qualidade via skills antes de fechar",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-22)",
+      "context": "O usuario quer que o 'finish' SEMPRE rode uma validacao de qualidade do que foi feito antes de fechar a demanda, nao so os comandos de teste atuais. Ideia: ao dar finish, o agente levanta as skills disponiveis (do projeto E globais) que avaliam qualidade de codigo e as aciona sobre o que mudou (modifiedFiles), checando: (a) qualidade do codigo; (b) tamanho de funcoes/arquivos; (c) responsabilidade unica (SRP); (d) cobertura/tests; (e) se precisa refatorar para ficar com boa qualidade -- e, se precisar, refatorar antes de fechar. Infra existente para reusar: ja ha um hook 'runValidationByDefault'/run_validation_commands no finish (core/src/_cli_lifecycle.py:474) que roda COMANDOS; esta demanda estende isso para acionar SKILLS consultivas (ex.: clean-code-review, clean-architecture-guardian, tdd, valida-pasta) e agir sobre os achados. Overlaps a resolver no recorte: D-088 (avalia DDD/SOLID ao criar LOCK -- mesmo espirito, momento diferente), D-085 (skill valida-pasta com nota 0-10) e D-080 (gate humano no finish). Decidir se e: passo automatico do finish no core, ou uma skill orquestradora acionada no momento do finish. Compativel com finish-human-only: roda quando o humano dispara o finish.",
+      "createdAt": "2026-06-22",
+      "updatedAt": "2026-06-22",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
+      "id": "D-094",
+      "kind": "feature",
+      "title": "Limpeza: separar core do plugin e justificar expostos",
+      "status": "Backlog",
+      "origin": "Backlog (2026-06-22)",
+      "context": "O usuario quer reorganizar a raiz do projeto separando claramente o que e CORE (motor/codigo interno do guia-fluxo) do que e de fato o PLUGIN gerado/exposto para consumo. Percepcao atual: ha arquivos demais expostos na raiz. Objetivo da tarefa: (1) inventariar cada arquivo/pasta exposto na raiz; (2) justificar a razao de existencia/exposicao de cada um; (3) entender os motivos que levaram cada um a estar onde esta; (4) avaliar onde da pra reduzir a superficie exposta, consolidando o que e core num lugar so e deixando exposto apenas o necessario ao plugin. Criterio de sucesso: um mapa raiz->(core|plugin|infra) com justificativa por item e uma proposta de consolidacao que diminua arquivos expostos sem quebrar descoberta do plugin (marketplace.json, .claude-plugin, etc).",
+      "createdAt": "2026-06-22",
+      "updatedAt": "2026-06-22",
+      "modifiedFiles": [],
+      "summary": [],
+      "validations": [],
+      "pending": []
+    },
+    {
       "id": "D-093",
       "kind": "feature",
       "title": "Rename: parar de imprimir 'NOME DO CHAT'; usar 'NOME DA DEMANDA' (chat pode ter varias demandas)",
