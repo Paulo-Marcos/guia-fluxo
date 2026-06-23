@@ -1,6 +1,6 @@
 {
-  "taskId": "D-081",
+  "taskId": "D-096",
   "status": "Validada",
-  "title": "finish/commit nao lida com delecao de arquivo e nao faz rollback do status ao falhar",
-  "chatTitle": "D-081 \u2728 - #FINALIZADO - finish/commit nao lida com delecao de arquivo e nao faz rollback do status ao falhar"
+  "title": "B-018: Tornar current task robusto sob chats concorrentes (hoje e arquivo global, nao por-chat)",
+  "chatTitle": "D-096 \u2728 - #FINALIZADO - B-018: Tornar current task robusto sob chats concorrentes (hoje e arquivo global, nao por-chat)"
 }

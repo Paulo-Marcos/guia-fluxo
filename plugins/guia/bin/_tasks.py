@@ -268,12 +268,36 @@ def find_task_or_current(task_id: str | None) -> dict[str, Any]:
     chosen_id = task_id or current.get("taskId")
     if not chosen_id:
         raise SystemExit(MSG_NO_CURRENT_TASK)
+    if task_id is None:
+        _warn_ambiguous_current(chosen_id)
     task = find_task(chosen_id)
     if task is None:
         suggestions = recent_task_ids()
         hint = f" Recent: {', '.join(suggestions)}" if suggestions else ""
         raise SystemExit(MSG_TASK_NOT_FOUND.format(id=chosen_id) + hint)
     return task
+
+
+def _warn_ambiguous_current(chosen_id: str) -> None:
+    """B-018/D-096: avisa quando um comando cai no fallback do current-task
+    global e ha mais de uma task ativa ao mesmo tempo.
+
+    `current-task.json` e unico por copia de trabalho: dois chats na mesma
+    pasta sobrescrevem o ponteiro, e um comando sem id explicito pode operar
+    na task errada (origem dos conflitos observados). O aviso vai para stderr
+    para nao corromper o stdout JSON de `status`; o fallback continua valendo
+    (convencao "um chat = uma task" nao e quebrada), so fica barulhento quando
+    ambiguo. Workaround estrutural (worktree por task) ja isola .guia/.
+    """
+    active = list_tasks(status=STATUS_IN_DEVELOPMENT)
+    if len(active) <= 1:
+        return
+    print(
+        f"Aviso: {len(active)} tasks em desenvolvimento ao mesmo tempo; "
+        f"nenhum id foi passado, usando o current-task.json global ({chosen_id}). "
+        f"Pode nao ser a task certa - passe o id explicito (ex: `ready {chosen_id}`).",
+        file=sys.stderr,
+    )
 
 
 def save_task(updated: dict[str, Any]) -> None:

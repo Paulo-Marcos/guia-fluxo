@@ -10,14 +10,6 @@
       "updatedAt": "2026-06-06"
     },
     {
-      "id": "B-018",
-      "title": "Tornar current task robusto sob chats concorrentes (hoje e arquivo global, nao por-chat)",
-      "context": "Investigado: .guia/current-task.json e UNICO arquivo global por copia de trabalho, escrito por set_current_task() em toda criacao/transicao. Um chat = uma task e convencao, NAO imposto pelo codigo. Dois chats na MESMA pasta sobrescrevem current-task; comando sem id explicito (find_task_or_current(None)) pode pegar a task errada: origem dos conflitos observados. Worktree por task ja e o workaround (cada worktree tem seu .guia/, pois .guia/ e versionado). Decidir: escopar current-task por sessao/worktree, ou exigir id explicito em ready/finish/status com warning no fallback. Ligado ao ADR de modelo de demanda.",
-      "status": "Backlog",
-      "createdAt": "2026-06-06",
-      "updatedAt": "2026-06-06"
-    },
-    {
       "id": "B-017",
       "title": "Permitir criar demanda em estado Planejada (cadastrar sem iniciar)",
       "context": "Hoje feature/issue entram em Em desenvolvimento na criacao (new_task carimba STATUS_IN_DEVELOPMENT). STATUS_PLANNED='Planejada' + tag #PLANEJADA existem sem caminho. Permitir criar demanda ja triada (sabe-se feature/bug, tem numero) mas nao iniciada - diferente do backlog (ideia nao triada, sem decisao feature-vs-bug). DEPENDE do ADR de modelo de demanda (tipo x status).",

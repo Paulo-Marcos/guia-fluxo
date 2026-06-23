@@ -2,6 +2,42 @@
 
 ---
 
+## [D-096] ✨ B-018: Tornar current task robusto sob chats concorrentes (hoje e arquivo global, nao por-chat)
+
+- **Status:** Validada
+- **Origem:** Backlog B-018 (2026-06-23)
+- **Tipo:** Feature
+- **Contexto:** Backlog B-018: Investigado: .guia/current-task.json e UNICO arquivo global por copia de trabalho, escrito por set_current_task() em toda criacao/transicao. Um chat = uma task e convencao, NAO imposto pelo codigo. Dois chats na MESMA pasta sobrescrevem current-task; comando sem id explicito (find_task_or_current(None)) pode pegar a task errada: origem dos conflitos observados. Worktree por task ja e o workaround (cada worktree tem seu .guia/, pois .guia/ e versionado). Decidir: escopar current-task por sessao/worktree, ou exigir id explicito em ready/finish/status com warning no fallback. Ligado ao ADR de modelo de demanda.
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+- `.guia/backlog.json`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `core/src/_tasks.py`
+- `plugins/guia/bin/_tasks.py`
+- `tests/test_current_task_fallback.py`
+
+### O que foi feito
+
+- Backlog B-018 promovido via guia-fluxo.
+- Avaliacao IA: Op A escolhida (confirmada pelo dev). current-task.json e global por copia de trabalho; find_task_or_current(None) resolve em silencio e pode pegar a task errada sob 2+ chats na mesma pasta. ADR-0011 (Aceita/implementada) ja reclassificou B-018 como refactor ortogonal - dependencia de design caiu. Op B (escopo por sessao) descartada: motor nao tem conceito de sessao (CLI invocado fresco), exigiria injetar session-id por chamada (=Op A por via fragil) e worktree-por-task ja isola .guia/. 
+- Op A (B-018): centraliza aviso de concorrencia em find_task_or_current. Quando id e omitido E ha 2+ tasks Em desenvolvimento, emite aviso em stderr dizendo qual id (current) foi escolhido e pede id explicito. Todos os callers (ready/finish/status/deps/meta) herdam; status --all mantido. stderr nao polui o stdout JSON do status.
+- Op B (escopo por sessao) descartada: motor nao tem conceito de sessao; worktree-por-task ja isola .guia/. Decisao registrada no assessment do promote e na ADR-0011 (que ja classificava B-018 como refactor ortogonal).
+- Fechada apos validacao humana. modifiedFiles podado de 66 para 7 (residuo do emaranhamento com D-093 removido; commit isolado de D-096).
+
+### Validacao feita
+
+- python -m pytest -q (181 passed, inclui test_current_task_fallback.py: 2 ativas+sem id avisa, 1 ativa silencia, id explicito silencia)
+- python core/build/render-skills.py --check (61 alvos em sincronia)
+- python core/src/guia.py doctor (OK)
+- python -m pytest -q (181 passed, inclui test_current_task_fallback.py)
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-093] ✨ Rename: parar de imprimir 'NOME DO CHAT'; usar 'NOME DA DEMANDA' (chat pode ter varias demandas)
 
 - **Status:** Validada
@@ -96,6 +132,31 @@
 ### Validacao pendente
 
 - Nenhuma.
+
+## [D-094] ✨ Limpeza: separar core do plugin e justificar expostos
+
+- **Status:** Aguardando validacao
+- **Origem:** Backlog (2026-06-22)
+- **Tipo:** Feature
+- **Contexto:** O usuario quer reorganizar a raiz do projeto separando claramente o que e CORE (motor/codigo interno do guia-fluxo) do que e de fato o PLUGIN gerado/exposto para consumo. Percepcao atual: ha arquivos demais expostos na raiz. Objetivo da tarefa: (1) inventariar cada arquivo/pasta exposto na raiz; (2) justificar a razao de existencia/exposicao de cada um; (3) entender os motivos que levaram cada um a estar onde esta; (4) avaliar onde da pra reduzir a superficie exposta, consolidando o que e core num lugar so e deixando exposto apenas o necessario ao plugin. Criterio de sucesso: um mapa raiz->(core|plugin|infra) com justificativa por item e uma proposta de consolidacao que diminua arquivos expostos sem quebrar descoberta do plugin (marketplace.json, .claude-plugin, etc).
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+- `docs/auditorias/D-094-raiz-core-plugin.md`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-23.
+- Inventario completo da raiz (21 entradas) classificado em CORE/PLUGIN/ESTADO/INFRA-DOCS com justificativa por item; diagnostico de que CORE (core/) e PLUGIN (plugins/) ja estao consolidados e a raiz e quase toda convencao irredutivel; proposta priorizada (P1 VERSION orfao, P2 mover community-health p/ .github/, P3 nao-fazer) respeitando ADR-0017 e a descoberta do plugin.
+
+### Validacao feita
+
+- doctor -> exit 0; render-skills --check -> exit 0 (61 alvos em sincronia)
+
+### Validacao pendente
+
+- Dono decide P1 (remover/dedupe VERSION) e P2 (mover CONTRIBUTING/SECURITY/CODE_OF_CONDUCT p/ .github/) -> viram demandas-filhas; nenhuma movimentacao executada (diagnostico). Bonus: README.md:9 ainda diz v0.1.0 (atual 0.4.0).
 
 ## [D-081] ✨ finish/commit nao lida com delecao de arquivo e nao faz rollback do status ao falhar
 
