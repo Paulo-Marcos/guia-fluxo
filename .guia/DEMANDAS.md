@@ -2,6 +2,101 @@
 
 ---
 
+## [D-093] ✨ Rename: parar de imprimir 'NOME DO CHAT'; usar 'NOME DA DEMANDA' (chat pode ter varias demandas)
+
+- **Status:** Validada
+- **Origem:** Backlog (2026-06-22)
+- **Tipo:** Feature
+- **Contexto:** Hoje todo verbo imprime 'NOME DO CHAT: D-NNN <emoji> - #STATUS - <title>' tentando renomear o chat - mas (a) na pratica o chat NAO eh renomeado automatico (so via /rename manual ou mark_chapter) e (b) com a chegada do epico (D-049) um mesmo chat-pai pode conter VARIAS demandas/stories. Mudar para: imprimir 'NOME DA DEMANDA: ...' (info pura da demanda corrente, sem pretender que e o titulo do chat); deixar a renomeacao do chat como acao OPCIONAL do usuario; quando houver API/comando de rename automatico disponivel (futuro Claude/Codex/Antigravity), oferecer um caminho separado. Tocar: _tasks.print_chat_title (renomear a funcao), MSG/format strings, chat-title.txt (manter o arquivo? avaliar se ainda faz sentido), bodies do manifest que mencionam 'NOME DO CHAT', docs/how-to/renomear-chat.md, ADRs 0004 (chat-title sincronizado) que precisa ser revisado/substituido por novo ADR registrando essa mudanca.
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+- `core/src/_tasks.py`
+- `core/src/_constants.py`
+- `core/src/_process_config.py`
+- `core/src/_cli_lifecycle.py`
+- `core/src/guia.py`
+- `core/manifest/manifest.yaml`
+- `core/manifest/bodies/_partials/post_cli.claude.md`
+- `core/manifest/bodies/_partials/post_cli.agent.md`
+- `core/manifest/bodies/_partials/title_context_rules.md`
+- `core/manifest/bodies/epic.md`
+- `core/manifest/bodies/guia-fluxo.md`
+- `docs/adr/0018-nome-da-demanda-chat-diferente-de-demanda.md`
+- `docs/adr/0004-chat-title-sincronizado.md`
+- `docs/adr/README.md`
+- `docs/how-to/renomear-chat.md`
+- `docs/reference/chat-rename-suporte.md`
+- `docs/reference/files.md`
+- `docs/reference/cli.md`
+- `docs/explanation/visao-geral.md`
+- `docs/tutorials/primeiro-uso.md`
+- `AGENTS.md`
+- `CLAUDE.md`
+- `README.md`
+- `CHANGELOG.md`
+- `.gitignore`
+- `tests/test_constants.py`
+- `tests/test_body_partials.py`
+- `.guia/backlog.json`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `plugins/guia/.agents/skills/guia-backlog/SKILL.md`
+- `plugins/guia/.agents/skills/guia-block/SKILL.md`
+- `plugins/guia/.agents/skills/guia-bug/SKILL.md`
+- `plugins/guia/.agents/skills/guia-cancel/SKILL.md`
+- `plugins/guia/.agents/skills/guia-chore/SKILL.md`
+- `plugins/guia/.agents/skills/guia-epic/SKILL.md`
+- `plugins/guia/.agents/skills/guia-feature/SKILL.md`
+- `plugins/guia/.agents/skills/guia-finish/SKILL.md`
+- `plugins/guia/.agents/skills/guia-fluxo/SKILL.md`
+- `plugins/guia/.agents/skills/guia-plan/SKILL.md`
+- `plugins/guia/.agents/skills/guia-promote/SKILL.md`
+- `plugins/guia/.agents/skills/guia-ready/SKILL.md`
+- `plugins/guia/.agents/skills/guia-start/SKILL.md`
+- `plugins/guia/.agents/skills/guia-status/SKILL.md`
+- `plugins/guia/.agents/skills/guia-unblock/SKILL.md`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/bin/_process_config.py`
+- `plugins/guia/bin/_tasks.py`
+- `plugins/guia/bin/guia.py`
+- `plugins/guia/commands/backlog.md`
+- `plugins/guia/commands/block.md`
+- `plugins/guia/commands/bug.md`
+- `plugins/guia/commands/cancel.md`
+- `plugins/guia/commands/chore.md`
+- `plugins/guia/commands/epic.md`
+- `plugins/guia/commands/feature.md`
+- `plugins/guia/commands/finish.md`
+- `plugins/guia/commands/guia-fluxo.md`
+- `plugins/guia/commands/plan.md`
+- `plugins/guia/commands/promote.md`
+- `plugins/guia/commands/ready.md`
+- `plugins/guia/commands/start.md`
+- `plugins/guia/commands/status.md`
+- `plugins/guia/commands/unblock.md`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-23.
+- Troquei o print 'NOME DO CHAT'/'CHAT_TITLE=' por 'NOME DA DEMANDA'/'DEMAND_TITLE=' (info pura da demanda corrente). Renomes internos: print_chat_title->print_demand_title, chat_title()->demand_title(), chave chatTitle->demandTitle em current-task.json, chatTitleFormat->demandTitleFormat em process.json (com fallback de leitura da chave legada), CHAT_TITLE_FILE/chat-title.txt->DEMAND_TITLE_FILE/demand-title.txt, CHAT_TITLE_FORMAT_DEFAULT->DEMAND_TITLE_FORMAT_DEFAULT.
+- Renomeacao do chat virou OPCIONAL: skills/partials (post_cli claude+agent, epic, guia-fluxo) reescritas para tratar mark_chapter/rename/codex_app.set_thread_title como conveniencia, pulada quando o chat tem varias demandas (epico D-049). Manifest regenerado -> 61 alvos em sync.
+- Nova ADR-0018 registra a mudanca (chat != demanda) e SUBSTITUI a ADR-0004. Auditei stdout: nenhum parser depende de 'NOME DO CHAT:'/'CHAT_TITLE='.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- python -m pytest tests/ -q -> 178 passed
+- python core/src/guia.py doctor -> exit 0
+- python core/build/render-skills.py --check -> exit 0 (61 alvos)
+- python core/src/guia.py status D-093 -> imprime 'NOME DA DEMANDA: ...' + 'DEMAND_TITLE=...'
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-081] ✨ finish/commit nao lida com delecao de arquivo e nao faz rollback do status ao falhar
 
 - **Status:** Validada
