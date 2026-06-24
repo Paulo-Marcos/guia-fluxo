@@ -5,9 +5,11 @@
       "id": "B-019",
       "title": "Formalizar padrao de commits (Conventional Commits + id da task)",
       "context": "Ja existe padrao parcial no CLAUDE.md (tipo: desc, tag [unlock:id]) + hook commit-msg + _commit.commit_task(). Formalizar e ampliar: possivelmente Conventional Commits inteiro, auto-incluir id da task no commit (ex feature(F-023): ...), template de corpo. RECORTE A DEFINIR pelo dev no futuro.",
-      "status": "Backlog",
+      "status": "Resolvida",
       "createdAt": "2026-06-06",
-      "updatedAt": "2026-06-06"
+      "updatedAt": "2026-06-06",
+      "resolvedAt": "2026-06-23",
+      "resolution": "Absorvido por D-054: Conventional Commits (type(scope) com id da task) + corpo enriquecido formalizados em _commit.build_commit_message."
     },
     {
       "id": "B-017",

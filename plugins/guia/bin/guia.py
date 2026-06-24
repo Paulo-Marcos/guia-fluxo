@@ -211,7 +211,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_epic = sub.add_parser(
         "epic",
-        help="Create an Epic (E-NNN) — orquestrador de stories (D-049).",
+        help="Create an Epic (E-NNN) â€” orquestrador de stories (D-049).",
     )
     p_epic.add_argument("title")
     p_epic.add_argument("--context", default="")
@@ -244,6 +244,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_ready.add_argument("--validation", action="append", default=[])
     p_ready.add_argument("--pending", action="append", default=[])
     p_ready.add_argument("--run-tests", action="store_true")
+    p_ready.add_argument(
+        "--commit-subject",
+        help=(
+            "Subject de commit pronto, seguindo a skill de convencao do usuario "
+            "(ex.: '✨ feat(D-054): ...'). Persistido na task e usado pelo "
+            "finish no lugar do header padrao. Veja a orientacao no corpo de ready.md."
+        ),
+    )
     p_ready.set_defaults(func=cmd_ready)
 
     p_finish = sub.add_parser("finish", help="Close an already validated task.")
@@ -257,6 +265,17 @@ def build_parser() -> argparse.ArgumentParser:
         "--commit",
         action=argparse.BooleanOptionalAction,
         default=None,
+    )
+    p_finish.add_argument(
+        "--commit-body",
+        help="Texto livre anexado ao corpo do commit (complementa summary/validacoes/arquivos).",
+    )
+    p_finish.add_argument(
+        "--commit-subject",
+        help=(
+            "Subject de commit pronto (skill de convencao do usuario). Substitui "
+            "o header padrao; tem precedencia sobre o subject persistido em ready."
+        ),
     )
     p_finish.add_argument("--lock", action="store_true")
     p_finish.add_argument("--lock-id")

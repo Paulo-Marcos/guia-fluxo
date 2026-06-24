@@ -363,7 +363,7 @@ def _print_epic_tree(epic: dict[str, Any]) -> None:
         print("  (sem filhos ainda - adicione com `feature/bug/chore --under " + epic["id"] + "`)")
         return
     for index, child in enumerate(children):
-        prefix = "    └─" if index == len(children) - 1 else "    ├─"
+        prefix = "    â””â”€" if index == len(children) - 1 else "    â”œâ”€"
         marker = kind_marker(child.get("kind", ""))
         print(
             f"{prefix} {child['id']} {marker} [{child.get('status', '?')}] "
@@ -413,6 +413,12 @@ def cmd_ready(args: argparse.Namespace) -> int:
     merge_list(task, "summary", args.summary or [MSG_DEFAULT_READY_SUMMARY])
     merge_list(task, "validations", args.validation)
     task["pending"] = args.pending or [MSG_DEFAULT_VALIDATION_PENDING]
+
+    # D-054: subject de commit pronto pela skill de convencao do usuario.
+    # Persistido na task para o finish (humano) usar sem o agente reconstruir.
+    commit_subject = getattr(args, "commit_subject", None)
+    if commit_subject and commit_subject.strip():
+        task["commitSubject"] = commit_subject.strip()
 
     if args.run_tests or config.get("ready", {}).get("runValidationByDefault", False):
         run_validation_commands(task, config, "ready")
@@ -496,7 +502,10 @@ def cmd_finish(args: argparse.Namespace) -> int:
         # hook de lock, staged inesperado), revertemos a transicao ja gravada
         # para nao deixar a task como Validada sem nenhum commit por tras.
         try:
-            commit_task(task)
+            # D-054: subject da convencao do usuario — --commit-subject do finish
+            # tem precedencia sobre o que foi persistido no ready (commitSubject).
+            subject_override = getattr(args, "commit_subject", None) or task.get("commitSubject")
+            commit_task(task, getattr(args, "commit_body", None), subject_override)
         except BaseException:
             task["status"] = previous_status
             save_task(task)
