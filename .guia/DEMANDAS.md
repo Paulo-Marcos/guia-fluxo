@@ -2,6 +2,126 @@
 
 ---
 
+## [D-089] ✨ Skill orquestradora por tema: aciona um bolo de skills
+
+- **Status:** Cancelada
+- **Origem:** Backlog (2026-06-21)
+- **Tipo:** Feature
+- **Contexto:** Reativa D-066 (Resolvida; ADR-0016 concluiu que registry e desnecessario). Em vez de um registro, uma skill orquestradora unica (ex: revisao-completa) cujo corpo aciona um conjunto de skills sobre o alvo. Cobre o caso de 'acionar skills por tema/evento' sem catalogo.
+
+### Arquivos modificados/criados
+
+- Nenhuma.
+
+### O que foi feito
+
+- Cancelada em 2026-06-24: Onda de skills descartada (decisao do dono 2026-06-24); D-095 gate de qualidade no finish cobre o espirito da avaliacao.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+
+## [D-088] ✨ Feature guia: avaliar arquitetura (DDD/SOLID) ao criar lock
+
+- **Status:** Cancelada
+- **Origem:** Backlog (2026-06-21)
+- **Tipo:** Feature
+- **Contexto:** Reativa D-062 (Resolvida indevidamente; ADR-0016). DIFERENTE das outras: e do CORE do guia (integrada ao lock), nao do plugin pessoal. Ao travar (lock), dispara uma skill que avalia a funcionalidade sob DDD/Clean/SOLID e verifica se os arquivos isolam mesmo a feature (responsabilidade unica); sugere patterns pra separar e travar so o que pertence a feature. Abordagem detalhada a definir.
+
+### Arquivos modificados/criados
+
+- Nenhuma.
+
+### O que foi feito
+
+- Cancelada em 2026-06-24: Onda de skills descartada (decisao do dono 2026-06-24); D-095 gate de qualidade no finish cobre o espirito da avaliacao.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+
+## [D-087] ✨ Skill commits-funcionais: agrupar working tree por funcionalidade (plugin proprio)
+
+- **Status:** Cancelada
+- **Origem:** Backlog (2026-06-21)
+- **Tipo:** Feature
+- **Contexto:** Reativa D-063 (Resolvida indevidamente; ADR-0016). Skill que le o working tree nao commitado, agrupa por funcionalidade e estrutura commits funcionais (um por funcao logica). Parte determinista (ler git status/diff) pode usar a CLI. Plugin do usuario.
+
+### Arquivos modificados/criados
+
+- Nenhuma.
+
+### O que foi feito
+
+- Cancelada em 2026-06-24: Onda de skills descartada (decisao do dono 2026-06-24); D-095 gate de qualidade no finish cobre o espirito da avaliacao.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+
+## [D-086] ✨ Skill avalia-tema: tema/metodologia vs projeto (plugin proprio)
+
+- **Status:** Cancelada
+- **Origem:** Backlog (2026-06-21)
+- **Tipo:** Feature
+- **Contexto:** Reativa D-064 (Resolvida indevidamente; ADR-0016). Skill que avalia um tema/padrao/conceito, relaciona com o projeto, diz se ja atende / nao atende / o que adaptar, e propoe acoes. Plugin do usuario.
+
+### Arquivos modificados/criados
+
+- Nenhuma.
+
+### O que foi feito
+
+- Cancelada em 2026-06-24: Onda de skills descartada (decisao do dono 2026-06-24); D-095 gate de qualidade no finish cobre o espirito da avaliacao.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+
+## [D-085] ✨ Skill valida-pasta: auditar pasta/feature com nota (plugin proprio)
+
+- **Status:** Cancelada
+- **Origem:** Backlog (2026-06-21)
+- **Tipo:** Feature
+- **Contexto:** Reativa D-065 (que ficou Resolvida 'absorvida por servico'; ADR-0016 recusou a camada). Abordagem: skill consultiva (SKILL.md) que recebe um alvo, levanta o que faz/por que/se faz sentido, da nota 0-10 e lista melhorias/problemas, reusando skills de qualidade existentes. Mora no plugin de skills do usuario, nao no core do guia.
+
+### Arquivos modificados/criados
+
+- Nenhuma.
+
+### O que foi feito
+
+- Cancelada em 2026-06-24: Onda de skills descartada (decisao do dono 2026-06-24); D-095 gate de qualidade no finish cobre o espirito da avaliacao.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+
 ## [D-090] ✨ Arquivamento de demandas antigas em .guia/DEMANDAS.md (keep N + historico + ai-skip)
 
 - **Status:** Validada
