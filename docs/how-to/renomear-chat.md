@@ -22,7 +22,7 @@ A forma muda por ferramenta. Ver [reference/chat-rename-suporte.md](../reference
 
 Resumo rapido:
 
-- **Claude Code**: `mark_chapter` (divisor + entrada na ToC) e/ou `/rename <titulo>` durante a sessao, ou iniciar com `claude -n <titulo>`.
+- **Claude Code**: `mark_chapter` (divisor + entrada na ToC) e/ou `/rename <titulo>` durante a sessao, ou iniciar com `claude -n <titulo>`. Para ja criar a demanda **e** abrir a sessao nomeada de uma vez pelo terminal, use o launcher `gf` — ver [criar-demanda-pelo-terminal.md](criar-demanda-pelo-terminal.md).
 - **Codex App**: `codex_app.set_thread_title` com o titulo impresso.
 - **Codex CLI/TUI**: `/rename` para a thread atual.
 - **Antigravity CLI**: `/rename <titulo>`.

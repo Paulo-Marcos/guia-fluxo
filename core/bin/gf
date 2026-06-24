@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+# core/bin/gf - launcher de terminal simetrico ao gf.ps1 (D-048).
+# Cria a demanda via `guia feature|bug|chore`, captura o titulo canonico e
+# abre `claude -n "<titulo>"` para que a nova sessao ja nasca nomeada,
+# eliminando o rename pos-criacao.
+#
+# Viabilidade (verificada em D-048): o Claude Code CLI expoe `-n/--name <name>`
+# que define o display name da sessao. Nao foi preciso fallback.
+#
+# Limitacao consciente: Claude-only. Codex App e Antigravity nao expoem criar
+# thread com titulo via API; o slash command in-chat continua como alternativa.
+#
+# Uso:
+#   gf <feature|bug|chore> "<titulo>" [--prompt "<prompt inicial>"] \
+#      [--no-launch] [args extra repassados ao guia: --context, --status, ...]
+
+set -eu
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+GUIA_SHIM="${SCRIPT_DIR}/guia"
+
+if [ ! -x "${GUIA_SHIM}" ] && [ ! -f "${GUIA_SHIM}" ]; then
+  printf "Erro: shim do motor nao encontrado em %s\n" "${GUIA_SHIM}" >&2
+  exit 2
+fi
+
+# --- 1. Parse de argumentos -------------------------------------------------
+kind=""
+title=""
+prompt=""
+no_launch=0
+guia_args=()
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --prompt)     prompt="${2:-}"; shift 2 ;;
+    --prompt=*)   prompt="${1#*=}"; shift ;;
+    --no-launch)  no_launch=1; shift ;;
+    *)
+      if [ -z "${kind}" ]; then
+        kind="$1"
+      elif [ -z "${title}" ]; then
+        title="$1"
+      else
+        guia_args+=("$1")
+      fi
+      shift ;;
+  esac
+done
+
+case "${kind}" in
+  feature|bug|chore) ;;
+  *)
+    printf "Erro: kind invalido '%s'. Use: feature | bug | chore.\n" "${kind}" >&2
+    printf "Uso: gf <feature|bug|chore> \"<titulo>\" [--prompt \"...\"] [--no-launch] [args guia]\n" >&2
+    exit 2 ;;
+esac
+
+if [ -z "${title}" ]; then
+  printf "Erro: titulo da demanda ausente.\n" >&2
+  printf "Uso: gf <feature|bug|chore> \"<titulo>\" [--prompt \"...\"] [--no-launch] [args guia]\n" >&2
+  exit 2
+fi
+
+# --- 2. Roda o motor, captura stdout e exit code ----------------------------
+# UTF-8 limpo (titulo tem emoji). command-substitution roda num subshell, entao
+# o `exec` interno do shim guia so substitui esse subshell - gf segue vivo.
+export PYTHONIOENCODING="utf-8"
+export PYTHONUTF8="1"
+
+set +e
+captured="$("${GUIA_SHIM}" "${kind}" "${title}" "${guia_args[@]}")"
+guia_exit=$?
+set -e
+
+# Mostra ao usuario o que o motor imprimiu (rastreabilidade).
+printf "%s\n" "${captured}"
+
+if [ "${guia_exit}" -ne 0 ]; then
+  printf "Erro: guia %s falhou (exit %s). Demanda nao criada; Claude nao foi aberto.\n" \
+    "${kind}" "${guia_exit}" >&2
+  exit "${guia_exit}"
+fi
+
+# --- 3. Extrai o titulo canonico --------------------------------------------
+# ID e ASCII puro: extrai-se da linha `D-NNN created:` sem risco de encoding.
+demand_id="$(printf '%s\n' "${captured}" \
+  | grep -E '^[A-Z]-[0-9]+ created:' \
+  | head -n1 \
+  | grep -oE '^[A-Z]-[0-9]+' || true)"
+
+# Titulo via stdout (secundario - pode corromper emoji em alguns consoles).
+stdout_name="$(printf '%s\n' "${captured}" \
+  | grep -E '^(DEMAND_TITLE|CHAT_TITLE)=' \
+  | head -n1 \
+  | sed -E 's/^(DEMAND_TITLE|CHAT_TITLE)=//')"
+
+# Fonte primaria: arquivo UTF-8 escrito por set_current_task (emoji fiel).
+file_name=""
+for leaf in ".guia/demand-title.txt" ".guia/chat-title.txt"; do
+  if [ -f "${leaf}" ]; then
+    file_name="$(tr -d '\r\n' < "${leaf}")"
+    [ -n "${file_name}" ] && break
+  fi
+done
+
+# Confia no arquivo so se casar com a demanda recem-criada (defesa contra
+# corrida com criacao paralela); senao cai no stdout.
+session_name=""
+if [ -n "${file_name}" ] && { [ -z "${demand_id}" ] || \
+   printf '%s' "${file_name}" | grep -qE "^${demand_id}([^0-9]|$)"; }; then
+  session_name="${file_name}"
+elif [ -n "${stdout_name}" ]; then
+  session_name="${stdout_name}"
+elif [ -n "${file_name}" ]; then
+  session_name="${file_name}"
+fi
+
+if [ -z "${session_name}" ]; then
+  printf "Erro: demanda criada, mas nao consegui capturar o titulo canonico.\n" >&2
+  printf "Abra o Claude manualmente e renomeie a sessao.\n" >&2
+  exit 1
+fi
+
+if [ -z "${demand_id}" ]; then
+  demand_id="$(printf '%s' "${session_name}" | grep -oE '^[A-Z]-[0-9]+' || true)"
+fi
+
+# --- 4. Abre o Claude ja nomeado --------------------------------------------
+if [ "${no_launch}" -eq 1 ]; then
+  printf "\nNOME DA SESSAO: %s\n" "${session_name}"
+  printf "(--no-launch: Claude nao foi aberto. Rode: claude -n \"%s\")\n" "${session_name}"
+  exit 0
+fi
+
+if ! command -v claude >/dev/null 2>&1; then
+  printf "Aviso: 'claude' nao encontrado no PATH. Demanda %s criada.\n" "${demand_id}" >&2
+  printf "Abra manualmente com:\n  claude -n \"%s\"\n" "${session_name}" >&2
+  exit 0
+fi
+
+printf "\nAbrindo Claude: %s\n" "${session_name}"
+if [ -n "${prompt}" ]; then
+  exec claude -n "${session_name}" "${prompt}"
+else
+  exec claude -n "${session_name}"
+fi

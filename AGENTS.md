@@ -47,6 +47,7 @@ Layout do repo-mae: **fontes** em `core/` (src, build, manifest, lock, hooks, te
 
 | Para que | Comando |
 | --- | --- |
+| Criar demanda pelo terminal + abrir Claude ja nomeado | `.\core\bin\gf.ps1 <feature\|bug\|chore> "<titulo>"` ([how-to](docs/how-to/criar-demanda-pelo-terminal.md)) |
 | Sanity check do layout | `.\core\bin\guia.ps1 doctor` |
 | Ver task atual | `.\core\bin\guia.ps1 status` |
 | Ver uma task especifica | `.\core\bin\guia.ps1 status <ID>` |
