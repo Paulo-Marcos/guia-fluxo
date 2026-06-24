@@ -169,6 +169,20 @@ MSG_VALIDATE_DEPRECATED = (
     "Use `finish --no-commit` para o mesmo efeito sem commit."
 )
 
+# D-080: `finish` exige previa autorizacao humana - o gate recusa o fechamento
+# sem ela. A autorizacao e a env GUIA_HUMAN_FINISH=1, que o desenvolvedor seta na
+# sessao dele. Com a env presente, o finish prossegue (a IA pode fechar quando o
+# usuario ja autorizou); sem ela, recusa. A IA dispara `ready` e nao seta a env
+# por conta propria - ela e o sinal *do desenvolvedor*, nao do agente.
+ENV_HUMAN_FINISH = "GUIA_HUMAN_FINISH"
+MSG_FINISH_HUMAN_ONLY = (
+    "finish exige previa autorizacao do desenvolvedor (D-080): a IA dispara "
+    "`ready`; o fechamento so roda com autorizacao humana explicita.\n"
+    f"Defina a variavel de ambiente {ENV_HUMAN_FINISH}=1 na sua sessao para "
+    "autorizar o finish; sem ela, o fechamento e recusado.\n"
+    "A IA nao deve setar a env por conta propria - ela e o sinal do humano."
+)
+
 
 DEMAND_TITLE_FORMAT_DEFAULT = "{id} {kindMarker} - #{statusTag} - {title}"
 

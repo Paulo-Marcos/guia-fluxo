@@ -157,6 +157,8 @@ Move a task para `Aguardando validacao`. Gera relatorio em `.guia/reports/`. Imp
 
 Marca como `Validada`, sugere `#FINALIZADO` e commita por padrao. Com `--lock`, registra os arquivos da task em `.guia/locks/registry.yaml` sob o slug informado.
 
+**Gate de autorizacao humana (D-080).** `finish` exige a previa autorizacao do desenvolvedor, expressa pela variavel de ambiente `GUIA_HUMAN_FINISH=1` setada na sessao. Sem ela, o comando recusa logo no topo (antes de qualquer mutacao de estado) com mensagem explicativa. O objetivo e tecnico, nao so convencional: garante que `finish` (fechar + commitar) seja sempre uma acao do humano - a IA dispara `ready` e nao seta a env por conta propria, pois ela e o sinal *do desenvolvedor*. Com a autorizacao previa do dono presente, o `finish` roda (inclusive disparado pela IA). No PowerShell: `$env:GUIA_HUMAN_FINISH = "1"`.
+
 **Hook de docs (F-010).** Antes do fechamento, `finish` consulta `.guia/docs-map.yaml` (se existir) e computa candidatos de doc a atualizar. Quando ha candidatos, voce precisa registrar um dos flags abaixo, senao o comando aborta:
 
 - `--docs-touched <path>` (repetivel): docs que voce atualizou nesta task.

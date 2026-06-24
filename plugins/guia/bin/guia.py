@@ -211,7 +211,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_epic = sub.add_parser(
         "epic",
-        help="Create an Epic (E-NNN) â€” orquestrador de stories (D-049).",
+        help="Create an Epic (E-NNN) — orquestrador de stories (D-049).",
     )
     p_epic.add_argument("title")
     p_epic.add_argument("--context", default="")

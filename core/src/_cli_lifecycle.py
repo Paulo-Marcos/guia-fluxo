@@ -19,8 +19,10 @@ from _constants import (
     GUIA_DIR,
     DEMAND_TITLE_FILE,
     DOCS_MAP_FILE,
+    ENV_HUMAN_FINISH,
     FEATURES_REL,
     MSG_DEFAULT_FINISH_SUMMARY,
+    MSG_FINISH_HUMAN_ONLY,
     MSG_DEFAULT_READY_SUMMARY,
     MSG_DEFAULT_VALIDATE_SUMMARY,
     MSG_DEFAULT_VALIDATION_PENDING,
@@ -363,7 +365,7 @@ def _print_epic_tree(epic: dict[str, Any]) -> None:
         print("  (sem filhos ainda - adicione com `feature/bug/chore --under " + epic["id"] + "`)")
         return
     for index, child in enumerate(children):
-        prefix = "    â””â”€" if index == len(children) - 1 else "    â”œâ”€"
+        prefix = "    └─" if index == len(children) - 1 else "    ├─"
         marker = kind_marker(child.get("kind", ""))
         print(
             f"{prefix} {child['id']} {marker} [{child.get('status', '?')}] "
@@ -433,7 +435,29 @@ def cmd_ready(args: argparse.Namespace) -> int:
     return 0
 
 
+def _env_truthy(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _require_human_finish() -> None:
+    """D-080: gate tecnico que torna `finish` dependente de autorizacao humana.
+
+    Antes era so convencao (AGENTS.md). Aqui a propria ferramenta recusa o
+    finish sem a previa autorizacao do desenvolvedor, expressa pela env
+    GUIA_HUMAN_FINISH=1 setada na sessao dele. Com a env presente, o finish
+    prossegue (a IA pode fechar quando o usuario ja autorizou); sem ela, recusa.
+    A IA nao seta a env por conta propria - ela e o sinal *do desenvolvedor*.
+
+    Mantido isolado no topo de cmd_finish (antes de qualquer mutacao de estado)
+    para minimizar conflito com D-095, que edita o corpo do mesmo handler.
+    """
+    if _env_truthy(ENV_HUMAN_FINISH):
+        return
+    raise SystemExit(MSG_FINISH_HUMAN_ONLY)
+
+
 def cmd_finish(args: argparse.Namespace) -> int:
+    _require_human_finish()
     task = find_task_or_current(args.task_id)
     # D-049: Epic so fecha quando todos os filhos forem terminais.
     if task.get("kind") == KIND_EPIC:
