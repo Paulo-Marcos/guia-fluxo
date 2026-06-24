@@ -4,10 +4,13 @@ Cada comando do CLI imprime `NOME DA DEMANDA: ...` — info da demanda corrente,
 
 ## Claude Code
 
-- Surrogate confiavel: `mark_chapter` (`mcp__ccd_session__mark_chapter`) com o titulo da demanda — coloca divisor + entrada na ToC.
-- Comando: `/rename <titulo>` durante a sessao quando disponivel.
-- Inicio de sessao: `claude -n <titulo>` quando essa flag estiver disponivel.
-- Claude **nao** usa `codex_app.*`. Se nao houver API/comando de sessao acessivel, basta repetir `NOME DA DEMANDA: ...` para o humano.
+- Surrogate confiavel (na sessao, pelo agente): `mark_chapter` (`mcp__ccd_session__mark_chapter`) com o titulo da demanda — coloca divisor + entrada na ToC. **Nao** renomeia de verdade no picker/titulo do terminal, mas cobre a navegacao.
+- Renomeacao real, na sessao, **pelo humano**: `/rename <titulo>` (slash command digitado; o agente nao consegue dispara-lo programaticamente).
+- Inicio de sessao: `claude -n <titulo>` — define o nome **no lancamento** (e o escopo da **D-048**, nao da renomeacao de sessao viva).
+- Helper fino: `core/bin/guia-rename.ps1` / `core/bin/guia-rename` le `.guia/demand-title.txt`, copia o titulo para o clipboard e imprime destacado — voce so da `/rename` + cola. Ver [how-to/renomear-chat.md](../how-to/renomear-chat.md).
+- Claude **nao** usa `codex_app.*`. Se nao houver superficie acessivel, basta repetir `NOME DA DEMANDA: ...` para o humano.
+
+> **Viabilidade (verificado na D-057):** **nao existe** mecanismo para um processo externo renomear uma sessao Claude Code **ja aberta** — sem flag de CLI, arquivo observado, IPC ou MCP ([claude-code#67680](https://github.com/anthropics/claude-code/issues/67680) pede exatamente isso, ainda aberta). Por isso a D-057 nao "aciona" rename nenhum: o essencial ja e o `mark_chapter` (in-session), e o helper acima so facilita o `/rename` manual via clipboard.
 
 ## Codex App
 

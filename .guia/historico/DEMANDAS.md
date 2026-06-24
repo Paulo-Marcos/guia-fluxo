@@ -2376,3 +2376,464 @@
 
 - Nenhuma.
 
+## [D-076] ✨ Plugin global-first + guia:init (ref codex-plugin-cc)
+
+- **Status:** Validada
+- **Origem:** Backlog D-076 promovido (2026-06-17)
+- **Tipo:** Feature
+- **Contexto:** Convergir para arquitetura plugin-global-first espelhando openai/codex-plugin-cc: motor+skills+templates 100% no plugin global (CLAUDE_PLUGIN_ROOT), projeto do cliente so com estado/controle (.guia/ JSONs + FEATURES.md + lock/hook opcionais). Adicionar /guia:init. Limpar o que nao e necessario (provavel: install.ps1/sh, layout .guia-fluxo no consumidor, talvez .agents cross-tool). Decisoes abertas: E1 nome da pasta local (.guia vs .guia-fluxo), E2 fate de Codex/Antigravity, E3 manter core/dist+render ou reestruturar, E4 escopo do guia:init (deploy de templates + hooksPath). Continua o D-075 (que ja poe o motor no plugin global via CLAUDE_PLUGIN_ROOT, auto-init, raiz por CWD).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_cli_lifecycle.py`
+- `core/src/_state.py`
+- `core/src/guia.py`
+- `core/src/_constants.py`
+- `core/src/_locks.py`
+- `core/lock/lock_api.py`
+- `core/lock/check-lock.py`
+- `core/hooks/commit-msg`
+- `core/build/render-skills.py`
+- `core/bin/guia`
+- `core/manifest/manifest.yaml`
+- `core/manifest/bodies/init.md`
+- `core/manifest/bodies/guia-fluxo.md`
+- `core/manifest/bodies/_partials/README.md`
+- `.claude/settings.json`
+- `.claude-plugin/marketplace.json`
+- `docs/adr/0015-plugin-global-first-guia-init.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/reference/cli.md`
+- `docs/reference/files.md`
+- `README.md`
+- `AGENTS.md`
+- `CLAUDE.md`
+- `CONTRIBUTING.md`
+- `CHANGELOG.md`
+- `tests/test_init_deploy.py`
+- `tests/test_install.py`
+- `tests/test_manifest_layout_b.py`
+- `tests/test_body_partials.py`
+- `tests/test_render_includes.py`
+- `plugins/guia/skills/init/SKILL.md`
+- `plugins/guia/.agents/skills/guia-init/SKILL.md`
+- `plugins/guia/bin/check-lock.py`
+- `plugins/guia/commands/init.md`
+- `plugins/guia/commands/feature.md`
+- `SECURITY.md`
+- `tests/test_render_polish.py`
+- `tests/test_render_hardening.py`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `tests/test_lock_api.py`
+
+### O que foi feito
+
+- Backlog D-076 promovido via guia-fluxo.
+- Avaliacao IA: Demanda valida e bem escopada. O caminho Claude ja e plugin-global-first (D-075: no-clone, motor via CLAUDE_PLUGIN_ROOT, raiz por CWD, auto-init de .guia/). Decisoes fechadas com o dev: E1 manter .guia/; E2 preservar cross-tool (Codex/Antigravity) intacto e tratar em demanda separada; E3 renomear dist/ -> plugins/guia/; E4 /guia:init full. Net-new: /guia:init + rename de layout + docs/ADR-0015. Sem worktree, in-place no main.
+- Convergencia plugin-global-first (espelha codex-plugin-cc). (1) Novo verbo/skill init (/guia:init) FULL: semeia .guia/ + deploya templates de lock (features/registry.yaml, lock-ignore.txt, .githooks/commit-msg) do plugin + git core.hooksPath; idempotente, no-clobber, flag --no-locks. Reusa initialize_project (D-075); fonte dos templates via CLAUDE_PLUGIN_ROOT/templates com fallback <engine>/../templates.
+- (2) Rename dist/ -> plugins/guia/ (git ve como renomeacao): default do Paths.build em render-skills.py, .claude/settings.json (extraKnownMarketplaces ./plugins/guia), .claude-plugin/marketplace.json raiz (source), doctor, e testes que hardcodavam dist (test_install/manifest_layout_b/body_partials/render_includes). marketplace.json dentro do plugin usa source ../ e seguiu valido.
+- (3) Locks funcionais no consumidor plugin-global: lock_api.REPO_ROOT em 3 camadas (GUIA_PROJECT_ROOT > script-se-tem-.guia > CWD, espelha _constants); check-lock.py embarcado no bin do plugin; commit-msg robusto (descobre validador em core/lock OU CLAUDE_PLUGIN_ROOT/bin, degrada exit 0 com aviso se nenhum).
+- (4) Cross-tool Codex/Antigravity (target agent_skill, .agents/skills, install.ps1/.sh, .guia-fluxo/) PRESERVADO intacto e adiado para demanda separada (decisao E2). Docs: ADR-0015 (novo), README, instalar-em-outro-projeto, body guia-fluxo, cli.md, files.md, AGENTS/CLAUDE, CONTRIBUTING, CHANGELOG. visao-geral.md mantido com refs dist/ historicas (F-011/F-012) de proposito.
+- ARQUIVOS NOVOS exigem no commit: [unlock:adicoes-exigem-autorizacao] motivo: <razao> (alem da palavra motivo:). Novos: core/manifest/bodies/init.md, docs/adr/0015-*.md, tests/test_init_deploy.py, plugins/guia/skills/init/SKILL.md, plugins/guia/.agents/skills/guia-init/SKILL.md, plugins/guia/bin/check-lock.py.
+- AJUSTE pos-validacao (skills -> commands): plugin SKILLS surgem bare no menu de slash (/init, /bug) e colidem com built-ins (/init) - confirmado pelo dev no install real. Migrado o target Claude de Agent Skills (skills/<verbo>/SKILL.md) para plugin COMMANDS (commands/<verbo>.md): render-skills.py ganha TargetSpec.emits_command + output flat sem 'name:' (claude_command); manifest key claude_skill->claude_command nos 15 verbos; plugins/guia/skills/ removido; commands/ gerado. Resultado: verbos namespaced /guia:<verbo>, sem colisao, auto-trigger por description preservado. Target agent_skill (Codex/Antigravity, .agents/skills/) intacto.
+- Docs alinhados (claude=commands, agent=skills): CLAUDE.md, AGENTS.md, CONTRIBUTING.md, docs/reference/{cli,files}.md, SECURITY.md, body guia-fluxo, ADR-0015 (decisao #4 + consequencias), CHANGELOG. 6 testes atualizados (body_partials/manifest_layout_b/render_includes/render_polish/render_hardening/install). Revisao adversarial (3 agentes) limpa: so 1 stale real (AGENTS.md:11 skills->commands) corrigido; resto pre-existente fora de escopo.
+- Fechada via finish --no-commit + commit manual unico: o commit_task do motor so cobre task.modifiedFiles e nao injeta o marcador [unlock:adicoes-exigem-autorizacao] que os arquivos novos exigem.
+
+### Validacao feita
+
+- python core/build/render-skills.py --check -> OK 56 alvos em sincronia
+- python -m pytest -> 144 passed (inclui tests/test_init_deploy.py novo: deploy templates + hooksPath + idempotencia/no-clobber + --no-locks)
+- python core/src/guia.py doctor -> Guia Fluxo files OK
+- hook commit-msg testado ao vivo no repo-mae: bloqueia add sem marcador (exit 1), libera com [unlock] + motivo (exit 0)
+- check-lock.py do plugin rodado de tmpdir resolve a raiz por CWD (reporta 'Nenhuma trava ativa' do tmp, nao o registry do repo) -> locks valem no consumidor
+- Dev confirmou no ambiente real (claude --plugin-dir + /reload-plugins): /guia:bug e /guia:init aparecem NAMESPACED, /guia filtra os verbos, /init nativo livre. Screenshots.
+- render --check OK (56 alvos); pytest 144 passed; doctor OK (apos a migracao)
+- render --check OK (56 alvos); pytest 146 passed (inclui lock_api _resolve_repo_root e test_init_deploy); doctor OK; /guia:* namespaced confirmado pelo dev no ambiente real (claude --plugin-dir + reload)
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-075] ✨ Plugin autossuficiente: install sem clone (CLAUDE_PLUGIN_ROOT)
+
+- **Status:** Aguardando validacao
+- **Origem:** Guia Fluxo (2026-06-16)
+- **Tipo:** Feature
+- **Contexto:** Tornar /plugin install guia@guia-fluxo suficiente sozinho (sem clone nem install.ps1) para usuarios Claude Code. Hoje as skills mandam rodar .\core\bin\guia.ps1 (relativo ao CWD) - exatamente o que a doc oficial plugin-dev proibe; o certo e a env var CLAUDE_PLUGIN_ROOT. O motor ja esta empacotado standalone em dist/bin/guia.py (F-012) e o plugin source e ./dist, entao CLAUDE_PLUGIN_ROOT = dist instalado -> python no bin do plugin funciona. Escopo Completo: (1) run command host-aware (Claude -> CLAUDE_PLUGIN_ROOT/bin/guia.py; agent Codex/Antigravity mantem deploy install.sh), (2) auto-init do .guia no 1o uso, (3) README/docs do fluxo sem clone + pre-req Python 3.10+. Relaciona spike D-058.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_constants.py`
+- `core/src/_cli_lifecycle.py`
+- `core/src/guia.py`
+- `core/manifest/bodies/_partials/run_cmd.claude.md`
+- `core/manifest/bodies/_partials/run_cmd.agent.md`
+- `core/manifest/bodies/feature.md`
+- `core/manifest/bodies/bug.md`
+- `core/manifest/bodies/chore.md`
+- `core/manifest/bodies/backlog.md`
+- `core/manifest/bodies/block.md`
+- `core/manifest/bodies/cancel.md`
+- `core/manifest/bodies/finish.md`
+- `core/manifest/bodies/plan.md`
+- `core/manifest/bodies/promote.md`
+- `core/manifest/bodies/ready.md`
+- `core/manifest/bodies/start.md`
+- `core/manifest/bodies/status.md`
+- `core/manifest/bodies/unblock.md`
+- `core/manifest/bodies/guia-fluxo.md`
+- `tests/test_auto_init.py`
+- `tests/test_body_partials.py`
+- `tests/test_manifest_layout_b.py`
+- `README.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/adr/0014-plugin-autossuficiente-claude-plugin-root.md`
+- `docs/adr/README.md`
+- `CHANGELOG.md`
+- `dist/ (regenerado por render-skills.py: skills/*, .agents/skills/*, bin/_constants.py, bin/_cli_lifecycle.py, bin/guia.py)`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Em desenvolvimento desde 2026-06-16.
+- Parte 1 (run host-aware): novo partial _partials/run_cmd.{claude,agent}.md incluido via {{include_per_target}} em TODOS os 13 verbos + Core Rule do guia-fluxo. Claude invoca python "${CLAUDE_PLUGIN_ROOT}/bin/guia.py" <command> (bash canonico + nota PowerShell $env:); agent mantem core/bin/guia.ps1 + fallback core/src/guia.py (sem regressao). Refs secundarias (block 'To resume', Portable install) neutralizadas.
+- Parte 2 (auto-init + raiz CWD): _constants.ROOT agora resolve em camadas (GUIA_PROJECT_ROOT > script_root quando ja tem .guia/ > CWD exato, SEM walk-up ancestral pra nao sequestrar .guia de pai). _cli_lifecycle.initialize_project()+ensure_initialized() extraidos de cmd_init; guia.py chama ensure_initialized() antes do dispatch (denylist init/doctor/render). NECESSARIO porque o plugin instalado vive fora da arvore do projeto: so __file__.parents[2] criaria .guia no cache.
+- Parte 3 (docs): README Instalacao lidera com rota sem clone (Python 3.10+); how-to instalar-em-outro-projeto com secao sem-clone; ADR-0014 novo + indice ADR; secao Portable install do body guia-fluxo reescrita; CHANGELOG [Unreleased] com a nuance dogfood (skills ativas vem de ./dist -> agente invoca dist/bin/guia.py; quem dev o motor usa core/bin/guia.ps1).
+- ARQUIVOS NOVOS (lock 'adicoes-exigem-autorizacao', op add): run_cmd.claude.md, run_cmd.agent.md, tests/test_auto_init.py, docs/adr/0014-*.md. O COMMIT (feito por voce) vai precisar de [unlock:adicoes-exigem-autorizacao] motivo: <razao>.
+
+### Validacao feita
+
+- python core/build/render-skills.py && --check verde (53 alvos em sincronia)
+- python -m pytest: 141 passed (inclui tests/test_auto_init.py novo: roota no CWD, aviso auto-init, doctor nao auto-inicializa, override GUIA_PROJECT_ROOT)
+- python core/src/guia.py doctor: Guia Fluxo files OK
+- Simulacao real: copiei dist/bin pra fora do repo, rodei de um projeto temp -> auto-init disparou, D-001 fresh criado no projeto, .guia NAO vazou pra pasta do motor
+
+### Validacao pendente
+
+- Validacao humana: num projeto NOVO (sem clone) rodar /plugin marketplace add Paulo-Marcos/guia-fluxo + /plugin install guia@guia-fluxo e depois /guia:feature "teste" pra confirmar o motor via ${CLAUDE_PLUGIN_ROOT}
+- Commit (humano) com [unlock:adicoes-exigem-autorizacao] por causa dos 4 arquivos novos
+
+## [D-074] ✨ B-009: marketplace remoto (.claude-plugin na raiz)
+
+- **Status:** Aguardando validacao
+- **Origem:** Guia Fluxo (2026-06-16)
+- **Tipo:** Feature
+- **Contexto:** Front #3 Akita. Repo publico. /plugin marketplace add Paulo-Marcos/guia-fluxo exige (guia oficial) .claude-plugin/marketplace.json na RAIZ - so existe em dist/. Criar root marketplace.json aditivo, plugin source ./dist (dogfood local segue ./dist via settings). Corrigir snippet install no README (/plugin install guia@guia-fluxo - plugin name e guia). Marcar B-009 entregue em ROADMAP/visao-geral. Drift namespace ai->guia fica chore separado. Validacao final e do dev em sessao Claude Code nova.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `.claude-plugin/marketplace.json`
+- `README.md`
+- `docs/ROADMAP.md`
+- `docs/explanation/visao-geral.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- B-009: criado .claude-plugin/marketplace.json na raiz (plugin guia, source ./dist) habilitando /plugin marketplace add Paulo-Marcos/guia-fluxo remoto (guia oficial exige o manifest na raiz). README install snippet corrigido (/plugin install guia@guia-fluxo). ROADMAP/visao-geral marcam B-009 entregue. Aditivo: dogfood local segue ./dist.
+
+### Validacao feita
+
+- marketplace.json JSON valido; doctor verde; render --check verde (53)
+
+### Validacao pendente
+
+- Humano: validar /plugin marketplace add Paulo-Marcos/guia-fluxo + /plugin install guia@guia-fluxo numa sessao Claude Code nova
+
+## [D-073] 🧹 Release v0.2.0: cortar CHANGELOG, bump VERSION, release.yml
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-15)
+- **Tipo:** Chore
+- **Contexto:** Front #2 do mapeamento Akita. Repo publicado e CI verde. (1) CHANGELOG [Unreleased] -> [0.2.0] - 2026-06-15 consolidando D-068/069/070/071/072. (2) VERSION 0.1.0 -> 0.2.0 (alinha plugin.json/marketplace.json ja em 0.2.0). (3) release.yml: workflow de release por tag v* (render --check + gh release create --generate-notes). Tag v0.2.0 + push e o passo outward-facing final com OK do dev. release.yml e arquivo novo -> commit precisa de [unlock:adicoes-exigem-autorizacao].
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `CHANGELOG.md`
+- `VERSION`
+- `.github/workflows/release.yml`
+- `README.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Release v0.2.0: CHANGELOG [Unreleased]->[0.2.0] 2026-06-15 (consolida D-068..D-072); VERSION 0.1.0->0.2.0; release.yml (release por tag v*: render --check + gh release create --generate-notes); badges de status (tests, render-check, release, MIT) no topo do README.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- doctor verde; render --check verde (53 alvos); release.yml YAML valido
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-072] 🐛 render-skills: include guard usa manifest_dir nao-resolvido (quebra CI Windows)
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-15)
+- **Tipo:** Bug / regressao
+- **Contexto:** CI Windows (GitHub Actions) falhou no primeiro push: tests/test_render_includes.py::GuardTests::test_circular_include_detected estoura ValueError em vez de RenderError. Causa em core/build/render-skills.py:393: ao montar o chain do include circular, p.relative_to(manifest_dir) usa manifest_dir NAO-resolvido, enquanto a stack e o path sao .resolve()d (linha 383). No runner Windows tempfile devolve nome curto 8.3 (RUNNER~1) e .resolve() expande pro longo (runneradmin) -> relative_to compara textos diferentes e estoura. Fix: usar root (= manifest_dir.resolve(), linha 379) no relative_to da linha 393. Nao reproduz em Windows local sem descasamento curto/longo.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/build/render-skills.py`
+- `tests/test_render_includes.py`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Fix: _expand_includes (render-skills.py:393) usa root (=manifest_dir.resolve()) em vez de manifest_dir cru ao montar o chain do include circular. No runner Windows o tempdir vem em nome curto 8.3 (RUNNER~1) e .resolve() expande pro longo -> relative_to comparava textos diferentes e estourava ValueError em vez de RenderError. Adicionado teste de regressao portatil (test_circular_chain_uses_resolved_manifest_dir) que forca cru!=resolvido via componente '..', reproduzindo o bug em qualquer SO.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- pytest 137 passed (Windows); regressao confirmada (falha com ValueError no codigo antigo, passa com o fix); render --check verde; doctor verde
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-071] 🧹 README value-first: o que faz e como usar antes da stack
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-15)
+- **Tipo:** Chore
+- **Contexto:** Pre-publicacao no GitHub. Aplicar a licao do artigo Akita ('ninguem liga pra sua stack'): o README deve LIDERAR com o que o guia-fluxo faz, o problema que resolve e COMO usar (fluxo + exemplo concreto), e so depois detalhes de stack/arquitetura/instalacao/plugin. Hoje o README mergulha em layout de plugin, marketplace e core/dist antes de mostrar valor. Tambem corrigir handle paulosmarcos -> Paulo-Marcos no README.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `README.md`
+- `dist/.claude-plugin/plugin.json`
+- `dist/.claude-plugin/marketplace.json`
+- `docs/ROADMAP.md`
+- `docs/explanation/visao-geral.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- README reescrito value-first: lidera com o que o pack faz, o problema e o fluxo (abre->ready->valida->finish->lock); stack movida pro fim. Handle paulosmarcos->Paulo-Marcos corrigido em plugin.json, marketplace.json, ROADMAP, visao-geral e instalar-em-outro-projeto.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- doctor verde; render --check verde (53 alvos); git grep sem paulosmarcos fora de .guia/FEATURES
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-070] 🧹 Docs quick wins: residuo CONTRIBUTING + llms.txt
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-12)
+- **Tipo:** Chore
+- **Contexto:** Quick wins do mapeamento do artigo Akita (boas praticas OSS na era LLM). (a) Residuo do D-069: CONTRIBUTING.md tabela Tipos em uso ainda lista o verbo issue como atual (linha 78) - trocar para bug via /bug. (b) Avaliar/criar llms.txt minimo na raiz apontando para AGENTS.md, CLAUDE.md, README e docs. Independente de publicar o repo.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `CONTRIBUTING.md`
+- `llms.txt`
+- `CHANGELOG.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Em desenvolvimento desde 2026-06-12.
+- CONTRIBUTING.md: troquei a linha obsoleta da tabela Tipos em uso (issue -> bug, /issue -> /bug) e atualizei a descricao do chore de [Manutencao sem demanda formal] para [Manutencao entregue via /chore (refactor pequeno, deps, build/lint)], coerente com o modelo atual onde chore E demanda formal D-NNN kind=chore.
+- O grep por issue pegou uma 2a referencia VIVA ao verbo removido, no fluxo Abra uma demanda (antiga linha 30): corrigida issue -> bug. Preservei o exemplo historico (issue: Paridade de skills...) e as 3 mencoes legitimas a issue do GitHub (canais de reporte).
+- llms.txt CRIADO. Decisao: vale a pena - o repo e uma ferramenta DE agentes, entao um llms.txt minimo e barato e coerente; complementa AGENTS.md (briefing profundo) sem duplicar, e a porta de entrada de 4 linhas. Formato padrao llmstxt.org: H1 + blockquote de 1 linha + bullets para AGENTS.md, CLAUDE.md, README.md, docs/.
+- AVISO UNLOCK: llms.txt e arquivo NOVO -> cai no lock global adicoes-exigem-autorizacao (operations add, files asterisco). O commit (feito pelo humano) precisara da marca: [unlock:adicoes-exigem-autorizacao] motivo: adiciona indice llms.txt para agentes.
+- Fechada apos validacao humana. CHANGELOG ganhou entradas Added (llms.txt) e Fixed (residuo issue em CONTRIBUTING).
+
+### Validacao feita
+
+- doctor verde (exit 0). Nao toquei core/ nem manifest, render dispensado.
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-069] 🧹 Corrigir drift de docs: verbo issue removido
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-11)
+- **Tipo:** Chore
+- **Contexto:** Pilar 'Documentacao' do artigo Akita. README.md linha 21 ainda lista /guia:issue, removido no ADR-0011 Fase 4 (substituido por /guia:bug). Varrer README.md + docs/ por referencias obsoletas a verbos/IDs removidos (issue, /guia:issue, ai issue, kind=issue usado como verbo) e alinhar ao vocabulario atual (bug, D-NNN). NAO mexer em mencoes legacy intencionais: 'Bug (legacy)', aceitacao de F/I/B-NNN como input, e historico no CHANGELOG/ADR. Independente: edicao de doc pura, sem dependencia de outra frente.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `README.md`
+- `docs/explanation/visao-geral.md`
+- `docs/reference/files.md`
+- `docs/reference/hooks-git.md`
+- `docs/tutorials/primeiro-uso.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/how-to/renomear-chat.md`
+- `docs/how-to/manter-docs-atualizados.md`
+- `docs/how-to/promover-backlog.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CHANGELOG.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Em desenvolvimento desde 2026-06-11.
+- Removido verbo/atalho obsoleto 'issue' de README e docs vivos: /guia:issue->/guia:bug (README, files.md, instalar-em-outro-projeto, visao-geral), /feature ou /issue->/bug (hooks-git), --kind issue->--kind bug (promover-backlog x2), e ajuste de prosa (files.md 'features e issues'->'features, bugs e chores'; promover-backlog 'feature ou issue'->'feature, bug ou chore'; renomear-chat lista de verbos; manter-docs 'feature/issue'->'demanda'; primeiro-uso 'feature/issue'->'feature/bug/chore').
+- Preservadas as mencoes legacy/historicas intencionais: 'Bug (legacy)' e kind=issue navegavel (visao-geral, cli.md), aceitacao de F/I/B-NNN, notas de remocao da Fase 4, ADRs (0004/0006/0010/0011) e auditorias F-014 (snapshots historicos, onde [ISSUE] e rotulo de classificacao, nao o verbo).
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- doctor: Guia Fluxo files OK.
+- python core/build/render-skills.py --check: OK 53 alvos em sincronia
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-079] 🧹 Subcomando backlog resolve para retirar item de backlog ja entregue
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-20)
+- **Tipo:** Chore
+- **Contexto:** Nao ha caminho oficial para retirar do backlog um item ja entregue por outra demanda (skill backlog so tem add/list/migrate/promote). Resultado: itens zumbis poluindo backlog list. Criar subcomando deterministico 'backlog resolve <id> [--reason]' que marca o item (tasks.json status=Backlog OU backlog.json legacy) como Resolvida + resolvedAt + resolution, e some do backlog list. Usar para fechar B-009/B-011/B-017 (ja entregues: marketplace remoto, cancel, plan).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `core/src/_constants.py`
+- `core/src/_cli_creation.py`
+- `core/src/guia.py`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/bin/_cli_creation.py`
+- `plugins/guia/bin/guia.py`
+- `tests/test_backlog_resolve.py`
+- `docs/reference/cli.md`
+- `.guia/backlog.json`
+- `core/src/_cli_lifecycle.py`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `CONTRIBUTING.md`
+- `tests/test_status_all.py`
+- `.claude/settings.json`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CLAUDE.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Novo subcomando deterministico 'backlog resolve <id> [--reason]' (status STATUS_RESOLVED=Resolvida) que retira do backlog ativo item ja entregue/obsoleto nas duas fontes (tasks.json D-NNN + backlog.json legacy B-NNN), preservando para historico. backlog list filtra resolvidos. Usado para fechar B-009/B-011/B-017.
+- BUNDLE Onda 1 (3 itens). (1) D-079 backlog resolve: subcomando deterministico 'backlog resolve <id> [--reason]' (STATUS_RESOLVED) nas 2 fontes; fechou B-009/B-011/B-017. (2) B-014 status --all: quadro de tasks Em desenvolvimento + aviso de concorrencia B-018 quando ha 2+ ativas. (3) D-078: F-NNN/I-NNN->D-NNN nos exemplos de CONTRIBUTING.md e cli.md (legacy statements preservados).
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- pytest tests/test_backlog_resolve.py: 4 passed
+- pytest tests/ (suite completa): 150 passed
+- guia doctor: exit 0 / render-skills.py --check: 56 alvos em sincronia
+- pytest tests/: 153 passed
+- guia doctor: exit 0; render-skills.py --check: 56 alvos OK
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-077] ✨ Corrigir source '../' no marketplace.json interno do plugin (alinhar codex-plugin-cc)
+
+- **Status:** Validada
+- **Origem:** Backlog (2026-06-19)
+- **Tipo:** Feature
+- **Contexto:** plugins/guia/.claude-plugin/marketplace.json declara o plugin com source: '../', mas a doc do Claude Code recomenda NAO usar '../' em source de plugin (deve ser caminho relativo ao marketplace root comecando com './'). Latente: so morde no install por marketplace LOCAL directory (que a versao atual do Claude do dev nem suporta); o caminho GitHub usa o marketplace.json da raiz (source './plugins/guia', correto). Opcao: alinhar 1:1 ao codex-plugin-cc - marketplace.json so na raiz, settings.json do repo apontando para '.' em vez de './plugins/guia', e remover/ajustar o marketplace.json interno. Descoberto na D-076 ao diagnosticar erro de install local (source type not supported).
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `.claude/settings.json`
+- `CLAUDE.md`
+- `plugins/guia/.claude-plugin/marketplace.json`
+- `.guia/backlog.json`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CONTRIBUTING.md`
+- `core/src/_cli_creation.py`
+- `core/src/_cli_lifecycle.py`
+- `core/src/_constants.py`
+- `core/src/guia.py`
+- `docs/reference/cli.md`
+- `plugins/guia/bin/_cli_creation.py`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/bin/guia.py`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-20: Onda 1: limpar marketplace interno (dev-loop).
+- Dev-loop: removido o marketplace.json interno de plugins/guia/.claude-plugin/ (usava source '../' desaconselhado). settings.json extraKnownMarketplaces repontado de ./plugins/guia para '.' (le o marketplace.json da raiz). CLAUDE.md atualizado. Teste local agora: abrir o repo (descoberta via raiz) ou claude --plugin-dir ./plugins/guia (carrega direto, sem marketplace).
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- render-skills.py --check: 56 alvos OK (marketplace interno nao e gerado)
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-058] ✨ Spike: instalar em projeto-teste e mapear experiencia real do consumidor
+
+- **Status:** Validada
+- **Origem:** Backlog (2026-06-10)
+- **Tipo:** Feature
+- **Contexto:** Objetivo: antes de implementar D-055 (renomear FEATURES.md), D-056 (mover features/ para .guia/) e D-057 (rename de chat), criar um projeto-teste vazio e rodar install.ps1 nele para ver exatamente o que o usuario recebe hoje. Isso serve dois propositos: (1) Validar o que funciona e o que esta estranho na visao do consumidor - quais pastas aparecem, o que o Claude Code detecta, se o doctor passa, se as skills disparam, se o fluxo feature -> ready -> finish funciona end-to-end. (2) Usar a experiencia real para priorizar e detalhar os backlogs estruturais (D-053, D-055, D-056) com evidencias concretas em vez de suposicoes. Passos sugeridos: (a) criar pasta vazia em algum lugar fora do repo-mae (ex: C:/dev/guia-teste); (b) rodar: .\install.ps1 -Target C:/dev/guia-teste -DryRun para previa; (c) rodar sem DryRun; (d) abrir o projeto no Claude Code e verificar se o plugin e detectado; (e) criar uma demanda de teste, rodar ready + finish; (f) documentar o que ficou confuso, o que estava faltando, o que soou errado no nome/layout. Resultado esperado: lista de ajustes priorizados que alimenta D-053/D-055/D-056 com contexto real.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `.guia/reports/D-058-spike-consumidor.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CHANGELOG.md`
+- `README.md`
+- `core/manifest/bodies/guia-fluxo.md`
+- `core/src/_constants.py`
+- `docs/ROADMAP.md`
+- `docs/adr/README.md`
+- `docs/explanation/visao-geral.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/tutorials/primeiro-uso.md`
+- `plugins/guia/.agents/skills/guia-fluxo/SKILL.md`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/commands/guia-fluxo.md`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-20: Spike: instalar em projeto-teste vazio e mapear a experiencia real do consumidor pos-global-first (D-076).
+- Spike empirico: plugin isolado + projeto vazio, simulando o consumidor global-first. RESULTADO: o fluxo global-first FUNCIONA end-to-end (auto-init, /guia:init deploya locks/hook, doctor OK, feature->ready->finish, hook bloqueia/libera corretamente com CLAUDE_PLUGIN_ROOT). 3 achados: (1) install.ps1/.sh QUEBRADOS (apontam dist/ removido no D-076) -> D-082; (2) D-061 bug original RESOLVIDO pelo global-first, resta so o gap de locks nao valerem fora de sessao Claude; (3) D-060 ja coberto por init (so falta doc). Warts: doctor pre-init cospe FAIL com exit 0.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- Testado em projeto isolado: doctor, feature, init (locks+hooksPath), ready, finish; hook commit-msg nos 2 modos (com/sem CLAUDE_PLUGIN_ROOT) + unlock
+
+### Validacao pendente
+
+- Nenhuma.
+

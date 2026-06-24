@@ -2,6 +2,146 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-102",
+      "kind": "feature",
+      "title": "B-003: Adicionar PreToolUse hook bloqueando Edit/Write em arquivo travado",
+      "status": "Aguardando validacao",
+      "origin": "Backlog B-003 (2026-06-24)",
+      "context": "Backlog B-003: Defesa em profundidade vs commit-msg hook atual (que so pega no commit, depois do estrago). hooks/hooks.json com matcher 'Edit|Write|MultiEdit' chama bin/check-lock.py recebendo file_path via stdin (JSON), retorna exit 2 com motivo se arquivo esta em features/registry.yaml. commit-msg continua existindo como segunda linha (defende push direto de outras ferramentas).",
+      "createdAt": "2026-06-24",
+      "updatedAt": "2026-06-24",
+      "startedAt": "2026-06-24T19:58:39-03:00",
+      "readyAt": "2026-06-24T20:08:34-03:00",
+      "finishedAt": null,
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md",
+        "core/lock/check-lock.py",
+        "core/build/render-skills.py",
+        "core/hooks/hooks.json",
+        "plugins/guia/bin/check-lock.py",
+        "plugins/guia/hooks/hooks.json",
+        "tests/test_pretool_lock.py",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "CHANGELOG.md",
+        "docs/explanation/por-que-lock.md"
+      ],
+      "summary": [
+        "Backlog B-003 promovido via guia-fluxo.",
+        "Avaliacao IA: Defesa em profundidade: hook PreToolUse do Claude Code que bloqueia Edit/Write/MultiEdit em arquivo travado ANTES da edicao, complementando o commit-msg (que so pega no commit). Reusa check-lock/lock_api. Recorte claro e acionavel.",
+        "Novo subcomando check-lock.py pretool: le payload PreToolUse no stdin, ancora repo-root pelo cwd, extrai tool_input.file_path e checa como modify (nao add, pra nao colidir com o blanket add-lock *), reusa lock_api.find_blocked + print_block; exit 2 bloqueia, exit 0 em qualquer falha (degrada liberando).",
+        "core/hooks/hooks.json (matcher Edit|Write|MultiEdit) renderizado para plugins/guia/hooks/hooks.json; auto-descoberto na instalacao do plugin, sem deploy por projeto. render-skills.py ganhou collect_hooks_outputs (valida JSON) + cobertura de orphan/clean.",
+        "commit-msg mantido como segunda linha de defesa. Docs: por-que-lock (camadas), AGENTS, CLAUDE, CHANGELOG."
+      ],
+      "validations": [
+        "python -m pytest tests/ -q  ->  228 passed",
+        "python -m pytest tests/test_pretool_lock.py -q  ->  7 passed (travado->2, livre->0, MultiEdit travado->2, arquivo novo nao bloqueado, JSON malformado/vazio/sem file_path->0)",
+        "python core/build/render-skills.py --check  ->  OK 67 alvos; --check-orphans OK; doctor OK",
+        "Smoke E2E pelo espelho plugins/guia/bin/check-lock.py: arquivo modify-travado -> exit 2 com print_block; arquivo livre -> exit 0"
+      ],
+      "pending": [
+        "Validacao humana em sessao Claude Code com o plugin guia carregado: tentar Edit num arquivo realmente travado (operations modify) e confirmar o bloqueio in-session (exit 2 + feedback ao agente).",
+        "Ao dar finish, escopar o commit so para os arquivos de D-102 - o working tree tem trabalho nao commitado de D-057/D-048 (guia-rename + docs de chat-rename) que nao pertence a esta demanda."
+      ],
+      "backlogId": "B-003",
+      "assessment": [
+        "Defesa em profundidade: hook PreToolUse do Claude Code que bloqueia Edit/Write/MultiEdit em arquivo travado ANTES da edicao, complementando o commit-msg (que so pega no commit). Reusa check-lock/lock_api. Recorte claro e acionavel."
+      ],
+      "executionPlan": [
+        "Adicionar subcomando 'pretool' em core/lock/check-lock.py: le JSON do PreToolUse no stdin, extrai tool_input.file_path, ancora repo root pelo cwd do payload, checa como modify (nao add, pra nao colidir com o blanket add-lock '*'), reusa print_block, exit 2 se travado.",
+        "Fonte core/hooks/hooks.json renderizada para plugins/guia/hooks/hooks.json (matcher Edit|Write|MultiEdit; auto-descoberto na instalacao do plugin).",
+        "Wire do novo output no render-skills.py (+ cobertura de orphan/check) e regen do espelho plugins/guia/.",
+        "Testes: edit em travado -> exit 2; livre -> exit 0; falha de infra -> exit 0; Write de arquivo novo nao bloqueado pelo blanket add-lock.",
+        "Docs: PreToolUse como primeira linha de defesa, commit-msg como segunda."
+      ],
+      "readyCount": 1,
+      "commitSubject": "feature(D-102): hook PreToolUse bloqueia edicao de arquivo travado antes do commit"
+    },
+    {
+      "id": "D-101",
+      "kind": "chore",
+      "title": "TESTE gf ps1 D-048 (descartar)",
+      "status": "Cancelada",
+      "origin": "Guia Fluxo (2026-06-24)",
+      "context": "teste ps1, cancelar",
+      "createdAt": "2026-06-24",
+      "updatedAt": "2026-06-24",
+      "startedAt": "2026-06-24T19:03:44-03:00",
+      "readyAt": null,
+      "finishedAt": null,
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo.",
+        "Cancelada em 2026-06-24: Demanda de teste do launcher gf (D-048), descartada"
+      ],
+      "validations": [],
+      "pending": [],
+      "cancellations": [
+        {
+          "reason": "Demanda de teste do launcher gf (D-048), descartada",
+          "at": "2026-06-24"
+        }
+      ]
+    },
+    {
+      "id": "D-100",
+      "kind": "chore",
+      "title": "TESTE gf bash D-048 (descartar)",
+      "status": "Cancelada",
+      "origin": "Guia Fluxo (2026-06-24)",
+      "context": "teste bash, sera cancelada",
+      "createdAt": "2026-06-24",
+      "updatedAt": "2026-06-24",
+      "startedAt": "2026-06-24T19:03:23-03:00",
+      "readyAt": null,
+      "finishedAt": null,
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo.",
+        "Cancelada em 2026-06-24: Demanda de teste do launcher gf (D-048), descartada"
+      ],
+      "validations": [],
+      "pending": [],
+      "cancellations": [
+        {
+          "reason": "Demanda de teste do launcher gf (D-048), descartada",
+          "at": "2026-06-24"
+        }
+      ]
+    },
+    {
+      "id": "D-099",
+      "kind": "chore",
+      "title": "TESTE gf launcher D-048 (descartar)",
+      "status": "Cancelada",
+      "origin": "Guia Fluxo (2026-06-24)",
+      "context": "teste automatizado do launcher gf, sera cancelada",
+      "createdAt": "2026-06-24",
+      "updatedAt": "2026-06-24",
+      "startedAt": "2026-06-24T19:01:46-03:00",
+      "readyAt": null,
+      "finishedAt": null,
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo.",
+        "Cancelada em 2026-06-24: Demanda de teste do launcher gf (D-048), descartada"
+      ],
+      "validations": [],
+      "pending": [],
+      "cancellations": [
+        {
+          "reason": "Demanda de teste do launcher gf (D-048), descartada",
+          "at": "2026-06-24"
+        }
+      ]
+    },
+    {
       "id": "D-098",
       "kind": "chore",
       "title": "Reverter gate de finish por env (D-080): finish vira user-authorized por regra de comportamento",
@@ -2684,15 +2824,79 @@
       "id": "D-057",
       "kind": "feature",
       "title": "Script de rename automatico do chat Claude a partir de chat-title.txt",
-      "status": "Backlog",
+      "status": "Validada",
       "origin": "Backlog (2026-06-09)",
       "context": "Problema: o agente escreve o titulo correto em .guia/chat-title.txt e imprime 'NOME DO CHAT: ...' mas nao consegue aplicar /rename automaticamente dentro do Claude Code (e um comando interno do chat, nao parametro de CLI). Workaround atual: usuario copia o titulo manualmente. Solucao desejada: um script externo (core/bin/guia-rename.ps1 ou similar) que leia .guia/chat-title.txt e acione o rename pelo mecanismo disponivel. Opcoes a avaliar: (1) claude --rename 'titulo' se o CLI suportar (verificar docs do Claude Code CLI); (2) mark_chapter como substituto de rename dentro do Claude Code (ja implementado em post_cli.claude.md); (3) launcher que passa o titulo como --session-name ao criar nova sessao (relacionado a D-048 - Launcher de terminal); (4) MCP tool mcp__ccd_session__mark_chapter que ja existe e pode ser chamado pelo proprio agente sem script externo. Avaliar se o problema real e o rename em sessao existente (script externo necessario) ou o titulo na criacao (D-048 resolve). Dependencia: descobrir se Claude Code CLI expoe algum mecanismo de rename de sessao em andamento.",
       "createdAt": "2026-06-09",
-      "updatedAt": "2026-06-09",
-      "modifiedFiles": [],
-      "summary": [],
-      "validations": [],
-      "pending": []
+      "updatedAt": "2026-06-24",
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md",
+        "core/bin/guia-rename.ps1",
+        "core/bin/guia-rename",
+        "docs/reference/chat-rename-suporte.md",
+        "docs/how-to/renomear-chat.md",
+        "CHANGELOG.md",
+        ".guia/backlog.json",
+        ".guia/current-task.json",
+        ".guia/historico/DEMANDAS.md",
+        ".guia/tasks.json",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "core/build/render-skills.py",
+        "core/lock/check-lock.py",
+        "docs/explanation/por-que-lock.md",
+        "plugins/guia/bin/check-lock.py"
+      ],
+      "summary": [
+        "Em desenvolvimento desde 2026-06-24: Iniciando: rename de sessao ja aberta via script externo que le .guia/chat-title.txt.",
+        "Verificacao de viabilidade (D-057): NAO existe mecanismo externo para renomear sessao Claude Code ja aberta (sem flag CLI/arquivo/IPC/MCP; claude -n so no lancamento=D-048; /rename e humano in-chat). Surrogate in-session segue mark_chapter no post_cli.",
+        "Escopo reduzido com o dono para doc+script fino. Entregue: par guia-rename.ps1/guia-rename (bash POSIX) que le .guia/demand-title.txt, copia o titulo pro clipboard e imprime destacado para o /rename manual.",
+        "Docs vivos atualizados (chat-rename-suporte.md, renomear-chat.md) + CHANGELOG. Delimitada sobreposicao com D-048 (nome na criacao) vs D-057 (sessao ja aberta).",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "python -m pytest -q => 228 passed",
+        "guia-rename.ps1 e guia-rename testados (exit 0)"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-057",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-057",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md",
+          "docs/reference/chat-rename-suporte.md",
+          "docs/how-to/renomear-chat.md"
+        ],
+        "checkedAt": "2026-06-24"
+      }
     },
     {
       "id": "D-056",
@@ -3534,15 +3738,83 @@
       "id": "D-048",
       "kind": "feature",
       "title": "Launcher de terminal que cria chat ja nomeado com D-NNN",
-      "status": "Backlog",
+      "status": "Validada",
       "origin": "Backlog (2026-06-08)",
       "context": "Wrapper (gf.ps1 / gf.sh) que executa guia.ps1 feature|bug|chore, captura o D-NNN gerado e dispara 'claude -n D-NNN - #DEV - <title>' (ou equivalente) para que a nova sessao ja nasca com o nome canonico, eliminando o rename pos-criacao. Claude-only no inicio porque Codex App e Antigravity nao expoem criar thread com titulo via API. Trade-off: muda o ponto de entrada (terminal em vez de dentro do chat), entao o slash command in-chat continua coexistindo como caminho alternativo.",
       "createdAt": "2026-06-08",
-      "updatedAt": "2026-06-08",
-      "modifiedFiles": [],
-      "summary": [],
-      "validations": [],
-      "pending": []
+      "updatedAt": "2026-06-24",
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md",
+        "core/bin/gf.ps1",
+        "core/bin/gf",
+        "docs/how-to/criar-demanda-pelo-terminal.md",
+        "docs/how-to/renomear-chat.md",
+        "AGENTS.md",
+        ".guia/backlog.json",
+        ".guia/current-task.json",
+        ".guia/historico/DEMANDAS.md",
+        ".guia/tasks.json",
+        "CHANGELOG.md"
+      ],
+      "summary": [
+        "Em desenvolvimento desde 2026-06-24: Implementando launcher gf.ps1/gf que cria demanda e abre claude com sessao nomeada.",
+        "Launcher gf.ps1 (PowerShell) + gf (bash POSIX) em core/bin/: cria a demanda via guia feature|bug|chore, captura o D-NNN/titulo canonico e abre 'claude -n <titulo>' com a sessao ja nomeada.",
+        "Viabilidade confirmada: Claude Code CLI expoe -n/--name <name> (display name da sessao). Sem fallback inventado.",
+        "Titulo lido de .guia/demand-title.txt (UTF-8 fiel ao emoji), so se o D-NNN casar com a linha 'created:' do stdout (defesa contra corrida); senao cai em DEMAND_TITLE=/CHAT_TITLE= do stdout.",
+        "gf.ps1 delega ao guia.ps1 vizinho (reusa resolucao de Python; '&' nao propaga o 'exit' interno - testado). gf usa command-substitution (o 'exec' do shim guia fica isolado no subshell).",
+        "Flags: -Prompt/--prompt (prompt inicial opcional), -NoLaunch/--no-launch (so cria, nao abre). Claude-only documentado como limitacao consciente.",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "pytest: 221 passed",
+        "guia doctor: exit 0",
+        "render-skills.py --check: OK 66 alvos em sincronia (exit 0)",
+        "gf.ps1 chore --NoLaunch -> criou D-099, capturou titulo (cancelada)",
+        "gf bash chore --no-launch -> criou D-100, emoji intacto (cancelada)",
+        "Get-Content -Encoding UTF8 round-trip: hexdump f0 9f a7 b9 (emoji preservado)"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-048",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-048",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md",
+          "docs/how-to/criar-demanda-pelo-terminal.md",
+          "docs/how-to/renomear-chat.md",
+          "AGENTS.md",
+          ".guia/DEMANDAS.md"
+        ],
+        "checkedAt": "2026-06-24",
+        "skipped": "visao-geral.md/ADR: gf e launcher fino (usa flag -n existente do Claude CLI); nao muda regra arquitetural nem cria nova camada/ator"
+      }
     },
     {
       "id": "D-047",

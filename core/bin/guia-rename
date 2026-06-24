@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# core/bin/guia-rename - helper fino de renomeacao de chat (D-057), variante POSIX.
+#
+# NAO renomeia a sessao Claude Code: nao existe mecanismo externo para
+# retitular uma sessao JA ABERTA (verificado em D-057; `claude -n` so vale
+# no lancamento = D-048; `/rename` e slash command humano dentro do chat).
+# O que faz: le `.guia/demand-title.txt` (titulo da demanda corrente, escrito
+# pelo motor), COPIA para a area de transferencia e imprime destacado - para
+# voce so dar `/rename` + colar.
+#
+# Pos-D-093: chat != demanda; renomear e conveniencia OPCIONAL. Pule quando
+# o chat agrega varias demandas (ex.: um epico e suas stories).
+
+set -eu
+
+OVERRIDE="${1:-}"
+
+find_demand_title_file() {
+  if [ -n "${OVERRIDE}" ]; then
+    if [ ! -f "${OVERRIDE}" ]; then
+      printf "Erro: arquivo nao encontrado: %s\n" "${OVERRIDE}" >&2
+      exit 2
+    fi
+    printf "%s\n" "${OVERRIDE}"
+    return 0
+  fi
+
+  # Sobe a partir do cwd procurando .guia/demand-title.txt.
+  dir="$(pwd)"
+  while [ -n "${dir}" ]; do
+    candidate="${dir}/.guia/demand-title.txt"
+    if [ -f "${candidate}" ]; then
+      printf "%s\n" "${candidate}"
+      return 0
+    fi
+    parent="$(dirname "${dir}")"
+    [ "${parent}" = "${dir}" ] && break
+    dir="${parent}"
+  done
+
+  printf "Erro: nao achei .guia/demand-title.txt subindo a partir de %s.\n" "$(pwd)" >&2
+  printf "Rode dentro de um projeto Guia Fluxo, ou passe o caminho como 1o argumento.\n" >&2
+  exit 2
+}
+
+FILE="$(find_demand_title_file)"
+
+# Primeira linha nao-vazia, sem espacos nas pontas.
+TITLE="$(sed -n '/[^[:space:]]/{s/^[[:space:]]*//;s/[[:space:]]*$//;p;q}' "${FILE}")"
+
+if [ -z "${TITLE}" ]; then
+  printf "demand-title.txt esta vazio (%s).\n" "${FILE}" >&2
+  printf "Rode um comando do guia (start/ready/finish...) para popular o titulo.\n" >&2
+  exit 1
+fi
+
+# Tenta copiar para o clipboard com o utilitario disponivel na plataforma.
+copy_to_clipboard() {
+  if command -v pbcopy >/dev/null 2>&1; then
+    printf "%s" "${TITLE}" | pbcopy && return 0
+  fi
+  if command -v wl-copy >/dev/null 2>&1; then
+    printf "%s" "${TITLE}" | wl-copy && return 0
+  fi
+  if command -v xclip >/dev/null 2>&1; then
+    printf "%s" "${TITLE}" | xclip -selection clipboard && return 0
+  fi
+  if command -v xsel >/dev/null 2>&1; then
+    printf "%s" "${TITLE}" | xsel --clipboard --input && return 0
+  fi
+  if command -v clip.exe >/dev/null 2>&1; then
+    printf "%s" "${TITLE}" | clip.exe && return 0
+  fi
+  return 1
+}
+
+if copy_to_clipboard; then
+  COPIED=1
+else
+  COPIED=0
+fi
+
+printf "\n  NOME DA DEMANDA:\n  %s\n\n" "${TITLE}"
+if [ "${COPIED}" -eq 1 ]; then
+  printf "  Copiado para a area de transferencia.\n"
+  printf "  No chat: digite /rename e cole.\n\n"
+else
+  printf "  (Nenhum utilitario de clipboard encontrado - copie a linha acima a mao.)\n"
+  printf "  Instale um de: pbcopy, wl-copy, xclip, xsel, clip.exe.\n"
+  printf "  No chat: /rename <cole o titulo>\n\n"
+fi

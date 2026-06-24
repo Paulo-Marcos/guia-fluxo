@@ -60,14 +60,6 @@
       "updatedAt": "2026-05-31"
     },
     {
-      "id": "B-003",
-      "title": "Adicionar PreToolUse hook bloqueando Edit/Write em arquivo travado",
-      "context": "Defesa em profundidade vs commit-msg hook atual (que so pega no commit, depois do estrago). hooks/hooks.json com matcher 'Edit|Write|MultiEdit' chama bin/check-lock.py recebendo file_path via stdin (JSON), retorna exit 2 com motivo se arquivo esta em features/registry.yaml. commit-msg continua existindo como segunda linha (defende push direto de outras ferramentas).",
-      "status": "Backlog",
-      "createdAt": "2026-05-31",
-      "updatedAt": "2026-05-31"
-    },
-    {
       "id": "B-002",
       "title": "Criar MCP server Python expondo feature/issue/ready/finish/status/backlog/promote como tools",
       "context": "Etapa B do plano arquitetural. Adiciona .mcp.json na raiz apontando para um MCP server local (Python, mesmo motor scripts/guia.py). Cada subcomando do guia.py vira uma tool MCP que retorna JSON estruturado {id, title, status, chatTitle, ...}. Elimina o parsing fragil de 'NOME DO CHAT:' do stdout. Agente chama feature(title, context) e recebe o resultado direto. Avaliar usar mcp-python-sdk ou implementacao stdlib pura para manter zero-deps.",

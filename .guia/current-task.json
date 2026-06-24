@@ -1,6 +1,6 @@
 {
-  "taskId": "D-052",
+  "taskId": "D-057",
   "status": "Validada",
-  "title": "Record task timestamps and execution stats",
-  "demandTitle": "D-052 \u2728 - #FINALIZADO - Record task timestamps and execution stats"
+  "title": "Script de rename automatico do chat Claude a partir de chat-title.txt",
+  "chatTitle": "D-057 \u2728 - #FINALIZADO - Script de rename automatico do chat Claude a partir de chat-title.txt"
 }
