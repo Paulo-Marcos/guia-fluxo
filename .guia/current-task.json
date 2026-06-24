@@ -1,6 +1,6 @@
 {
-  "taskId": "D-080",
+  "taskId": "D-095",
   "status": "Validada",
-  "title": "Forcar finish como acao exclusivamente humana (gate na ferramenta)",
-  "demandTitle": "D-080 \u2728 - #FINALIZADO - Forcar finish como acao exclusivamente humana (gate na ferramenta)"
+  "title": "finish: gate de qualidade via skills antes de fechar",
+  "demandTitle": "D-095 \u2728 - #FINALIZADO - finish: gate de qualidade via skills antes de fechar"
 }

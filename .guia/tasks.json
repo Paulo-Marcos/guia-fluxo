@@ -2,6 +2,131 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-098",
+      "kind": "chore",
+      "title": "Reverter gate de finish por env (D-080): finish vira user-authorized por regra de comportamento",
+      "status": "Validada",
+      "origin": "Feedback do dono (sessao 2026-06-24)",
+      "context": "D-080 implementou gate por env GUIA_HUMAN_FINISH no cmd_finish. O dono rejeitou em uso: mandar variavel e ruim e NAO deve ficar habilitada; nao quer configurar nem passar parametro pro finish. Novo modelo (confirmado): /guia:finish e solicitado pelo USUARIO; o agente so executa quando o usuario autoriza, e NUNCA dispara finish por conta propria. Sem gate tecnico no CLI - sem env/param/flag (o motor nao consegue distinguir agente de humano sem um sinal, entao o controle vira regra de comportamento documentada). Escopo: remover ENV_HUMAN_FINISH/_require_human_finish/MSG_FINISH_HUMAN_ONLY do core+mirror; reverter testes (test_finish_human_gate + env nos runners de finish); atualizar docs (AGENTS/CLAUDE/manifest/bodies-finish/cli.md/CHANGELOG) pro modelo de autorizacao humana por comportamento. Supersede D-080.",
+      "createdAt": "2026-06-24",
+      "updatedAt": "2026-06-24",
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md",
+        "core/src/_cli_lifecycle.py",
+        "core/src/_constants.py",
+        "core/manifest/manifest.yaml",
+        "core/manifest/bodies/finish.md",
+        "plugins/guia/bin/_cli_lifecycle.py",
+        "plugins/guia/bin/_constants.py",
+        "plugins/guia/commands/finish.md",
+        "plugins/guia/.agents/skills/guia-finish/SKILL.md",
+        "AGENTS.md",
+        "CLAUDE.md",
+        "CHANGELOG.md",
+        "docs/reference/cli.md",
+        "tests/test_finish_commit.py",
+        "tests/test_epic.py",
+        "tests/test_depends.py",
+        "tests/test_smoke.py"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo.",
+        "Removido o gate por env do finish (D-080): apagados _require_human_finish/_env_truthy + ENV_HUMAN_FINISH/MSG_FINISH_HUMAN_ONLY (core+mirror). cmd_finish agora abre direto em find_task_or_current, com comentario explicando que o controle e regra de comportamento.",
+        "finish nao exige env nem flag. Controle = instrucao do agente: so roda quando o usuario solicita /guia:finish ou autoriza; nunca por conta propria. Docs reescritas: AGENTS.md, CLAUDE.md, manifest, bodies/finish.md, docs/reference/cli.md, CHANGELOG.md.",
+        "Testes: removido tests/test_finish_human_gate.py; revertido o env GUIA_HUMAN_FINISH dos runners (test_finish_commit/epic/depends/smoke) e de tests/test_quality_hook.py (limpeza, import os tirado).",
+        "Commit isolado 28dd205 (D-098 separado do D-095 por reconstrucao a partir do HEAD). Gate por env removido; finish vira regra de comportamento."
+      ],
+      "validations": [
+        "python -m pytest tests/test_finish_commit.py tests/test_epic.py tests/test_depends.py tests/test_smoke.py tests/test_quality_hook.py -q -> 35 passed",
+        "python core/src/guia.py doctor -> OK; render-skills.py --check -> 64 alvos em sincronia"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-098",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: chore D-098",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: core/manifest/manifest.yaml",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: core/manifest/manifest.yaml",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md",
+          "docs/reference/cli.md",
+          "CLAUDE.md",
+          "AGENTS.md"
+        ],
+        "checkedAt": "2026-06-24"
+      },
+      "qualityReview": {
+        "candidates": [
+          "core/src/_cli_lifecycle.py",
+          "core/src/_constants.py",
+          "core/manifest/manifest.yaml",
+          "core/manifest/bodies/finish.md",
+          "plugins/guia/bin/_cli_lifecycle.py",
+          "plugins/guia/bin/_constants.py",
+          "plugins/guia/commands/finish.md",
+          "plugins/guia/.agents/skills/guia-finish/SKILL.md",
+          "AGENTS.md",
+          "CLAUDE.md",
+          "CHANGELOG.md",
+          "docs/reference/cli.md",
+          "tests/test_finish_commit.py",
+          "tests/test_epic.py",
+          "tests/test_depends.py",
+          "tests/test_smoke.py"
+        ],
+        "dimensions": [
+          "(a) qualidade do codigo (legibilidade, nomes, clean code)",
+          "(b) tamanho de funcoes/arquivos (funcao curta, arquivo coeso)",
+          "(c) responsabilidade unica (SRP) por funcao/classe/modulo",
+          "(d) cobertura/tests do que mudou",
+          "(e) necessidade de refatorar para boa qualidade - e refatorar antes de fechar"
+        ],
+        "skills": [],
+        "findings": [],
+        "checkedAt": "2026-06-24",
+        "skipped": "Revert: remocao do gate por env (codigo morto) + docs; nenhuma logica nova de produto a revisar."
+      }
+    },
+    {
       "id": "D-097",
       "kind": "chore",
       "title": "Consolidar superficie da raiz (D-094): VERSION fonte unica + community-health em .github/ + fix README",
@@ -153,15 +278,148 @@
       "id": "D-095",
       "kind": "feature",
       "title": "finish: gate de qualidade via skills antes de fechar",
-      "status": "Backlog",
+      "status": "Validada",
       "origin": "Backlog (2026-06-22)",
       "context": "O usuario quer que o 'finish' SEMPRE rode uma validacao de qualidade do que foi feito antes de fechar a demanda, nao so os comandos de teste atuais. Ideia: ao dar finish, o agente levanta as skills disponiveis (do projeto E globais) que avaliam qualidade de codigo e as aciona sobre o que mudou (modifiedFiles), checando: (a) qualidade do codigo; (b) tamanho de funcoes/arquivos; (c) responsabilidade unica (SRP); (d) cobertura/tests; (e) se precisa refatorar para ficar com boa qualidade -- e, se precisar, refatorar antes de fechar. Infra existente para reusar: ja ha um hook 'runValidationByDefault'/run_validation_commands no finish (core/src/_cli_lifecycle.py:474) que roda COMANDOS; esta demanda estende isso para acionar SKILLS consultivas (ex.: clean-code-review, clean-architecture-guardian, tdd, valida-pasta) e agir sobre os achados. Overlaps a resolver no recorte: D-088 (avalia DDD/SOLID ao criar LOCK -- mesmo espirito, momento diferente), D-085 (skill valida-pasta com nota 0-10) e D-080 (gate humano no finish). Decidir se e: passo automatico do finish no core, ou uma skill orquestradora acionada no momento do finish. Compativel com finish-human-only: roda quando o humano dispara o finish.",
       "createdAt": "2026-06-22",
-      "updatedAt": "2026-06-22",
-      "modifiedFiles": [],
-      "summary": [],
-      "validations": [],
-      "pending": []
+      "updatedAt": "2026-06-24",
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md",
+        "core/src/_quality_hook.py",
+        "core/src/_constants.py",
+        "core/src/_process_config.py",
+        "core/src/_cli_lifecycle.py",
+        "core/src/guia.py",
+        "core/manifest/manifest.yaml",
+        "core/manifest/bodies/finish.md",
+        "tests/test_quality_hook.py",
+        "tests/test_finish_commit.py",
+        "plugins/guia/bin/_quality_hook.py",
+        "plugins/guia/commands/finish.md",
+        "plugins/guia/bin/_cli_lifecycle.py",
+        "plugins/guia/bin/_constants.py",
+        "plugins/guia/bin/guia.py",
+        "plugins/guia/bin/_process_config.py",
+        "plugins/guia/.agents/skills/guia-finish/SKILL.md",
+        "CHANGELOG.md",
+        "docs/reference/cli.md"
+      ],
+      "summary": [
+        "Em desenvolvimento desde 2026-06-24: Iniciando: gancho de validacao de qualidade por skills no finish (Onda 2, liberado pos-D-080).",
+        "D-095: gate de qualidade consultivo no finish. Novo _quality_hook.py (espelha o docs-hook): cmd_finish chama ensure_quality_review_ok DEPOIS do guard humano D-080 e do docs-gate, ANTES de mutar status. Quando arquivos de produto mudaram (exclui .guia/**), recusa o finish ate o agente confirmar --quality-checked (ou listar --quality-skill) ou pular com --quality-skip. Bloco instrutivo lista arquivos, dimensoes (a-e) e skills candidatas (clean-code-review, clean-architecture-guardian, tdd-dotnet, valida-pasta/D-085).",
+        "Design B (hibrido): core sinaliza+exige, skill guia:finish executa as skills (skills sao LLM-driven, Python nao as roda). Contrato documentado no body finish.md + manifest. Config finish.qualityGateByDefault (default True) liga/desliga; registro persistido em task.qualityReview. Nao duplica D-088 (LOCK-time) nem D-085 (valida-pasta) - referencia.",
+        "Gate de qualidade consultivo no finish (D-095). Fechamento via commit manual com [unlock:] por causa dos 3 arquivos novos (_quality_hook + mirror + teste)."
+      ],
+      "validations": [
+        "python -m pytest tests/ -q  => 212 passed",
+        "python core/build/render-skills.py --check  => OK 64 alvos em sincronia"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-095",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-095",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "README.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo padrao ou os comandos da capa mudaram, atualize.",
+            "purpose": "Porta de entrada do projeto."
+          },
+          {
+            "path": "docs/reference/cli.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se voce adicionou/mudou subcomando ou flag, documente aqui.",
+            "purpose": "Referencia completa de subcomandos do core/src/guia.py / core/bin/guia.ps1."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py, core/manifest/manifest.yaml",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py, core/manifest/manifest.yaml",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          },
+          {
+            "path": "CONTRIBUTING.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo humano mudou (novo passo, nova checagem), atualize.",
+            "purpose": "Guia pra humanos contribuirem."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md",
+          "docs/reference/cli.md"
+        ],
+        "checkedAt": "2026-06-24"
+      },
+      "qualityReview": {
+        "candidates": [
+          "core/src/_quality_hook.py",
+          "core/src/_constants.py",
+          "core/src/_process_config.py",
+          "core/src/_cli_lifecycle.py",
+          "core/src/guia.py",
+          "core/manifest/manifest.yaml",
+          "core/manifest/bodies/finish.md",
+          "tests/test_quality_hook.py",
+          "tests/test_finish_commit.py",
+          "plugins/guia/bin/_quality_hook.py",
+          "plugins/guia/commands/finish.md",
+          "plugins/guia/bin/_cli_lifecycle.py",
+          "plugins/guia/bin/_constants.py",
+          "plugins/guia/bin/guia.py",
+          "plugins/guia/bin/_process_config.py",
+          "plugins/guia/.agents/skills/guia-finish/SKILL.md",
+          "CHANGELOG.md",
+          "docs/reference/cli.md"
+        ],
+        "dimensions": [
+          "(a) qualidade do codigo (legibilidade, nomes, clean code)",
+          "(b) tamanho de funcoes/arquivos (funcao curta, arquivo coeso)",
+          "(c) responsabilidade unica (SRP) por funcao/classe/modulo",
+          "(d) cobertura/tests do que mudou",
+          "(e) necessidade de refatorar para boa qualidade - e refatorar antes de fechar"
+        ],
+        "skills": [],
+        "findings": [],
+        "checkedAt": "2026-06-24",
+        "skipped": "D-095 implementada e validada por sessao anterior (ready). Fechamento delegado pelo dono via /guia:finish; suite completa 210 passed. Revisao por skills nao re-executada nesta sessao."
+      }
     },
     {
       "id": "D-094",

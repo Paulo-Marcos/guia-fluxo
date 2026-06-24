@@ -2,30 +2,94 @@
 
 ---
 
-## [E-001] 🎯 Teste
+## [D-098] 🧹 Reverter gate de finish por env (D-080): finish vira user-authorized por regra de comportamento
 
-- **Status:** Cancelada
-- **Origem:** Guia Fluxo (2026-06-22)
-- **Tipo:** Epic
-- **Contexto:** Teste
+- **Status:** Validada
+- **Origem:** Feedback do dono (sessao 2026-06-24)
+- **Tipo:** Chore
+- **Contexto:** D-080 implementou gate por env GUIA_HUMAN_FINISH no cmd_finish. O dono rejeitou em uso: mandar variavel e ruim e NAO deve ficar habilitada; nao quer configurar nem passar parametro pro finish. Novo modelo (confirmado): /guia:finish e solicitado pelo USUARIO; o agente so executa quando o usuario autoriza, e NUNCA dispara finish por conta propria. Sem gate tecnico no CLI - sem env/param/flag (o motor nao consegue distinguir agente de humano sem um sinal, entao o controle vira regra de comportamento documentada). Escopo: remover ENV_HUMAN_FINISH/_require_human_finish/MSG_FINISH_HUMAN_ONLY do core+mirror; reverter testes (test_finish_human_gate + env nos runners de finish); atualizar docs (AGENTS/CLAUDE/manifest/bodies-finish/cli.md/CHANGELOG) pro modelo de autorizacao humana por comportamento. Supersede D-080.
 
 ### Arquivos modificados/criados
 
 - `.guia/DEMANDAS.md`
+- `core/src/_cli_lifecycle.py`
+- `core/src/_constants.py`
+- `core/manifest/manifest.yaml`
+- `core/manifest/bodies/finish.md`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/commands/finish.md`
+- `plugins/guia/.agents/skills/guia-finish/SKILL.md`
+- `AGENTS.md`
+- `CLAUDE.md`
+- `CHANGELOG.md`
+- `docs/reference/cli.md`
+- `tests/test_finish_commit.py`
+- `tests/test_epic.py`
+- `tests/test_depends.py`
+- `tests/test_smoke.py`
 
 ### O que foi feito
 
 - Demanda criada via Guia Fluxo.
-- Cancelada em 2026-06-24: Epic de teste do fluxo D-049; sem WIP real.
+- Removido o gate por env do finish (D-080): apagados _require_human_finish/_env_truthy + ENV_HUMAN_FINISH/MSG_FINISH_HUMAN_ONLY (core+mirror). cmd_finish agora abre direto em find_task_or_current, com comentario explicando que o controle e regra de comportamento.
+- finish nao exige env nem flag. Controle = instrucao do agente: so roda quando o usuario solicita /guia:finish ou autoriza; nunca por conta propria. Docs reescritas: AGENTS.md, CLAUDE.md, manifest, bodies/finish.md, docs/reference/cli.md, CHANGELOG.md.
+- Testes: removido tests/test_finish_human_gate.py; revertido o env GUIA_HUMAN_FINISH dos runners (test_finish_commit/epic/depends/smoke) e de tests/test_quality_hook.py (limpeza, import os tirado).
+- Commit isolado 28dd205 (D-098 separado do D-095 por reconstrucao a partir do HEAD). Gate por env removido; finish vira regra de comportamento.
 
 ### Validacao feita
 
-- Nenhuma.
+- python -m pytest tests/test_finish_commit.py tests/test_epic.py tests/test_depends.py tests/test_smoke.py tests/test_quality_hook.py -q -> 35 passed
+- python core/src/guia.py doctor -> OK; render-skills.py --check -> 64 alvos em sincronia
 
 ### Validacao pendente
 
 - Nenhuma.
 
+## [D-095] ✨ finish: gate de qualidade via skills antes de fechar
+
+- **Status:** Validada
+- **Origem:** Backlog (2026-06-22)
+- **Tipo:** Feature
+- **Contexto:** O usuario quer que o 'finish' SEMPRE rode uma validacao de qualidade do que foi feito antes de fechar a demanda, nao so os comandos de teste atuais. Ideia: ao dar finish, o agente levanta as skills disponiveis (do projeto E globais) que avaliam qualidade de codigo e as aciona sobre o que mudou (modifiedFiles), checando: (a) qualidade do codigo; (b) tamanho de funcoes/arquivos; (c) responsabilidade unica (SRP); (d) cobertura/tests; (e) se precisa refatorar para ficar com boa qualidade -- e, se precisar, refatorar antes de fechar. Infra existente para reusar: ja ha um hook 'runValidationByDefault'/run_validation_commands no finish (core/src/_cli_lifecycle.py:474) que roda COMANDOS; esta demanda estende isso para acionar SKILLS consultivas (ex.: clean-code-review, clean-architecture-guardian, tdd, valida-pasta) e agir sobre os achados. Overlaps a resolver no recorte: D-088 (avalia DDD/SOLID ao criar LOCK -- mesmo espirito, momento diferente), D-085 (skill valida-pasta com nota 0-10) e D-080 (gate humano no finish). Decidir se e: passo automatico do finish no core, ou uma skill orquestradora acionada no momento do finish. Compativel com finish-human-only: roda quando o humano dispara o finish.
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+- `core/src/_quality_hook.py`
+- `core/src/_constants.py`
+- `core/src/_process_config.py`
+- `core/src/_cli_lifecycle.py`
+- `core/src/guia.py`
+- `core/manifest/manifest.yaml`
+- `core/manifest/bodies/finish.md`
+- `tests/test_quality_hook.py`
+- `tests/test_finish_commit.py`
+- `plugins/guia/bin/_quality_hook.py`
+- `plugins/guia/commands/finish.md`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/bin/guia.py`
+- `plugins/guia/bin/_process_config.py`
+- `plugins/guia/.agents/skills/guia-finish/SKILL.md`
+- `CHANGELOG.md`
+- `docs/reference/cli.md`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-24: Iniciando: gancho de validacao de qualidade por skills no finish (Onda 2, liberado pos-D-080).
+- D-095: gate de qualidade consultivo no finish. Novo _quality_hook.py (espelha o docs-hook): cmd_finish chama ensure_quality_review_ok DEPOIS do guard humano D-080 e do docs-gate, ANTES de mutar status. Quando arquivos de produto mudaram (exclui .guia/**), recusa o finish ate o agente confirmar --quality-checked (ou listar --quality-skill) ou pular com --quality-skip. Bloco instrutivo lista arquivos, dimensoes (a-e) e skills candidatas (clean-code-review, clean-architecture-guardian, tdd-dotnet, valida-pasta/D-085).
+- Design B (hibrido): core sinaliza+exige, skill guia:finish executa as skills (skills sao LLM-driven, Python nao as roda). Contrato documentado no body finish.md + manifest. Config finish.qualityGateByDefault (default True) liga/desliga; registro persistido em task.qualityReview. Nao duplica D-088 (LOCK-time) nem D-085 (valida-pasta) - referencia.
+- Gate de qualidade consultivo no finish (D-095). Fechamento via commit manual com [unlock:] por causa dos 3 arquivos novos (_quality_hook + mirror + teste).
+
+### Validacao feita
+
+- python -m pytest tests/ -q  => 212 passed
+- python core/build/render-skills.py --check  => OK 64 alvos em sincronia
+
+### Validacao pendente
+
+- Nenhuma.
 
 ## [D-080] ✨ Forcar finish como acao exclusivamente humana (gate na ferramenta)
 
