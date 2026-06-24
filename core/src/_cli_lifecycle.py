@@ -52,6 +52,10 @@ from _git_ops import git_changed_files
 from _locks import lock_task_files
 from _paths import relative
 from _process_config import default_process
+from _quality_hook import (
+    build_quality_review_record,
+    ensure_quality_review_ok,
+)
 from _reports import write_report
 from _state import copy_if_missing, read_json, write_if_missing, write_json
 from _tasks import (
@@ -471,6 +475,12 @@ def cmd_finish(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
 
+    # D-095: validacao consultiva de qualidade (skills) antes de fechar. O core
+    # apenas sinaliza+exige; a skill `guia:finish` roda as skills de qualidade
+    # sobre modifiedFiles. Barra aqui (antes de qualquer mutacao de status) para
+    # nao deixar a task meio-fechada, espelhando o docs-gate e o gate humano.
+    ensure_quality_review_ok(task, changed_files, config, args)
+
     finish_config = config.get("finish", {})
     # D-081: guarda o status pre-finish para reverter caso o commit falhe.
     previous_status = task.get("status")
@@ -484,6 +494,9 @@ def cmd_finish(args: argparse.Namespace) -> int:
         task["docsReview"] = build_docs_review_record(
             task, changed_files, docs_map, args
         )
+    # D-095: registra a validacao de qualidade (skills rodadas, achados,
+    # ou skip) na task para rastreabilidade no report/commit.
+    task["qualityReview"] = build_quality_review_record(task, changed_files, args)
 
     if args.run_tests or finish_config.get("runValidationByDefault", False):
         run_validation_commands(task, config, "finish")

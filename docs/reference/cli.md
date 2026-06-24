@@ -152,7 +152,9 @@ Move a task para `Aguardando validacao`. Gera relatorio em `.guia/reports/`. Imp
 .\core\bin\guia.ps1 finish D-NNN `
     [--lock --lock-id <slug>] `
     [--docs-touched <path> ...] `
-    [--docs-skip "<motivo>"]
+    [--docs-skip "<motivo>"] `
+    [--quality-checked] [--quality-skill <nome> ...] [--quality-finding "<acao>" ...] `
+    [--quality-skip "<motivo>"]
 ```
 
 Marca como `Validada`, sugere `#FINALIZADO` e commita por padrao. Com `--lock`, registra os arquivos da task em `.guia/locks/registry.yaml` sob o slug informado.
@@ -166,6 +168,15 @@ Marca como `Validada`, sugere `#FINALIZADO` e commita por padrao. Com `--lock`, 
 - `--docs-checked`: confirmacao explicita de que revisou (use em ultimo caso, ou junto com `--docs-touched`/`--docs-skip`).
 
 O resultado fica em `task.docsReview` no `.guia/tasks.json`. Quando `.guia/docs-map.yaml` nao existe, o hook vira no-op com aviso no stderr. Detalhes em [`docs-map.md`](docs-map.md) e [`docs/how-to/manter-docs-atualizados.md`](../how-to/manter-docs-atualizados.md).
+
+**Gate de qualidade (D-095).** Antes de fechar, `finish` forca uma validacao consultiva de qualidade do que foi feito (alem dos `validationCommands`). Quando arquivos de *produto* mudaram (qualquer coisa fora de `.guia/`), o comando recusa o fechamento ate o agente confirmar que rodou as skills de qualidade sobre `modifiedFiles`. Skills sao acionadas pelo **agente**, nao pelo Python: o core sinaliza+exige (imprime os arquivos, as dimensoes (a)–(e) e as skills candidatas — `clean-code-review`, `clean-architecture-guardian`, `tdd-dotnet`, `valida-pasta`/D-085) e a skill `guia:finish` instrui o agente a rodar e refatorar se preciso. Flags:
+
+- `--quality-checked`: confirma que a validacao consultiva rodou sobre o que mudou.
+- `--quality-skill <nome>` (repetivel): skill de qualidade acionada (ex.: `clean-code-review`).
+- `--quality-finding "<acao>"` (repetivel): achado/refatoracao aplicada.
+- `--quality-skip "<motivo>"`: nada a avaliar (ex.: alteracao trivial) — pula o gate com justificativa.
+
+O resultado (skills, achados, dimensoes, ou skip) fica em `task.qualityReview` no `.guia/tasks.json`. O gate e no-op quando so `.guia/**` mudou ou quando `finish.qualityGateByDefault` e `false` no `.guia/process.json` (default `true`). Distinto de **D-088** (avalia DDD/SOLID ao criar LOCK) e reusa **D-085** (`valida-pasta`).
 
 ### `docs-check`
 

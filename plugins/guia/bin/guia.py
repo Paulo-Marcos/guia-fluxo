@@ -295,6 +295,29 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Confirmacao explicita de que os docs foram revisados (use junto com --docs-touched ou --docs-skip).",
     )
+    # D-095: gate de qualidade. O agente roda as skills de qualidade sobre
+    # modifiedFiles e confirma aqui; sem isso (e sem skip) o finish recusa.
+    p_finish.add_argument(
+        "--quality-checked",
+        action="store_true",
+        help="Confirma que a validacao consultiva de qualidade (skills) rodou sobre o que mudou.",
+    )
+    p_finish.add_argument(
+        "--quality-skill",
+        action="append",
+        default=[],
+        help="Skill de qualidade acionada (ex.: clean-code-review). Repetir por skill.",
+    )
+    p_finish.add_argument(
+        "--quality-finding",
+        action="append",
+        default=[],
+        help="Achado/refatoracao aplicada na validacao de qualidade. Repetir por item.",
+    )
+    p_finish.add_argument(
+        "--quality-skip",
+        help="Justificativa quando nao ha nada a avaliar na validacao de qualidade.",
+    )
     p_finish.set_defaults(func=cmd_finish)
 
     p_docs_check = sub.add_parser(

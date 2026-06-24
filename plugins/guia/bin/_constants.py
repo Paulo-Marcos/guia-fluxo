@@ -168,6 +168,23 @@ MSG_VALIDATE_DEPRECATED = (
     "AVISO: `validate` esta deprecado e sera removido em uma proxima versao. "
     "Use `finish --no-commit` para o mesmo efeito sem commit."
 )
+# D-095: `finish` exige uma validacao consultiva de qualidade do que foi feito
+# antes de fechar (alem dos comandos de teste). Skills sao acionadas pelo
+# AGENTE, nao pelo Python, entao o core sinaliza+exige e a skill `guia:finish`
+# executa. Estas listas alimentam o bloco instrutivo do gate (_quality_hook).
+QUALITY_DIMENSIONS = (
+    "(a) qualidade do codigo (legibilidade, nomes, clean code)",
+    "(b) tamanho de funcoes/arquivos (funcao curta, arquivo coeso)",
+    "(c) responsabilidade unica (SRP) por funcao/classe/modulo",
+    "(d) cobertura/tests do que mudou",
+    "(e) necessidade de refatorar para boa qualidade - e refatorar antes de fechar",
+)
+QUALITY_SKILL_SUGGESTIONS = (
+    "clean-code-review",
+    "clean-architecture-guardian",
+    "tdd-dotnet",
+    "valida-pasta (D-085, quando disponivel)",
+)
 
 
 DEMAND_TITLE_FORMAT_DEFAULT = "{id} {kindMarker} - #{statusTag} - {title}"
@@ -262,6 +279,8 @@ __all__ = [
     "MSG_DEFAULT_TASK_PENDING",
     "MSG_NONE_PLACEHOLDER",
     "MSG_VALIDATE_DEPRECATED",
+    "QUALITY_DIMENSIONS",
+    "QUALITY_SKILL_SUGGESTIONS",
     "DEMAND_TITLE_FORMAT_DEFAULT",
     "KIND_LABELS",
     "KIND_MARKERS",

@@ -40,6 +40,9 @@ def default_process(project_name: str) -> dict[str, Any]:
             "status": STATUS_VALIDATED,
             "runValidationByDefault": False,
             "validationCommands": [],
+            # D-095: validacao consultiva de qualidade (skills) antes de fechar.
+            # Default True (o dono quer sempre); pule um run com --quality-skip.
+            "qualityGateByDefault": True,
             "commitByDefault": True,
             "lockOnFinish": False,
         },

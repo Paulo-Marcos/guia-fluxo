@@ -111,6 +111,9 @@ class FinishCommitDeletionTests(unittest.TestCase):
                 "remove doomed.txt",
                 "--validation",
                 "n/a",
+                # D-095: arquivo de produto mudou -> gate de qualidade exige
+                # confirmacao; aqui validamos para testar o commit em si.
+                "--quality-checked",
             )
 
             # (1) o commit acontece: returncode 0, novo commit, arquivo sumiu do HEAD.
@@ -157,6 +160,9 @@ class FinishCommitRollbackTests(unittest.TestCase):
                 "edita tracked",
                 "--validation",
                 "n/a",
+                # D-095: passa o gate de qualidade para exercitar o rollback do
+                # commit (o ponto deste teste), nao parar antes no gate.
+                "--quality-checked",
             )
 
             # O finish falha e o status fica intacto (nao Validada); nada commitado.

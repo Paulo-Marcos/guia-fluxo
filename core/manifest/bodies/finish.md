@@ -21,14 +21,40 @@ For each listed candidate:
 
 If the project has no `.guia/docs-map.yaml`, the hook is a no-op and `finish` runs as before.
 
-## 2) Close
+## 2) Quality gate — run quality skills over what changed (D-095)
+
+`finish` does **not** just run the test commands; it forces a **consultative quality validation** of the work. When product files changed (anything outside `.guia/`), the tool refuses to close until you confirm you ran it. **You (the agent) run the skills — the core only signals and enforces.**
+
+Before closing:
+
+1. Read `modifiedFiles` (the changed product files for this task).
+2. Invoke the available **quality skills** — both **project** and **global** — over those files. Candidates in this environment:
+   - `clean-code-review` (micro: readability, names, function size, smells)
+   - `clean-architecture-guardian` (macro: layers, SOLID, SRP, coupling)
+   - `tdd-dotnet` (tests/coverage of what changed)
+   - `valida-pasta` (D-085, folder quality score 0–10, when available)
+3. Evaluate every dimension: **(a)** code quality, **(b)** function/file size, **(c)** single responsibility (SRP), **(d)** coverage/tests, **(e)** whether it needs refactoring to reach good quality — and **if it does, refactor before closing**.
+
+This is distinct from **D-088** (DDD/SOLID assessment at LOCK creation — same spirit, different moment) and reuses **D-085**'s `valida-pasta` rather than reimplementing scoring.
+
+Then close, confirming the validation ran:
+
+```text
+finish <D-NNN> --docs-skip "..." --quality-checked --quality-skill clean-code-review --quality-finding "extraiu funcao X; cobriu caso Y"
+# when there is genuinely nothing to assess (e.g. trivial constant/rename):
+finish <D-NNN> --docs-skip "..." --quality-skip "alteracao trivial, sem impacto de qualidade"
+```
+
+The gate is a no-op when only `.guia/` bookkeeping changed, or when `finish.qualityGateByDefault` is `false` in `.guia/process.json`.
+
+## 3) Close
 
 Run this **only** because the developer asked for it (no env var or flag — see the rule above):
 
 ```text
-finish <D-NNN> --docs-touched docs/reference/cli.md --docs-touched CHANGELOG.md
+finish <D-NNN> --docs-touched docs/reference/cli.md --quality-checked
 # or, when nothing needed touching:
-finish <D-NNN> --docs-skip "internal flow, no user-facing change"
+finish <D-NNN> --docs-skip "internal flow, no user-facing change" --quality-skip "no product code changed"
 ```
 
 `finish` commits by default. Use `--no-commit` for dry close. Lock with `--lock --lock-id feature-slug --lock-description "..."` only when the developer asks for it.
