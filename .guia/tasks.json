@@ -813,15 +813,134 @@
       "id": "D-090",
       "kind": "feature",
       "title": "Arquivamento de demandas antigas em .guia/DEMANDAS.md (keep N + historico + ai-skip)",
-      "status": "Backlog",
+      "status": "Validada",
       "origin": "Backlog (2026-06-21)",
       "context": "Follow-up do D-055 (rename ja feito): o catalogo cresce indefinidamente (hoje 72 demandas / ~3000 linhas), agente carrega tudo no contexto a cada operacao. Manter so as N ultimas (param em process.json, default 30) em .guia/DEMANDAS.md; mover as mais antigas para .guia/historico/ (arquivo unico ou por mes) com marcador no topo '<!-- guia-fluxo: archive=true ai-skip=true -->' que o agente checa antes de carregar. Toca _features_md (upsert chama arquivamento), _process_config (param). Cuidado: numeracao de ID e segura (tasks.json autoritativo).",
       "createdAt": "2026-06-21",
-      "updatedAt": "2026-06-21",
-      "modifiedFiles": [],
-      "summary": [],
-      "validations": [],
-      "pending": []
+      "updatedAt": "2026-06-24",
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md",
+        "core/src/_features_archive.py",
+        "core/src/_features_md.py",
+        "core/src/_constants.py",
+        "core/src/_process_config.py",
+        "plugins/guia/bin/_features_archive.py",
+        "plugins/guia/bin/_features_md.py",
+        "plugins/guia/bin/_constants.py",
+        "plugins/guia/bin/_process_config.py",
+        "tests/test_features_archive.py",
+        ".guia/process.json",
+        "CHANGELOG.md",
+        ".guia/current-task.json",
+        ".guia/tasks.json",
+        "core/src/_cli_creation.py",
+        "core/src/_cli_lifecycle.py",
+        "core/src/_cli_tasks.py",
+        "core/src/_clock.py",
+        "core/src/_tasks.py",
+        "core/src/guia.py",
+        "docs/reference/cli.md",
+        "docs/reference/files.md",
+        "plugins/guia/bin/_cli_creation.py",
+        "plugins/guia/bin/_cli_lifecycle.py",
+        "plugins/guia/bin/_cli_tasks.py",
+        "plugins/guia/bin/_clock.py",
+        "plugins/guia/bin/_tasks.py",
+        "plugins/guia/bin/guia.py"
+      ],
+      "summary": [
+        "Em desenvolvimento desde 2026-06-24: Implementando arquivamento de DEMANDAS.md (keep-N).",
+        "Novo modulo _features_archive.archive_old_entries(): mantem so as N demandas mais recentes em .guia/DEMANDAS.md e move as antigas para .guia/historico/DEMANDAS.md com marcador '<!-- guia-fluxo: archive=true ai-skip=true -->' no topo.",
+        "upsert_features_entry chama archive_old_entries() no fim (1 import + 1 linha) - isolado para merge limpo com D-052, que ja entrou em _features_md.py durante a implementacao sem conflito.",
+        "Param archive.keepInDemandas em process.json (default 30 via ARCHIVE_KEEP_DEFAULT); fallback para 30 quando ausente. tasks.json segue fonte autoritativa de IDs - arquivamento do .md nao afeta geracao de ID. Idempotente: dedup por ID no append ao historico.",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "python -m pytest tests/ -> 214 passed",
+        "python -m pytest tests/test_features_archive.py -> 4 passed (mantem N + arquiva resto com marcador; no-op abaixo do limite; idempotencia; keep=0)",
+        "python core/build/render-skills.py --check -> OK 66 alvos em sincronia"
+      ],
+      "pending": [],
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-090",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-090",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "README.md",
+            "trigger": "touched",
+            "reason": "touched: .guia/process.json, core/src/guia.py",
+            "hint": "Se o fluxo padrao ou os comandos da capa mudaram, atualize.",
+            "purpose": "Porta de entrada do projeto."
+          },
+          {
+            "path": "docs/reference/cli.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se voce adicionou/mudou subcomando ou flag, documente aqui.",
+            "purpose": "Referencia completa de subcomandos do core/src/guia.py / core/bin/guia.ps1."
+          },
+          {
+            "path": "docs/reference/files.md",
+            "trigger": "touched",
+            "reason": "touched: .guia/process.json",
+            "hint": "Atualize se criou novo arquivo de estado/config.",
+            "purpose": "Mapa dos arquivos de estado (.guia/*, .guia/DEMANDAS.md, .guia/locks/registry.yaml)."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: .guia/process.json, core/src/guia.py",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: .guia/process.json, core/src/guia.py",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          },
+          {
+            "path": "CONTRIBUTING.md",
+            "trigger": "touched",
+            "reason": "touched: .guia/process.json, core/src/guia.py",
+            "hint": "Se o fluxo humano mudou (novo passo, nova checagem), atualize.",
+            "purpose": "Guia pra humanos contribuirem."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md",
+          "docs/reference/files.md"
+        ],
+        "checkedAt": "2026-06-24",
+        "skipped": "Sem novo subcomando/flag (cli.md), sem mudanca no fluxo padrao/capa (README, CLAUDE, AGENTS, CONTRIBUTING), sem nova regra arquitetural/ADR (visao-geral, adr) - arquivamento e otimizacao interna do .md, follow-up do D-055."
+      }
     },
     {
       "id": "D-089",
@@ -2864,15 +2983,149 @@
       "id": "D-052",
       "kind": "feature",
       "title": "Record task timestamps and execution stats",
-      "status": "Backlog",
+      "status": "Validada",
       "origin": "Backlog (2026-06-08)",
       "context": "Today tasks store only createdAt and updatedAt as dates (no time component). Goal: capture richer timing data to support performance/throughput analysis later.\n\nRequired signals (minimum):\n- startedAt: precise timestamp when status transitions to Em desenvolvimento (covers both /feature|/bug|/chore created at status=in-development AND /start|/promote from Backlog/Planejada).\n- finishedAt: precise timestamp when status reaches a terminal state (Finalizada / Cancelada).\n- elapsedTotal: finishedAt - startedAt (wall-clock, including pauses).\n\nStretch (worth considering):\n- readyAt: timestamp when agent runs /ready (lets us measure dev time vs validation wait time separately).\n- blocks[]: each block already has reason, but extend with blockedAt + unblockedAt timestamps so we can compute elapsedBlocked = sum(unblockedAt - blockedAt). Then activeTime = elapsedTotal - elapsedBlocked.\n- per-phase counts: how many times the task was blocked/unblocked, how many ready->finish cycles (if we ever allow ready being re-triggered).\n\nUse cases:\n- Average time-to-validation per kind (feature vs bug vs chore).\n- Time spent blocked vs actively developed.\n- Detect tasks that sit too long in Aguardando validacao (process bottleneck).\n\nNotes for implementation:\n- Use ISO-8601 with timezone (avoid the createdAt: '2026-06-08' format - need full datetime).\n- Backfill old tasks: leave new fields null for tasks created before the change (do not invent timestamps).\n- Probably touches: _clock.py (timestamp source), _tasks.py (new_task + transition helpers), _cli_creation.py + _cli_lifecycle.py (set the new fields), _features_md.py / _reports.py (surface the new data), .guia/process.json (schema bump?), tasks.json schemaVersion bump.\n- Add a 'stats' subcommand or extend 'tasks show --json' to expose computed elapsedTotal/activeTime.\n- Test coverage: a new test file simulating create -> block -> unblock -> ready -> finish and asserting the elapsed math.",
       "createdAt": "2026-06-08",
-      "updatedAt": "2026-06-08",
-      "modifiedFiles": [],
-      "summary": [],
-      "validations": [],
-      "pending": []
+      "updatedAt": "2026-06-24",
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md",
+        "core/src/_clock.py",
+        "core/src/_stats.py",
+        "core/src/_tasks.py",
+        "core/src/_cli_lifecycle.py",
+        "core/src/_cli_creation.py",
+        "core/src/_cli_tasks.py",
+        "core/src/_features_md.py",
+        "core/src/_constants.py",
+        "core/src/guia.py",
+        "tests/test_stats_timing.py",
+        "plugins/guia/bin/",
+        "docs/reference/cli.md",
+        "docs/reference/files.md",
+        "CHANGELOG.md"
+      ],
+      "summary": [
+        "Em desenvolvimento desde 2026-06-24.",
+        "Seam now_iso() (ISO-8601 c/ timezone, override GUIA_NOW p/ testes) + parse_iso em _clock.py; today() intacto",
+        "Novo _stats.py: compute_stats/elapsed_blocked_seconds/format_duration (puro, backfill=null)",
+        "new_task seeda startedAt(in-dev)/readyAt/finishedAt; start/promote carimbam startedAt set-if-absent; ready seta readyAt+readyCount; finish/cancel/validate setam finishedAt; block/unblock gravam blockedAt/unblockedAt precisos",
+        "Subcomando 'stats [id] [--json]' (elapsedTotal/activeTime/blocks/ciclos); secao Timing isolada em _features_md (cobre reports); schemaVersion tasks.json -> 2 (TASKS_SCHEMA_VERSION)",
+        "Dry-close (--no-commit): index compartilhado mistura D-052 e D-090 (paralelo); commit por demanda fica com o usuario"
+      ],
+      "validations": [
+        "python -m pytest tests/ -q -> 221 passed",
+        "python core/src/guia.py doctor -> Guia Fluxo files OK",
+        "python core/build/render-skills.py --check -> 66 alvos em sincronia"
+      ],
+      "pending": [],
+      "finishedAt": "2026-06-24T18:00:57-03:00",
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-052",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-052",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "README.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo padrao ou os comandos da capa mudaram, atualize.",
+            "purpose": "Porta de entrada do projeto."
+          },
+          {
+            "path": "docs/reference/cli.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se voce adicionou/mudou subcomando ou flag, documente aqui.",
+            "purpose": "Referencia completa de subcomandos do core/src/guia.py / core/bin/guia.ps1."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          },
+          {
+            "path": "CONTRIBUTING.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo humano mudou (novo passo, nova checagem), atualize.",
+            "purpose": "Guia pra humanos contribuirem."
+          }
+        ],
+        "touched": [
+          "docs/reference/cli.md",
+          "docs/reference/files.md",
+          "CHANGELOG.md"
+        ],
+        "checkedAt": "2026-06-24",
+        "skipped": "README/visao-geral/ADR/CLAUDE/AGENTS/CONTRIBUTING: stats e subcomando read-only, sem mudanca de fluxo padrao nem regra arquitetural nova"
+      },
+      "qualityReview": {
+        "candidates": [
+          "core/src/_clock.py",
+          "core/src/_stats.py",
+          "core/src/_tasks.py",
+          "core/src/_cli_lifecycle.py",
+          "core/src/_cli_creation.py",
+          "core/src/_cli_tasks.py",
+          "core/src/_features_md.py",
+          "core/src/_constants.py",
+          "core/src/guia.py",
+          "tests/test_stats_timing.py",
+          "plugins/guia/bin/",
+          "docs/reference/cli.md",
+          "docs/reference/files.md",
+          "CHANGELOG.md"
+        ],
+        "dimensions": [
+          "(a) qualidade do codigo (legibilidade, nomes, clean code)",
+          "(b) tamanho de funcoes/arquivos (funcao curta, arquivo coeso)",
+          "(c) responsabilidade unica (SRP) por funcao/classe/modulo",
+          "(d) cobertura/tests do que mudou",
+          "(e) necessidade de refatorar para boa qualidade - e refatorar antes de fechar"
+        ],
+        "skills": [
+          "clean-code-review"
+        ],
+        "findings": [
+          "_stats.py isolado como modulo puro (SRP); funcoes curtas; startedAt set-if-absent; finishedAt revertido junto do status no fail de commit"
+        ],
+        "checkedAt": "2026-06-24"
+      }
     },
     {
       "id": "D-051",

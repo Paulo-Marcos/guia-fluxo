@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from _constants import (
+    ARCHIVE_KEEP_DEFAULT,
     DEMAND_TITLE_FORMAT_DEFAULT,
     KIND_FEATURE,
     PREFIX_BACKLOG,
@@ -50,6 +51,12 @@ def default_process(project_name: str) -> dict[str, Any]:
             "status": STATUS_VALIDATED,
             "deprecatedAliasFor": "finish --no-commit",
             "lockOnValidate": False,
+        },
+        # D-090: mantem so as N demandas mais recentes em .guia/DEMANDAS.md;
+        # as antigas vao para .guia/historico/ (marcado ai-skip) para nao
+        # inflar o contexto do agente. tasks.json continua a fonte de IDs.
+        "archive": {
+            "keepInDemandas": ARCHIVE_KEEP_DEFAULT,
         },
     }
 

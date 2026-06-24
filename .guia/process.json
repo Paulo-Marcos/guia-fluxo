@@ -25,5 +25,8 @@
     "status": "Validada",
     "deprecatedAliasFor": "finish --no-commit",
     "lockOnValidate": false
+  },
+  "archive": {
+    "keepInDemandas": 30
   }
 }

@@ -76,6 +76,16 @@ FEATURES_FILE = GUIA_DIR / "DEMANDAS.md"
 # a exclusao de lock - o git stageia ".guia/DEMANDAS.md". Use sempre este.
 FEATURES_REL = FEATURES_FILE.relative_to(ROOT).as_posix()
 REGISTRY_FILE = GUIA_DIR / "locks" / "registry.yaml"
+# D-090: DEMANDAS.md cresce sem limite e o agente carrega tudo a cada operacao.
+# Mantemos so as N demandas mais recentes no .md; as antigas migram para o
+# arquivo de historico abaixo, marcado com ARCHIVE_MARKER (ai-skip) para o
+# agente nao puxar para o contexto. tasks.json continua a fonte de IDs - o
+# arquivamento do .md nunca afeta a geracao do proximo ID.
+ARCHIVE_DIR = GUIA_DIR / "historico"
+ARCHIVE_FILE = ARCHIVE_DIR / "DEMANDAS.md"
+ARCHIVE_MARKER = "<!-- guia-fluxo: archive=true ai-skip=true -->"
+ARCHIVE_HEADER = f"{ARCHIVE_MARKER}\n# Demandas (historico)\n\n---\n\n"
+ARCHIVE_KEEP_DEFAULT = 30
 
 
 # Aceita IDs novos (D-NNN per ADR-0011) e legacy (F-NNN, I-NNN).
@@ -219,8 +229,17 @@ SECTION_FILES = "### Arquivos modificados/criados"
 SECTION_DONE = "### O que foi feito"
 SECTION_VALIDATION_DONE = "### Validacao feita"
 SECTION_VALIDATION_PENDING = "### Validacao pendente"
+# D-052: secao opcional de timing no catalogo/reports - so aparece quando a
+# task tem ao menos um timestamp rico (tasks pre-D-052 nao renderizam isto).
+SECTION_TIMING = "### Timing (D-052)"
 FEATURES_HEADER = "# Demandas\n\n---\n\n"
 FEATURES_INSERT_MARKER = "---\n\n"
+
+# D-052: schemaVersion do tasks.json bumpado para 2 (campos de timing
+# startedAt/readyAt/finishedAt + blocks[].blockedAt/unblockedAt + readyCount).
+# Migracao e aditiva: tasks antigas seguem sem os campos (backfill = null),
+# nenhuma logica ramifica no numero - ele e informativo/rastreavel.
+TASKS_SCHEMA_VERSION = 2
 
 
 MIN_PYTHON_MAJOR = 3
@@ -240,6 +259,11 @@ __all__ = [
     "FEATURES_FILE",
     "FEATURES_REL",
     "REGISTRY_FILE",
+    "ARCHIVE_DIR",
+    "ARCHIVE_FILE",
+    "ARCHIVE_MARKER",
+    "ARCHIVE_HEADER",
+    "ARCHIVE_KEEP_DEFAULT",
     "TASK_HEADING_RE",
     "STATUS_IN_DEVELOPMENT",
     "STATUS_AWAITING_VALIDATION",
@@ -289,6 +313,8 @@ __all__ = [
     "SECTION_DONE",
     "SECTION_VALIDATION_DONE",
     "SECTION_VALIDATION_PENDING",
+    "SECTION_TIMING",
+    "TASKS_SCHEMA_VERSION",
     "FEATURES_HEADER",
     "FEATURES_INSERT_MARKER",
     "MIN_PYTHON_MAJOR",

@@ -12,6 +12,7 @@
   docs-map.yaml      Opcional. Declaracao dos docs vivos para o hook do `finish`.
   reports/           Relatorios gerados por ready/finish.
   DEMANDAS.md        Historico legivel por humano. Espelha tasks.json em prosa.
+  historico/         Demandas antigas arquivadas (D-090). Marcado ai-skip.
 
 core/
   src/guia.py                CLI portavel, Python puro.
@@ -39,11 +40,14 @@ Configuracao por projeto. Inclui:
 
 - nome do projeto;
 - comandos de teste e validacao;
-- politica de lock (autovalidacao, etc.).
+- politica de lock (autovalidacao, etc.);
+- `archive.keepInDemandas` (D-090): quantas demandas mais recentes ficam em `.guia/DEMANDAS.md` antes do arquivamento (default `30`). As mais antigas migram para `.guia/historico/DEMANDAS.md`.
 
 ## `.guia/tasks.json`
 
 Lista todas as demandas (features, bugs e chores) com status. Fonte programatica - leia daqui em vez de fazer parse de `.guia/DEMANDAS.md`.
+
+`schemaVersion: 2` (D-052) adiciona timing rico por task: `startedAt` (entrada em desenvolvimento), `readyAt` (ultimo `ready`), `finishedAt` (estado terminal) em ISO-8601 com timezone, `readyCount`, e `blockedAt`/`unblockedAt` em cada item de `blocks[]`. Tasks anteriores ao D-052 nao tem esses campos (backfill = `null`). Use `guia stats <id>` para os derivados (elapsed total, tempo ativo) em vez de calcular a mao.
 
 ## `.guia/current-task.json`
 
@@ -88,6 +92,12 @@ Historico humano-legivel. Cada secao tem:
 - validacoes pendentes.
 
 O script reescreve este arquivo a cada operacao. Nao edite a mao - voce sera sobrescrito.
+
+Para nao crescer sem limite (e inflar o contexto do agente a cada operacao), o upsert mantem apenas as `archive.keepInDemandas` demandas mais recentes (default `30`) e arquiva as antigas em `.guia/historico/DEMANDAS.md` (D-090). `tasks.json` continua a fonte autoritativa de IDs - o arquivamento do `.md` nunca afeta a geracao do proximo ID.
+
+## `.guia/historico/DEMANDAS.md`
+
+Arquivo unico de historico (D-090). Recebe as demandas mais antigas retiradas de `.guia/DEMANDAS.md` quando o catalogo passa de `archive.keepInDemandas`. Comeca com o marcador `<!-- guia-fluxo: archive=true ai-skip=true -->` no topo: o agente deve checa-lo **antes** de carregar e pular o arquivo (nao puxar historico arquivado pro contexto). O append deduplica por ID, entao rodar o arquivamento varias vezes nao duplica nem corrompe.
 
 ## `.guia/locks/lock-ignore.txt`
 
