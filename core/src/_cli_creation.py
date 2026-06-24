@@ -18,7 +18,7 @@ from __future__ import annotations
 import argparse
 from typing import Any
 
-from _clock import today
+from _clock import now_iso, today
 from _constants import (
     BACKLOG_FILE,
     CURRENT_FILE,
@@ -347,6 +347,10 @@ def _promote_existing_task(
     """Promove uma task ja em tasks.json (status=Backlog) para
     Em desenvolvimento (ADR-0011 Fase 2). Preserva o id."""
     task["status"] = STATUS_IN_DEVELOPMENT
+    # D-052: promote leva a task de Backlog para in-development - carimba o
+    # inicio (set-if-absent, espelhando cmd_start).
+    if not task.get("startedAt"):
+        task["startedAt"] = now_iso()
     task["kind"] = args.kind
     task["updatedAt"] = today()
     if args.title:

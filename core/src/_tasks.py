@@ -20,7 +20,7 @@ import re
 import sys
 from typing import Any
 
-from _clock import today
+from _clock import now_iso, today
 from _constants import (
     BACKLOG_FILE,
     CURRENT_FILE,
@@ -70,6 +70,12 @@ def new_task(
     defaults de implementacao.
     """
     is_backlog = status == STATUS_BACKLOG
+    # D-052: startedAt so e setado quando a task ja nasce "Em desenvolvimento"
+    # (feature/bug/chore default). Backlog/Planejada nascem com null e ganham
+    # startedAt na transicao para in-development (start/promote). readyAt e
+    # finishedAt nascem null sempre. Tasks antigas (sem estes campos) seguem
+    # tratadas como null - backfill = null, nada inventado.
+    in_development = status == STATUS_IN_DEVELOPMENT
     task: dict[str, Any] = {
         "id": task_id,
         "kind": kind,
@@ -79,6 +85,9 @@ def new_task(
         "context": context or title,
         "createdAt": today(),
         "updatedAt": today(),
+        "startedAt": now_iso() if in_development else None,
+        "readyAt": None,
+        "finishedAt": None,
         "modifiedFiles": [] if is_backlog else [FEATURES_REL],
         "summary": [] if is_backlog else [MSG_DEFAULT_TASK_CREATED],
         "validations": [],

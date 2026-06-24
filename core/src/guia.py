@@ -89,7 +89,12 @@ from _cli_deps import (  # noqa: E402
     cmd_depends_remove,
 )
 from _cli_meta import cmd_docs_check, cmd_render  # noqa: E402
-from _cli_tasks import cmd_tasks_filter, cmd_tasks_list, cmd_tasks_show  # noqa: E402
+from _cli_tasks import (  # noqa: E402
+    cmd_stats,
+    cmd_tasks_filter,
+    cmd_tasks_list,
+    cmd_tasks_show,
+)
 from _constants import (  # noqa: E402
     KIND_BUG,
     KIND_CHORE,
@@ -492,6 +497,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_tasks_filter.add_argument("--limit", type=int, default=None, help="Limita aos N mais recentes.")
     p_tasks_filter.add_argument("--json", action="store_true", help="Saida em JSON.")
     p_tasks_filter.set_defaults(func=cmd_tasks_filter)
+
+    p_stats = sub.add_parser(
+        "stats",
+        help="Timing/throughput de uma task: elapsed total, tempo ativo, bloqueios, ciclos (D-052).",
+    )
+    p_stats.add_argument("task_id", nargs="?")
+    p_stats.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_stats.set_defaults(func=cmd_stats)
 
     p_depends = sub.add_parser(
         "depends",

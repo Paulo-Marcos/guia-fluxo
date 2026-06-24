@@ -9,7 +9,8 @@ from __future__ import annotations
 import argparse
 import json
 
-from _tasks import find_task, format_task_line, list_tasks
+from _stats import compute_stats, format_duration
+from _tasks import find_task, find_task_or_current, format_task_line, list_tasks
 
 
 def _print_json(payload) -> None:
@@ -63,4 +64,25 @@ def cmd_tasks_filter(args: argparse.Namespace) -> int:
     return 0
 
 
-__all__ = ["cmd_tasks_list", "cmd_tasks_show", "cmd_tasks_filter"]
+def cmd_stats(args: argparse.Namespace) -> int:
+    """D-052: timing/throughput de uma task (elapsed total, tempo ativo,
+    bloqueios, ciclos de ready). Aceita id explicito ou cai no current-task.
+    `--json` para consumo por agente."""
+    task = find_task_or_current(args.task_id)
+    stats = compute_stats(task)
+    if args.json:
+        _print_json({"taskId": task["id"], "stats": stats})
+        return 0
+    print(f"{task['id']} {task.get('title', '')}")
+    print(f"  startedAt : {stats['startedAt'] or '-'}")
+    print(f"  readyAt   : {stats['readyAt'] or '-'}")
+    print(f"  finishedAt: {stats['finishedAt'] or '-'}")
+    print(f"  elapsed total : {format_duration(stats['elapsedTotalSeconds'])}")
+    print(f"  blocked total : {format_duration(stats['elapsedBlockedSeconds'])}")
+    print(f"  active time   : {format_duration(stats['activeTimeSeconds'])}")
+    print(f"  blocks/unblocks: {stats['blockCount']}/{stats['unblockCount']}")
+    print(f"  ready cycles   : {stats['readyCount']}")
+    return 0
+
+
+__all__ = ["cmd_tasks_list", "cmd_tasks_show", "cmd_tasks_filter", "cmd_stats"]

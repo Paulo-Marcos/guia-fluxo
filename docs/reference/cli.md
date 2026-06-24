@@ -246,6 +246,16 @@ Gerencia dependencias entre demandas. Uma task pode declarar que **depende** de 
 
 `add` recusa auto-dependencia, id inexistente em `tasks.json`, e qualquer dep que crie **ciclo** no grafo. `remove` e idempotente. `list` mostra cada dependencia com status atual e marca quais ainda bloqueiam.
 
+### `stats` (D-052)
+
+```powershell
+.\core\bin\guia.ps1 stats [D-NNN] [--json]
+```
+
+Mostra o timing/throughput de uma task a partir dos timestamps ricos (ISO-8601 com timezone) capturados nas transicoes: `startedAt` (entrada em *Em desenvolvimento* via create/`start`/`promote`), `readyAt` (ultimo `ready`), `finishedAt` (terminal: Validada/Finalizada/Cancelada) e os intervalos de `blocks[]` (`blockedAt`/`unblockedAt`). Sem id, usa a task corrente.
+
+Campos computados (segundos): `elapsedTotalSeconds` (= `finishedAt − startedAt`, wall-clock incl. pausas), `elapsedBlockedSeconds` (= Σ dos bloqueios fechados), `activeTimeSeconds` (= total − bloqueado); mais os contadores `blockCount`/`unblockCount`/`readyCount`. `--json` emite o objeto cru para consumo por agente. **Backfill:** tasks criadas antes do D-052 nao tem os campos e aparecem como `null` (nada e inventado).
+
 ### `render`
 
 ```powershell

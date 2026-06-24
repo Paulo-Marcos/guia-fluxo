@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from _clock import today
+from _clock import now_iso, today
 from _commit import commit_task
 from _constants import (
     GUIA_DIR,
@@ -41,6 +41,7 @@ from _constants import (
     STATUS_PLANNED,
     STATUS_VALIDATED,
     TASKS_FILE,
+    TASKS_SCHEMA_VERSION,
 )
 from _docs_hook import (
     build_docs_review_record,
@@ -105,7 +106,7 @@ def initialize_project(project_name: str, force: bool = False) -> None:
     """
     GUIA_DIR.mkdir(parents=True, exist_ok=True)
     write_if_missing(PROCESS_FILE, default_process(project_name), force=force)
-    write_if_missing(TASKS_FILE, {"schemaVersion": 1, "tasks": []}, force=force)
+    write_if_missing(TASKS_FILE, {"schemaVersion": TASKS_SCHEMA_VERSION, "tasks": []}, force=force)
     write_if_missing(BACKLOG_FILE, {"schemaVersion": 1, "items": []}, force=force)
     write_if_missing(CURRENT_FILE, {}, force=force)
     if force or not DEMAND_TITLE_FILE.exists():
@@ -413,6 +414,10 @@ def cmd_ready(args: argparse.Namespace) -> int:
     config = read_json(PROCESS_FILE, default_process(ROOT.name))
     changed_files = args.file or git_changed_files()
     task["status"] = config.get("ready", {}).get("status", STATUS_AWAITING_VALIDATION)
+    # D-052: marca a entrega para validacao. readyAt guarda o ultimo ready;
+    # readyCount conta os ciclos ready->finish (cada re-ready incrementa).
+    task["readyAt"] = now_iso()
+    task["readyCount"] = task.get("readyCount", 0) + 1
     merge_list(task, "modifiedFiles", changed_files)
     merge_list(task, "summary", args.summary or [MSG_DEFAULT_READY_SUMMARY])
     merge_list(task, "validations", args.validation)
@@ -484,7 +489,11 @@ def cmd_finish(args: argparse.Namespace) -> int:
     finish_config = config.get("finish", {})
     # D-081: guarda o status pre-finish para reverter caso o commit falhe.
     previous_status = task.get("status")
+    # D-052: guarda o finishedAt anterior junto do status - se o commit falhar
+    # e o status reverter para nao-terminal, o carimbo de termino tambem volta.
+    previous_finished = task.get("finishedAt")
     task["status"] = finish_config.get("status", STATUS_VALIDATED)
+    task["finishedAt"] = now_iso()
     merge_list(task, "modifiedFiles", changed_files)
     merge_list(task, "modifiedFiles", args.docs_touched)
     merge_list(task, "summary", args.summary or [MSG_DEFAULT_FINISH_SUMMARY])
@@ -527,6 +536,7 @@ def cmd_finish(args: argparse.Namespace) -> int:
             commit_task(task, getattr(args, "commit_body", None), subject_override)
         except BaseException:
             task["status"] = previous_status
+            task["finishedAt"] = previous_finished
             save_task(task)
             set_current_task(task)
             upsert_features_entry(task)
@@ -556,6 +566,7 @@ def cmd_cancel(args: argparse.Namespace) -> int:
         )
 
     task["status"] = STATUS_CANCELLED
+    task["finishedAt"] = now_iso()  # D-052: Cancelada e estado terminal.
     cancellation = {"reason": args.reason, "at": today()}
     task.setdefault("cancellations", []).append(cancellation)
     merge_list(task, "summary", [f"Cancelada em {today()}: {args.reason}"])
@@ -644,6 +655,11 @@ def cmd_start(args: argparse.Namespace) -> int:
 
     coming_from_backlog = task["status"] == STATUS_BACKLOG
     task["status"] = STATUS_IN_DEVELOPMENT
+    # D-052: carimba startedAt na primeira entrada em desenvolvimento. Usa
+    # set-if-absent para nao sobrescrever se a task ja passou por aqui (o
+    # caminho de resumo pos-bloqueio e unblock, que nao reseta o inicio).
+    if not task.get("startedAt"):
+        task["startedAt"] = now_iso()
     note = f"Em desenvolvimento desde {today()}"
     if args.note:
         note = f"{note}: {args.note}"
@@ -672,7 +688,9 @@ def cmd_block(args: argparse.Namespace) -> int:
         raise SystemExit(f"Task {task['id']} ja esta bloqueada.")
 
     task["status"] = STATUS_BLOCKED
-    block_record = {"reason": args.reason, "at": today()}
+    # D-052: `at` (so-data) mantido para compat; blockedAt e o carimbo preciso
+    # que alimenta o calculo de elapsedBlocked junto com unblockedAt.
+    block_record = {"reason": args.reason, "at": today(), "blockedAt": now_iso()}
     task.setdefault("blocks", []).append(block_record)
     merge_list(task, "summary", [f"Bloqueada em {today()}: {args.reason}"])
 
@@ -696,7 +714,8 @@ def cmd_unblock(args: argparse.Namespace) -> int:
     task["status"] = STATUS_IN_DEVELOPMENT
     blocks = task.get("blocks") or []
     if blocks and "unblockedAt" not in blocks[-1]:
-        blocks[-1]["unblockedAt"] = today()
+        # D-052: carimbo preciso para fechar o intervalo de bloqueio.
+        blocks[-1]["unblockedAt"] = now_iso()
     note = f"Desbloqueada em {today()}."
     if args.note:
         note = f"Desbloqueada em {today()}: {args.note}"
@@ -717,6 +736,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
     task = find_task_or_current(args.task_id)
     config = read_json(PROCESS_FILE, default_process(ROOT.name))
     task["status"] = config.get("validate", {}).get("status", STATUS_VALIDATED)
+    task["finishedAt"] = now_iso()  # D-052: Validada e estado terminal.
     merge_list(task, "modifiedFiles", args.file)
     merge_list(task, "summary", args.summary or [MSG_DEFAULT_VALIDATE_SUMMARY])
     task["pending"] = []
