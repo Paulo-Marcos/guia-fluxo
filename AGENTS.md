@@ -36,7 +36,7 @@ Layout do repo-mae: **fontes** em `core/` (src, build, manifest, lock, hooks, te
        --summary "Resumo do que foi feito" `
        --validation "Comando/check executado e resultado"
    ```
-5. **Nao feche sozinho.** `finish` so depois de validacao humana em uso real. Test suite passar **nao basta** - o usuario testa de verdade e ai pede o `finish`. Desde D-080 isto e **gate tecnico, nao so convencao**: a ferramenta recusa `finish` sem a previa autorizacao do desenvolvedor, expressa pela env `GUIA_HUMAN_FINISH=1` setada na sessao dele. **A IA nao seta essa env por conta propria** - ela e o sinal *do humano*. Default: para no `ready` e entrega. Se o desenvolvedor ja deu autorizacao previa (env setada na sessao), o `finish` pode rodar.
+5. **Nao feche sozinho.** `finish` e acao **do usuario**: a IA so executa quando o desenvolvedor solicita (`/guia:finish`) ou autoriza explicitamente, e **nunca** dispara `finish` por conta propria. `finish` so depois de validacao humana em uso real - test suite passar **nao basta** - o usuario testa de verdade e ai pede o `finish`. Isto e **regra de comportamento** (esta documentada aqui, na skill e no CLAUDE.md), nao um parametro nem um gate tecnico no motor: o `finish` nao exige env nem flag (D-098 removeu o gate por env `GUIA_HUMAN_FINISH` que o D-080 havia tentado - mandar variavel era ruim e o motor nao consegue distinguir agente de humano). Default da IA: para no `ready` e entrega; aguarda o usuario disparar o `finish`.
 6. **Antes de fechar, rode o docs-check:**
    ```powershell
    .\core\bin\guia.ps1 docs-check

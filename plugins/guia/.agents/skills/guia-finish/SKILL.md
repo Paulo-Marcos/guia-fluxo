@@ -1,13 +1,13 @@
 ---
 name: guia-finish
-description: CLOSE an already-validated task — runs the docs-check hook and commits by default. **Requires the developer's prior authorization (technical gate, D-080): env `GUIA_HUMAN_FINISH=1` set in the session, else the tool refuses. An AI agent must not set this env itself — it is the developer's signal; stop at `ready` and hand off, and only run `finish` when the developer already authorized it.** Use only after the developer confirms validation in real use. Required when `.guia/docs-map.yaml` exists: `--docs-touched <path>` (repeatable) or `--docs-skip "<reason>"`. Options: `--file`, `--summary`, `--validation` (same as ready), `--no-commit` (dry close), `--lock --lock-id <slug> --lock-description "..."` (protect files after close). For handoff to validation use `ready`; for inspection use `status`.
+description: CLOSE an already-validated task — runs the docs-check hook and commits by default. **`finish` is the USER's action: the agent only runs it when the developer requests `/guia:finish` or explicitly authorizes, and must NEVER trigger `finish` on its own — stop at `ready` and hand off. Behavioral rule, not a CLI parameter: no env, no flag (D-098 removed the `GUIA_HUMAN_FINISH` env gate the earlier D-080 had tried).** Use only after the developer confirms validation in real use. Required when `.guia/docs-map.yaml` exists: `--docs-touched <path>` (repeatable) or `--docs-skip "<reason>"`. Options: `--file`, `--summary`, `--validation` (same as ready), `--no-commit` (dry close), `--lock --lock-id <slug> --lock-description "..."` (protect files after close). For handoff to validation use `ready`; for inspection use `status`.
 ---
 
 # Finish
 
 Close an already-validated task. Run **only after** the developer confirms validation in real use — `finish` is the closing gate, not a shortcut.
 
-> **Human authorization required (technical gate, D-080).** `finish` is the developer's call. The tool now **refuses** to close unless the developer pre-authorized it via the `GUIA_HUMAN_FINISH=1` env var set in their session. **If you are an AI agent, your job ends at `ready` — do NOT set this env var yourself; it is the developer's signal.** When the developer has already given prior authorization (the env is set in the session), `finish` may run; otherwise stop at `ready` and hand off.
+> **`finish` is the USER's action (behavioral rule, D-098).** Closing is the developer's call. **If you are an AI agent, run `finish` ONLY when the developer requests `/guia:finish` or explicitly authorizes it — NEVER on your own initiative.** Your default job ends at `ready`: hand off and wait for the developer to ask for the close. This is a behavioral rule, not a CLI parameter — there is no env var or flag to set (D-098 removed the `GUIA_HUMAN_FINISH` env gate the earlier D-080 had tried; sending a variable was bad, and the engine cannot tell an agent apart from a human anyway).
 
 **Run the engine** via the repo wrapper (portable fallback on Linux/Mac/no PowerShell: `python core/src/guia.py <command>`):
 
@@ -34,7 +34,7 @@ If the project has no `.guia/docs-map.yaml`, the hook is a no-op and `finish` ru
 
 ## 2) Close
 
-Requires the developer's prior authorization — the `GUIA_HUMAN_FINISH=1` env var set in the session (D-080), e.g. `$env:GUIA_HUMAN_FINISH = "1"` in PowerShell:
+Run this **only** because the developer asked for it (no env var or flag — see the rule above):
 
 ```text
 finish <D-NNN> --docs-touched docs/reference/cli.md --docs-touched CHANGELOG.md

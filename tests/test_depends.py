@@ -8,7 +8,6 @@ estiver aberta; deteccao de ciclo; auto-dep; id inexistente.
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -32,15 +31,12 @@ def _seed(sandbox: Path) -> None:
 
 
 def _run(sandbox: Path, *args: str) -> subprocess.CompletedProcess[str]:
-    # D-080: finish exige a env de autorizacao humana; a suite roda autorizada.
-    env = {**os.environ, "GUIA_HUMAN_FINISH": "1"}
     return subprocess.run(
         [sys.executable, "core/src/guia.py", *args],
         cwd=sandbox,
         capture_output=True,
         text=True,
         encoding="utf-8",
-        env=env,
     )
 
 

@@ -9,7 +9,6 @@ que o `_bootstrap_sys_path` da CLI ache os modulos.
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -39,9 +38,6 @@ class SmokeTest(unittest.TestCase):
             sandbox = Path(tmp)
             _seed_sandbox(sandbox)
 
-            # D-080: finish exige a env de autorizacao humana; o smoke roda autorizado.
-            smoke_env = {**os.environ, "GUIA_HUMAN_FINISH": "1"}
-
             def run(*args: str) -> subprocess.CompletedProcess[str]:
                 return subprocess.run(
                     [sys.executable, "core/src/guia.py", *args],
@@ -50,7 +46,6 @@ class SmokeTest(unittest.TestCase):
                     capture_output=True,
                     text=True,
                     encoding="utf-8",  # CLI emite UTF-8 (emoji markers); Windows default e cp1252.
-                    env=smoke_env,
                 )
 
             run("init", "--project-name", "smoke")

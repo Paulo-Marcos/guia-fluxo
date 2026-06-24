@@ -21,7 +21,7 @@ Este repo **e um plugin Claude Code oficial**: `plugins/guia/.claude-plugin/plug
 | `/guia:plan` | `plan` | — | Marcar task como `Planejada` (triada mas nao iniciada). Aceita transicao de Backlog/Em desenvolvimento. |
 | `/guia:start` | `start` | — | Comecar trabalho em task Planejada/Backlog (status -> Em desenvolvimento). |
 | `/guia:ready` | `ready` | — | Implementacao pronta para validacao humana. **A IA dispara, nao o humano.** |
-| `/guia:finish` | `finish` | — | Validacao confirmada, fechar e (opcional) travar. **Exige previa autorizacao humana (gate tecnico, D-080):** env `GUIA_HUMAN_FINISH=1` na sessao, senao a ferramenta recusa. **A IA nao seta essa env por conta propria** - ela e o sinal do humano; com a autorizacao previa do dono, o `finish` pode rodar. |
+| `/guia:finish` | `finish` | — | Validacao confirmada, fechar e (opcional) travar. **Acao do usuario (regra de comportamento, D-098):** a IA so executa quando voce solicita `/guia:finish` ou autoriza explicitamente, e **nunca dispara `finish` sozinha**. Sem env, sem parametro, sem gate tecnico no motor - o controle e a propria instrucao do agente. (D-098 removeu o gate por env `GUIA_HUMAN_FINISH` do D-080.) |
 | `/guia:status` | `status` | — | Inspecao da task atual (read-only). |
 | `/guia:cancel` | `cancel` | — | Encerrar task como Cancelada (terminal). Exige `--reason`. |
 | `/guia:block` | `block` | — | Pausar task preservando WIP. Exige `--reason`. |

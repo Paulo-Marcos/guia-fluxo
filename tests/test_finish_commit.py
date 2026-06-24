@@ -18,7 +18,6 @@ init`, evitando deploy do hook commit-msg e mantendo o commit livre de locks.
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -59,16 +58,12 @@ def _init_repo(sandbox: Path) -> None:
 
 
 def _run(sandbox: Path, *args: str) -> subprocess.CompletedProcess[str]:
-    # D-080: finish exige a env de autorizacao humana. A suite roda como o
-    # desenvolvedor ja autorizado, entao a env fica setada para todo o CLI.
-    env = {**os.environ, "GUIA_HUMAN_FINISH": "1"}
     return subprocess.run(
         [sys.executable, "core/src/guia.py", *args],
         cwd=sandbox,
         capture_output=True,
         text=True,
         encoding="utf-8",
-        env=env,
     )
 
 
