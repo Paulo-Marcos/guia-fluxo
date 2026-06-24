@@ -2,6 +2,52 @@
 
 ---
 
+## [D-054] ✨ Enriquecer mensagem de commit com resumo do que foi feito
+
+- **Status:** Aguardando validacao
+- **Origem:** Backlog (2026-06-09)
+- **Tipo:** Feature
+- **Contexto:** Hoje o commit gerado pelo finish tem formato minimo: '{kind}: {title}\n\nTask: {id}'. Nao ha resumo do que mudou, quais validacoes passaram, ou referencia ao contexto. Melhorias possiveis: (1) incluir o campo summary da task no corpo do commit (o que foi feito); (2) incluir validacoes que passaram; (3) listar arquivos modificados de forma legivel (ja esta em modifiedFiles mas nao aparece no commit); (4) permitir que o agente passe --commit-body 'texto adicional' no finish para complementar a mensagem automatica; (5) avaliar se o formato deveria seguir Conventional Commits mais estritamente (scope, breaking change). Cuidado: a mensagem de commit atual e simples de parsear por ferramentas - nao complexificar sem motivo claro.
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+- `core/src/_commit.py`
+- `core/src/guia.py`
+- `core/src/_cli_lifecycle.py`
+- `plugins/guia/bin/_commit.py`
+- `plugins/guia/bin/guia.py`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `tests/test_commit_message.py`
+- `.guia/backlog.json`
+- `core/manifest/bodies/ready.md`
+- `plugins/guia/commands/ready.md`
+- `plugins/guia/.agents/skills/guia-ready/SKILL.md`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-23: Enriquecer mensagem de commit do finish (summary/validations/modifiedFiles) + formalizar Conventional Commits; absorve B-019.
+- Commit do finish agora usa Conventional Commits com id da task como scope: header {kind}({id}): {title} (preserva convencao do repo feature/bug/chore, nao feat/fix).
+- Corpo enriquecido em _commit.build_commit_message(): summary (o que foi feito), bloco Validacoes, bloco Arquivos; cada bloco so aparece se tiver conteudo.
+- Rodape Task: {id} mantido literal e por ultimo como ancora estavel para parsers existentes.
+- Novo --commit-body no finish anexa texto livre antes do rodape Task:.
+- B-019 (formalizar Conventional Commits + id da task) absorvido e resolvido por esta demanda.
+- Ajuste (pedido do usuario): se existir uma skill de convencao de commits do usuario (nome/descricao com commit + conventional/convention/gitmoji), o agente a usa para gerar o subject e passa via --commit-subject; senao, engine usa o formato padrao.
+- Engine: build_commit_message/commit_task ganharam subject_override — substitui SO o header, preservando corpo (summary/validacoes/arquivos) e rodape Task: {id}.
+- Fluxo: --commit-subject persistido em ready (task.commitSubject); finish (humano) consome automaticamente; --commit-subject no finish tem precedencia. Guia do agente adicionada em ready.md (deteccao por padrao de nome; se ambiguo, perguntar ao usuario).
+
+### Validacao feita
+
+- python -m pytest tests/test_commit_message.py tests/test_finish_commit.py -q (10 passed)
+- python core/build/render-skills.py --check (OK: 63 alvos em sincronia)
+- e2e: ready --commit-subject 'feat(D-001): ...' -> finish -> commit usa o subject da convencao, mantendo corpo+Task: footer.
+- python -m pytest tests/test_commit_message.py -q (12 passed)
+- python core/build/render-skills.py --check (OK: 63 alvos)
+
+### Validacao pendente
+
+- Para o commit DESTA demanda: o repo (git log) usa 'feature: D-NNN desc' SEM gitmoji, mas a skill conventional-commit-gitmoji esta disponivel na sessao. Confirme se quer que eu prepare um subject gitmoji via --commit-subject ou mantenha o default do engine.
+
 ## [D-097] 🧹 Consolidar superficie da raiz (D-094): VERSION fonte unica + community-health em .github/ + fix README
 
 - **Status:** Validada
