@@ -1,6 +1,6 @@
 {
-  "taskId": "D-094",
+  "taskId": "D-080",
   "status": "Validada",
-  "title": "Limpeza: separar core do plugin e justificar expostos",
-  "chatTitle": "D-094 \u2728 - #FINALIZADO - Limpeza: separar core do plugin e justificar expostos"
+  "title": "Forcar finish como acao exclusivamente humana (gate na ferramenta)",
+  "demandTitle": "D-080 \u2728 - #FINALIZADO - Forcar finish como acao exclusivamente humana (gate na ferramenta)"
 }

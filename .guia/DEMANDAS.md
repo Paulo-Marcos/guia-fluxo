@@ -2,6 +2,85 @@
 
 ---
 
+## [E-001] 🎯 Teste
+
+- **Status:** Cancelada
+- **Origem:** Guia Fluxo (2026-06-22)
+- **Tipo:** Epic
+- **Contexto:** Teste
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Cancelada em 2026-06-24: Epic de teste do fluxo D-049; sem WIP real.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Nenhuma.
+
+
+## [D-080] ✨ Forcar finish como acao exclusivamente humana (gate na ferramenta)
+
+- **Status:** Validada
+- **Origem:** Backlog (2026-06-20)
+- **Tipo:** Feature
+- **Contexto:** Hoje 'finish' e so convencao (AGENTS.md): nada tecnico impede a IA de rodar finish/commit. O dono exige que finish seja sempre humano e que isso esteja PREVISTO NA FERRAMENTA. Avaliar: (a) flag/env exigindo confirmacao humana (ex: GUIA_HUMAN_FINISH=1 ou --i-am-human) que a IA nao deve setar; (b) hook/guard que detecta contexto de agente; (c) no minimo, doc explicita. Relacionado: finish tambem nao injeta [unlock:] para arquivos novos, forcando commit manual - avaliar --unlock no finish junto (cruza com D-054 enriquecer commit).
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+- `core/src/_cli_lifecycle.py`
+- `core/src/_constants.py`
+- `core/src/guia.py`
+- `core/manifest/bodies/finish.md`
+- `core/manifest/manifest.yaml`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/bin/guia.py`
+- `plugins/guia/commands/finish.md`
+- `plugins/guia/.agents/skills/guia-finish/SKILL.md`
+- `AGENTS.md`
+- `CLAUDE.md`
+- `tests/test_finish_human_gate.py`
+- `tests/test_finish_commit.py`
+- `tests/test_epic.py`
+- `tests/test_depends.py`
+- `tests/test_smoke.py`
+- `CHANGELOG.md`
+- `docs/reference/cli.md`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-23.
+- Gate tecnico no topo de cmd_finish (_require_human_finish): finish recusa sem sinal humano explicito (--i-am-human ou env GUIA_HUMAN_FINISH=1). Guard isolado no topo, antes de qualquer mutacao, pra minimizar conflito com D-095.
+- Flag --i-am-human adicionada ao parser finish; constantes ENV_HUMAN_FINISH e MSG_FINISH_HUMAN_ONLY em _constants.py. Mirror plugins/guia/bin regenerado via render-skills.py.
+- Docs: AGENTS.md/CLAUDE.md agora dizem gate tecnico (nao so convencao); manifest + bodies/finish.md instruem a IA a NUNCA rodar finish nem setar o sinal.
+- AJUSTE pedido pelo dono: sinal unico e a env GUIA_HUMAN_FINISH=1 (previa autorizacao do dev). Flag --i-am-human REMOVIDA (era demais). Semantica: com a env setada, ate a IA pode finalizar (dono ja autorizou); sem ela, recusa.
+- Gate tecnico no topo de cmd_finish (_require_human_finish, sem args): finish recusa SystemExit sem GUIA_HUMAN_FINISH=1. Isolado no topo, antes de mutacao, pra minimizar conflito com D-095.
+- Docs (AGENTS.md/CLAUDE.md/manifest/bodies/finish.md): gate tecnico = previa autorizacao via env; a IA nao seta a env por conta propria. Mirror regenerado, --check OK.
+- Gate de finish humano implementado e documentado; commit manual com [unlock:] por causa do arquivo de teste novo (injecao de unlock e D-054, fora de escopo).
+
+### Validacao feita
+
+- python -m pytest tests/ -q -> 198 passed
+- python core/src/guia.py doctor -> Guia Fluxo files OK
+- python core/build/render-skills.py --check -> 63 alvos em sincronia
+- python -m pytest tests/ -q -> 201 passed
+- python core/src/guia.py doctor -> OK
+- render-skills.py --check -> 63 alvos em sincronia
+
+### Validacao pendente
+
+- Nenhuma.
+
 ## [D-054] ✨ Enriquecer mensagem de commit com resumo do que foi feito
 
 - **Status:** Aguardando validacao
@@ -278,7 +357,7 @@
 
 ## [D-092] ✨ Filho 1
 
-- **Status:** Em desenvolvimento
+- **Status:** Cancelada
 - **Origem:** Guia Fluxo (2026-06-22)
 - **Tipo:** Feature
 - **Contexto:** Filho 1
@@ -290,6 +369,7 @@
 ### O que foi feito
 
 - Demanda criada via Guia Fluxo.
+- Cancelada em 2026-06-24: Scratch do teste de epic->story (D-049); sem WIP real.
 
 ### Validacao feita
 
@@ -297,32 +377,7 @@
 
 ### Validacao pendente
 
-- Executar implementacao e validacoes.
-
-
-## [E-001] 🎯 Teste
-
-- **Status:** Em desenvolvimento
-- **Origem:** Guia Fluxo (2026-06-22)
-- **Tipo:** Epic
-- **Contexto:** Teste
-
-### Arquivos modificados/criados
-
-- `.guia/DEMANDAS.md`
-
-### O que foi feito
-
-- Demanda criada via Guia Fluxo.
-
-### Validacao feita
-
 - Nenhuma.
-
-### Validacao pendente
-
-- Executar implementacao e validacoes.
-
 
 ## [D-049] ✨ Hierarquia epic -> stories com chat-pai orquestrador
 
@@ -2772,9 +2827,9 @@
 
 - Nenhuma.
 
-## [F-014] Auditoria estruturada de core/ para mapear features, issues e backlog
+## [F-014] ✨ Auditoria estruturada de core/ para mapear features, issues e backlog
 
-- **Status:** Em desenvolvimento
+- **Status:** Cancelada
 - **Origem:** Guia Fluxo (2026-06-02)
 - **Tipo:** Feature
 - **Contexto:** Walkthrough em 7 etapas (manifest, guia.py, guia.ps1, render-skills.py, check-lock.py, hooks, templates) de cada arquivo em core/. Para cada arquivo: funcao atual, riscos, melhorias, possiveis adicoes. Saida: lista de candidatos classificados como feature/issue/backlog para abertura em lote ao final. Inclui doc de acompanhamento em docs/explanation/ para rastrear progresso entre sessoes e fora do chat.
@@ -2786,6 +2841,7 @@
 ### O que foi feito
 
 - Demanda criada via guia-fluxo.
+- Cancelada em 2026-06-24: Auditoria stale (criada 2026-06-02, sem WIP, aponta FEATURES.md pre-migracao D-055); intencao coberta pela D-094.
 
 ### Validacao feita
 
@@ -2793,8 +2849,7 @@
 
 ### Validacao pendente
 
-- Executar implementacao e validacoes.
-
+- Nenhuma.
 
 ## [F-013] B-008 passos 3+4: install.ps1/install.sh + templates em dist/ + smoke do consumer
 
