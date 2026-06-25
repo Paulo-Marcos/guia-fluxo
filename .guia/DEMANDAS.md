@@ -4,7 +4,7 @@
 
 ## [D-102] ✨ B-003: Adicionar PreToolUse hook bloqueando Edit/Write em arquivo travado
 
-- **Status:** Aguardando validacao
+- **Status:** Validada
 - **Origem:** Backlog B-003 (2026-06-24)
 - **Tipo:** Feature
 - **Contexto:** Backlog B-003: Defesa em profundidade vs commit-msg hook atual (que so pega no commit, depois do estrago). hooks/hooks.json com matcher 'Edit|Write|MultiEdit' chama bin/check-lock.py recebendo file_path via stdin (JSON), retorna exit 2 com motivo se arquivo esta em features/registry.yaml. commit-msg continua existindo como segunda linha (defende push direto de outras ferramentas).
@@ -22,6 +22,11 @@
 - `CLAUDE.md`
 - `CHANGELOG.md`
 - `docs/explanation/por-que-lock.md`
+- `.guia/tasks.json`
+- `.guia/backlog.json`
+- `.guia/current-task.json`
+- `.guia/historico/DEMANDAS.md`
+- `.guia/demand-title.txt`
 
 ### O que foi feito
 
@@ -30,6 +35,7 @@
 - Novo subcomando check-lock.py pretool: le payload PreToolUse no stdin, ancora repo-root pelo cwd, extrai tool_input.file_path e checa como modify (nao add, pra nao colidir com o blanket add-lock *), reusa lock_api.find_blocked + print_block; exit 2 bloqueia, exit 0 em qualquer falha (degrada liberando).
 - core/hooks/hooks.json (matcher Edit|Write|MultiEdit) renderizado para plugins/guia/hooks/hooks.json; auto-descoberto na instalacao do plugin, sem deploy por projeto. render-skills.py ganhou collect_hooks_outputs (valida JSON) + cobertura de orphan/clean.
 - commit-msg mantido como segunda linha de defesa. Docs: por-que-lock (camadas), AGENTS, CLAUDE, CHANGELOG.
+- Demanda finalizada via Guia Fluxo.
 
 ### Validacao feita
 
@@ -40,14 +46,15 @@
 
 ### Validacao pendente
 
-- Validacao humana em sessao Claude Code com o plugin guia carregado: tentar Edit num arquivo realmente travado (operations modify) e confirmar o bloqueio in-session (exit 2 + feedback ao agente).
-- Ao dar finish, escopar o commit so para os arquivos de D-102 - o working tree tem trabalho nao commitado de D-057/D-048 (guia-rename + docs de chat-rename) que nao pertence a esta demanda.
+- Nenhuma.
 
 ### Timing (D-052)
 
 - **Iniciada:** 2026-06-24T19:58:39-03:00
 - **Ready:** 2026-06-24T20:08:34-03:00
-- **Terminada:** Nenhuma.
+- **Terminada:** 2026-06-24T23:04:37-03:00
+- **Elapsed total:** 3h 05m 58s
+- **Tempo ativo:** 3h 05m 58s
 
 ## [D-101] 🧹 TESTE gf ps1 D-048 (descartar)
 

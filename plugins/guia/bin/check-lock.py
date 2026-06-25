@@ -385,6 +385,90 @@ def cmd_hook(args: argparse.Namespace) -> int:
     return 1
 
 
+def _retarget_repo_root(cwd: str) -> None:
+    """Re-anchor lock_api's REPO_ROOT/REGISTRY/LOCK_IGNORE at `cwd`.
+
+    The PreToolUse hook (cmd_pretool) ships inside the plugin, so
+    lock_api's import-time `_resolve_repo_root` would land on the plugin dir
+    (or the caller's CWD) instead of the project being edited. Claude Code
+    passes the session's working directory in the hook payload (`cwd`), which
+    is the authoritative project root - we point the lock domain at it before
+    matching so the registry consulted is the project's, not the plugin's.
+    """
+    root = Path(cwd).resolve()
+    lock_api.REPO_ROOT = root
+    lock_api.REGISTRY = root / ".guia" / "locks" / "registry.yaml"
+    lock_api.LOCK_IGNORE = root / ".guia" / "locks" / "lock-ignore.txt"
+    lock_api.invalidate_caches()
+
+
+def _pretool_rel_path(payload: dict) -> str | None:
+    """Project-relative path targeted by an Edit/Write/MultiEdit call.
+
+    All three tools carry `tool_input.file_path` (absolute). Returns the
+    path normalized relative to lock_api.REPO_ROOT, or None when absent or
+    resolving outside the repo (not our concern - degrade liberando).
+    """
+    tool_input = payload.get("tool_input")
+    if not isinstance(tool_input, dict):
+        return None
+    raw = tool_input.get("file_path")
+    if not raw or not isinstance(raw, str):
+        return None
+    try:
+        absolute = Path(raw).resolve()
+        relative = absolute.relative_to(lock_api.REPO_ROOT.resolve())
+    except (OSError, ValueError):
+        return None
+    return relative.as_posix()
+
+
+def cmd_pretool(args: argparse.Namespace) -> int:
+    """Claude Code PreToolUse hook: bloqueia Edit/Write/MultiEdit em travado.
+
+    Le o payload da tool no stdin (JSON), extrai `file_path` e checa contra
+    `.guia/locks/registry.yaml`. Exit 2 (motivo no stderr) diz ao Claude Code
+    para BLOQUEAR a edicao e devolver a mensagem ao agente; exit 0 libera.
+
+    Checa apenas a operacao `modify`: o registry default tem um lock guarda-
+    chuva `add` em `*` ("adicoes-exigem-autorizacao") que, se inferido por
+    arquivo novo, bloquearia toda criacao de arquivo no editor - inviavel. A
+    autorizacao de adicoes e batch e vive no commit (marca [unlock:...]), entao
+    fica para o hook commit-msg (segunda linha de defesa). Aqui protegemos o
+    caso real: editar um arquivo homologado/travado existente.
+
+    Degrada liberando (exit 0) em QUALQUER falha (JSON ruim, I/O, infra
+    ausente): um hook quebrado nao pode travar trabalho legitimo - mesma
+    filosofia do cmd_hook (commit-msg).
+    """
+    try:
+        raw = sys.stdin.read()
+    except OSError:
+        return 0
+    try:
+        payload = json.loads(raw) if raw.strip() else {}
+    except ValueError:
+        return 0
+    if not isinstance(payload, dict):
+        return 0
+    try:
+        cwd = payload.get("cwd")
+        if isinstance(cwd, str) and cwd.strip():
+            _retarget_repo_root(cwd)
+        rel = _pretool_rel_path(payload)
+        if rel is None:
+            return 0
+        events = lock_api.events_from_paths([rel], lock_api.OPERATION_MODIFY)
+        blocked = lock_api.find_blocked(events)
+    except Exception:
+        # Degrada liberando: falha transiente/infra nao bloqueia a edicao.
+        return 0
+    if not blocked:
+        return 0
+    print_block(blocked, sys.stderr)
+    return 2
+
+
 def _read_input_or_file(value: str) -> str:
     """Le `-` como stdin, qualquer outra coisa como path (achado 5.12)."""
     if value == "-":
@@ -500,6 +584,12 @@ def main(argv: list[str] | None = None) -> int:
     p_hook = sub.add_parser("hook", help="Modo git commit-msg")
     p_hook.add_argument("msg_file")
     p_hook.set_defaults(func=cmd_hook)
+
+    p_pretool = sub.add_parser(
+        "pretool",
+        help="Modo Claude Code PreToolUse (le payload JSON no stdin; exit 2 se travado)",
+    )
+    p_pretool.set_defaults(func=cmd_pretool)
 
     p_ci = sub.add_parser("ci", help="Modo CI (le arquivos+mensagens de arquivos; use - para stdin)")
     p_ci.add_argument("--files", required=True, help="Path do arquivo de lista; use '-' para stdin.")

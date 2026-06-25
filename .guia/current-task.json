@@ -1,6 +1,6 @@
 {
-  "taskId": "D-057",
+  "taskId": "D-102",
   "status": "Validada",
-  "title": "Script de rename automatico do chat Claude a partir de chat-title.txt",
-  "chatTitle": "D-057 \u2728 - #FINALIZADO - Script de rename automatico do chat Claude a partir de chat-title.txt"
+  "title": "B-003: Adicionar PreToolUse hook bloqueando Edit/Write em arquivo travado",
+  "demandTitle": "D-102 \u2728 - #FINALIZADO - B-003: Adicionar PreToolUse hook bloqueando Edit/Write em arquivo travado"
 }

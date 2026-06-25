@@ -72,6 +72,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from dataclasses import dataclass
@@ -119,12 +120,14 @@ class Paths:
     agent_skill_dir: Path
     bin_dir: Path
     templates_dir: Path
+    hooks_dir: Path
     core_src_dir: Path
     engine_src: Path
     lock_api_src: Path
     check_lock_src: Path
     wrapper_src: Path
     templates_src: Path
+    hooks_json_src: Path
     version_file: Path
 
     @classmethod
@@ -141,12 +144,14 @@ class Paths:
             agent_skill_dir=dist / ".agents" / "skills",
             bin_dir=dist / "bin",
             templates_dir=dist / "templates",
+            hooks_dir=dist / "hooks",
             core_src_dir=root / "core" / "src",
             engine_src=root / "core" / "src" / "guia.py",
             lock_api_src=root / "core" / "lock" / "lock_api.py",
             check_lock_src=root / "core" / "lock" / "check-lock.py",
             wrapper_src=root / "core" / "bin" / "guia.ps1",
             templates_src=root / "core" / "templates",
+            hooks_json_src=root / "core" / "hooks" / "hooks.json",
             version_file=root / "VERSION",
         )
 
@@ -622,6 +627,29 @@ def collect_template_outputs(paths: Paths) -> list[Output]:
     return outputs
 
 
+# --- hooks/ (D-102) -------------------------------------------------------
+
+
+def collect_hooks_outputs(paths: Paths) -> list[Output]:
+    """Copy the plugin hooks manifest to plugins/guia/hooks/hooks.json.
+
+    `core/hooks/hooks.json` declares the PreToolUse guard that blocks
+    Edit/Write/MultiEdit on locked files (D-102). Claude Code auto-discovers
+    `<plugin-root>/hooks/hooks.json` on install, so no per-project deploy is
+    needed (the commit-msg git hook stays the per-project, push-time second
+    line of defense). Validated as JSON before copying.
+    """
+    src = paths.hooks_json_src
+    if not src.exists():
+        raise RenderError(f"Erro: hooks manifest nao encontrado em {src}")
+    content = src.read_text(encoding="utf-8")
+    try:
+        json.loads(content)
+    except json.JSONDecodeError as exc:
+        raise RenderError(f"Erro: hooks.json invalido em {src}: {exc}")
+    return [Output(paths.hooks_dir / "hooks.json", "hooks", "hooks.json", content)]
+
+
 # --- version sync (D-097) -------------------------------------------------
 
 
@@ -728,7 +756,7 @@ def find_orphans(outputs: list[Output], paths: Paths) -> list[Path]:
     """
     expected = {output.path.resolve() for output in outputs}
     orphans: list[Path] = []
-    for root in (paths.bin_dir, paths.command_dir, paths.agent_skill_dir, paths.templates_dir):
+    for root in (paths.bin_dir, paths.command_dir, paths.agent_skill_dir, paths.templates_dir, paths.hooks_dir):
         if not root.exists():
             continue
         for path in root.rglob("*"):
@@ -759,7 +787,7 @@ def clean_orphans(outputs: list[Output], paths: Paths) -> list[Path]:
         except OSError as exc:
             sys.stderr.write(f"Aviso: nao consegui apagar {path}: {exc}\n")
     # Limpeza de diretorios vazios (bottom-up)
-    for root in (paths.command_dir, paths.agent_skill_dir, paths.templates_dir, paths.bin_dir):
+    for root in (paths.command_dir, paths.agent_skill_dir, paths.templates_dir, paths.bin_dir, paths.hooks_dir):
         if not root.exists():
             continue
         # Bottom-up: rglob retorna nested-first quando reverse-sort
@@ -791,6 +819,7 @@ def collect_all_outputs(paths: Paths, only_verb: str | None) -> list[Output]:
             outputs
             + collect_bin_outputs(paths)
             + collect_template_outputs(paths)
+            + collect_hooks_outputs(paths)
             + collect_version_outputs(paths)
         )
     return outputs

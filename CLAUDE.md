@@ -42,6 +42,7 @@ O repo tem `.claude-plugin/marketplace.json` na **raiz** (catalogo, `source: ./p
 - **Edicao de arquivo:** use as tools `Edit`/`Write` (nao bash heredoc). A regra geral de "nao editar gerados" de AGENTS.md se aplica integralmente.
 - **NOME DA DEMANDA:** sempre que o CLI imprimir essa linha, repita ao usuario (rastreabilidade). E info da demanda corrente, **nao** um titulo de chat - um mesmo chat pode conter varias demandas (epico D-049). Renomear a sessao e **opcional**: so quando uma demanda mapeia limpo para o chat, via `mark_chapter` e/ou `/rename` (ADR-0018).
 - **Sandbox de hooks:** o sistema ja proibe pular hooks (`--no-verify`, `--no-gpg-sign`). Se o hook bloquear, investigue.
+- **Lock em tempo real (D-102):** o plugin declara um hook **PreToolUse** (`plugins/guia/hooks/hooks.json`, gerado de `core/hooks/hooks.json`) que bloqueia `Edit`/`Write`/`MultiEdit` num arquivo travado **antes** da edicao (exit 2 com o motivo de `print_block`). E auto-descoberto quando o plugin esta carregado - nao precisa de `init`. Se ele barrar, pare e peca autorizacao/unlock ao dono; nao tente contornar. O `commit-msg` continua como segunda linha de defesa.
 
 ## O resto
 

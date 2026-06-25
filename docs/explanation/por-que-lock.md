@@ -16,18 +16,21 @@ O custo nao e o bug introduzido - o agente provavelmente conserta se voce pedir.
 
 ```
 .guia/locks/registry.yaml   <- fonte da verdade (lista de travas)
-core/lock/check-lock.py     <- CLI: gerencia, valida, roda no hook e no CI
+core/lock/check-lock.py     <- CLI: gerencia, valida, roda nos hooks e no CI
+core/hooks/hooks.json       <- hook PreToolUse (Claude Code) que bloqueia a
+                               edicao ANTES de ela acontecer
 core/hooks/commit-msg       <- hook git que rejeita commits violando trava
 .github/workflows/          <- CI que rejeita PRs violando trava
    lock-check.yml
 docs/                       <- regras para os agentes lerem antes de editar
 ```
 
-As tres camadas sao **redundantes de proposito**:
+As camadas sao **redundantes de proposito**:
 
 1. **Documentacao** - informa o agente do protocolo antes de qualquer edicao. Falha quando o agente nao leu.
-2. **Git hook local** (`commit-msg`) - rejeita o commit na sua maquina antes mesmo de subir. Falha quando voce passa `--no-verify` ou o hook nao esta instalado.
-3. **CI** (`lock-check.yml`) - rejeita o merge no PR mesmo se o hook local foi pulado. Falha so se voce desabilitar branch protection.
+2. **Hook PreToolUse** (`core/hooks/hooks.json`, Claude Code) - intercepta `Edit`/`Write`/`MultiEdit` num arquivo travado **antes da edicao** e devolve o motivo ao agente (exit 2). Pega o estrago na origem, nao depois do commit. So vale dentro de sessoes Claude Code com o plugin carregado, por isso o hook git continua. Degrada **liberando** em qualquer falha de infra - um hook quebrado nao trava trabalho legitimo. Checa so a operacao `modify` (proteger arquivo homologado existente); a autorizacao de **adicoes** e batch e vive no commit, entao fica para o commit-msg.
+3. **Git hook local** (`commit-msg`) - rejeita o commit na sua maquina antes de subir, e defende push direto por outras ferramentas (fora do Claude Code). Falha quando voce passa `--no-verify` ou o hook nao esta instalado.
+4. **CI** (`lock-check.yml`) - rejeita o merge no PR mesmo se o hook local foi pulado. Falha so se voce desabilitar branch protection.
 
 A unica forma de aceitar uma alteracao em arquivo travado e incluir no commit:
 

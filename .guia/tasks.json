@@ -5,14 +5,14 @@
       "id": "D-102",
       "kind": "feature",
       "title": "B-003: Adicionar PreToolUse hook bloqueando Edit/Write em arquivo travado",
-      "status": "Aguardando validacao",
+      "status": "Validada",
       "origin": "Backlog B-003 (2026-06-24)",
       "context": "Backlog B-003: Defesa em profundidade vs commit-msg hook atual (que so pega no commit, depois do estrago). hooks/hooks.json com matcher 'Edit|Write|MultiEdit' chama bin/check-lock.py recebendo file_path via stdin (JSON), retorna exit 2 com motivo se arquivo esta em features/registry.yaml. commit-msg continua existindo como segunda linha (defende push direto de outras ferramentas).",
       "createdAt": "2026-06-24",
       "updatedAt": "2026-06-24",
       "startedAt": "2026-06-24T19:58:39-03:00",
       "readyAt": "2026-06-24T20:08:34-03:00",
-      "finishedAt": null,
+      "finishedAt": "2026-06-24T23:04:37-03:00",
       "modifiedFiles": [
         ".guia/DEMANDAS.md",
         "core/lock/check-lock.py",
@@ -24,14 +24,20 @@
         "AGENTS.md",
         "CLAUDE.md",
         "CHANGELOG.md",
-        "docs/explanation/por-que-lock.md"
+        "docs/explanation/por-que-lock.md",
+        ".guia/tasks.json",
+        ".guia/backlog.json",
+        ".guia/current-task.json",
+        ".guia/historico/DEMANDAS.md",
+        ".guia/demand-title.txt"
       ],
       "summary": [
         "Backlog B-003 promovido via guia-fluxo.",
         "Avaliacao IA: Defesa em profundidade: hook PreToolUse do Claude Code que bloqueia Edit/Write/MultiEdit em arquivo travado ANTES da edicao, complementando o commit-msg (que so pega no commit). Reusa check-lock/lock_api. Recorte claro e acionavel.",
         "Novo subcomando check-lock.py pretool: le payload PreToolUse no stdin, ancora repo-root pelo cwd, extrai tool_input.file_path e checa como modify (nao add, pra nao colidir com o blanket add-lock *), reusa lock_api.find_blocked + print_block; exit 2 bloqueia, exit 0 em qualquer falha (degrada liberando).",
         "core/hooks/hooks.json (matcher Edit|Write|MultiEdit) renderizado para plugins/guia/hooks/hooks.json; auto-descoberto na instalacao do plugin, sem deploy por projeto. render-skills.py ganhou collect_hooks_outputs (valida JSON) + cobertura de orphan/clean.",
-        "commit-msg mantido como segunda linha de defesa. Docs: por-que-lock (camadas), AGENTS, CLAUDE, CHANGELOG."
+        "commit-msg mantido como segunda linha de defesa. Docs: por-que-lock (camadas), AGENTS, CLAUDE, CHANGELOG.",
+        "Demanda finalizada via Guia Fluxo."
       ],
       "validations": [
         "python -m pytest tests/ -q  ->  228 passed",
@@ -39,10 +45,7 @@
         "python core/build/render-skills.py --check  ->  OK 67 alvos; --check-orphans OK; doctor OK",
         "Smoke E2E pelo espelho plugins/guia/bin/check-lock.py: arquivo modify-travado -> exit 2 com print_block; arquivo livre -> exit 0"
       ],
-      "pending": [
-        "Validacao humana em sessao Claude Code com o plugin guia carregado: tentar Edit num arquivo realmente travado (operations modify) e confirmar o bloqueio in-session (exit 2 + feedback ao agente).",
-        "Ao dar finish, escopar o commit so para os arquivos de D-102 - o working tree tem trabalho nao commitado de D-057/D-048 (guia-rename + docs de chat-rename) que nao pertence a esta demanda."
-      ],
+      "pending": [],
       "backlogId": "B-003",
       "assessment": [
         "Defesa em profundidade: hook PreToolUse do Claude Code que bloqueia Edit/Write/MultiEdit em arquivo travado ANTES da edicao, complementando o commit-msg (que so pega no commit). Reusa check-lock/lock_api. Recorte claro e acionavel."
@@ -55,7 +58,73 @@
         "Docs: PreToolUse como primeira linha de defesa, commit-msg como segunda."
       ],
       "readyCount": 1,
-      "commitSubject": "feature(D-102): hook PreToolUse bloqueia edicao de arquivo travado antes do commit"
+      "commitSubject": "feature(D-102): hook PreToolUse bloqueia edicao de arquivo travado antes do commit",
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-102",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-102",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md",
+          "docs/explanation/por-que-lock.md"
+        ],
+        "checkedAt": "2026-06-24",
+        "skipped": "DEMANDAS.md e mantida pelo motor; visao-geral.md e ADR sem mudanca: ADR-0002 (unlock por commit-message) segue valido e o PreToolUse e apenas mais um ponto de enforcement, ja documentado em por-que-lock.md"
+      },
+      "qualityReview": {
+        "candidates": [
+          "core/lock/check-lock.py",
+          "core/build/render-skills.py",
+          "core/hooks/hooks.json",
+          "plugins/guia/bin/check-lock.py",
+          "plugins/guia/hooks/hooks.json",
+          "tests/test_pretool_lock.py",
+          "AGENTS.md",
+          "CLAUDE.md",
+          "CHANGELOG.md",
+          "docs/explanation/por-que-lock.md"
+        ],
+        "dimensions": [
+          "(a) qualidade do codigo (legibilidade, nomes, clean code)",
+          "(b) tamanho de funcoes/arquivos (funcao curta, arquivo coeso)",
+          "(c) responsabilidade unica (SRP) por funcao/classe/modulo",
+          "(d) cobertura/tests do que mudou",
+          "(e) necessidade de refatorar para boa qualidade - e refatorar antes de fechar"
+        ],
+        "skills": [
+          "clean-code-review"
+        ],
+        "findings": [
+          "Revisao clean-code: cmd_pretool com SRP/stepdown, helpers extraidos, degrada liberando; reusa lock_api.find_blocked + print_block. collect_hooks_outputs espelha collect_template_outputs e valida JSON. Sem bloqueadores; 1 nit aceito (mutacao de globais de lock_api num processo efemero)."
+        ],
+        "checkedAt": "2026-06-24"
+      }
     },
     {
       "id": "D-101",
