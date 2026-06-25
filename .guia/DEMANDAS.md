@@ -608,7 +608,7 @@ Notes for implementation:
 
 ## [D-054] ✨ Enriquecer mensagem de commit com resumo do que foi feito
 
-- **Status:** Aguardando validacao
+- **Status:** Validada
 - **Origem:** Backlog (2026-06-09)
 - **Tipo:** Feature
 - **Contexto:** Hoje o commit gerado pelo finish tem formato minimo: '{kind}: {title}\n\nTask: {id}'. Nao ha resumo do que mudou, quais validacoes passaram, ou referencia ao contexto. Melhorias possiveis: (1) incluir o campo summary da task no corpo do commit (o que foi feito); (2) incluir validacoes que passaram; (3) listar arquivos modificados de forma legivel (ja esta em modifiedFiles mas nao aparece no commit); (4) permitir que o agente passe --commit-body 'texto adicional' no finish para complementar a mensagem automatica; (5) avaliar se o formato deveria seguir Conventional Commits mais estritamente (scope, breaking change). Cuidado: a mensagem de commit atual e simples de parsear por ferramentas - nao complexificar sem motivo claro.
@@ -627,6 +627,7 @@ Notes for implementation:
 - `core/manifest/bodies/ready.md`
 - `plugins/guia/commands/ready.md`
 - `plugins/guia/.agents/skills/guia-ready/SKILL.md`
+- `CHANGELOG.md`
 
 ### O que foi feito
 
@@ -639,6 +640,7 @@ Notes for implementation:
 - Ajuste (pedido do usuario): se existir uma skill de convencao de commits do usuario (nome/descricao com commit + conventional/convention/gitmoji), o agente a usa para gerar o subject e passa via --commit-subject; senao, engine usa o formato padrao.
 - Engine: build_commit_message/commit_task ganharam subject_override — substitui SO o header, preservando corpo (summary/validacoes/arquivos) e rodape Task: {id}.
 - Fluxo: --commit-subject persistido em ready (task.commitSubject); finish (humano) consome automaticamente; --commit-subject no finish tem precedencia. Guia do agente adicionada em ready.md (deteccao por padrao de nome; se ambiguo, perguntar ao usuario).
+- Demanda finalizada via Guia Fluxo.
 
 ### Validacao feita
 
@@ -650,7 +652,13 @@ Notes for implementation:
 
 ### Validacao pendente
 
-- Para o commit DESTA demanda: o repo (git log) usa 'feature: D-NNN desc' SEM gitmoji, mas a skill conventional-commit-gitmoji esta disponivel na sessao. Confirme se quer que eu prepare um subject gitmoji via --commit-subject ou mantenha o default do engine.
+- Nenhuma.
+
+### Timing (D-052)
+
+- **Iniciada:** Nenhuma.
+- **Ready:** Nenhuma.
+- **Terminada:** 2026-06-24T23:42:36-03:00
 
 ## [D-097] 🧹 Consolidar superficie da raiz (D-094): VERSION fonte unica + community-health em .github/ + fix README
 

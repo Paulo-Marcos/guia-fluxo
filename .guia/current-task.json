@@ -1,6 +1,6 @@
 {
-  "taskId": "D-102",
+  "taskId": "D-054",
   "status": "Validada",
-  "title": "B-003: Adicionar PreToolUse hook bloqueando Edit/Write em arquivo travado",
-  "demandTitle": "D-102 \u2728 - #FINALIZADO - B-003: Adicionar PreToolUse hook bloqueando Edit/Write em arquivo travado"
+  "title": "Enriquecer mensagem de commit com resumo do que foi feito",
+  "demandTitle": "D-054 \u2728 - #FINALIZADO - Enriquecer mensagem de commit com resumo do que foi feito"
 }

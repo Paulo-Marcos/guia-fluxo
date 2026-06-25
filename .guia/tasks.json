@@ -3235,11 +3235,11 @@
       "id": "D-054",
       "kind": "feature",
       "title": "Enriquecer mensagem de commit com resumo do que foi feito",
-      "status": "Aguardando validacao",
+      "status": "Validada",
       "origin": "Backlog (2026-06-09)",
       "context": "Hoje o commit gerado pelo finish tem formato minimo: '{kind}: {title}\\n\\nTask: {id}'. Nao ha resumo do que mudou, quais validacoes passaram, ou referencia ao contexto. Melhorias possiveis: (1) incluir o campo summary da task no corpo do commit (o que foi feito); (2) incluir validacoes que passaram; (3) listar arquivos modificados de forma legivel (ja esta em modifiedFiles mas nao aparece no commit); (4) permitir que o agente passe --commit-body 'texto adicional' no finish para complementar a mensagem automatica; (5) avaliar se o formato deveria seguir Conventional Commits mais estritamente (scope, breaking change). Cuidado: a mensagem de commit atual e simples de parsear por ferramentas - nao complexificar sem motivo claro.",
       "createdAt": "2026-06-09",
-      "updatedAt": "2026-06-23",
+      "updatedAt": "2026-06-24",
       "modifiedFiles": [
         ".guia/DEMANDAS.md",
         "core/src/_commit.py",
@@ -3252,7 +3252,8 @@
         ".guia/backlog.json",
         "core/manifest/bodies/ready.md",
         "plugins/guia/commands/ready.md",
-        "plugins/guia/.agents/skills/guia-ready/SKILL.md"
+        "plugins/guia/.agents/skills/guia-ready/SKILL.md",
+        "CHANGELOG.md"
       ],
       "summary": [
         "Em desenvolvimento desde 2026-06-23: Enriquecer mensagem de commit do finish (summary/validations/modifiedFiles) + formalizar Conventional Commits; absorve B-019.",
@@ -3263,7 +3264,8 @@
         "B-019 (formalizar Conventional Commits + id da task) absorvido e resolvido por esta demanda.",
         "Ajuste (pedido do usuario): se existir uma skill de convencao de commits do usuario (nome/descricao com commit + conventional/convention/gitmoji), o agente a usa para gerar o subject e passa via --commit-subject; senao, engine usa o formato padrao.",
         "Engine: build_commit_message/commit_task ganharam subject_override \u2014 substitui SO o header, preservando corpo (summary/validacoes/arquivos) e rodape Task: {id}.",
-        "Fluxo: --commit-subject persistido em ready (task.commitSubject); finish (humano) consome automaticamente; --commit-subject no finish tem precedencia. Guia do agente adicionada em ready.md (deteccao por padrao de nome; se ambiguo, perguntar ao usuario)."
+        "Fluxo: --commit-subject persistido em ready (task.commitSubject); finish (humano) consome automaticamente; --commit-subject no finish tem precedencia. Guia do agente adicionada em ready.md (deteccao por padrao de nome; se ambiguo, perguntar ao usuario).",
+        "Demanda finalizada via Guia Fluxo."
       ],
       "validations": [
         "python -m pytest tests/test_commit_message.py tests/test_finish_commit.py -q (10 passed)",
@@ -3272,9 +3274,107 @@
         "python -m pytest tests/test_commit_message.py -q (12 passed)",
         "python core/build/render-skills.py --check (OK: 63 alvos)"
       ],
-      "pending": [
-        "Para o commit DESTA demanda: o repo (git log) usa 'feature: D-NNN desc' SEM gitmoji, mas a skill conventional-commit-gitmoji esta disponivel na sessao. Confirme se quer que eu prepare um subject gitmoji via --commit-subject ou mantenha o default do engine."
-      ]
+      "pending": [],
+      "finishedAt": "2026-06-24T23:42:36-03:00",
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-054",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: feature D-054",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "README.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo padrao ou os comandos da capa mudaram, atualize.",
+            "purpose": "Porta de entrada do projeto."
+          },
+          {
+            "path": "docs/reference/cli.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se voce adicionou/mudou subcomando ou flag, documente aqui.",
+            "purpose": "Referencia completa de subcomandos do core/src/guia.py / core/bin/guia.ps1."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          },
+          {
+            "path": "CONTRIBUTING.md",
+            "trigger": "touched",
+            "reason": "touched: core/src/guia.py",
+            "hint": "Se o fluxo humano mudou (novo passo, nova checagem), atualize.",
+            "purpose": "Guia pra humanos contribuirem."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md"
+        ],
+        "checkedAt": "2026-06-24",
+        "skipped": "DEMANDAS.md auto-atualizado; visao-geral/ADR sem mudanca arquitetural (enhancement de formato de commit)"
+      },
+      "qualityReview": {
+        "candidates": [
+          "core/src/_commit.py",
+          "core/src/guia.py",
+          "core/src/_cli_lifecycle.py",
+          "plugins/guia/bin/_commit.py",
+          "plugins/guia/bin/guia.py",
+          "plugins/guia/bin/_cli_lifecycle.py",
+          "tests/test_commit_message.py",
+          "core/manifest/bodies/ready.md",
+          "plugins/guia/commands/ready.md",
+          "plugins/guia/.agents/skills/guia-ready/SKILL.md",
+          "CHANGELOG.md"
+        ],
+        "dimensions": [
+          "(a) qualidade do codigo (legibilidade, nomes, clean code)",
+          "(b) tamanho de funcoes/arquivos (funcao curta, arquivo coeso)",
+          "(c) responsabilidade unica (SRP) por funcao/classe/modulo",
+          "(d) cobertura/tests do que mudou",
+          "(e) necessidade de refatorar para boa qualidade - e refatorar antes de fechar"
+        ],
+        "skills": [],
+        "findings": [
+          "Revisao inline das 5 dimensoes (D-095): build_commit_message e funcao pura ~35 linhas, SRP separada de commit_task, sem duplicacao; cobertura em tests/test_commit_message.py (12 casos); sem refatoracao pendente."
+        ],
+        "checkedAt": "2026-06-24"
+      }
     },
     {
       "id": "D-053",
