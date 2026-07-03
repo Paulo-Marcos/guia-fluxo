@@ -6,6 +6,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Fixed
+- **`finish` deixa de finalizar a demanda errada por drift do `current-task.json` (D-103, ex-B-018).** `finish` é terminal (commita, difícil reverter) e até aqui, sem id explícito, caía no ponteiro global `current-task.json` — que é único por cópia de trabalho e outra sessão/chat na mesma pasta pode ter driftado para uma demanda que este chat nunca tocou. Incidente real: o ponteiro apontava para uma `D-NNN` em `Backlog` de outro chat e um `finish` sem id a finalizou (o aviso do D-096 nem disparava, pois só conta tasks `Em desenvolvimento`, e a driftada estava em `Backlog`). Dois guards fecham o footgun, em `_resolve_finish_target` + `cmd_finish`: **(1) resolução** — sem id explícito o `finish` **recusa** (não usa mais o ponteiro global) e lista as candidatas em `Aguardando validacao`; como o motor não tem conceito de "chat" (Op B do D-096 foi descartada por isso), quem sabe qual demanda o chat conduz é o agente, que deve passar `finish D-NNN` deduzido da conversa. **(2) status** — `finish` só aceita demanda em estado finalizável (`Aguardando validacao`/`Em desenvolvimento`); `Backlog`/`Planejada` (o estado da task driftada) e estados terminais são recusados antes de qualquer mutação. Regra de comportamento espelhada na skill/command `finish`, no manifest e em `docs/reference/cli.md`. Testes em `tests/test_finish_id_guard.py` (4/4); suíte completa 232/232.
+
 ## [0.4.0] - 2026-06-24
 
 ### Added

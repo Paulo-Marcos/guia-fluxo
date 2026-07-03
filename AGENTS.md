@@ -93,6 +93,7 @@ Em Linux/Mac: `python core/src/guia.py doctor` e o mesmo `render-skills.py --che
 - Nao introduza dependencias novas em Python sem demanda explicita. Hoje o pack roda com stdlib + `pyyaml`.
 - Nao crie LICENSE/CONTRIBUTING/SECURITY/CODE_OF_CONDUCT novos - ja existem na raiz. Edite os existentes.
 - Nao sugira `validate` - foi deprecado. Use `ready` -> humano testa -> `finish`.
+- Nao rode `finish` sem o `D-NNN` explicito (D-103). Passe sempre o id da demanda ativa DESTE chat (deduzido da conversa, nao do `current-task.json` - ponteiro global que drifta entre chats e ja finalizou a task errada). `finish` sem id e recusado; ele so aceita demanda em `Aguardando validacao`/`Em desenvolvimento`.
 - Nao commite sem o usuario pedir. Nunca `--no-verify`, `--no-gpg-sign`, nem amend de commit publicado.
 
 ## Onde aprender mais

@@ -2,6 +2,88 @@
 
 ---
 
+## [D-104] 🐛 cancel sem id cai no current-task.json (mesmo footgun do D-103 no finish)
+
+- **Status:** Em desenvolvimento
+- **Origem:** avaliacao pos-D-103
+- **Tipo:** Bug / regressao
+- **Contexto:** cmd_cancel usa find_task_or_current, que deduz do ponteiro global current-task.json quando nenhum id e passado. Esse ponteiro drifta entre chats/sessoes concorrentes na mesma pasta; cancel e terminal e irreversivel, entao um cancel sem id pode cancelar a demanda errada. Aplicar a mesma protecao do D-103: exigir id explicito, nao deduzir do ponteiro, e extrair resolver compartilhado para verbos terminais.
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+
+### Validacao feita
+
+- Nenhuma.
+
+### Validacao pendente
+
+- Executar implementacao e validacoes.
+
+### Timing (D-052)
+
+- **Iniciada:** 2026-07-03T00:40:22-03:00
+- **Ready:** Nenhuma.
+- **Terminada:** Nenhuma.
+
+
+## [D-103] 🐛 finish sem id fecha a task errada por drift do current-task.json entre sessoes concorrentes
+
+- **Status:** Validada
+- **Origem:** Incidente reportado pelo usuario (2026-07-02)
+- **Tipo:** Bug / regressao
+- **Contexto:** finish e terminal (commita) e confia cegamente no current-task.json global, que driftou para D-178 (Backlog de outra sessao) e finalizou a task errada. Fix: finish para de deduzir do ponteiro global; exige o id da demanda ativa do chat (agente passa) e ganha guard de status (so finaliza de Aguardando validacao/Em desenvolvimento).
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+- `core/src/_cli_lifecycle.py`
+- `core/manifest/bodies/finish.md`
+- `core/manifest/manifest.yaml`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `plugins/guia/commands/finish.md`
+- `plugins/guia/.agents/skills/guia-finish/SKILL.md`
+- `tests/test_finish_id_guard.py`
+- `docs/reference/cli.md`
+- `CHANGELOG.md`
+- `CLAUDE.md`
+- `AGENTS.md`
+- `.guia/current-task.json`
+- `.guia/historico/DEMANDAS.md`
+- `.guia/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- cmd_finish deixa de deduzir do current-task.json: novo _resolve_finish_target exige id explicito (sem id, recusa e lista candidatas em Aguardando validacao).
+- Guard de status: finish so aceita demanda em Aguardando validacao/Em desenvolvimento; Backlog/Planejada/terminal recusados antes de qualquer mutacao (barra o incidente D-178-Backlog na raiz).
+- Regra de comportamento espelhada na skill/command finish, manifest, cli.md, CLAUDE.md e AGENTS.md: agente sempre passa o D-NNN da demanda ativa do chat.
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- pytest tests/test_finish_id_guard.py (4/4)
+- pytest suite completa (232/232)
+- render-skills.py --check OK (67 alvos) + doctor OK
+- smoke: finish sem id -> exit 1 e lista candidatas
+
+### Validacao pendente
+
+- Nenhuma.
+
+### Timing (D-052)
+
+- **Iniciada:** 2026-07-02T23:14:43-03:00
+- **Ready:** 2026-07-02T23:26:40-03:00
+- **Terminada:** 2026-07-03T00:41:21-03:00
+- **Elapsed total:** 1h 26m 38s
+- **Tempo ativo:** 1h 26m 38s
+
 ## [D-102] ✨ B-003: Adicionar PreToolUse hook bloqueando Edit/Write em arquivo travado
 
 - **Status:** Validada
@@ -1184,89 +1266,6 @@ Notes for implementation:
 ### Validacao feita
 
 - 150 testes; render --check OK; doctor OK; zero refs vivas a FEATURES.md (so historico/fixtures).
-
-### Validacao pendente
-
-- Nenhuma.
-
-## [D-083] ✨ Primitiva de servicos (guia service): ADR + design do 3o dominio
-
-- **Status:** Validada
-- **Origem:** Guia Fluxo (2026-06-20)
-- **Tipo:** Feature
-- **Contexto:** Design+ADR de uma primitiva de servicos que unifica D-062/064/065/066/063 (todas sao 'orquestrar um conjunto configurado de skills com prompt/criterio'). Formaliza o modelo de dominio do Guia Fluxo em 3 grandes grupos: Demandas, Locks, Servicos. Servico = receita de orquestracao (quais skills, ordem, prompt de config, saida); skills vivem externas (Claude/Codex); guia e dono da receita. CRUD deterministico (guia service add/edit/remove/list/show/run) espelhando locks; catalogo .guia/services.yaml = dado do consumidor (plugin fica com a cara dele); execucao agent-driven via /guia:service <nome>. Estrategia: ADR primeiro, depois construir pequeno (CRUD + 1 servico real). Esta demanda entrega o ADR; implementacao vira demanda separada.
-
-### Arquivos modificados/criados
-
-- `FEATURES.md`
-- `docs/adr/0016-primitiva-de-servicos.md`
-- `docs/adr/README.md`
-- `.guia/current-task.json`
-- `.guia/tasks.json`
-- `CHANGELOG.md`
-- `README.md`
-- `core/manifest/bodies/guia-fluxo.md`
-- `core/src/_constants.py`
-- `docs/ROADMAP.md`
-- `docs/explanation/visao-geral.md`
-- `docs/how-to/instalar-em-outro-projeto.md`
-- `docs/tutorials/primeiro-uso.md`
-- `plugins/guia/.agents/skills/guia-fluxo/SKILL.md`
-- `plugins/guia/bin/_constants.py`
-- `plugins/guia/commands/guia-fluxo.md`
-
-### O que foi feito
-
-- Demanda criada via Guia Fluxo.
-- ADR-0016 (Proposta): primitiva de servicos como 3o dominio (Demandas/Locks/Servicos). Servico = receita de orquestracao (skills externas + prompt + saida); CRUD deterministico guia service espelhando locks; catalogo .guia/services.yaml do consumidor; execucao agent-driven /guia:service; cross-tool via manifest->render. Mapeia D-066=primitiva, D-065/064/062/063=servicos. Estrategia faseada (MVP: CRUD + valida-pasta). Tambem adicionei ao indice o 0015 que faltava (drift do D-076).
-- Demanda finalizada via Guia Fluxo.
-
-### Validacao feita
-
-- Sem codigo (so docs/adr). ADR segue o template (Contexto/Decisao/Consequencias/Alternativas/Links).
-
-### Validacao pendente
-
-- Nenhuma.
-
-## [D-082] ✨ install.ps1 e install.sh quebrados: apontam dist/ (removido no D-076)
-
-- **Status:** Validada
-- **Origem:** Backlog (2026-06-20)
-- **Tipo:** Feature
-- **Contexto:** Confirmado no spike D-058 (2026-06-20): install.ps1 (linha 66 DistRoot=repo/dist + throw 68-70) e install.sh (DIST_ROOT linha 70 + exit 1 73-74) abortam com 'dist/ nao encontrado' porque o D-076 renomeou dist/ -> plugins/guia/. install.ps1 -DryRun aborta na hora. A rota install.* (Codex/Antigravity/dev, conforme CHANGELOG D-075) esta morta. Decidir: (a) corrigir DistRoot -> plugins/guia e ajustar o layout copiado + doc embutida (o consumidor copiaria plugins/guia em vez de dist); OU (b) deprecar formalmente os installers, ja que o global-first (/plugin install + auto-init + /guia:init) e o caminho canonico. Relacionado a D-056 (estrutura de pastas) e D-060.
-
-### Arquivos modificados/criados
-
-- `FEATURES.md`
-- `install.ps1`
-- `install.sh`
-- `tests/test_install.py`
-- `README.md`
-- `docs/how-to/instalar-em-outro-projeto.md`
-- `docs/tutorials/primeiro-uso.md`
-- `docs/ROADMAP.md`
-- `docs/explanation/visao-geral.md`
-- `core/manifest/bodies/guia-fluxo.md`
-- `core/src/_constants.py`
-- `plugins/guia/bin/_constants.py`
-- `plugins/guia/commands/guia-fluxo.md`
-- `plugins/guia/.agents/skills/guia-fluxo/SKILL.md`
-- `CHANGELOG.md`
-- `.guia/backlog.json`
-- `.guia/current-task.json`
-- `.guia/tasks.json`
-- `docs/adr/README.md`
-
-### O que foi feito
-
-- Em desenvolvimento desde 2026-06-20: Deprecar install.ps1/.sh (quebrados, apontam dist/); global-first + copia-manual cobrem; cross-tool formaliza no B-004.
-- Deprecados install.ps1/.sh (quebrados desde D-076, confirmado no spike D-058). Removidos os 2 scripts + tests/test_install.py. Docs reescritos p/ global-first (Claude) + copia-manual (Codex/Antigravity, automacao em aberto B-004): README, how-to (reescrito), tutorial, manifest body (re-render), anotacoes historicas ROADMAP/visao-geral. Corrigido tambem stale do marketplace.json interno no body (removido no D-077). Resolvidos D-060 (hooksPath ja guardado por init) e D-061 (bug original resolvido; gap residual no relatorio do spike).
-- Demanda finalizada via Guia Fluxo.
-
-### Validacao feita
-
-- render --check OK; doctor OK; pytest 150 passed (test_install.py removido)
 
 ### Validacao pendente
 

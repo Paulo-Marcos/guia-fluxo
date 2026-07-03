@@ -2,6 +2,157 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-104",
+      "kind": "bug",
+      "title": "cancel sem id cai no current-task.json (mesmo footgun do D-103 no finish)",
+      "status": "Em desenvolvimento",
+      "origin": "avaliacao pos-D-103",
+      "context": "cmd_cancel usa find_task_or_current, que deduz do ponteiro global current-task.json quando nenhum id e passado. Esse ponteiro drifta entre chats/sessoes concorrentes na mesma pasta; cancel e terminal e irreversivel, entao um cancel sem id pode cancelar a demanda errada. Aplicar a mesma protecao do D-103: exigir id explicito, nao deduzir do ponteiro, e extrair resolver compartilhado para verbos terminais.",
+      "createdAt": "2026-07-03",
+      "updatedAt": "2026-07-03",
+      "startedAt": "2026-07-03T00:40:22-03:00",
+      "readyAt": null,
+      "finishedAt": null,
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo."
+      ],
+      "validations": [],
+      "pending": [
+        "Executar implementacao e validacoes."
+      ]
+    },
+    {
+      "id": "D-103",
+      "kind": "bug",
+      "title": "finish sem id fecha a task errada por drift do current-task.json entre sessoes concorrentes",
+      "status": "Validada",
+      "origin": "Incidente reportado pelo usuario (2026-07-02)",
+      "context": "finish e terminal (commita) e confia cegamente no current-task.json global, que driftou para D-178 (Backlog de outra sessao) e finalizou a task errada. Fix: finish para de deduzir do ponteiro global; exige o id da demanda ativa do chat (agente passa) e ganha guard de status (so finaliza de Aguardando validacao/Em desenvolvimento).",
+      "createdAt": "2026-07-02",
+      "updatedAt": "2026-07-03",
+      "startedAt": "2026-07-02T23:14:43-03:00",
+      "readyAt": "2026-07-02T23:26:40-03:00",
+      "finishedAt": "2026-07-03T00:41:21-03:00",
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md",
+        "core/src/_cli_lifecycle.py",
+        "core/manifest/bodies/finish.md",
+        "core/manifest/manifest.yaml",
+        "plugins/guia/bin/_cli_lifecycle.py",
+        "plugins/guia/commands/finish.md",
+        "plugins/guia/.agents/skills/guia-finish/SKILL.md",
+        "tests/test_finish_id_guard.py",
+        "docs/reference/cli.md",
+        "CHANGELOG.md",
+        "CLAUDE.md",
+        "AGENTS.md",
+        ".guia/current-task.json",
+        ".guia/historico/DEMANDAS.md",
+        ".guia/tasks.json"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo.",
+        "cmd_finish deixa de deduzir do current-task.json: novo _resolve_finish_target exige id explicito (sem id, recusa e lista candidatas em Aguardando validacao).",
+        "Guard de status: finish so aceita demanda em Aguardando validacao/Em desenvolvimento; Backlog/Planejada/terminal recusados antes de qualquer mutacao (barra o incidente D-178-Backlog na raiz).",
+        "Regra de comportamento espelhada na skill/command finish, manifest, cli.md, CLAUDE.md e AGENTS.md: agente sempre passa o D-NNN da demanda ativa do chat.",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "pytest tests/test_finish_id_guard.py (4/4)",
+        "pytest suite completa (232/232)",
+        "render-skills.py --check OK (67 alvos) + doctor OK",
+        "smoke: finish sem id -> exit 1 e lista candidatas"
+      ],
+      "pending": [],
+      "readyCount": 1,
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: bug D-103",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: bug D-103",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          },
+          {
+            "path": "CLAUDE.md",
+            "trigger": "touched",
+            "reason": "touched: core/manifest/manifest.yaml",
+            "hint": "Se a lista de skills/atalhos ou regras nao-negociaveis mudou, atualize.",
+            "purpose": "Briefing curto para o Claude Code."
+          },
+          {
+            "path": "AGENTS.md",
+            "trigger": "touched",
+            "reason": "touched: core/manifest/manifest.yaml",
+            "hint": "Mesma logica do CLAUDE.md.",
+            "purpose": "Briefing curto para agentes genericos (Codex, Cursor, Antigravity)."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md",
+          "docs/reference/cli.md",
+          "CLAUDE.md",
+          "AGENTS.md"
+        ],
+        "checkedAt": "2026-07-03",
+        "skipped": "DEMANDAS.md e auto-mantido pelo script; sem ADR/visao nova - bugfix reusa estrutura existente (design ja discutido no D-096)"
+      },
+      "qualityReview": {
+        "candidates": [
+          "core/src/_cli_lifecycle.py",
+          "core/manifest/bodies/finish.md",
+          "core/manifest/manifest.yaml",
+          "plugins/guia/bin/_cli_lifecycle.py",
+          "plugins/guia/commands/finish.md",
+          "plugins/guia/.agents/skills/guia-finish/SKILL.md",
+          "tests/test_finish_id_guard.py",
+          "docs/reference/cli.md",
+          "CHANGELOG.md",
+          "CLAUDE.md",
+          "AGENTS.md"
+        ],
+        "dimensions": [
+          "(a) qualidade do codigo (legibilidade, nomes, clean code)",
+          "(b) tamanho de funcoes/arquivos (funcao curta, arquivo coeso)",
+          "(c) responsabilidade unica (SRP) por funcao/classe/modulo",
+          "(d) cobertura/tests do que mudou",
+          "(e) necessidade de refatorar para boa qualidade - e refatorar antes de fechar"
+        ],
+        "skills": [
+          "clean-code-review"
+        ],
+        "findings": [
+          "Revisao OK: funcoes pequenas, nomes claros, guard antes de mutacao (SRP). 2 achados de polimento opcional registrados para chore futuro, nao-bloqueadores."
+        ],
+        "checkedAt": "2026-07-03"
+      }
+    },
+    {
       "id": "D-102",
       "kind": "feature",
       "title": "B-003: Adicionar PreToolUse hook bloqueando Edit/Write em arquivo travado",

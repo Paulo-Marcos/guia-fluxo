@@ -1,6 +1,6 @@
 {
-  "taskId": "D-054",
+  "taskId": "D-103",
   "status": "Validada",
-  "title": "Enriquecer mensagem de commit com resumo do que foi feito",
-  "demandTitle": "D-054 \u2728 - #FINALIZADO - Enriquecer mensagem de commit com resumo do que foi feito"
+  "title": "finish sem id fecha a task errada por drift do current-task.json entre sessoes concorrentes",
+  "demandTitle": "D-103 \ud83d\udc1b - #FINALIZADO - finish sem id fecha a task errada por drift do current-task.json entre sessoes concorrentes"
 }

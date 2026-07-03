@@ -4,6 +4,8 @@ Close an already-validated task. Run **only after** the developer confirms valid
 
 > **`finish` is the USER's action (behavioral rule, D-098).** Closing is the developer's call. **If you are an AI agent, run `finish` ONLY when the developer requests `/guia:finish` or explicitly authorizes it — NEVER on your own initiative.** Your default job ends at `ready`: hand off and wait for the developer to ask for the close. This is a behavioral rule, not a CLI parameter — there is no env var or flag to set (D-098 removed the `GUIA_HUMAN_FINISH` env gate the earlier D-080 had tried; sending a variable was bad, and the engine cannot tell an agent apart from a human anyway).
 
+> **Always pass the explicit demand id of THIS chat (behavioral rule, D-103).** `finish` is terminal and irreversible. **Never run bare `finish`** — the engine no longer falls back to `current-task.json` (a single per-working-copy pointer that another session/chat can silently drift to a demand this chat never touched; that footgun once closed the wrong task). Deduce the id from the conversation — the demand this chat created and worked on (the `NOME DA DEMANDA: D-NNN ...` line the CLI printed), **not** from the current-task pointer — and pass it: `finish D-NNN`. If ever unsure which demand is active here, run `status --all` and confirm with the developer before closing. Bare `finish` is rejected and lists the `Aguardando validacao` candidates to help you pick.
+
 {{include_per_target: _partials/run_cmd}}
 
 ## 1) Docs hook (mandatory when `.guia/docs-map.yaml` exists)

@@ -25,12 +25,14 @@ from _constants import (
     MSG_DEFAULT_VALIDATE_SUMMARY,
     MSG_DEFAULT_VALIDATION_PENDING,
     MSG_PROCESS_FILES_OK,
+    MSG_TASK_NOT_FOUND,
     MSG_VALIDATE_DEPRECATED,
     BACKLOG_FILE,
     CURRENT_FILE,
     PROCESS_FILE,
     ROOT,
     STATUS_AWAITING_VALIDATION,
+    STATUS_AWAITING_VALIDATION_ACCENTED,
     STATUS_BACKLOG,
     STATUS_BLOCKED,
     STATUS_CANCELLED,
@@ -62,12 +64,14 @@ from _state import copy_if_missing, read_json, write_if_missing, write_json
 from _tasks import (
     epic_open_children,
     find_children,
+    find_task,
     find_task_or_current,
     format_task_line,
     kind_marker,
     list_tasks,
     merge_list,
     print_demand_title,
+    recent_task_ids,
     save_task,
     set_current_task,
     unmet_dependencies,
@@ -442,6 +446,87 @@ def cmd_ready(args: argparse.Namespace) -> int:
     return 0
 
 
+# D-103: estados a partir dos quais `finish` faz sentido. Fechar e terminal
+# (Validada) e irreversivel; so aceitamos demandas ja entregues para validacao
+# ou ainda em desenvolvimento (atalho ready->finish num passo). Backlog/Planejada
+# precisam de start/ready antes; estados terminais ja foram fechados.
+_FINISHABLE_STATUSES = frozenset(
+    {
+        STATUS_AWAITING_VALIDATION,
+        STATUS_AWAITING_VALIDATION_ACCENTED,
+        STATUS_IN_DEVELOPMENT,
+    }
+)
+
+
+def _resolve_terminal_target(
+    task_id: str | None,
+    *,
+    verb: str,
+    example_id: str,
+    candidates: list[dict[str, Any]],
+    candidates_label: str,
+    empty_hint: str,
+) -> dict[str, Any]:
+    """D-103/D-104: resolve a demanda de um verbo TERMINAL sem cair no ponteiro.
+
+    Verbos terminais (`finish`, `cancel`) sao irreversiveis: `finish` commita e
+    marca Validada, `cancel` marca Cancelada. Ate o D-103 ambos confiavam no
+    ponteiro `current-task.json` quando nenhum id era passado. Esse ponteiro e
+    unico por copia de trabalho: outra sessao/chat na mesma pasta o sobrescreve,
+    e um verbo terminal sem id podia agir sobre uma demanda que este chat nunca
+    tocou (o incidente do D-103: o ponteiro driftou para uma D-NNN em Backlog de
+    outro chat e o `finish` a finalizou).
+
+    O motor nao tem conceito de "chat" (Op B do D-096 foi descartada por isso),
+    entao quem sabe qual demanda este chat conduz e o agente - que deve passar o
+    id explicito. Aqui, portanto, NAO deduzimos do ponteiro: com id, usamos ele;
+    sem id, recusamos e listamos as candidatas (parametrizadas por verbo) para
+    ajudar o operador a escolher a certa.
+    """
+    if task_id:
+        task = find_task(task_id)
+        if task is None:
+            suggestions = recent_task_ids()
+            hint = f" Recentes: {', '.join(suggestions)}" if suggestions else ""
+            raise SystemExit(MSG_TASK_NOT_FOUND.format(id=task_id) + hint)
+        return task
+
+    lines = [
+        f"{verb} exige o id explicito da demanda ativa deste chat "
+        f"(ex: `{verb} {example_id}`).",
+        "Esta acao e terminal e irreversivel: o motor nao deduz do "
+        "current-task.json global, que pode ter driftado de outra sessao para "
+        "uma demanda que este chat nunca tocou (D-103/D-104).",
+    ]
+    if candidates:
+        lines.append(candidates_label)
+        for candidate in candidates:
+            lines.append(f"  - {candidate['id']} {candidate.get('title', '')}")
+    else:
+        lines.append(empty_hint)
+    raise SystemExit("\n".join(lines))
+
+
+def _resolve_finish_target(task_id: str | None) -> dict[str, Any]:
+    """D-103: resolve a demanda a finalizar SEM cair no current-task.json global.
+
+    Fino wrapper sobre `_resolve_terminal_target`: sem id, lista as candidatas em
+    Aguardando validacao (o estado esperado de quem chega no finish).
+    """
+    return _resolve_terminal_target(
+        task_id,
+        verb="finish",
+        example_id="D-173",
+        candidates=list_tasks(status=STATUS_AWAITING_VALIDATION),
+        candidates_label="Candidatas em Aguardando validacao:",
+        empty_hint=(
+            "Nenhuma task em Aguardando validacao agora - rode `ready <id>` "
+            "antes, ou passe o id da demanda deste chat."
+        ),
+    )
+
+
 def cmd_finish(args: argparse.Namespace) -> int:
     # D-098: `finish` e acao do usuario, garantida por REGRA DE COMPORTAMENTO
     # (skill/AGENTS/CLAUDE), nao por gate tecnico no motor. O gate por env
@@ -449,7 +534,22 @@ def cmd_finish(args: argparse.Namespace) -> int:
     # motor nao consegue distinguir agente de humano sem um sinal artificial.
     # O agente nunca dispara finish por conta propria - so quando o usuario
     # solicita `/guia:finish` ou autoriza explicitamente.
-    task = find_task_or_current(args.task_id)
+    #
+    # D-103: resolucao NAO usa o current-task.json global (footgun de drift
+    # entre chats). Exige id explicito; sem id, recusa e lista candidatas.
+    task = _resolve_finish_target(args.task_id)
+    # D-103: guard de status - so finaliza de um estado finalizavel. Barra o
+    # incidente na raiz: finalizar por engano uma demanda em Backlog/Planejada
+    # (ou re-finalizar uma ja terminal) agora e recusado antes de qualquer
+    # mutacao, com o status atual no erro.
+    current_status = task.get("status")
+    if current_status not in _FINISHABLE_STATUSES:
+        raise SystemExit(
+            f"Task {task['id']} esta em '{current_status}' - finish so aceita "
+            f"demanda em [{', '.join(sorted(_FINISHABLE_STATUSES))}]. "
+            "Backlog/Planejada precisam de `start`/`ready` antes; estados "
+            "terminais (Validada/Finalizada/Cancelada) ja foram fechados."
+        )
     # D-049: Epic so fecha quando todos os filhos forem terminais.
     if task.get("kind") == KIND_EPIC:
         open_kids = epic_open_children(task["id"])
@@ -558,8 +658,36 @@ def _clear_current_if_matches(task_id: str) -> None:
         DEMAND_TITLE_FILE.write_text("", encoding="utf-8")
 
 
+def _resolve_cancel_target(task_id: str | None) -> dict[str, Any]:
+    """D-104: resolve a demanda a cancelar SEM cair no current-task.json global.
+
+    Mesmo footgun do D-103 no finish: `cancel` e terminal (Cancelada) e
+    irreversivel; deduzir do ponteiro global podia cancelar a demanda errada
+    quando o ponteiro driftou de outra sessao. Exige id explicito. Sem id, lista
+    as candidatas abertas (nao-terminais) - o universo cancelavel e mais amplo
+    que o do finish (Backlog/Planejada/Em desenvolvimento/Aguardando/Bloqueada).
+    """
+    open_candidates = [
+        task for task in list_tasks() if task.get("status") not in _TERMINAL_STATUSES
+    ]
+    return _resolve_terminal_target(
+        task_id,
+        verb="cancel",
+        example_id="D-173",
+        candidates=open_candidates,
+        candidates_label="Candidatas abertas (nao-terminais):",
+        empty_hint=(
+            "Nenhuma task aberta agora - nada a cancelar, ou passe o id da "
+            "demanda deste chat."
+        ),
+    )
+
+
 def cmd_cancel(args: argparse.Namespace) -> int:
-    task = find_task_or_current(args.task_id)
+    # D-104: resolucao NAO usa o current-task.json global (footgun de drift entre
+    # chats, herdado do D-103 no finish). Exige id explicito; sem id, recusa e
+    # lista as candidatas abertas.
+    task = _resolve_cancel_target(args.task_id)
     if task["status"] in _TERMINAL_STATUSES:
         raise SystemExit(
             f"Task {task['id']} ja esta em estado terminal ({task['status']}); nao pode ser cancelada."

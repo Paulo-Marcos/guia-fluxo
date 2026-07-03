@@ -2837,3 +2837,86 @@
 
 - Nenhuma.
 
+## [D-082] ✨ install.ps1 e install.sh quebrados: apontam dist/ (removido no D-076)
+
+- **Status:** Validada
+- **Origem:** Backlog (2026-06-20)
+- **Tipo:** Feature
+- **Contexto:** Confirmado no spike D-058 (2026-06-20): install.ps1 (linha 66 DistRoot=repo/dist + throw 68-70) e install.sh (DIST_ROOT linha 70 + exit 1 73-74) abortam com 'dist/ nao encontrado' porque o D-076 renomeou dist/ -> plugins/guia/. install.ps1 -DryRun aborta na hora. A rota install.* (Codex/Antigravity/dev, conforme CHANGELOG D-075) esta morta. Decidir: (a) corrigir DistRoot -> plugins/guia e ajustar o layout copiado + doc embutida (o consumidor copiaria plugins/guia em vez de dist); OU (b) deprecar formalmente os installers, ja que o global-first (/plugin install + auto-init + /guia:init) e o caminho canonico. Relacionado a D-056 (estrutura de pastas) e D-060.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `install.ps1`
+- `install.sh`
+- `tests/test_install.py`
+- `README.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/tutorials/primeiro-uso.md`
+- `docs/ROADMAP.md`
+- `docs/explanation/visao-geral.md`
+- `core/manifest/bodies/guia-fluxo.md`
+- `core/src/_constants.py`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/commands/guia-fluxo.md`
+- `plugins/guia/.agents/skills/guia-fluxo/SKILL.md`
+- `CHANGELOG.md`
+- `.guia/backlog.json`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `docs/adr/README.md`
+
+### O que foi feito
+
+- Em desenvolvimento desde 2026-06-20: Deprecar install.ps1/.sh (quebrados, apontam dist/); global-first + copia-manual cobrem; cross-tool formaliza no B-004.
+- Deprecados install.ps1/.sh (quebrados desde D-076, confirmado no spike D-058). Removidos os 2 scripts + tests/test_install.py. Docs reescritos p/ global-first (Claude) + copia-manual (Codex/Antigravity, automacao em aberto B-004): README, how-to (reescrito), tutorial, manifest body (re-render), anotacoes historicas ROADMAP/visao-geral. Corrigido tambem stale do marketplace.json interno no body (removido no D-077). Resolvidos D-060 (hooksPath ja guardado por init) e D-061 (bug original resolvido; gap residual no relatorio do spike).
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- render --check OK; doctor OK; pytest 150 passed (test_install.py removido)
+
+### Validacao pendente
+
+- Nenhuma.
+
+## [D-083] ✨ Primitiva de servicos (guia service): ADR + design do 3o dominio
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-06-20)
+- **Tipo:** Feature
+- **Contexto:** Design+ADR de uma primitiva de servicos que unifica D-062/064/065/066/063 (todas sao 'orquestrar um conjunto configurado de skills com prompt/criterio'). Formaliza o modelo de dominio do Guia Fluxo em 3 grandes grupos: Demandas, Locks, Servicos. Servico = receita de orquestracao (quais skills, ordem, prompt de config, saida); skills vivem externas (Claude/Codex); guia e dono da receita. CRUD deterministico (guia service add/edit/remove/list/show/run) espelhando locks; catalogo .guia/services.yaml = dado do consumidor (plugin fica com a cara dele); execucao agent-driven via /guia:service <nome>. Estrategia: ADR primeiro, depois construir pequeno (CRUD + 1 servico real). Esta demanda entrega o ADR; implementacao vira demanda separada.
+
+### Arquivos modificados/criados
+
+- `FEATURES.md`
+- `docs/adr/0016-primitiva-de-servicos.md`
+- `docs/adr/README.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
+- `CHANGELOG.md`
+- `README.md`
+- `core/manifest/bodies/guia-fluxo.md`
+- `core/src/_constants.py`
+- `docs/ROADMAP.md`
+- `docs/explanation/visao-geral.md`
+- `docs/how-to/instalar-em-outro-projeto.md`
+- `docs/tutorials/primeiro-uso.md`
+- `plugins/guia/.agents/skills/guia-fluxo/SKILL.md`
+- `plugins/guia/bin/_constants.py`
+- `plugins/guia/commands/guia-fluxo.md`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- ADR-0016 (Proposta): primitiva de servicos como 3o dominio (Demandas/Locks/Servicos). Servico = receita de orquestracao (skills externas + prompt + saida); CRUD deterministico guia service espelhando locks; catalogo .guia/services.yaml do consumidor; execucao agent-driven /guia:service; cross-tool via manifest->render. Mapeia D-066=primitiva, D-065/064/062/063=servicos. Estrategia faseada (MVP: CRUD + valida-pasta). Tambem adicionei ao indice o 0015 que faltava (drift do D-076).
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- Sem codigo (so docs/adr). ADR segue o template (Contexto/Decisao/Consequencias/Alternativas/Links).
+
+### Validacao pendente
+
+- Nenhuma.
+
