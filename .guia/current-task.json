@@ -1,6 +1,6 @@
 {
-  "taskId": "D-103",
+  "taskId": "D-104",
   "status": "Validada",
-  "title": "finish sem id fecha a task errada por drift do current-task.json entre sessoes concorrentes",
-  "demandTitle": "D-103 \ud83d\udc1b - #FINALIZADO - finish sem id fecha a task errada por drift do current-task.json entre sessoes concorrentes"
+  "title": "cancel sem id cai no current-task.json (mesmo footgun do D-103 no finish)",
+  "demandTitle": "D-104 \ud83d\udc1b - #FINALIZADO - cancel sem id cai no current-task.json (mesmo footgun do D-103 no finish)"
 }

@@ -5,24 +5,99 @@
       "id": "D-104",
       "kind": "bug",
       "title": "cancel sem id cai no current-task.json (mesmo footgun do D-103 no finish)",
-      "status": "Em desenvolvimento",
+      "status": "Validada",
       "origin": "avaliacao pos-D-103",
       "context": "cmd_cancel usa find_task_or_current, que deduz do ponteiro global current-task.json quando nenhum id e passado. Esse ponteiro drifta entre chats/sessoes concorrentes na mesma pasta; cancel e terminal e irreversivel, entao um cancel sem id pode cancelar a demanda errada. Aplicar a mesma protecao do D-103: exigir id explicito, nao deduzir do ponteiro, e extrair resolver compartilhado para verbos terminais.",
       "createdAt": "2026-07-03",
       "updatedAt": "2026-07-03",
       "startedAt": "2026-07-03T00:40:22-03:00",
-      "readyAt": null,
-      "finishedAt": null,
+      "readyAt": "2026-07-03T00:44:51-03:00",
+      "finishedAt": "2026-07-03T00:51:24-03:00",
       "modifiedFiles": [
-        ".guia/DEMANDAS.md"
+        ".guia/DEMANDAS.md",
+        "core/src/_cli_lifecycle.py",
+        "plugins/guia/bin/_cli_lifecycle.py",
+        "tests/test_cancel_id_guard.py",
+        "docs/reference/cli.md",
+        "CHANGELOG.md",
+        ".guia/current-task.json",
+        ".guia/tasks.json"
       ],
       "summary": [
-        "Demanda criada via Guia Fluxo."
+        "Demanda criada via Guia Fluxo.",
+        "Extraido _resolve_terminal_target (resolver compartilhado para verbos terminais); _resolve_finish_target virou wrapper fino sobre ele.",
+        "cmd_cancel agora resolve via _resolve_cancel_target (exige id explicito, nao deduz do current-task.json); sem id recusa e lista candidatas abertas (nao-terminais). Guard de status terminal preservado.",
+        "Docs (cli.md secao cancel) e CHANGELOG atualizados; render em sincronia.",
+        "Demanda finalizada via Guia Fluxo."
       ],
-      "validations": [],
-      "pending": [
-        "Executar implementacao e validacoes."
-      ]
+      "validations": [
+        "python -m pytest tests/test_cancel_id_guard.py tests/test_finish_id_guard.py -> 8/8",
+        "python -m pytest tests/ -> 236/236",
+        "python core/build/render-skills.py --check -> 67 alvos em sincronia"
+      ],
+      "pending": [],
+      "readyCount": 1,
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: bug D-104",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: bug D-104",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md",
+          "docs/reference/cli.md"
+        ],
+        "checkedAt": "2026-07-03",
+        "skipped": "visao-geral/ADR: sem decisao arquitetural nova - reusa o padrao do D-103 (resolver compartilhado), sem nova camada/ator"
+      },
+      "qualityReview": {
+        "candidates": [
+          "core/src/_cli_lifecycle.py",
+          "plugins/guia/bin/_cli_lifecycle.py",
+          "tests/test_cancel_id_guard.py",
+          "docs/reference/cli.md",
+          "CHANGELOG.md"
+        ],
+        "dimensions": [
+          "(a) qualidade do codigo (legibilidade, nomes, clean code)",
+          "(b) tamanho de funcoes/arquivos (funcao curta, arquivo coeso)",
+          "(c) responsabilidade unica (SRP) por funcao/classe/modulo",
+          "(d) cobertura/tests do que mudou",
+          "(e) necessidade de refatorar para boa qualidade - e refatorar antes de fechar"
+        ],
+        "skills": [
+          "clean-code-review"
+        ],
+        "findings": [
+          "Revisao clean-code: dedup finish/cancel via _resolve_terminal_target (DRY, Clean Code Cap.3); 2 sugestoes opcionais (Parameter Object, Extract Function) avaliadas e conscientemente nao aplicadas."
+        ],
+        "checkedAt": "2026-07-03"
+      }
     },
     {
       "id": "D-103",

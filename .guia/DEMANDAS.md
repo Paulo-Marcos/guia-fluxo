@@ -4,7 +4,7 @@
 
 ## [D-104] 🐛 cancel sem id cai no current-task.json (mesmo footgun do D-103 no finish)
 
-- **Status:** Em desenvolvimento
+- **Status:** Validada
 - **Origem:** avaliacao pos-D-103
 - **Tipo:** Bug / regressao
 - **Contexto:** cmd_cancel usa find_task_or_current, que deduz do ponteiro global current-task.json quando nenhum id e passado. Esse ponteiro drifta entre chats/sessoes concorrentes na mesma pasta; cancel e terminal e irreversivel, entao um cancel sem id pode cancelar a demanda errada. Aplicar a mesma protecao do D-103: exigir id explicito, nao deduzir do ponteiro, e extrair resolver compartilhado para verbos terminais.
@@ -12,25 +12,39 @@
 ### Arquivos modificados/criados
 
 - `.guia/DEMANDAS.md`
+- `core/src/_cli_lifecycle.py`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `tests/test_cancel_id_guard.py`
+- `docs/reference/cli.md`
+- `CHANGELOG.md`
+- `.guia/current-task.json`
+- `.guia/tasks.json`
 
 ### O que foi feito
 
 - Demanda criada via Guia Fluxo.
+- Extraido _resolve_terminal_target (resolver compartilhado para verbos terminais); _resolve_finish_target virou wrapper fino sobre ele.
+- cmd_cancel agora resolve via _resolve_cancel_target (exige id explicito, nao deduz do current-task.json); sem id recusa e lista candidatas abertas (nao-terminais). Guard de status terminal preservado.
+- Docs (cli.md secao cancel) e CHANGELOG atualizados; render em sincronia.
+- Demanda finalizada via Guia Fluxo.
 
 ### Validacao feita
 
-- Nenhuma.
+- python -m pytest tests/test_cancel_id_guard.py tests/test_finish_id_guard.py -> 8/8
+- python -m pytest tests/ -> 236/236
+- python core/build/render-skills.py --check -> 67 alvos em sincronia
 
 ### Validacao pendente
 
-- Executar implementacao e validacoes.
+- Nenhuma.
 
 ### Timing (D-052)
 
 - **Iniciada:** 2026-07-03T00:40:22-03:00
-- **Ready:** Nenhuma.
-- **Terminada:** Nenhuma.
-
+- **Ready:** 2026-07-03T00:44:51-03:00
+- **Terminada:** 2026-07-03T00:51:24-03:00
+- **Elapsed total:** 11m 02s
+- **Tempo ativo:** 11m 02s
 
 ## [D-103] 🐛 finish sem id fecha a task errada por drift do current-task.json entre sessoes concorrentes
 

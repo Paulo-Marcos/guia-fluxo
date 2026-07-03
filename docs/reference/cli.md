@@ -206,6 +206,8 @@ Encerra a task como `Cancelada` (estado terminal). `--reason` e **obrigatorio** 
 - `--keep-worktree`: nao remove a worktree associada. Default: remove se a task tinha worktree.
 - `--set-current`: mantem a task como current apos cancelar. Default: limpa `.guia/current-task.json` se a task cancelada era a current.
 
+**Id explicito obrigatorio (D-104).** Como o `finish` (D-103), `cancel` **nao** cai no `current-task.json` global quando o id e omitido — `cancel` e terminal (`Cancelada`) e irreversivel, e o ponteiro global drifta entre sessoes/chats concorrentes na mesma pasta, entao um `cancel` sem id podia cancelar uma demanda que este chat nunca tocou. O agente **deve passar o id explicito** (`cancel D-NNN`, deduzido da conversa). Sem id, o comando **recusa** e lista as candidatas abertas (nao-terminais) — universo mais amplo que o do `finish`, ja que `cancel` vale de qualquer estado nao-terminal (`Backlog`/`Planejada`/`Em desenvolvimento`/`Aguardando validacao`/`Bloqueada`). A resolucao compartilhada vive em `_resolve_terminal_target` (reusada por `finish` e `cancel`).
+
 Bloqueia se a task ja esta em estado terminal (`Validada`, `Finalizada`, `Cancelada`). Imprime `NOME DA DEMANDA: D-NNN - #CANCELADA - ...`.
 
 ### `block`
