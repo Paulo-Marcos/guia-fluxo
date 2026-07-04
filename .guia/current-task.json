@@ -1,6 +1,6 @@
 {
-  "taskId": "D-104",
+  "taskId": "D-105",
   "status": "Validada",
-  "title": "cancel sem id cai no current-task.json (mesmo footgun do D-103 no finish)",
-  "demandTitle": "D-104 \ud83d\udc1b - #FINALIZADO - cancel sem id cai no current-task.json (mesmo footgun do D-103 no finish)"
+  "title": "finish deve commitar so os arquivos da demanda",
+  "demandTitle": "D-105 \ud83d\udc1b - #FINALIZADO - finish deve commitar so os arquivos da demanda"
 }

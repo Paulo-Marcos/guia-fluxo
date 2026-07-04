@@ -84,7 +84,15 @@ def git_commit(files: Iterable[str], message: str) -> None:
     # (restrito aos pathspecs da task) reconcilia o index com o working tree,
     # cobrindo adicoes, modificacoes E delecoes no mesmo stage.
     subprocess.run(git_command("add", "-A", "--", *files_list), cwd=ROOT, check=True)
-    subprocess.run(git_command("commit", "-m", message), cwd=ROOT, check=True)
+    # D-105: commit ESCOPADO ao pathspec da demanda. Sem `-- <files>`, o
+    # `git commit` sela o INDEX inteiro - engolindo o que outra demanda (outro
+    # chat/agente rodando em paralelo na mesma arvore) tenha dado `git add`.
+    # Com o pathspec, so os caminhos desta demanda entram no commit, mesmo com
+    # o index sujo de trabalho concorrente. E o que torna o `--no-commit` +
+    # staging manual desnecessario como isolamento.
+    subprocess.run(
+        git_command("commit", "-m", message, "--", *files_list), cwd=ROOT, check=True
+    )
 
 
 def git_branch_exists(branch: str) -> bool:

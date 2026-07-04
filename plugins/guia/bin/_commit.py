@@ -14,10 +14,8 @@ from _constants import (
     MSG_GIT_NOT_FOUND,
     MSG_NO_FILES_FOR_COMMIT,
     MSG_NONE_PLACEHOLDER,
-    MSG_UNRELATED_STAGED,
 )
-from _git_ops import git_commit, git_staged_files, has_git
-from _paths import normalize_path
+from _git_ops import git_commit, has_git
 
 
 def build_commit_message(
@@ -95,12 +93,11 @@ def commit_task(
         raise SystemExit(MSG_NO_FILES_FOR_COMMIT)
     if not has_git():
         raise SystemExit(MSG_GIT_NOT_FOUND)
-    expected = {normalize_path(value) for value in files}
-    staged = {normalize_path(value) for value in git_staged_files()}
-    unexpected = sorted(staged - expected)
-    if unexpected:
-        names = ", ".join(unexpected)
-        raise SystemExit(MSG_UNRELATED_STAGED.format(names=names))
+    # D-105: NAO abortamos mais quando ha arquivos alheios staged. Antes, um
+    # `git add` de outra demanda paralela fazia o finish recusar (staged -
+    # expected). Agora `git_commit` commita por pathspec (`commit -- <files>`),
+    # entao arquivos alheios no index simplesmente nao entram neste commit -
+    # ficam intactos para a demanda dona fechar. Nada a checar aqui.
     message = build_commit_message(task, commit_body, subject_override)
     try:
         git_commit(files, message)

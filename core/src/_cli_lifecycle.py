@@ -24,6 +24,7 @@ from _constants import (
     MSG_DEFAULT_READY_SUMMARY,
     MSG_DEFAULT_VALIDATE_SUMMARY,
     MSG_DEFAULT_VALIDATION_PENDING,
+    MSG_NONE_PLACEHOLDER,
     MSG_PROCESS_FILES_OK,
     MSG_TASK_NOT_FOUND,
     MSG_VALIDATE_DEPRECATED,
@@ -51,7 +52,6 @@ from _docs_hook import (
     load_docs_map,
 )
 from _features_md import upsert_features_entry
-from _git_ops import git_changed_files
 from _locks import lock_task_files
 from _paths import relative
 from _process_config import default_process
@@ -413,10 +413,30 @@ def _status_board() -> int:
     return 0
 
 
+def _is_bookkeeping(path: str) -> bool:
+    """D-105: True para arquivos de processo do Guia (`.guia/...`) - catalogo,
+    locks, estado. Toda demanda os co-commita; nao contam como 'trabalho de
+    produto' na hora de decidir se algo precisa ser declarado via --file."""
+    return path.replace("\\", "/").startswith(".guia/")
+
+
+def _declared_product_files(task: dict[str, Any]) -> list[str]:
+    """D-105: arquivos de PRODUTO ja declarados na task (via --file de um
+    ready/finish anterior), excluindo bookkeeping e o placeholder."""
+    return [
+        value
+        for value in task.get("modifiedFiles", [])
+        if value and value != MSG_NONE_PLACEHOLDER and not _is_bookkeeping(value)
+    ]
+
+
 def cmd_ready(args: argparse.Namespace) -> int:
     task = find_task_or_current(args.task_id)
     config = read_json(PROCESS_FILE, default_process(ROOT.name))
-    changed_files = args.file or git_changed_files()
+    # D-105: os arquivos da demanda vem SO do que foi declarado (--file), nunca
+    # da arvore inteira. `git diff HEAD` incluiria o trabalho de outras demandas
+    # em paralelo, contaminando modifiedFiles (que o finish depois commita).
+    changed_files = list(args.file)
     task["status"] = config.get("ready", {}).get("status", STATUS_AWAITING_VALIDATION)
     # D-052: marca a entrega para validacao. readyAt guarda o ultimo ready;
     # readyCount conta os ciclos ready->finish (cada re-ready incrementa).
@@ -567,7 +587,35 @@ def cmd_finish(args: argparse.Namespace) -> int:
             )
             raise SystemExit("\n".join(lines))
     config = read_json(PROCESS_FILE, default_process(ROOT.name))
-    changed_files = args.file or git_changed_files()
+    # D-105: os arquivos da demanda vem SO do que foi declarado (--file), nunca
+    # da arvore inteira - `git diff HEAD` inclui o trabalho de outras demandas
+    # em paralelo e o commit as engoliria.
+    changed_files = list(args.file)
+
+    # D-105: no caminho de commit exigimos os arquivos de produto declarados.
+    # Sem isso, um finish sem --file commitaria so o bookkeeping (.guia/) e
+    # deixaria o codigo real de fora - ou, no modelo antigo (git add -A da
+    # arvore), engoliria arquivos de outras demandas. Epicos sao orquestradores
+    # (fecham commitando so o catalogo), entao ficam de fora do gate.
+    commit_requested = args.commit
+    if commit_requested is None:
+        commit_requested = config.get("finish", {}).get("commitByDefault", True)
+    if (
+        commit_requested
+        and task.get("kind") != KIND_EPIC
+        and not changed_files
+        and not _declared_product_files(task)
+    ):
+        raise SystemExit(
+            f"finish {task['id']} vai commitar, mas nenhum arquivo de produto "
+            "desta demanda foi declarado.\n"
+            "O motor NAO infere da arvore inteira (D-105): `git diff HEAD` "
+            "inclui o trabalho de outras demandas rodando em paralelo, e o "
+            "commit as engoliria.\n"
+            "Declare os arquivos que ESTA demanda tocou:\n"
+            f"  finish {task['id']} --file <path> [--file <path> ...]\n"
+            "Ou feche sem commitar agora com --no-commit."
+        )
 
     docs_map = load_docs_map()
     if docs_map is not None:
@@ -615,9 +663,7 @@ def cmd_finish(args: argparse.Namespace) -> int:
         merge_list(task, "modifiedFiles", [".guia/locks/registry.yaml"])
         merge_list(task, "summary", [f"Lock `{args.lock_id}` registrado para os arquivos finalizados."])
 
-    commit_requested = args.commit
-    if commit_requested is None:
-        commit_requested = finish_config.get("commitByDefault", True)
+    # commit_requested ja foi resolvido acima (D-105 gate), antes das mutacoes.
 
     save_task(task)
     set_current_task(task)

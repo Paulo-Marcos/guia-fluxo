@@ -2,6 +2,125 @@
   "schemaVersion": 1,
   "tasks": [
     {
+      "id": "D-105",
+      "kind": "bug",
+      "title": "finish deve commitar so os arquivos da demanda",
+      "status": "Validada",
+      "origin": "Guia Fluxo (2026-07-03)",
+      "context": "Hoje finish faz git add -A (arvore inteira) e commita tudo. Com varios chats/agentes em paralelo (ex.: D-189 fechando enquanto D-190/191/192 trabalham), o commit de encerramento engole codigo das outras demandas. O paliativo atual e --no-commit + staging manual seletivo. Objetivo: toda demanda deve conseguir commitar tudo que ELA mexeu, via staging seletivo dos arquivos da demanda (nao git add -A), para nao vazar trabalho concorrente. Avaliar como rastrear os arquivos da demanda e commitar apenas eles.",
+      "createdAt": "2026-07-03",
+      "updatedAt": "2026-07-04",
+      "startedAt": "2026-07-03T23:56:30-03:00",
+      "readyAt": "2026-07-04T00:16:29-03:00",
+      "finishedAt": "2026-07-04T01:36:57-03:00",
+      "modifiedFiles": [
+        ".guia/DEMANDAS.md",
+        "core/src/_git_ops.py",
+        "core/src/_commit.py",
+        "core/src/_cli_lifecycle.py",
+        "core/manifest/bodies/finish.md",
+        "core/manifest/bodies/ready.md",
+        "tests/test_finish_commit.py",
+        "docs/reference/cli.md",
+        "CHANGELOG.md",
+        "plugins/guia/bin/_git_ops.py",
+        "plugins/guia/bin/_commit.py",
+        "plugins/guia/bin/_cli_lifecycle.py",
+        "plugins/guia/commands/finish.md",
+        "plugins/guia/commands/ready.md",
+        "plugins/guia/.agents/skills/guia-finish/SKILL.md",
+        "plugins/guia/.agents/skills/guia-ready/SKILL.md",
+        ".guia/current-task.json",
+        ".guia/historico/DEMANDAS.md",
+        ".guia/tasks.json"
+      ],
+      "summary": [
+        "Demanda criada via Guia Fluxo.",
+        "Commit do finish escopado ao pathspec da demanda: git commit -- <files> (nao sela mais o index inteiro)",
+        "cmd_ready/cmd_finish param de inferir arquivos da arvore inteira; vem so de --file",
+        "Guard MSG_UNRELATED_STAGED removido (commit por pathspec torna staged alheio inofensivo)",
+        "Gate: finish que commita sem arquivo de produto declarado e recusado pedindo --file (epico isento)",
+        "Demanda finalizada via Guia Fluxo."
+      ],
+      "validations": [
+        "pytest tests/ -q: 239 passed",
+        "render-skills.py --check: 67 alvos em sincronia"
+      ],
+      "pending": [],
+      "readyCount": 1,
+      "docsReview": {
+        "candidates": [
+          {
+            "path": ".guia/DEMANDAS.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: bug D-105",
+            "hint": "Ja e atualizado pelo script no finish; so revisar se quiser ajustar narrativa.",
+            "purpose": "Catalogo legivel de demandas (gerado/mantido por core/src/guia.py)."
+          },
+          {
+            "path": "CHANGELOG.md",
+            "trigger": "task-finished",
+            "reason": "task-finished: bug D-105",
+            "hint": "Adicione entrada se a mudanca for visivel pro usuario do pack.",
+            "purpose": "Historico user-facing no estilo Keep a Changelog."
+          },
+          {
+            "path": "docs/explanation/visao-geral.md",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Mudou a forma de pensar do pack (nova camada, novo ator)? Reescreva o trecho afetado.",
+            "purpose": "Visao arquitetural do pack."
+          },
+          {
+            "path": "docs/adr/",
+            "trigger": "architectural-decision",
+            "reason": "architectural-decision: avalie se a feature/issue mudou regra arquitetural",
+            "hint": "Crie 0NNN-titulo.md a partir de docs/adr/template.md.",
+            "purpose": "Decisoes arquiteturais (Architecture Decision Records)."
+          }
+        ],
+        "touched": [
+          "CHANGELOG.md",
+          "docs/reference/cli.md"
+        ],
+        "checkedAt": "2026-07-04",
+        "skipped": "visao-geral/ADR nao se aplicam: e refinamento do commit sob o principio ja existente 'motor nao tem conceito de chat; o agente declara os arquivos' (D-103/D-096), nao nova regra arquitetural"
+      },
+      "qualityReview": {
+        "candidates": [
+          "core/src/_git_ops.py",
+          "core/src/_commit.py",
+          "core/src/_cli_lifecycle.py",
+          "core/manifest/bodies/finish.md",
+          "core/manifest/bodies/ready.md",
+          "tests/test_finish_commit.py",
+          "docs/reference/cli.md",
+          "CHANGELOG.md",
+          "plugins/guia/bin/_git_ops.py",
+          "plugins/guia/bin/_commit.py",
+          "plugins/guia/bin/_cli_lifecycle.py",
+          "plugins/guia/commands/finish.md",
+          "plugins/guia/commands/ready.md",
+          "plugins/guia/.agents/skills/guia-finish/SKILL.md",
+          "plugins/guia/.agents/skills/guia-ready/SKILL.md"
+        ],
+        "dimensions": [
+          "(a) qualidade do codigo (legibilidade, nomes, clean code)",
+          "(b) tamanho de funcoes/arquivos (funcao curta, arquivo coeso)",
+          "(c) responsabilidade unica (SRP) por funcao/classe/modulo",
+          "(d) cobertura/tests do que mudou",
+          "(e) necessidade de refatorar para boa qualidade - e refatorar antes de fechar"
+        ],
+        "skills": [
+          "clean-code-review"
+        ],
+        "findings": [
+          "Revisao clean-code do diff core: sem bloqueador/importante; 2 sugestoes marginais (Extract Function do gate, rename changed_files) recusadas por consistencia com os gates inline vizinhos e baixo ganho. 239/239 testes."
+        ],
+        "checkedAt": "2026-07-04"
+      }
+    },
+    {
       "id": "D-104",
       "kind": "bug",
       "title": "cancel sem id cai no current-task.json (mesmo footgun do D-103 no finish)",

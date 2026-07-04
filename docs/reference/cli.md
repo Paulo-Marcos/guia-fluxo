@@ -150,6 +150,8 @@ Move a task para `Aguardando validacao`. Gera relatorio em `.guia/reports/`. Imp
 
 ```powershell
 .\core\bin\guia.ps1 finish D-NNN `
+    --file <caminho> [--file <outro>] `
+    [--no-commit] `
     [--lock --lock-id <slug>] `
     [--docs-touched <path> ...] `
     [--docs-skip "<motivo>"] `
@@ -158,6 +160,8 @@ Move a task para `Aguardando validacao`. Gera relatorio em `.guia/reports/`. Imp
 ```
 
 Marca como `Validada`, sugere `#FINALIZADO` e commita por padrao. Com `--lock`, registra os arquivos da task em `.guia/locks/registry.yaml` sob o slug informado.
+
+**Commit escopado aos arquivos da demanda (D-105).** Com varios chats/agentes na mesma copia de trabalho, o `finish` engolia codigo de outras demandas no commit de encerramento (`git add -A` da arvore + `git commit` sem pathspec selavam o index inteiro); o paliativo era `--no-commit` + staging manual. Agora: (1) o conjunto de arquivos vem **so de `--file`** (ou do que um `ready` anterior acumulou), nunca inferido de `git diff HEAD`; e (2) o commit e **escopado ao pathspec** (`git commit -- <files>`), entao arquivo de outra demanda ja `git add`-ado fica intacto, de fora do commit. Um `finish` que **commita** sem nenhum arquivo de produto declarado e **recusado** com pedido de `--file` (evita commitar so o bookkeeping e deixar o codigo de fora); epicos ficam de fora do gate, e `--no-commit` (dry close) nao exige `--file`. O `--no-commit` deixa de ser necessario como isolamento — sobrevive so como fechamento sem commit.
 
 **Id explicito obrigatorio + guard de status (D-103).** Diferente dos outros verbos, `finish` **nao** cai no `current-task.json` global quando o id e omitido. Esse ponteiro e unico por copia de trabalho: outra sessao/chat na mesma pasta pode te-lo driftado para uma demanda que este chat nunca tocou — e um `finish` sem id ja finalizou a task errada por causa disso (o ponteiro apontava para uma D-NNN em `Backlog` de outro chat). Como o motor nao tem conceito de "chat", quem sabe qual demanda este chat conduz e o agente, que **deve passar o id explicito** (`finish D-NNN`, deduzido da conversa, nao do ponteiro). Sem id, o comando **recusa** e lista as candidatas em `Aguardando validacao`. Alem disso, `finish` so aceita demanda em estado **finalizavel** — `Aguardando validacao` ou `Em desenvolvimento`; `Backlog`/`Planejada` precisam de `start`/`ready` antes, e estados terminais ja foram fechados. O aviso do `status --all` (B-018) continua, mas o gate real do fechamento vive aqui.
 

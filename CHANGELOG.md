@@ -6,6 +6,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Fixed
+- **`finish` commita só os arquivos da demanda, não a árvore inteira (D-105).** Com vários chats/agentes trabalhando em paralelo na mesma cópia de trabalho, o `finish` engolia código de outras demandas no commit de encerramento — o paliativo era `--no-commit` + staging manual. Dois vazamentos, agora fechados: **(1) coleta** — `cmd_ready`/`cmd_finish` faziam `changed_files = args.file or git_changed_files()`, e o fallback `git diff HEAD` (árvore inteira) enfiava em `modifiedFiles` os arquivos de demandas paralelas; agora vêm **só de `--file`** (nunca inferidos da árvore). **(2) commit** — `git_commit` fazia `git add -A -- <files>` seguido de `git commit -m msg` **sem pathspec**, e o commit selava o *index inteiro* (inclusive o que outra demanda deu `git add`); agora o commit é **escopado ao pathspec** (`git commit -m msg -- <files>`), então arquivo alheio staged fica intacto, de fora do commit. O guard `MSG_UNRELATED_STAGED` (que *abortava* o finish quando havia staged alheio) foi removido — deixou de ser necessário e travava trabalho concorrente. **Gate novo:** um `finish` que commita sem nenhum arquivo de produto declarado (via `--file` ou acumulado num `ready`) é **recusado** com mensagem pedindo `--file`, evitando fechar commitando só o bookkeeping e deixando o código de fora; épicos (orquestradores, fecham só o catálogo) ficam de fora do gate, e `--no-commit` não exige `--file`. Regra de comportamento espelhada nas skills `ready`/`finish`. Testes em `tests/test_finish_commit.py` (isolamento de staged concorrente, recusa sem `--file`, `--no-commit` sem `--file`, rollback via hook `commit-msg`).
+
 ## [0.4.2] - 2026-07-03
 
 ### Fixed

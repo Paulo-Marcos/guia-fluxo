@@ -2,6 +2,61 @@
 
 ---
 
+## [D-105] 🐛 finish deve commitar so os arquivos da demanda
+
+- **Status:** Validada
+- **Origem:** Guia Fluxo (2026-07-03)
+- **Tipo:** Bug / regressao
+- **Contexto:** Hoje finish faz git add -A (arvore inteira) e commita tudo. Com varios chats/agentes em paralelo (ex.: D-189 fechando enquanto D-190/191/192 trabalham), o commit de encerramento engole codigo das outras demandas. O paliativo atual e --no-commit + staging manual seletivo. Objetivo: toda demanda deve conseguir commitar tudo que ELA mexeu, via staging seletivo dos arquivos da demanda (nao git add -A), para nao vazar trabalho concorrente. Avaliar como rastrear os arquivos da demanda e commitar apenas eles.
+
+### Arquivos modificados/criados
+
+- `.guia/DEMANDAS.md`
+- `core/src/_git_ops.py`
+- `core/src/_commit.py`
+- `core/src/_cli_lifecycle.py`
+- `core/manifest/bodies/finish.md`
+- `core/manifest/bodies/ready.md`
+- `tests/test_finish_commit.py`
+- `docs/reference/cli.md`
+- `CHANGELOG.md`
+- `plugins/guia/bin/_git_ops.py`
+- `plugins/guia/bin/_commit.py`
+- `plugins/guia/bin/_cli_lifecycle.py`
+- `plugins/guia/commands/finish.md`
+- `plugins/guia/commands/ready.md`
+- `plugins/guia/.agents/skills/guia-finish/SKILL.md`
+- `plugins/guia/.agents/skills/guia-ready/SKILL.md`
+- `.guia/current-task.json`
+- `.guia/historico/DEMANDAS.md`
+- `.guia/tasks.json`
+
+### O que foi feito
+
+- Demanda criada via Guia Fluxo.
+- Commit do finish escopado ao pathspec da demanda: git commit -- <files> (nao sela mais o index inteiro)
+- cmd_ready/cmd_finish param de inferir arquivos da arvore inteira; vem so de --file
+- Guard MSG_UNRELATED_STAGED removido (commit por pathspec torna staged alheio inofensivo)
+- Gate: finish que commita sem arquivo de produto declarado e recusado pedindo --file (epico isento)
+- Demanda finalizada via Guia Fluxo.
+
+### Validacao feita
+
+- pytest tests/ -q: 239 passed
+- render-skills.py --check: 67 alvos em sincronia
+
+### Validacao pendente
+
+- Nenhuma.
+
+### Timing (D-052)
+
+- **Iniciada:** 2026-07-03T23:56:30-03:00
+- **Ready:** 2026-07-04T00:16:29-03:00
+- **Terminada:** 2026-07-04T01:36:57-03:00
+- **Elapsed total:** 1h 40m 27s
+- **Tempo ativo:** 1h 40m 27s
+
 ## [D-104] 🐛 cancel sem id cai no current-task.json (mesmo footgun do D-103 no finish)
 
 - **Status:** Validada
@@ -1203,83 +1258,6 @@ Notes for implementation:
 ### Validacao feita
 
 - LOCK testado no novo path: bloqueia add sem unlock (exit 1), libera com [unlock:] (exit 0). pytest 150 passed. render --check OK. doctor OK. grep: zero refs vivas a features/.
-
-### Validacao pendente
-
-- Nenhuma.
-
-## [D-055] ✨ Renomear FEATURES.md e implementar arquivamento de demandas antigas
-
-- **Status:** Validada
-- **Origem:** Backlog (2026-06-09)
-- **Tipo:** Feature
-- **Contexto:** Dois problemas: (1) Nome 'FEATURES.md' nao reflete a realidade atual - o arquivo guarda features, bugs e chores (o guarda-chuva e 'demanda'). Candidatos: DEMANDAS.md, HISTORICO.md, DEMANDS.md. (2) Tamanho: o arquivo cresce indefinidamente. Hoje tem 122KB com 52+ demandas e vai piorar. Custo real: agente carregando o arquivo inteiro no contexto a cada operacao. Solucao proposta: manter somente as N ultimas demandas (parametro em process.json, default 20-30) no arquivo ativo; mover demandas mais antigas para DEMANDAS.archive.md (ou .guia/historico/YYYY-MM.md). Para o bloqueio de leitura por IA: adicionar uma linha no topo do arquivo de arquivo como '<!-- guia-fluxo: archive=true ai-skip=true -->' que o agente pode verificar antes de carregar. Impacto tecnico: _features_md.py (upsert_features_entry), _tasks.py (format/display), _constants.py (path do arquivo). Avaliar se FEATURES.md fica na raiz ou vai para .guia/ junto dos outros arquivos de processo.
-
-### Arquivos modificados/criados
-
-- `FEATURES.md`
-- `core/src/_constants.py`
-- `core/src/_tasks.py`
-- `core/src/_locks.py`
-- `core/src/_cli_creation.py`
-- `core/src/_cli_lifecycle.py`
-- `core/src/_features_md.py`
-- `.guia/docs-map.yaml`
-- `.guia/DEMANDAS.md`
-- `.github/PULL_REQUEST_TEMPLATE.md`
-- `.guia/current-task.json`
-- `.guia/tasks.json`
-- `AGENTS.md`
-- `CONTRIBUTING.md`
-- `README.md`
-- `SECURITY.md`
-- `core/manifest/bodies/_partials/title_context_rules.md`
-- `core/manifest/bodies/block.md`
-- `core/manifest/bodies/cancel.md`
-- `core/manifest/bodies/plan.md`
-- `core/manifest/bodies/start.md`
-- `docs/README.md`
-- `docs/explanation/por-que-script-fonte-da-verdade.md`
-- `docs/explanation/visao-geral.md`
-- `docs/how-to/instalar-em-outro-projeto.md`
-- `docs/how-to/manter-docs-atualizados.md`
-- `docs/reference/cli.md`
-- `docs/reference/docs-map.md`
-- `docs/reference/files.md`
-- `docs/tutorials/primeiro-uso.md`
-- `plugins/guia/.agents/skills/guia-backlog/SKILL.md`
-- `plugins/guia/.agents/skills/guia-block/SKILL.md`
-- `plugins/guia/.agents/skills/guia-bug/SKILL.md`
-- `plugins/guia/.agents/skills/guia-cancel/SKILL.md`
-- `plugins/guia/.agents/skills/guia-chore/SKILL.md`
-- `plugins/guia/.agents/skills/guia-feature/SKILL.md`
-- `plugins/guia/.agents/skills/guia-plan/SKILL.md`
-- `plugins/guia/.agents/skills/guia-start/SKILL.md`
-- `plugins/guia/bin/_cli_creation.py`
-- `plugins/guia/bin/_cli_lifecycle.py`
-- `plugins/guia/bin/_constants.py`
-- `plugins/guia/bin/_features_md.py`
-- `plugins/guia/bin/_locks.py`
-- `plugins/guia/bin/_tasks.py`
-- `plugins/guia/commands/backlog.md`
-- `plugins/guia/commands/block.md`
-- `plugins/guia/commands/bug.md`
-- `plugins/guia/commands/cancel.md`
-- `plugins/guia/commands/chore.md`
-- `plugins/guia/commands/feature.md`
-- `plugins/guia/commands/plan.md`
-- `plugins/guia/commands/start.md`
-- `tests/test_tasks_domain.py`
-
-### O que foi feito
-
-- Em desenvolvimento desde 2026-06-21: Onda 2 (destravada pelo spike D-058): renomear FEATURES.md + arquivamento; coordenar com D-056 (mover features/ -> .guia/).
-- Rename+move: FEATURES.md (raiz) -> .guia/DEMANDAS.md (decisao: nome reflete 'demanda', e raiz do consumidor fica so com .guia/, cumprindo o global-first junto do D-056). Constantes FEATURES_FILE/FEATURES_HEADER ajustadas; header do arquivo -> '# Demandas'. Fix funcional: nova const FEATURES_REL (path root-relativo .guia/DEMANDAS.md) usada em new_task/promote/start/exclusao-de-lock - antes era basename, que quebraria o commit (git stageia .guia/DEMANDAS.md). docs-map.yaml e manifest bodies (block/cancel/plan) atualizados; PR template; comentarios de codigo.
-- Demanda finalizada via Guia Fluxo.
-
-### Validacao feita
-
-- 150 testes; render --check OK; doctor OK; zero refs vivas a FEATURES.md (so historico/fixtures).
 
 ### Validacao pendente
 

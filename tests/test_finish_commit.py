@@ -128,9 +128,11 @@ class FinishCommitRollbackTests(unittest.TestCase):
     def test_status_not_validada_when_commit_fails(self) -> None:
         """Defeito 2: se o commit falha, o status NAO pode ficar `Validada`.
 
-        Forca a falha deterministicamente: um arquivo nao relacionado fica
-        staged, o que faz `commit_task` recusar (MSG_UNRELATED_STAGED) antes do
-        commit. Sem rollback, a task ficaria Validada sem commit."""
+        Forca a falha deterministicamente com um hook `commit-msg` que rejeita
+        (exit 1), fazendo `git commit` estourar. Sem rollback, a task ficaria
+        Validada sem commit por tras. (Ate o D-105 este teste forcava a falha
+        com um arquivo alheio staged - hoje isso NAO falha mais: o commit por
+        pathspec ignora o index alheio; ver test_finish_isolates_*.)"""
         with tempfile.TemporaryDirectory() as tmp:
             sandbox = Path(tmp)
             _seed(sandbox)
@@ -145,10 +147,10 @@ class FinishCommitRollbackTests(unittest.TestCase):
             _run(sandbox, "chore", "Edita tracked")
             tracked.write_text("v2\n", encoding="utf-8")
 
-            # Arquivo nao relacionado a task, mas staged -> commit_task recusa.
-            intruder = sandbox / "intruder.txt"
-            intruder.write_text("surpresa\n", encoding="utf-8")
-            _git(sandbox, "add", "intruder.txt")
+            # commit-msg que rejeita qualquer commit -> git commit retorna != 0.
+            hook = sandbox / ".git" / "hooks" / "commit-msg"
+            hook.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+            hook.chmod(0o755)
 
             result = _run(
                 sandbox,
@@ -169,6 +171,118 @@ class FinishCommitRollbackTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertEqual(_show(sandbox, "D-001")["status"], "Em desenvolvimento")
             self.assertEqual(_commit_count(sandbox), before)
+
+
+@unittest.skipUnless(shutil.which("git"), "git nao disponivel")
+class FinishCommitIsolationTests(unittest.TestCase):
+    """D-105: o commit de encerramento so pode selar os arquivos DESTA demanda,
+    mesmo com outra demanda (outro chat/agente em paralelo) com arquivos ja
+    staged na mesma arvore. Antes, o `git commit` sem pathspec engolia o index
+    inteiro; agora commita por pathspec."""
+
+    def test_finish_isolates_concurrent_staged_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sandbox = Path(tmp)
+            _seed(sandbox)
+            _init_repo(sandbox)
+
+            tracked = sandbox / "tracked.txt"
+            tracked.write_text("v1\n", encoding="utf-8")
+            _git(sandbox, "add", "tracked.txt")
+            _git(sandbox, "commit", "-m", "seed")
+
+            _run(sandbox, "chore", "Edita tracked")
+            tracked.write_text("v2\n", encoding="utf-8")
+
+            # Simula outra demanda em paralelo: um arquivo dela ja esta staged.
+            intruder = sandbox / "intruder.txt"
+            intruder.write_text("trabalho de outra demanda\n", encoding="utf-8")
+            _git(sandbox, "add", "intruder.txt")
+
+            result = _run(
+                sandbox,
+                "finish",
+                "D-001",
+                "--file",
+                "tracked.txt",
+                "--summary",
+                "edita tracked",
+                "--validation",
+                "n/a",
+                "--quality-checked",
+            )
+
+            # O finish fecha com sucesso, commita tracked.txt e NAO engole o
+            # intruder.txt (fica de fora do HEAD, intacto no working tree).
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            head = _head_files(sandbox)
+            self.assertIn("tracked.txt", head)
+            self.assertNotIn("intruder.txt", head)
+            self.assertTrue(intruder.exists())
+            self.assertEqual(_show(sandbox, "D-001")["status"], "Validada")
+
+
+@unittest.skipUnless(shutil.which("git"), "git nao disponivel")
+class FinishRequiresDeclaredFilesTests(unittest.TestCase):
+    """D-105: com commit, o finish recusa quando nenhum arquivo de produto foi
+    declarado (nem via --file, nem acumulado num ready). O motor nao infere da
+    arvore inteira, entao exige a declaracao para nao commitar so o bookkeeping
+    e deixar o codigo de fora."""
+
+    def test_finish_refuses_commit_without_declared_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sandbox = Path(tmp)
+            _seed(sandbox)
+            _init_repo(sandbox)
+
+            seed = sandbox / "seed.txt"
+            seed.write_text("x\n", encoding="utf-8")
+            _git(sandbox, "add", "seed.txt")
+            _git(sandbox, "commit", "-m", "seed")
+            before = _commit_count(sandbox)
+
+            _run(sandbox, "chore", "Mexe em codigo mas esquece --file")
+            # Ha trabalho de produto na arvore, mas o agente nao o declarou.
+            feature = sandbox / "feature.txt"
+            feature.write_text("codigo novo\n", encoding="utf-8")
+
+            result = _run(
+                sandbox,
+                "finish",
+                "D-001",
+                "--summary",
+                "fecha sem declarar arquivos",
+                "--quality-skip",
+                "n/a",
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("--file", result.stderr)
+            self.assertEqual(_show(sandbox, "D-001")["status"], "Em desenvolvimento")
+            self.assertEqual(_commit_count(sandbox), before)
+
+    def test_finish_no_commit_allowed_without_files(self) -> None:
+        """Contraparte: --no-commit nao commita, entao nao exige --file."""
+        with tempfile.TemporaryDirectory() as tmp:
+            sandbox = Path(tmp)
+            _seed(sandbox)
+            _init_repo(sandbox)
+            _git(sandbox, "commit", "--allow-empty", "-m", "seed")
+
+            _run(sandbox, "chore", "Fecha sem commit")
+            result = _run(
+                sandbox,
+                "finish",
+                "D-001",
+                "--no-commit",
+                "--summary",
+                "dry close",
+                "--quality-skip",
+                "n/a",
+            )
+
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            self.assertEqual(_show(sandbox, "D-001")["status"], "Validada")
 
 
 if __name__ == "__main__":
