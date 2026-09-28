@@ -6,6 +6,9 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Changed
+- **`bug` exige o teste de regressão antes da correção.** O corpo do comando ganhou a seção *Regression test before the fix*: escrever o teste que reproduz o defeito, vê-lo falhar pelo motivo relatado, corrigir, vê-lo passar e registrar o antes/depois no `ready --validation`. Sem refactor de carona, abstração especulativa ou teste enfraquecido; quando o teste é impossível (glitch visual, timing de hardware), dizer por quê e descrever a checagem manual. Veio da auditoria dos commits do gerador-cortes (D-778 lá), onde três correções entraram sem teste.
+
 ## [0.4.3] - 2026-07-04
 
 ### Fixed
