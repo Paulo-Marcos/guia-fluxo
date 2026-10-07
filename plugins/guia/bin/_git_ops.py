@@ -174,10 +174,10 @@ def git_branch_exists(branch: str) -> bool:
         return False
 
 
-def git_worktree_add(branch: str, path: Path) -> None:
+def git_worktree_add(branch: str, path: Path, start: str | None = None) -> None:
     _ensure_git()
     subprocess.run(
-        git_command("worktree", "add", "-b", branch, str(path)),
+        git_command("worktree", "add", "-b", branch, str(path), *([start] if start else [])),
         cwd=ROOT,
         check=True,
     )

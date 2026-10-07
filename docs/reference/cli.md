@@ -196,6 +196,15 @@ O resultado (skills, achados, dimensoes, ou skip) fica em `task.qualityReview` n
 
 Imprime a mensagem de commit da demanda no formato de `delivery.commit.format` (D-112). No modo `pr` o `finish` nao commita, entao e esta mensagem que o agente usa no `git commit -F` e no corpo do squash. No formato `gitmoji-conventional`: header `<emoji> <tipo>(D-NNN): titulo` (feature -> `✨ feat`, bug -> `🐛 fix`, chore -> `🧹 chore`), corpo = `--body`, uma marca `[unlock:<trava>] motivo: ...` por trava que os arquivos declarados tocam e `Co-Authored-By` de `delivery.commit.coAuthor`. A operacao de cada arquivo (adicao, modificacao, delecao) vem do git contra a base (`merge-base` com `origin/<baseBranch>`), nao do disco: arquivo novo conta como adicao. Trava tocada sem motivo recusa (exit 1) citando cada uma; `--unlock-reason` aceita `<trava>=<motivo>` ou um `<motivo>` para todas. Sem id, vale a branch (D-110). O `finish` com commit (modo `direct`) aceita o mesmo `--unlock-reason`.
 
+### `worktree`
+
+```powershell
+.\core\bin\guia.ps1 worktree add [D-NNN] [--path <rel>] [--branch <nome>]
+.\core\bin\guia.ps1 worktree remove [D-NNN] [--force]
+```
+
+Cria ou remove o worktree de uma demanda que ja existe (D-113). `add` segue `delivery.worktree`: caminho e branch pelos modelos, a partir de `from` (busca a base no `origin` antes), copia os `envFiles` e cria as `junctions`, registrando tudo na demanda (`WORKTREE_PATH=`, `WORKTREE_BRANCH=`). `remove` desfaz as juncoes registradas **antes** do `git worktree remove` e **recusa** se sobrar qualquer link no worktree - uma remocao que atravessa juncao apaga o destino na principal (D-880 no gerador-cortes). Sem `--force`, worktree com mudanca nao commitada fica, com a mensagem do git. No modo `pr`, o `finish` remove o worktree da demanda (se `removeOnFinish`) do mesmo jeito, sem `--force`, e so avisa se nao conseguir. Sem id, vale a branch (D-110).
+
 ### `docs-check`
 
 ```powershell

@@ -89,6 +89,7 @@ from _cli_deps import (  # noqa: E402
     cmd_depends_remove,
 )
 from _cli_meta import cmd_commit_message, cmd_docs_check, cmd_render  # noqa: E402
+from _cli_worktree import cmd_worktree  # noqa: E402
 from _cli_tasks import (  # noqa: E402
     cmd_stats,
     cmd_tasks_filter,
@@ -357,6 +358,21 @@ def build_parser() -> argparse.ArgumentParser:
     p_commit_msg.add_argument("--body", help="Texto livre no corpo (o porque).")
     p_commit_msg.add_argument("--subject", help="Header pronto; substitui o montado.")
     p_commit_msg.set_defaults(func=cmd_commit_message)
+
+    p_worktree = sub.add_parser(
+        "worktree",
+        help="Cria ou remove o worktree de uma demanda pelos modelos de delivery.worktree (D-113).",
+    )
+    p_worktree.add_argument("action", choices=["add", "remove"])
+    p_worktree.add_argument("task_id", nargs="?")
+    p_worktree.add_argument("--path", help="Caminho (relativo a raiz) no lugar do modelo.")
+    p_worktree.add_argument("--branch", help="Branch no lugar do modelo.")
+    p_worktree.add_argument(
+        "--force",
+        action="store_true",
+        help="remove: descarta mudancas nao commitadas do worktree.",
+    )
+    p_worktree.set_defaults(func=cmd_worktree)
 
     p_plan = sub.add_parser(
         "plan",
