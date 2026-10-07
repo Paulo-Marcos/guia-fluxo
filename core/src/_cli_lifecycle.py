@@ -102,6 +102,7 @@ def _ensure_dependencies_met(task: dict[str, Any], verb: str) -> None:
     )
     raise SystemExit("\n".join(lines))
 from _validation_runner import run_validation_commands
+from _hooks_check import hooks_path_warnings
 from _skills import STAGE_QUALITY, STAGE_READY, announce_stage, record_stage
 from _worktree import cleanup_task_worktree
 
@@ -1030,6 +1031,9 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     # 4. git (sempre)
     if not has_git():
         warnings.append("git nao encontrado no PATH (commit/worktree falharao)")
+    else:
+        # D-115: o commit-msg das travas vai rodar neste worktree?
+        warnings.extend(hooks_path_warnings())
 
     if _is_dev_repo():
         code_root = _code_root()

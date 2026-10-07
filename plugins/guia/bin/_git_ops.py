@@ -46,6 +46,19 @@ def run_git(*args: str, check: bool = True, capture: bool = False) -> subprocess
     )
 
 
+def git_output(cwd: Path, *args: str) -> str | None:
+    """Saida (sem espacos nas pontas) de `git <args>` em `cwd`, ou None se falhar.
+
+    Para leituras pontuais (config, rev-parse) onde "nao definido" e "erro"
+    se tratam igual. Nunca levanta.
+    """
+    try:
+        result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True)
+    except (FileNotFoundError, OSError):
+        return None
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
 def current_branch() -> str | None:
     """Branch da arvore onde o comando roda (CWD), ou None (destacado, sem git).
 
@@ -233,6 +246,7 @@ __all__ = [
     "git_command",
     "run_git",
     "current_branch",
+    "git_output",
     "git_changed_files",
     "git_ignored_files",
     "name_status_against_base",
