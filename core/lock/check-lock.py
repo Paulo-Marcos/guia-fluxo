@@ -189,6 +189,8 @@ def cmd_history(args: argparse.Namespace) -> int:
                 "--date=short",
             ],
             text=True,
+            encoding="utf-8",
+            errors="replace",
             cwd=lock_api.REPO_ROOT,
         )
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
@@ -326,6 +328,8 @@ def cmd_audit(args: argparse.Namespace) -> int:
                 "--date=short",
             ],
             text=True,
+            encoding="utf-8",
+            errors="replace",
             cwd=lock_api.REPO_ROOT,
         )
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
@@ -362,6 +366,8 @@ def cmd_hook(args: argparse.Namespace) -> int:
         staged = subprocess.check_output(
             ["git", "diff", "--cached", "--name-status", "--diff-filter=ACMRD"],
             text=True,
+            encoding="utf-8",
+            errors="replace",
             cwd=lock_api.REPO_ROOT,
         ).splitlines()
     except (subprocess.CalledProcessError, FileNotFoundError):
@@ -504,7 +510,19 @@ def cmd_ci(args: argparse.Namespace) -> int:
 # -- Entry point ------------------------------------------------------------
 
 
+def _utf8_streams() -> None:
+    """Saida em UTF-8 (D-116): assunto gitmoji num pipe cp1252 estourava.
+
+    Mesmo padrao do `guia.py`: `reconfigure` quando o stream oferece.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="replace")
+
+
 def main(argv: list[str] | None = None) -> int:
+    _utf8_streams()
     parser = argparse.ArgumentParser(description="Validador e gerenciador de travas de edicao.")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
