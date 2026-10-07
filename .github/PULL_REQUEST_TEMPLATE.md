@@ -11,7 +11,7 @@ Veja docs/how-to/ antes de abrir o PR.
 
 <!-- ID da demanda (D-###) e link, se houver. -->
 
-- Demanda: F-### / I-###
+- Demanda: D-###
 
 ## O que mudou
 
@@ -47,5 +47,5 @@ Liste aqui quais features foram desbloqueadas e por que.
 
 - [ ] `python core/src/guia.py doctor` passa.
 - [ ] `python core/build/render-skills.py --check` passa (se mexeu em skills).
-- [ ] Demanda no `.guia/DEMANDAS.md` atualizada via `ready`/`finish`.
+- [ ] Demanda `D-NNN` citada no titulo do PR e no commit.
 - [ ] Documentacao atualizada (se mudou comportamento).

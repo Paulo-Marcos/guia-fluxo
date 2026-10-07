@@ -8,3 +8,13 @@ Thumbs.db
 .guia/demand-title.txt
 .guia/chat-title.txt
 .guia/reports/
+
+# Guia Fluxo: estado vivo das demandas, so na pasta principal (D-106).
+# Com um worktree por demanda, versionar o estado faria cada PR colidir nele.
+# Continuam versionados: process.json, docs-map.yaml e locks/ (configuracao
+# que o CI e os hooks leem).
+.guia/tasks.json
+.guia/backlog.json
+.guia/DEMANDAS.md
+.guia/current-task.json
+.guia/historico/

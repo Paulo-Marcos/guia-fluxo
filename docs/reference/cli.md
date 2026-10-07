@@ -31,7 +31,7 @@ Migra um projeto **existente** do layout antigo (pre-D-055/D-056) para o atual: 
 .\core\bin\guia.ps1 doctor
 ```
 
-Sanity check: confirma layout, dependencias e que os arquivos esperados existem.
+Sanity check: confirma layout, dependencias e que os arquivos esperados existem. `.guia/process.json` (configuracao) e obrigatorio; `tasks.json`, `backlog.json` e `current-task.json` (estado) ausentes geram so aviso, porque o estado pode estar fora do git (checkout limpo do CI) ou o projeto ainda nao ter demandas (D-106). `--strict` promove avisos a erro.
 
 ### `feature`
 

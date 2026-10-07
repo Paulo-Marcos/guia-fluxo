@@ -960,11 +960,14 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     failures: list[str] = []
     warnings: list[str] = []
 
-    # 1. .guia/ files (sempre)
-    required = [PROCESS_FILE, TASKS_FILE, BACKLOG_FILE, CURRENT_FILE]
-    for path in required:
+    # 1. .guia/ files (sempre). process.json e configuracao (versionada);
+    # tasks/backlog/current sao estado local, que pode estar fora do git
+    # (checkout limpo do CI, D-106): ausente e projeto sem demandas, nao erro.
+    if not PROCESS_FILE.exists():
+        failures.append(f"missing: {relative(PROCESS_FILE)}")
+    for path in (TASKS_FILE, BACKLOG_FILE, CURRENT_FILE):
         if not path.exists():
-            failures.append(f"missing: {relative(path)}")
+            warnings.append(f"estado ausente: {relative(path)} (projeto sem demandas ou estado fora do git)")
 
     # 4. git (sempre)
     if not has_git():

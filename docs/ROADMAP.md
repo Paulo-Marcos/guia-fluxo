@@ -18,4 +18,4 @@ Versao atual: ver [`VERSION`](../VERSION) e [`CHANGELOG.md`](../CHANGELOG.md).
 
 ## Backlog conceitual
 
-Itens vivos em [`.guia/backlog.json`](../.guia/backlog.json). Dependencias arquiteturais maiores estao registradas como ADRs em [`docs/adr/`](adr/) (ex.: ADR-0011 sobre modelo de demanda).
+Itens vivos no backlog do Guia (`.guia/backlog.json`, estado local fora do git desde a D-106; `guia backlog list`). Dependencias arquiteturais maiores estao registradas como ADRs em [`docs/adr/`](adr/) (ex.: ADR-0011 sobre modelo de demanda).

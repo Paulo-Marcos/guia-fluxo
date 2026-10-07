@@ -1,6 +1,6 @@
 # D-094 — Auditoria da raiz: separar CORE do PLUGIN e justificar os expostos
 
-- **Task:** [D-094](../../.guia/DEMANDAS.md) — Limpeza: separar core do plugin e justificar expostos
+- **Task:** D-094 — Limpeza: separar core do plugin e justificar expostos
 - **Tipo:** diagnóstico + proposta (NÃO executa movimentações estruturais — viram demandas-filhas)
 - **Data:** 2026-06-23
 - **Restrições honradas:** [ADR-0017](../adr/0017-manter-core-src-flat.md) (não reabrir reorg interna de `core/src/`), descoberta do plugin intacta ([ADR-0006](../adr/0006-plugin-oficial-claude-code.md), [ADR-0015](../adr/0015-plugin-global-first-guia-init.md)).
