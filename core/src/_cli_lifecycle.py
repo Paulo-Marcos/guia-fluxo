@@ -928,13 +928,25 @@ def cmd_validate(args: argparse.Namespace) -> int:
     return 0
 
 
+def _code_root() -> Path:
+    """Arvore cujo codigo o doctor confere (manifest, render, lock_api).
+
+    D-109: no modo `pr`, ROOT e a arvore principal mesmo quando o motor roda
+    de um worktree (o estado mora la). O codigo a conferir, porem, e o da
+    arvore onde o motor esta - senao o doctor de um worktree aprovaria o
+    render da principal. Fora do repo-mae, cai em ROOT, como antes.
+    """
+    script_tree = Path(__file__).resolve().parents[2]
+    return script_tree if (script_tree / "core" / "manifest").is_dir() else ROOT
+
+
 def _is_dev_repo() -> bool:
     """True when running from the repo-mae (has core/manifest/).
 
     In the consumer (.guia-fluxo/bin/ flat layout), core/ does not exist;
     the extended checks degrade to "lite" mode (just .guia/ files + git).
     """
-    return (ROOT / "core" / "manifest").is_dir()
+    return (_code_root() / "core" / "manifest").is_dir()
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
@@ -974,8 +986,9 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         warnings.append("git nao encontrado no PATH (commit/worktree falharao)")
 
     if _is_dev_repo():
+        code_root = _code_root()
         # 2 + 3. manifest + PyYAML
-        manifest = ROOT / "core" / "manifest" / "manifest.yaml"
+        manifest = code_root / "core" / "manifest" / "manifest.yaml"
         if not manifest.exists():
             failures.append(f"missing: {relative(manifest)}")
         else:
@@ -992,13 +1005,13 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
         # 5. render --check
         if not getattr(args, "skip_render", False):
-            render = ROOT / "core" / "build" / "render-skills.py"
+            render = code_root / "core" / "build" / "render-skills.py"
             if render.exists():
                 import subprocess
 
                 result = subprocess.run(
                     [sys.executable, str(render), "--check"],
-                    cwd=ROOT,
+                    cwd=code_root,
                     capture_output=True,
                     text=True,
                 )
@@ -1008,12 +1021,12 @@ def cmd_doctor(args: argparse.Namespace) -> int:
                     )
 
         # 6. plugins/guia/bin/guia.py
-        dist_guia = ROOT / "plugins" / "guia" / "bin" / "guia.py"
+        dist_guia = code_root / "plugins" / "guia" / "bin" / "guia.py"
         if not dist_guia.exists():
             warnings.append(f"motor standalone ausente: {relative(dist_guia)}")
 
         # 7. lock_api importavel
-        lock_api_path = ROOT / "core" / "lock" / "lock_api.py"
+        lock_api_path = code_root / "core" / "lock" / "lock_api.py"
         if not lock_api_path.exists():
             failures.append(f"missing: {relative(lock_api_path)}")
         else:

@@ -28,5 +28,8 @@
   },
   "archive": {
     "keepInDemandas": 30
+  },
+  "delivery": {
+    "mode": "pr"
   }
 }
