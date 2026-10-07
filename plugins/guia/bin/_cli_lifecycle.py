@@ -62,6 +62,7 @@ from _quality_hook import (
 from _reports import write_report
 from _state import copy_if_missing, read_json, write_if_missing, write_json
 from _tasks import (
+    branch_task_id,
     epic_open_children,
     find_children,
     find_task,
@@ -487,6 +488,7 @@ def _resolve_terminal_target(
     candidates: list[dict[str, Any]],
     candidates_label: str,
     empty_hint: str,
+    from_branch: bool = False,
 ) -> dict[str, Any]:
     """D-103/D-104: resolve a demanda de um verbo TERMINAL sem cair no ponteiro.
 
@@ -503,7 +505,12 @@ def _resolve_terminal_target(
     id explicito. Aqui, portanto, NAO deduzimos do ponteiro: com id, usamos ele;
     sem id, recusamos e listamos as candidatas (parametrizadas por verbo) para
     ajudar o operador a escolher a certa.
+
+    D-110: com `from_branch`, a branch de demanda do modo `pr` conta como id
+    explicito - ela e do worktree desta sessao, nao um ponteiro compartilhado.
     """
+    if not task_id and from_branch:
+        task_id = branch_task_id()
     if task_id:
         task = find_task(task_id)
         if task is None:
@@ -540,6 +547,7 @@ def _resolve_finish_target(task_id: str | None) -> dict[str, Any]:
         example_id="D-173",
         candidates=list_tasks(status=STATUS_AWAITING_VALIDATION),
         candidates_label="Candidatas em Aguardando validacao:",
+        from_branch=True,
         empty_hint=(
             "Nenhuma task em Aguardando validacao agora - rode `ready <id>` "
             "antes, ou passe o id da demanda deste chat."

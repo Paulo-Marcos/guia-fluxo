@@ -23,6 +23,8 @@ from typing import Any
 from _clock import now_iso, today
 from _constants import (
     BACKLOG_FILE,
+    DELIVERY_MODE,
+    DELIVERY_MODE_PR,
     CURRENT_FILE,
     DEMAND_TITLE_FILE,
     DEMAND_TITLE_FORMAT_DEFAULT,
@@ -48,6 +50,7 @@ from _constants import (
     TASK_PREFIXES_FOR_NUMBERING,
     TASKS_FILE,
 )
+from _git_ops import current_branch
 from _state import read_json, read_text, write_json
 
 
@@ -272,7 +275,35 @@ def format_task_line(task: dict[str, Any]) -> str:
     )
 
 
+# D-110: branch de demanda no modo `pr` (`d-110-slug`, `e-002-slug`).
+BRANCH_TASK_RE = re.compile(r"^([de])-(\d+)(?:-|$)", re.IGNORECASE)
+
+
+def branch_task_id() -> str | None:
+    """Id da demanda pela branch do worktree onde o comando roda (R3).
+
+    So no modo `pr`: la cada demanda tem worktree e branch proprios, e a
+    branch identifica a demanda sem depender do `current-task.json` global,
+    que outra sessao pode ter movido (D-103). Branch sem o padrao, ou com id
+    que nao existe em `tasks.json`, devolve None e o chamador segue como
+    antes. Avisa no stderr quando resolve, para o operador ver de onde veio.
+    """
+    if DELIVERY_MODE != DELIVERY_MODE_PR:
+        return None
+    branch = current_branch()
+    match = BRANCH_TASK_RE.match(branch or "")
+    if not match:
+        return None
+    task_id = f"{match.group(1).upper()}-{match.group(2)}"
+    if find_task(task_id) is None:
+        return None
+    print(f"Guia Fluxo: demanda {task_id} resolvida pela branch {branch}.", file=sys.stderr)
+    return task_id
+
+
 def find_task_or_current(task_id: str | None) -> dict[str, Any]:
+    if task_id is None:
+        task_id = branch_task_id()
     current = read_json(CURRENT_FILE, {})
     chosen_id = task_id or current.get("taskId")
     if not chosen_id:
@@ -394,6 +425,8 @@ def print_task_created(task: dict[str, Any]) -> None:
 
 
 __all__ = [
+    "BRANCH_TASK_RE",
+    "branch_task_id",
     "new_task",
     "next_task_id",
     "find_task",

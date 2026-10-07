@@ -46,6 +46,24 @@ def run_git(*args: str, check: bool = True, capture: bool = False) -> subprocess
     )
 
 
+def current_branch() -> str | None:
+    """Branch da arvore onde o comando roda (CWD), ou None (destacado, sem git).
+
+    D-110: no modo `pr` a raiz do estado (ROOT) e a arvore principal; a branch
+    que identifica a demanda e a do worktree de onde o comando foi chamado.
+    """
+    try:
+        output = subprocess.check_output(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            cwd=Path.cwd(),
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError):
+        return None
+    return output if output and output != "HEAD" else None
+
+
 def git_changed_files() -> list[str]:
     if not has_git():
         return []
@@ -168,6 +186,7 @@ __all__ = [
     "has_git",
     "git_command",
     "run_git",
+    "current_branch",
     "git_changed_files",
     "git_staged_files",
     "git_commit",

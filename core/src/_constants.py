@@ -120,6 +120,8 @@ def _resolve_root() -> Path:
 
 
 ROOT = _resolve_root()
+# Modo de entrega do projeto (D-109/D-110), lido do process.json da raiz do estado.
+DELIVERY_MODE = _delivery_mode(ROOT)
 
 
 GUIA_DIR = ROOT / ".guia"
@@ -316,6 +318,7 @@ MIN_PYTHON_MINOR = 10
 
 __all__ = [
     "ROOT",
+    "DELIVERY_MODE",
     "DELIVERY_MODE_DIRECT",
     "DELIVERY_MODE_PR",
     "DELIVERY_MODES",
