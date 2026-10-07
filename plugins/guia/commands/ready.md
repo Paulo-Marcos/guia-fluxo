@@ -23,6 +23,10 @@ Pass changed files with `--file`, implementation notes with `--summary`, validat
 
 > **Declare every file this demand touched with `--file` (D-105).** `ready` no longer infers the file set from the whole tree (`git diff HEAD` would pick up the work of demands running in parallel in the same working copy). The `--file` set you pass here is what accumulates into the demand's `modifiedFiles` and, later, is exactly what `finish` commits — pathspec-scoped, so concurrent work is never swallowed. One `--file` per file. A committing `finish` with no product file declared (here or there) is refused.
 
+### Skill da etapa (R12, D-114)
+
+`ready` anuncia no stderr a skill que a etapa aciona (`skills.ready` no process.json; padrao `delivery-report`; `null` desliga). Confira se ela existe na sessao: se existir, rode-a; se nao, siga mesmo assim. Registre o que aconteceu com `--skill-ran <nome>` e/ou `--skill-missing <nome>` - vai para `skillsRun` na demanda, entao uma etapa que ficou sem skill aparece no relatorio.
+
 ### Convencao de commit do usuario (D-054)
 
 Antes de entregar, **verifique se existe uma skill de convencao de commits** do usuario/projeto — qualquer skill cujo nome ou descricao combine `commit` com `conventional`, `convention` ou `gitmoji` (ex.: `conventional-commit-gitmoji`). Olhe as skills disponiveis na sessao e em `.claude/`/plugins.

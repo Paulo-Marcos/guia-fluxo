@@ -35,5 +35,11 @@
       "format": "gitmoji-conventional",
       "coAuthor": "Claude Opus 5.5 <noreply@anthropic.com>"
     }
+  },
+  "skills": {
+    "quality": [
+      "clean-code-review",
+      "clean-architecture-guardian"
+    ]
   }
 }

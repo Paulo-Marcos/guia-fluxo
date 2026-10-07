@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 from _commit import compose_commit_message
-from _constants import DOCS_MAP_FILE, ROOT
+from _constants import DOCS_MAP_FILE, PROCESS_FILE, ROOT
 from _docs_hook import (
     compute_docs_candidates,
     load_docs_map,
@@ -16,6 +16,8 @@ from _docs_hook import (
 )
 from _git_ops import git_changed_files
 from _paths import relative
+from _skills import STAGE_COMMIT, announce_stage
+from _state import read_json
 from _tasks import find_task_or_current
 
 
@@ -72,6 +74,7 @@ def cmd_commit_message(args: argparse.Namespace) -> int:
     ponteiro, como nos demais verbos.
     """
     task = find_task_or_current(args.task_id)
+    announce_stage(STAGE_COMMIT, read_json(PROCESS_FILE, {}))
     subject = args.subject or task.get("commitSubject")
     message = compose_commit_message(task, args.unlock_reason, args.body, subject)
     sys.stdout.write(message.rstrip("\n") + "\n")

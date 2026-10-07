@@ -188,6 +188,10 @@ O resultado fica em `task.docsReview` no `.guia/tasks.json`. Quando `.guia/docs-
 
 O resultado (skills, achados, dimensoes, ou skip) fica em `task.qualityReview` no `.guia/tasks.json`. O gate e no-op quando so `.guia/**` mudou ou quando `finish.qualityGateByDefault` e `false` no `.guia/process.json` (default `true`). Distinto de **D-088** (avalia DDD/SOLID ao criar LOCK) e reusa **D-085** (`valida-pasta`).
 
+### Skills por etapa (`--skill-ran`, `--skill-missing`)
+
+`ready`, `finish` (etapa `quality`) e `commit-message` (etapa `commit`) anunciam no stderr a skill da etapa, lida de `skills.<etapa>` no `process.json` (D-114, R12). O agente confere se ela existe na sessao e registra: `--skill-ran <nome>` / `--skill-missing <nome>` (repetiveis) em `ready` e `finish`; no `finish`, `--quality-skill` tambem conta como `ran`. Etapa com `null` registra `disabled`. O portao de qualidade do D-095 continua exigindo `--quality-checked` ou `--quality-skip`; so a lista de candidatas vem da configuracao.
+
 ### `commit-message`
 
 ```powershell

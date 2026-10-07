@@ -102,6 +102,7 @@ def _ensure_dependencies_met(task: dict[str, Any], verb: str) -> None:
     )
     raise SystemExit("\n".join(lines))
 from _validation_runner import run_validation_commands
+from _skills import STAGE_QUALITY, STAGE_READY, announce_stage, record_stage
 from _worktree import cleanup_task_worktree
 
 
@@ -461,6 +462,10 @@ def cmd_ready(args: argparse.Namespace) -> int:
     if args.run_tests or config.get("ready", {}).get("runValidationByDefault", False):
         run_validation_commands(task, config, "ready")
 
+    # D-114 (R12): a etapa ready diz qual skill aciona e registra o que rodou.
+    announce_stage(STAGE_READY, config)
+    record_stage(task, STAGE_READY, config, args.skill_ran, args.skill_missing)
+
     save_task(task)
     set_current_task(task)
     upsert_features_entry(task)
@@ -678,6 +683,14 @@ def cmd_finish(args: argparse.Namespace) -> int:
     # D-095: registra a validacao de qualidade (skills rodadas, achados,
     # ou skip) na task para rastreabilidade no report/commit.
     task["qualityReview"] = build_quality_review_record(task, changed_files, args)
+    # D-114 (R12): --quality-skill conta como skill da etapa que rodou.
+    record_stage(
+        task,
+        STAGE_QUALITY,
+        config,
+        [*(args.quality_skill or []), *(args.skill_ran or [])],
+        args.skill_missing,
+    )
 
     if args.run_tests or finish_config.get("runValidationByDefault", False):
         run_validation_commands(task, config, "finish")
