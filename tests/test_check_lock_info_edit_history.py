@@ -89,6 +89,7 @@ class CheckLockJsonCLITests(unittest.TestCase):
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         self.assertEqual(result.returncode, 0, msg=result.stderr)
         payload = json.loads(result.stdout)
@@ -101,6 +102,7 @@ class CheckLockJsonCLITests(unittest.TestCase):
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         self.assertEqual(result.returncode, 0, msg=result.stderr)
         payload = json.loads(result.stdout)
@@ -113,6 +115,7 @@ class CheckLockJsonCLITests(unittest.TestCase):
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         # Pode ser 0 (com ou sem entries) - so verifica JSON parseavel
         self.assertEqual(result.returncode, 0, msg=result.stderr)
@@ -132,6 +135,7 @@ class CheckLockJsonCLITests(unittest.TestCase):
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         self.assertEqual(result.returncode, 0, msg=result.stderr)
         payload = json.loads(result.stdout)
@@ -144,6 +148,7 @@ class CheckLockJsonCLITests(unittest.TestCase):
             cwd=REPO_ROOT,
             capture_output=True,
             text=True,
+            encoding="utf-8",
         )
         self.assertEqual(result.returncode, 1)
         payload = json.loads(result.stdout)
