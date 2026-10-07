@@ -69,6 +69,11 @@ class FinishTransactionTests(unittest.TestCase):
         self.sandbox = Path(self._tmp.name)
         _seed(self.sandbox)
         _git(self.sandbox, "init", "-q")
+        # Identidade na config do repo: o commit do motor nao recebe os `-c`
+        # deste helper, e o runner do CI nao tem identidade global.
+        _git(self.sandbox, "config", "user.email", "t@t")
+        _git(self.sandbox, "config", "user.name", "t")
+        _git(self.sandbox, "config", "commit.gpgsign", "false")
         (self.sandbox / "a.txt").write_text("a\n", encoding="utf-8")
         _git(self.sandbox, "add", "a.txt")
         _git(self.sandbox, "commit", "-q", "-m", "seed")
