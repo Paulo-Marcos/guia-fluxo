@@ -258,6 +258,18 @@ def build_parser() -> argparse.ArgumentParser:
             "finish no lugar do header padrao. Veja a orientacao no corpo de ready.md."
         ),
     )
+    p_ready.add_argument(
+        "--skill-ran",
+        action="append",
+        default=[],
+        help="Skill da etapa que rodou (R12/D-114; repetivel).",
+    )
+    p_ready.add_argument(
+        "--skill-missing",
+        action="append",
+        default=[],
+        help="Skill da etapa que nao existe na sessao: a etapa segue e fica registrada (repetivel).",
+    )
     p_ready.set_defaults(func=cmd_ready)
 
     p_finish = sub.add_parser("finish", help="Close an already validated task.")
@@ -329,6 +341,18 @@ def build_parser() -> argparse.ArgumentParser:
     p_finish.add_argument(
         "--quality-skip",
         help="Justificativa quando nao ha nada a avaliar na validacao de qualidade.",
+    )
+    p_finish.add_argument(
+        "--skill-ran",
+        action="append",
+        default=[],
+        help="Skill da etapa que rodou (R12/D-114; repetivel).",
+    )
+    p_finish.add_argument(
+        "--skill-missing",
+        action="append",
+        default=[],
+        help="Skill da etapa que nao existe na sessao: a etapa segue e fica registrada (repetivel).",
     )
     p_finish.set_defaults(func=cmd_finish)
 

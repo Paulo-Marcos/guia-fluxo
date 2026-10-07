@@ -31,9 +31,9 @@ from _constants import (
     GUIA_DIR,
     MSG_NONE_PLACEHOLDER,
     QUALITY_DIMENSIONS,
-    QUALITY_SKILL_SUGGESTIONS,
     ROOT,
 )
+from _skills import STAGE_QUALITY, stage_skills
 
 _GUIA_PREFIX = (GUIA_DIR.relative_to(ROOT).as_posix() + "/")
 
@@ -89,7 +89,7 @@ def ensure_quality_review_ok(
     checked = bool(getattr(args, "quality_checked", False))
     if skipped or checked or skills:
         return
-    print_quality_block(task, candidates)
+    print_quality_block(task, candidates, config)
     raise SystemExit(
         "quality-check: rode as skills de qualidade sobre os arquivos acima "
         "(qualidade de codigo, tamanho de funcao/arquivo, SRP, cobertura, "
@@ -117,7 +117,9 @@ def build_quality_review_record(
     return record
 
 
-def print_quality_block(task: dict[str, Any], candidates: list[str]) -> None:
+def print_quality_block(
+    task: dict[str, Any], candidates: list[str], config: dict[str, Any] | None = None
+) -> None:
     print()
     print(f"=== quality-check: {task.get('id')} ===")
     print(
@@ -135,9 +137,15 @@ def print_quality_block(task: dict[str, Any], candidates: list[str]) -> None:
     for dim in QUALITY_DIMENSIONS:
         print(f"  - {dim}")
     print()
-    print("Skills candidatas (use as que existirem no ambiente):")
-    for skill in QUALITY_SKILL_SUGGESTIONS:
-        print(f"  - {skill}")
+    # D-114 (R12): as candidatas vem de `skills.quality` (padrao: a lista de
+    # sempre). Desligada, o gate continua exigindo a confirmacao.
+    skills, disabled = stage_skills(STAGE_QUALITY, config or {})
+    if disabled:
+        print("Skills candidatas: desligadas em skills.quality (avalie sem skill).")
+    else:
+        print("Skills candidatas (use as que existirem no ambiente):")
+        for skill in skills:
+            print(f"  - {skill}")
     print()
     print("Como prosseguir:")
     print("  - Rodou e (se preciso) refatorou? Re-rode com --quality-checked")

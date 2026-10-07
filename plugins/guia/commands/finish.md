@@ -41,7 +41,7 @@ If the project has no `.guia/docs-map.yaml`, the hook is a no-op and `finish` ru
 Before closing:
 
 1. Read `modifiedFiles` (the changed product files for this task).
-2. Invoke the available **quality skills** — both **project** and **global** — over those files. Candidates in this environment:
+2. Invoke the available **quality skills** — both **project** and **global** — over those files. The list comes from `skills.quality` in `.guia/process.json` (R12, D-114: a name, a list, or `null` to disable; absent = the defaults below). The quality gate prints the configured list. Defaults:
    - `clean-code-review` (micro: readability, names, function size, smells)
    - `clean-architecture-guardian` (macro: layers, SOLID, SRP, coupling)
    - `tdd-dotnet` (tests/coverage of what changed)
@@ -54,6 +54,8 @@ Then close, confirming the validation ran:
 
 ```text
 finish <D-NNN> --docs-skip "..." --quality-checked --quality-skill clean-code-review --quality-finding "extraiu funcao X; cobriu caso Y"
+# skill configurada que nao existe nesta sessao (R12, D-114): siga e registre
+finish <D-NNN> --quality-checked --quality-skill clean-code-review --skill-missing valida-pasta
 # when there is genuinely nothing to assess (e.g. trivial constant/rename):
 finish <D-NNN> --docs-skip "..." --quality-skip "alteracao trivial, sem impacto de qualidade"
 ```
