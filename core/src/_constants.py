@@ -21,6 +21,21 @@ from pathlib import Path
 DELIVERY_MODE_DIRECT = "direct"
 DELIVERY_MODE_PR = "pr"
 DELIVERY_MODES = (DELIVERY_MODE_DIRECT, DELIVERY_MODE_PR)
+# D-112 (R1): branch base do projeto, contra a qual se medem os arquivos da
+# demanda (adicao/modificacao/delecao para as travas).
+DELIVERY_BASE_BRANCH_DEFAULT = "main"
+# D-112 (R1 commit.format): "legacy" e o header historico `kind(ID): titulo`
+# com o rodape `Task:`; "gitmoji-conventional" e `<emoji> <tipo>(ID): titulo`
+# com as marcas [unlock:] e o Co-Authored-By no fim.
+COMMIT_FORMAT_LEGACY = "legacy"
+COMMIT_FORMAT_GITMOJI = "gitmoji-conventional"
+COMMIT_GITMOJI_BY_KIND = {
+    "feature": "✨ feat",
+    "bug": "🐛 fix",
+    "issue": "🐛 fix",
+    "chore": "🧹 chore",
+    "epic": "🎯 chore",
+}
 
 
 def _linked_worktree_main(root: Path) -> Path | None:
@@ -318,6 +333,10 @@ MIN_PYTHON_MINOR = 10
 
 __all__ = [
     "ROOT",
+    "COMMIT_FORMAT_GITMOJI",
+    "COMMIT_FORMAT_LEGACY",
+    "COMMIT_GITMOJI_BY_KIND",
+    "DELIVERY_BASE_BRANCH_DEFAULT",
     "DELIVERY_MODE",
     "DELIVERY_MODE_DIRECT",
     "DELIVERY_MODE_PR",

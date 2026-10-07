@@ -188,6 +188,14 @@ O resultado fica em `task.docsReview` no `.guia/tasks.json`. Quando `.guia/docs-
 
 O resultado (skills, achados, dimensoes, ou skip) fica em `task.qualityReview` no `.guia/tasks.json`. O gate e no-op quando so `.guia/**` mudou ou quando `finish.qualityGateByDefault` e `false` no `.guia/process.json` (default `true`). Distinto de **D-088** (avalia DDD/SOLID ao criar LOCK) e reusa **D-085** (`valida-pasta`).
 
+### `commit-message`
+
+```powershell
+.\core\bin\guia.ps1 commit-message [D-NNN] [--body "o porque"] [--unlock-reason "<trava>=<motivo>"] [--subject "..."]
+```
+
+Imprime a mensagem de commit da demanda no formato de `delivery.commit.format` (D-112). No modo `pr` o `finish` nao commita, entao e esta mensagem que o agente usa no `git commit -F` e no corpo do squash. No formato `gitmoji-conventional`: header `<emoji> <tipo>(D-NNN): titulo` (feature -> `✨ feat`, bug -> `🐛 fix`, chore -> `🧹 chore`), corpo = `--body`, uma marca `[unlock:<trava>] motivo: ...` por trava que os arquivos declarados tocam e `Co-Authored-By` de `delivery.commit.coAuthor`. A operacao de cada arquivo (adicao, modificacao, delecao) vem do git contra a base (`merge-base` com `origin/<baseBranch>`), nao do disco: arquivo novo conta como adicao. Trava tocada sem motivo recusa (exit 1) citando cada uma; `--unlock-reason` aceita `<trava>=<motivo>` ou um `<motivo>` para todas. Sem id, vale a branch (D-110). O `finish` com commit (modo `direct`) aceita o mesmo `--unlock-reason`.
+
 ### `docs-check`
 
 ```powershell

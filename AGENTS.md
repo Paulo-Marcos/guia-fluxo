@@ -62,7 +62,7 @@ Reference completa: [`docs/reference/cli.md`](docs/reference/cli.md).
 
 ## Convencoes
 
-- **Commits:** `feature: ...`, `bug: ...`, `chore: ...` no imperativo (ADR-0011 Fase 4: `issue:` deixou de ser usado). Exemplos no `git log`. Para arquivo travado: incluir `[unlock:<feature-id>] motivo: <razao>`.
+- **Commits:** neste repo, gitmoji em portugues (`<emoji> <tipo>(D-NNN): ...`), montado por `guia commit-message` (D-112: formato de `delivery.commit` e marcas `[unlock:]` das travas tocadas). Formato legado dos consumidores sem `delivery`: `feature: ...`, `bug: ...`, `chore: ...` no imperativo (ADR-0011 Fase 4: `issue:` deixou de ser usado). Exemplos no `git log`. Para arquivo travado: incluir `[unlock:<feature-id>] motivo: <razao>`.
 - **Docs:** estrutura Diataxis em `docs/{tutorials,how-to,reference,explanation}/`. Antes de criar arquivo de doc, leia [`docs/explanation/por-que-diataxis.md`](docs/explanation/por-que-diataxis.md).
 - **Plataforma alvo:** comandos no README/docs usam PowerShell (`.\core\bin\guia.ps1`). Em Linux/Mac use `python core/src/guia.py <sub>` - o resultado e identico.
 
