@@ -30,6 +30,10 @@
     "keepInDemandas": 30
   },
   "delivery": {
-    "mode": "pr"
+    "mode": "pr",
+    "commit": {
+      "format": "gitmoji-conventional",
+      "coAuthor": "Claude Opus 5.5 <noreply@anthropic.com>"
+    }
   }
 }

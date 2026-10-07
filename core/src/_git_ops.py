@@ -79,6 +79,32 @@ def git_changed_files() -> list[str]:
     return [line.strip() for line in output.splitlines() if line.strip()]
 
 
+def name_status_against_base(files: Iterable[str], base_branch: str) -> list[str]:
+    """Linhas `name-status` dos `files` contra a base da branch atual (D-112).
+
+    Base = merge-base de HEAD com `origin/<base_branch>` (o que o PR vai
+    mostrar); sem remoto, HEAD. Compara a arvore de trabalho com a base, entao
+    conta o que ja foi commitado na branch e o que ainda nao foi. Arquivo
+    novo nao rastreado (e nao ignorado) entra como `A`. Roda no CWD: no modo
+    `pr` e o worktree da demanda, nao a principal.
+    """
+    files_list = list(files)
+    if not files_list:
+        return []
+    cwd = Path.cwd()
+
+    def _out(*args: str) -> str | None:
+        result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True)
+        return result.stdout if result.returncode == 0 else None
+
+    base = (_out("merge-base", "HEAD", f"origin/{base_branch}") or "").strip() or "HEAD"
+    tracked = _out("diff", "--name-status", "--no-renames", base, "--", *files_list) or ""
+    untracked = _out("ls-files", "--others", "--exclude-standard", "--", *files_list) or ""
+    lines = [line for line in tracked.splitlines() if line.strip()]
+    lines += [f"A\t{path}" for path in untracked.splitlines() if path.strip()]
+    return lines
+
+
 def git_ignored_files(files: Iterable[str]) -> set[str]:
     """Subconjunto de `files` que o .gitignore ignora (D-111, D-579).
 
@@ -209,6 +235,7 @@ __all__ = [
     "current_branch",
     "git_changed_files",
     "git_ignored_files",
+    "name_status_against_base",
     "git_staged_files",
     "git_commit",
     "git_branch_exists",

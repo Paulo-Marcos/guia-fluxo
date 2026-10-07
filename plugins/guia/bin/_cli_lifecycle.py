@@ -703,7 +703,12 @@ def cmd_finish(args: argparse.Namespace) -> int:
             # D-054: subject da convencao do usuario — --commit-subject do finish
             # tem precedencia sobre o que foi persistido no ready (commitSubject).
             subject_override = getattr(args, "commit_subject", None) or task.get("commitSubject")
-            commit_task(task, getattr(args, "commit_body", None), subject_override)
+            commit_task(
+                task,
+                getattr(args, "commit_body", None),
+                subject_override,
+                getattr(args, "unlock_reason", None),
+            )
         except BaseException:
             task.clear()
             task.update(task_before)

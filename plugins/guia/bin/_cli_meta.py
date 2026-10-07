@@ -1,4 +1,4 @@
-"""CLI handlers: docs-check / render."""
+"""CLI handlers: docs-check / render / commit-message."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import json
 import subprocess
 import sys
 
+from _commit import compose_commit_message
 from _constants import DOCS_MAP_FILE, ROOT
 from _docs_hook import (
     compute_docs_candidates,
@@ -62,4 +63,19 @@ def cmd_render(args: argparse.Namespace) -> int:
     return subprocess.call(cmd)
 
 
-__all__ = ["cmd_docs_check", "cmd_render"]
+def cmd_commit_message(args: argparse.Namespace) -> int:
+    """Imprime a mensagem de commit da demanda no formato configurado (D-112).
+
+    No modo `pr` o `finish` nao commita (D-111): quem commita e monta o
+    squash e o agente, e esta e a mensagem que ele usa (`git commit -F`,
+    `gh pr merge --body-file`). Sem id, vale a branch (D-110) e depois o
+    ponteiro, como nos demais verbos.
+    """
+    task = find_task_or_current(args.task_id)
+    subject = args.subject or task.get("commitSubject")
+    message = compose_commit_message(task, args.unlock_reason, args.body, subject)
+    sys.stdout.write(message.rstrip("\n") + "\n")
+    return 0
+
+
+__all__ = ["cmd_commit_message", "cmd_docs_check", "cmd_render"]

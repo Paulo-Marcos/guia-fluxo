@@ -88,7 +88,7 @@ from _cli_deps import (  # noqa: E402
     cmd_depends_list,
     cmd_depends_remove,
 )
-from _cli_meta import cmd_docs_check, cmd_render  # noqa: E402
+from _cli_meta import cmd_commit_message, cmd_docs_check, cmd_render  # noqa: E402
 from _cli_tasks import (  # noqa: E402
     cmd_stats,
     cmd_tasks_filter,
@@ -272,6 +272,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
     )
     p_finish.add_argument(
+        "--unlock-reason",
+        action="append",
+        default=[],
+        help='Motivo das marcas [unlock:] no formato gitmoji (D-112): "<trava>=<motivo>" ou "<motivo>".',
+    )
+    p_finish.add_argument(
         "--commit-body",
         help="Texto livre anexado ao corpo do commit (complementa summary/validacoes/arquivos).",
     )
@@ -336,6 +342,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="Saida em JSON para consumo por agente.",
     )
     p_docs_check.set_defaults(func=cmd_docs_check)
+
+    p_commit_msg = sub.add_parser(
+        "commit-message",
+        help="Imprime a mensagem de commit da demanda no formato de delivery.commit (D-112).",
+    )
+    p_commit_msg.add_argument("task_id", nargs="?")
+    p_commit_msg.add_argument(
+        "--unlock-reason",
+        action="append",
+        default=[],
+        help='Motivo das marcas [unlock:]: "<trava>=<motivo>" ou "<motivo>" para todas (repetivel).',
+    )
+    p_commit_msg.add_argument("--body", help="Texto livre no corpo (o porque).")
+    p_commit_msg.add_argument("--subject", help="Header pronto; substitui o montado.")
+    p_commit_msg.set_defaults(func=cmd_commit_message)
 
     p_plan = sub.add_parser(
         "plan",
