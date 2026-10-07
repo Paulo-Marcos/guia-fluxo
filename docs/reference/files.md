@@ -41,6 +41,7 @@ Configuracao por projeto. Inclui:
 - nome do projeto;
 - comandos de teste e validacao;
 - politica de lock (autovalidacao, etc.);
+- `delivery.mode` (D-109): `direct` (padrao, quando ausente) ou `pr`. No modo `pr`, cada demanda trabalha num worktree ligado e o estado (`tasks.json`, `backlog.json`, `current-task.json`, `DEMANDAS.md`) mora so na arvore principal, fora do git: rodado de dentro de um worktree, o motor le e grava o `.guia/` da principal. Valor desconhecido conta como `direct`;
 - `archive.keepInDemandas` (D-090): quantas demandas mais recentes ficam em `.guia/DEMANDAS.md` antes do arquivamento (default `30`). As mais antigas migram para `.guia/historico/DEMANDAS.md`.
 
 ## `.guia/tasks.json`

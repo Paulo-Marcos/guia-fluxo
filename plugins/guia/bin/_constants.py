@@ -10,9 +10,73 @@ without cycles.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 from pathlib import Path
+
+# D-109 (R1): como o codigo chega a main. "direct" = commit do finish na
+# arvore atual (comportamento historico); "pr" = worktree por demanda, PR e
+# squash, com o estado so na arvore principal.
+DELIVERY_MODE_DIRECT = "direct"
+DELIVERY_MODE_PR = "pr"
+DELIVERY_MODES = (DELIVERY_MODE_DIRECT, DELIVERY_MODE_PR)
+
+
+def _linked_worktree_main(root: Path) -> Path | None:
+    """Arvore principal de `root`, quando `root` e um worktree ligado do git.
+
+    Worktree ligado tem `.git` como arquivo (`gitdir: <comum>/worktrees/<n>`)
+    e o gitdir dele tem `commondir`, que aponta o `.git` comum; a arvore
+    principal e a pasta dona desse `.git`. Le arquivos em vez de chamar o
+    `git` porque roda no import. Submodulo (`.git` arquivo sem `commondir`),
+    repo comum e repo bare devolvem None.
+    """
+    dot_git = root / ".git"
+    if not dot_git.is_file():
+        return None
+    try:
+        text = dot_git.read_text(encoding="utf-8").strip()
+        if not text.startswith("gitdir:"):
+            return None
+        gitdir = Path(text[len("gitdir:"):].strip())
+        if not gitdir.is_absolute():
+            gitdir = root / gitdir
+        commondir_file = gitdir / "commondir"
+        if not commondir_file.is_file():
+            return None
+        common = Path(commondir_file.read_text(encoding="utf-8").strip())
+    except OSError:
+        return None
+    if not common.is_absolute():
+        common = gitdir / common
+    common = common.resolve()
+    return common.parent if common.name == ".git" else None
+
+
+def _delivery_mode(root: Path) -> str:
+    """`delivery.mode` do `.guia/process.json` de `root`; padrao `direct`."""
+    try:
+        data = json.loads((root / ".guia" / "process.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return DELIVERY_MODE_DIRECT
+    delivery = data.get("delivery") if isinstance(data, dict) else None
+    mode = delivery.get("mode") if isinstance(delivery, dict) else None
+    return mode if mode in DELIVERY_MODES else DELIVERY_MODE_DIRECT
+
+
+def _state_root(candidate: Path) -> Path:
+    """No modo `pr`, troca um worktree ligado pela arvore principal (R3).
+
+    O estado (tasks, backlog, current-task) e local e mora so na principal;
+    o `.guia/` do worktree tem so a configuracao versionada. Sem o desvio, o
+    motor criaria ali uma copia orfa. O modo vem do `process.json` da
+    principal, que e o estado autoritativo. No `direct`, nada muda.
+    """
+    main = _linked_worktree_main(candidate)
+    if main is not None and _delivery_mode(main) == DELIVERY_MODE_PR:
+        return main
+    return candidate
 
 
 def _resolve_root() -> Path:
@@ -39,6 +103,10 @@ def _resolve_root() -> Path:
        project whose `.guia/` happens to sit above the CWD (e.g. a stray
        `.guia/` in the temp dir or the user's home), the same footgun
        `git`'s upward `.git` search has. Run commands from the project root.
+
+    Layers 2 and 3 then pass through `_state_root` (D-109): in `pr` mode a
+    linked worktree resolves to the main working tree. The env override is
+    explicit and is never redirected.
     """
     override = os.environ.get("GUIA_PROJECT_ROOT")
     if override:
@@ -46,9 +114,9 @@ def _resolve_root() -> Path:
 
     script_root = Path(__file__).resolve().parents[2]
     if (script_root / ".guia").is_dir():
-        return script_root
+        return _state_root(script_root)
 
-    return Path.cwd().resolve()
+    return _state_root(Path.cwd().resolve())
 
 
 ROOT = _resolve_root()
@@ -248,6 +316,9 @@ MIN_PYTHON_MINOR = 10
 
 __all__ = [
     "ROOT",
+    "DELIVERY_MODE_DIRECT",
+    "DELIVERY_MODE_PR",
+    "DELIVERY_MODES",
     "GUIA_DIR",
     "PROCESS_FILE",
     "TASKS_FILE",

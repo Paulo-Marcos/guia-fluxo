@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from conftest_paths import REPO_ROOT, ensure_core_importable
+from conftest_paths import ensure_core_importable
 
 ensure_core_importable()
 
@@ -40,7 +40,10 @@ class SlugifyTests(unittest.TestCase):
 
 class RelativeTests(unittest.TestCase):
     def test_inside_repo(self) -> None:
-        path = REPO_ROOT / "README.md"
+        # Relativo a ROOT (a raiz do estado). No modo `pr`, rodado de um
+        # worktree, ROOT e a arvore principal e nao o REPO_ROOT do teste
+        # (D-109), entao o contrato se afirma contra ROOT.
+        path = _paths.ROOT / "README.md"
         self.assertEqual(_paths.relative(path), "README.md")
 
     def test_outside_repo_fallback(self) -> None:
