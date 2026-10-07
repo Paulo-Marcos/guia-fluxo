@@ -33,6 +33,8 @@ Migra um projeto **existente** do layout antigo (pre-D-055/D-056) para o atual: 
 
 Sanity check: confirma layout, dependencias e que os arquivos esperados existem. `.guia/process.json` (configuracao) e obrigatorio; `tasks.json`, `backlog.json` e `current-task.json` (estado) ausentes geram so aviso, porque o estado pode estar fora do git (checkout limpo do CI) ou o projeto ainda nao ter demandas (D-106). `--strict` promove avisos a erro.
 
+**Hook `commit-msg` (D-115).** Num repositorio git, o `doctor` confere se o hook das travas vai rodar no worktree onde o comando roda: avisa quando `core.hooksPath` aponta para `NUL`/`/dev/null` (hooks desligados), quando a pasta configurada nao tem `commit-msg`, quando o `config.worktree` diverge da config comum (com `extensions.worktreeConfig`), e quando um projeto com travas nao tem hook configurado nem `commit-msg` em `.git/hooks`. Sao avisos; `--strict` reprova.
+
 ### `feature`
 
 ```powershell
