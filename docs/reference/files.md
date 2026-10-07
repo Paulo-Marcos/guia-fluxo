@@ -43,6 +43,7 @@ Configuracao por projeto. Inclui:
 - politica de lock (autovalidacao, etc.);
 - `delivery.mode` (D-109): `direct` (padrao, quando ausente) ou `pr`. No modo `pr`, cada demanda trabalha num worktree ligado e o estado (`tasks.json`, `backlog.json`, `current-task.json`, `DEMANDAS.md`) mora so na arvore principal, fora do git: rodado de dentro de um worktree, o motor le e grava o `.guia/` da principal. Valor desconhecido conta como `direct`;
 - `delivery.commit` (D-112): `format` = `legacy` (padrao: `kind(ID): titulo` + rodape `Task:`) ou `gitmoji-conventional` (`<emoji> <tipo>(ID): titulo`, corpo com o porque, marcas `[unlock:]` e `Co-Authored-By` de `coAuthor`); `delivery.baseBranch` (padrao `main`) e a base contra a qual se medem os arquivos da demanda para as travas;
+- `delivery.worktree` (D-113, modo `pr`): modelos `path` (padrao `../{repo}-{idCompact}`), `branch` (`{idLower}-{slug}`) e `from` (`origin/{baseBranch}`); `envFiles` copiados da principal para o worktree; `junctions` = pastas da principal ligadas no worktree (juncao no Windows, link simbolico no resto), criadas e desfeitas pelo motor. Placeholders: `{repo}`, `{id}`, `{idLower}`, `{idCompact}`, `{slug}` (titulo sem acento), `{baseBranch}`. No modo `direct` seguem os fixos `.claude/worktrees/<slug>` e `codex/<slug>`;
 - `archive.keepInDemandas` (D-090): quantas demandas mais recentes ficam em `.guia/DEMANDAS.md` antes do arquivamento (default `30`). As mais antigas migram para `.guia/historico/DEMANDAS.md`.
 
 ## `.guia/tasks.json`
