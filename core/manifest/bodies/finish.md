@@ -61,7 +61,7 @@ finish <D-NNN> --file <path> --docs-skip "internal flow, no user-facing change" 
 
 > **Declare the demand's files with `--file` (behavioral rule, D-105).** When committing, `finish` no longer infers the file set from the whole tree. `git diff HEAD` sees the work of every demand running in parallel in the same working copy, and the old `git add -A` swallowed it into the closing commit (the reason `--no-commit` was a workaround). Now the commit is **scoped to the pathspecs you declare** (or that a prior `ready` accumulated) — pass one `--file` per file **this** demand touched. A committing `finish` with no product file declared is **refused** with a message asking for `--file`. You no longer need `--no-commit` to avoid swallowing concurrent work; it survives only as a genuine dry-close.
 
-`finish` commits by default (now isolated to your `--file` set). Use `--no-commit` for a real dry close. Lock with `--lock --lock-id feature-slug --lock-description "..."` only when the developer asks for it.
+`finish` commits by default (now isolated to your `--file` set). Use `--no-commit` for a real dry close. **In `delivery.mode: "pr"` it never commits** (D-111): the code reaches `main` through the PR squash, so `finish` only closes the state, and `--commit` is refused. Lock with `--lock --lock-id feature-slug --lock-description "..."` only when the developer asks for it.
 
 {{include_per_target: _partials/post_cli}}
 

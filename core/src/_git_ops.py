@@ -79,6 +79,26 @@ def git_changed_files() -> list[str]:
     return [line.strip() for line in output.splitlines() if line.strip()]
 
 
+def git_ignored_files(files: Iterable[str]) -> set[str]:
+    """Subconjunto de `files` que o .gitignore ignora (D-111, D-579).
+
+    `git check-ignore` sai 1 quando nenhum e ignorado e 0 listando os que
+    sao; arquivo versionado nunca conta como ignorado (sem `--no-index`).
+    """
+    files_list = list(files)
+    if not files_list:
+        return set()
+    result = subprocess.run(
+        git_command("check-ignore", "--", *files_list),
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+    )
+    if result.returncode not in (0, 1):
+        return set()
+    return {line.strip() for line in result.stdout.splitlines() if line.strip()}
+
+
 def git_staged_files() -> list[str]:
     if not has_git():
         return []
@@ -188,6 +208,7 @@ __all__ = [
     "run_git",
     "current_branch",
     "git_changed_files",
+    "git_ignored_files",
     "git_staged_files",
     "git_commit",
     "git_branch_exists",
