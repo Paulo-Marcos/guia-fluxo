@@ -1,8 +1,7 @@
-# Roda a suite pytest (tests/) em matrix Windows + Linux x Python 3.10/3.12.
-# Ate aqui nenhum workflow exercitava tests/ - so render-check (doctor +
-# render --check) e lock-check. Este fecha o pilar "Testes + CI": cada push
-# em main e cada pull_request roda a suite em ambos os SOs para pegar
-# regressao cross-plataforma (ex.: encoding cp1252 vs UTF-8 no Windows).
+# Roda a suite pytest (tests/) em matrix Windows + Linux x Python 3.10/3.12,
+# mais as conferencias de layout (doctor + render --check), em todo push na
+# main e em todo pull_request. O job `CI ok` agrega tudo num check so, que e o
+# exigido pela protecao da main (D-106).
 #
 # O pack roda com stdlib + pyyaml; pytest e a unica dependencia extra de
 # teste. Sem pyproject/pytest.ini: pytest descobre tests/ pela raiz sem config.
@@ -38,3 +37,57 @@ jobs:
 
       - name: pytest
         run: pytest
+
+  # Era o workflow render-check.yml, com filtro de caminhos. Check com filtro
+  # nao pode ser exigido: quando o filtro nao casa, o check nunca roda e o PR
+  # espera para sempre. Aqui roda sempre e e barato. O checkout nao tem o
+  # estado do Guia (fora do git desde a D-106): o doctor confere a
+  # configuracao versionada e trata estado ausente como projeto sem demandas.
+  render-check:
+    name: doctor + render --check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: doctor (arquivos de processo integros)
+        run: python core/src/guia.py doctor
+
+      - name: render --check (skills geradas em sincronia com manifest)
+        run: python core/build/render-skills.py --check
+
+  ci-ok:
+    name: CI ok
+    if: always()
+    needs: [tests, render-check]
+    runs-on: ubuntu-latest
+    steps:
+      # D-881 (gerador-cortes): o passo roda SEMPRE e so aprova com todos os
+      # jobs em success. La ele rodava so para reprovar, com `if` sem funcao de
+      # status, e o GitHub poe um success() implicito. Numa run o GitHub
+      # cancelou quatro jobs por falta de runner, esse success() deu falso, o
+      # passo foi pulado e o CI ok ficou verde. Com always() o success() nao
+      # entra na conta; exigir success de cada job pega tambem resultado que
+      # surgir. E check pulado conta como aprovado na protecao: por isso o
+      # always() tambem no job.
+      - name: Todos os jobs passaram
+        if: always()
+        shell: python
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          import json, os, sys
+
+          resultados = {job: dado["result"] for job, dado in json.loads(os.environ["NEEDS"]).items()}
+          for job, resultado in resultados.items():
+              print(f"{job}: {resultado}")
+          reprovados = [job for job, resultado in resultados.items() if resultado != "success"]
+          if reprovados or not resultados:
+              print(f"::error::Jobs que nao terminaram em success: {', '.join(reprovados) or 'nenhum job para julgar'}")
+              sys.exit(1)

@@ -147,10 +147,10 @@ ortogonal), [B-011](../../FEATURES.md) ja foi obsoletado por F-027
 
 ## Links
 
-- [B-017](../../.guia/backlog.json) - estado Planejada (depende deste ADR).
-- [B-018](../../.guia/backlog.json) - current-task concorrente (depende deste ADR).
-- [B-011](../../.guia/backlog.json) - cancel/abandon (depende deste ADR).
-- [B-012](../../.guia/backlog.json) - verbo cancel (depende deste ADR).
-- [B-013](../../.guia/backlog.json) - block/unblock (depende deste ADR).
+- B-017 (backlog do Guia, estado local) - estado Planejada (depende deste ADR).
+- B-018 (backlog do Guia, estado local) - current-task concorrente (depende deste ADR).
+- B-011 (backlog do Guia, estado local) - cancel/abandon (depende deste ADR).
+- B-012 (backlog do Guia, estado local) - verbo cancel (depende deste ADR).
+- B-013 (backlog do Guia, estado local) - block/unblock (depende deste ADR).
 - [ADR-0001](0001-script-fonte-da-verdade.md) - motor centralizado e o que viabiliza migracao one-shot.
 - [ADR-0003](0003-json-maquina-markdown-humano.md) - JSON como fonte; `tasks.json` ja modela `kind`+`status`.

@@ -1,0 +1,21 @@
+version: 2
+
+# D-106 (padrao da D-689 do gerador-cortes): as atualizacoes chegam num PR so,
+# agrupadas, em vez de PRs soltos que se acumulam ate o Dependabot parar de
+# propor versao nova (inclusive as de seguranca). So github-actions: o pack
+# roda com stdlib + pyyaml e nao tem manifesto pip versionado.
+#
+# commit-message: o prefixo segue o padrao de commit gitmoji do processo novo.
+# Sem ele, o Dependabot escreve `build(deps): ...`.
+
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "🧹 chore"
+      include: "scope"
+    groups:
+      actions:
+        update-types: ["minor", "patch"]

@@ -1,6 +1,6 @@
 # guia-fluxo
 
-[![tests](https://github.com/Paulo-Marcos/guia-fluxo/actions/workflows/tests.yml/badge.svg)](https://github.com/Paulo-Marcos/guia-fluxo/actions/workflows/tests.yml) [![render-check](https://github.com/Paulo-Marcos/guia-fluxo/actions/workflows/render-check.yml/badge.svg)](https://github.com/Paulo-Marcos/guia-fluxo/actions/workflows/render-check.yml) [![release](https://img.shields.io/github/v/release/Paulo-Marcos/guia-fluxo)](https://github.com/Paulo-Marcos/guia-fluxo/releases) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![tests](https://github.com/Paulo-Marcos/guia-fluxo/actions/workflows/tests.yml/badge.svg)](https://github.com/Paulo-Marcos/guia-fluxo/actions/workflows/tests.yml) [![release](https://img.shields.io/github/v/release/Paulo-Marcos/guia-fluxo)](https://github.com/Paulo-Marcos/guia-fluxo/releases) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 > Transforme pedidos soltos a um agente de IA em **demandas rastreáveis** — e proteja o código já homologado contra "refactor de brinde".
 
@@ -61,6 +61,8 @@ Os verbos do dia a dia (Windows usa o wrapper; em Linux/macOS troque por `python
 ```
 
 Cada comando atualiza o estado (`.guia/*.json`, `.guia/DEMANDAS.md`) e imprime o `NOME DA DEMANDA`, que o agente repete pra amarrar o trabalho à demanda. É info da demanda, não um título de chat — renomear o chat é opcional. Referência completa: [`docs/reference/cli.md`](docs/reference/cli.md).
+
+Neste repositório o estado das demandas (`tasks.json`, `backlog.json`, `DEMANDAS.md`, `current-task.json`, `historico/`) é **local**, fora do git, e mora só na pasta principal: cada demanda trabalha num worktree e chega à `main` por PR. A configuração (`process.json`, `docs-map.yaml`, `locks/`) continua versionada.
 
 ## Documentação
 

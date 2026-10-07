@@ -72,5 +72,44 @@ class DoctorConsumerLiteTests(unittest.TestCase):
             self.assertIn("Guia Fluxo files OK", doctor_result.stdout)
 
 
+class DoctorStatelessTests(unittest.TestCase):
+    """D-106: estado fora do git (checkout limpo do CI) e projeto sem demandas.
+
+    `process.json` e configuracao versionada e continua obrigatorio; tasks,
+    backlog e current-task sao estado local e, ausentes, so geram aviso.
+    """
+
+    def _sandbox_without_state(self, tmp: str) -> Path:
+        sandbox = Path(tmp)
+        _seed_consumer(sandbox)
+        init_result = _run_consumer(sandbox, "init", "--project-name", "stateless")
+        self.assertEqual(init_result.returncode, 0, msg=init_result.stderr)
+        for name in ("tasks.json", "backlog.json", "current-task.json"):
+            (sandbox / ".guia" / name).unlink(missing_ok=True)
+        return sandbox
+
+    def test_missing_state_is_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sandbox = self._sandbox_without_state(tmp)
+            result = _run_consumer(sandbox, "doctor")
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            self.assertIn("warn: estado ausente", result.stderr)
+            self.assertFalse((sandbox / ".guia" / "tasks.json").exists(), "doctor nao deve semear estado")
+
+    def test_missing_state_fails_in_strict(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sandbox = self._sandbox_without_state(tmp)
+            result = _run_consumer(sandbox, "doctor", "--strict")
+            self.assertEqual(result.returncode, 1, msg=result.stdout)
+
+    def test_missing_process_file_still_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sandbox = self._sandbox_without_state(tmp)
+            (sandbox / ".guia" / "process.json").unlink()
+            result = _run_consumer(sandbox, "doctor")
+            self.assertEqual(result.returncode, 1, msg=result.stdout)
+            self.assertIn("missing: .guia/process.json", result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
