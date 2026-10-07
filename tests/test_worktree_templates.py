@@ -137,6 +137,17 @@ class WorktreeTemplateTests(unittest.TestCase):
         self.assertIn("'../fora'", result.stdout + result.stderr)
         self.assertFalse(self.worktree.exists(), "recusa antes de criar o worktree")
 
+    def test_junction_name_is_not_parsed_by_a_shell(self) -> None:
+        """`&` no nome nao vira separador de comando (era `cmd /c mklink`)."""
+        process = self.main / ".guia" / "process.json"
+        data = json.loads(process.read_text(encoding="utf-8"))
+        data["delivery"]["worktree"]["junctions"] = ["a&b"]
+        process.write_text(json.dumps(data), encoding="utf-8")
+        (self.main / "a&b").mkdir()
+        (self.main / "a&b" / "f.txt").write_text("ok\n", encoding="utf-8")
+        self._ok("worktree", "add", "D-001")
+        self.assertEqual((self.worktree / "a&b" / "f.txt").read_text(encoding="utf-8"), "ok\n")
+
 
 if __name__ == "__main__":
     unittest.main()

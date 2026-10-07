@@ -116,11 +116,12 @@ def find_links(root: Path) -> list[Path]:
 
 def _make_junction(link: Path, target: Path) -> None:
     if os.name == "nt":
-        subprocess.run(
-            ["cmd", "/c", "mklink", "/J", str(link), str(target)],
-            check=True,
-            capture_output=True,
-        )
+        # Sem `cmd /c mklink`: o cmd reinterpreta a linha e `&` no nome (que
+        # vem do process.json versionado) viraria outro comando. A API e a
+        # mesma que os testes do CPython usam para criar juncoes.
+        import _winapi
+
+        _winapi.CreateJunction(str(target), str(link))
     else:
         os.symlink(target, link, target_is_directory=True)
 
