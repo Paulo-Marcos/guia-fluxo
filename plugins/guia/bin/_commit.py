@@ -15,7 +15,7 @@ from _constants import (
     MSG_NO_FILES_FOR_COMMIT,
     MSG_NONE_PLACEHOLDER,
 )
-from _git_ops import git_commit, has_git
+from _git_ops import git_commit, git_ignored_files, has_git
 
 
 def build_commit_message(
@@ -89,10 +89,15 @@ def commit_task(
     subject_override: str | None = None,
 ) -> None:
     files = [value for value in task.get("modifiedFiles", []) if value != MSG_NONE_PLACEHOLDER]
-    if not files:
-        raise SystemExit(MSG_NO_FILES_FOR_COMMIT)
     if not has_git():
         raise SystemExit(MSG_GIT_NOT_FOUND)
+    # D-111 (D-579): toda demanda nasce com `.guia/DEMANDAS.md` em
+    # modifiedFiles; com o estado no .gitignore, `git add` abortava o commit
+    # inteiro. Arquivo ignorado nao e versionado aqui: sai do pathspec.
+    ignored = git_ignored_files(files)
+    files = [value for value in files if value not in ignored]
+    if not files:
+        raise SystemExit(MSG_NO_FILES_FOR_COMMIT)
     # D-105: NAO abortamos mais quando ha arquivos alheios staged. Antes, um
     # `git add` de outra demanda paralela fazia o finish recusar (staged -
     # expected). Agora `git_commit` commita por pathspec (`commit -- <files>`),

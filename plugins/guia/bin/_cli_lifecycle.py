@@ -8,6 +8,7 @@ _commit, _locks, etc.
 from __future__ import annotations
 
 import argparse
+import copy
 import os
 import sys
 from pathlib import Path
@@ -16,7 +17,10 @@ from typing import Any
 from _clock import now_iso, today
 from _commit import commit_task
 from _constants import (
+    DELIVERY_MODE,
+    DELIVERY_MODE_PR,
     GUIA_DIR,
+    REGISTRY_FILE,
     DEMAND_TITLE_FILE,
     DOCS_MAP_FILE,
     FEATURES_REL,
@@ -606,7 +610,18 @@ def cmd_finish(args: argparse.Namespace) -> int:
     # arvore), engoliria arquivos de outras demandas. Epicos sao orquestradores
     # (fecham commitando so o catalogo), entao ficam de fora do gate.
     commit_requested = args.commit
-    if commit_requested is None:
+    if DELIVERY_MODE == DELIVERY_MODE_PR:
+        # D-111: no modo `pr` o codigo chega a main pelo squash do PR; o
+        # finish so fecha o estado. Commit aqui cairia na arvore principal
+        # (ROOT), mesmo rodado de um worktree - por isso nem `commitByDefault`
+        # nem `--commit` valem.
+        if commit_requested:
+            raise SystemExit(
+                f"finish {task['id']}: no modo `pr` (delivery.mode) o codigo entra "
+                "pela main via squash do PR; o finish nao commita. Rode sem --commit."
+            )
+        commit_requested = False
+    elif commit_requested is None:
         commit_requested = config.get("finish", {}).get("commitByDefault", True)
     if (
         commit_requested
@@ -643,11 +658,12 @@ def cmd_finish(args: argparse.Namespace) -> int:
     ensure_quality_review_ok(task, changed_files, config, args)
 
     finish_config = config.get("finish", {})
-    # D-081: guarda o status pre-finish para reverter caso o commit falhe.
-    previous_status = task.get("status")
-    # D-052: guarda o finishedAt anterior junto do status - se o commit falhar
-    # e o status reverter para nao-terminal, o carimbo de termino tambem volta.
-    previous_finished = task.get("finishedAt")
+    # D-081/D-111: foto da demanda e das travas antes de qualquer mutacao. Se
+    # o commit falhar, tudo volta - nao so o status (D-081 revertia status e
+    # finishedAt, mas deixava gravados o registro do portao, resumo, arquivos
+    # e a trava nova: o "grava o gate, nao muda o status" da D-579).
+    task_before = copy.deepcopy(task)
+    registry_before = REGISTRY_FILE.read_bytes() if REGISTRY_FILE.exists() else None
     task["status"] = finish_config.get("status", STATUS_VALIDATED)
     task["finishedAt"] = now_iso()
     merge_list(task, "modifiedFiles", changed_files)
@@ -689,8 +705,12 @@ def cmd_finish(args: argparse.Namespace) -> int:
             subject_override = getattr(args, "commit_subject", None) or task.get("commitSubject")
             commit_task(task, getattr(args, "commit_body", None), subject_override)
         except BaseException:
-            task["status"] = previous_status
-            task["finishedAt"] = previous_finished
+            task.clear()
+            task.update(task_before)
+            if registry_before is None:
+                REGISTRY_FILE.unlink(missing_ok=True)
+            else:
+                REGISTRY_FILE.write_bytes(registry_before)
             save_task(task)
             set_current_task(task)
             upsert_features_entry(task)
