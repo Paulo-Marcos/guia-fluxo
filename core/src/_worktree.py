@@ -135,8 +135,22 @@ def _remove_link(link: Path) -> None:
         os.unlink(link)
 
 
+def _inside(rel: str) -> str:
+    """`envFiles`/`junctions` sao relativos e ficam dentro do worktree.
+
+    Vem do process.json versionado: um `../fora` faria o motor copiar arquivo
+    ou criar link fora do worktree (e da principal).
+    """
+    candidate = Path(rel)
+    if candidate.is_absolute() or ".." in candidate.parts or not candidate.parts:
+        raise SystemExit(f"delivery.worktree: caminho invalido {rel!r} - use relativo, sem '..'.")
+    return rel
+
+
 def _prepare(worktree_path: Path, settings: dict[str, Any]) -> tuple[list[str], list[str]]:
     """Copia os envFiles e cria as juncoes declaradas; devolve o que fez."""
+    for rel in [*settings["envFiles"], *settings["junctions"]]:
+        _inside(rel)
     copied: list[str] = []
     for rel in settings["envFiles"]:
         source, dest = ROOT / rel, worktree_path / rel
@@ -177,6 +191,8 @@ def create_worktree(
     absolute_path = (ROOT / path).resolve()
     if absolute_path.exists():
         raise SystemExit(f"Pasta ja existe: {absolute_path}. Remova-a ou use --path.")
+    for rel in [*settings["envFiles"], *settings["junctions"]]:
+        _inside(rel)
     if start.startswith("origin/"):
         run_git("fetch", "-q", "origin", start.split("/", 1)[1], check=False)
     git_worktree_add(branch, absolute_path, start)
@@ -205,7 +221,7 @@ def remove_worktree(task: dict[str, Any], force: bool = False) -> None:
         raise SystemExit("Recusado: o worktree registrado e a propria arvore principal.")
     if absolute_path.exists():
         for rel in worktree.get("junctions") or []:
-            link = absolute_path / rel
+            link = absolute_path / _inside(rel)
             if _is_link(link):
                 _remove_link(link)
         leftovers = find_links(absolute_path)

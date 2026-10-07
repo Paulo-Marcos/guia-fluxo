@@ -127,6 +127,16 @@ class WorktreeTemplateTests(unittest.TestCase):
         self.assertNotIn("Traceback", result.stderr)
         self.assertTrue(self.worktree.exists())
 
+    def test_add_refuses_paths_outside_the_worktree(self) -> None:
+        process = self.main / ".guia" / "process.json"
+        data = json.loads(process.read_text(encoding="utf-8"))
+        data["delivery"]["worktree"]["junctions"] = ["../fora"]
+        process.write_text(json.dumps(data), encoding="utf-8")
+        result = self._run("worktree", "add", "D-001")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("'../fora'", result.stdout + result.stderr)
+        self.assertFalse(self.worktree.exists(), "recusa antes de criar o worktree")
+
 
 if __name__ == "__main__":
     unittest.main()
