@@ -449,6 +449,10 @@ A `main` acumula no `[Unreleased]`; a PROD puxa quando o Paulo quer; a release
 | Fechar com retrabalho | `kaizen` (todo erro vira portão ou regra) |
 | Commit | `conventional-commit-gitmoji` |
 
+No Guia, esses nomes viram **padrões configuráveis por etapa** (R12): o
+projeto troca, renomeia ou desliga cada um; skill ausente faz a etapa avisar
+e seguir, menos nas etapas que são portão.
+
 ---
 
 ## 4. O que o Guia passa a fazer
@@ -497,10 +501,7 @@ existentes; o perfil (R2) preenche os valores.
       "categoryByKind": {"feature": "Added", "bug": "Fixed", "chore": "Changed"}
     },
     "audit": {
-      "enabled": true,
-      "skill": "pr-audit",
-      "depsSkill": "pr-bump",
-      "securitySkill": "security-audit",
+      "enabled": true,                    // a skill vem de skills.audit (R12)
       "marker": "<!-- auditoria-aprovada sha={sha} -->",
       "statusContext": "Auditoria registrada",
       "carryOverOnCleanRebase": true      // R8
@@ -514,7 +515,6 @@ existentes; o perfil (R2) preenche os valores.
     },
     "release": {
       "enabled": true,
-      "skill": "release",
       "script": "bin/release.ps1",        // vazio = o Guia guia sem script
       "twoActs": true,
       "branch": "release-v{version}",
@@ -524,12 +524,21 @@ existentes; o perfil (R2) preenche os valores.
     "dependencies": {                     // R11
       "enabled": true,
       "bots": ["app/dependabot"],
-      "skill": "pr-bump",
       "trigger": "on-idle",               // "on-idle" | "weekly" | "manual"
       "autoApprove": ["patch", "minor"],  // major sempre pede o humano
       "securityPriority": "hotfix",
       "postMerge": ["bin\\bootstrap.ps1 -Dev"]  // sincronizar o DEV; nunca a PROD
     }
+  },
+  "skills": {                           // R12: etapa -> skill(s); fora de delivery,
+    "commit":   "conventional-commit-gitmoji", // porque vale também no modo direct
+    "ready":    "delivery-report",
+    "quality":  ["clean-code-review", "clean-architecture-guardian"],
+    "audit":    "pr-audit",
+    "security": "security-audit",
+    "deps":     "pr-bump",
+    "release":  "release",
+    "retro":    "kaizen"                  // null desliga a etapa de skill
   },
   "autonomy": {
     "default": "pr",
@@ -543,6 +552,8 @@ existentes; o perfil (R2) preenche os valores.
 Requisitos:
 
 - **Sem `delivery`, nada muda.** `mode: "direct"` é o padrão implícito.
+- **Sem `skills`, valem os padrões do plugin** (R12), escolhidos para
+  reproduzir o que o Guia sugere hoje.
 - `mode: "pr"` implica `finish.commitByDefault = false`: o código chega à
   `main` pelo squash, não por commit do `finish` (hoje o `finish` com commit
   aborta no gerador-cortes porque faz `git add .guia/DEMANDAS.md`, que é
@@ -641,7 +652,7 @@ script ou no diretório atual, e num worktree acharia (ou criaria) uma cópia
 | Comando | Faz | Quem pode invocar |
 |---|---|---|
 | `/guia:ship [D-NNN]` | confere portão completo, fragmento de changelog e Pedido → Teste; push; abre (ou atualiza) o PR com título = assunto do commit e corpo montado da demanda; grava a mensagem de squash em `.guia/queue/D-NNN.msg` (com `[unlock:]` e `Co-Authored-By`); status → `Em PR` | agente (nível ≥ `pr`) |
-| `/guia:audit [D-NNN]` | roda a skill de auditoria configurada sobre o head; se aprovada, comenta o relatório com o marcador e grava `auditedSha` + `auditedPatchId` na demanda | agente (nível ≥ `pr`) |
+| `/guia:audit [D-NNN]` | roda a skill de `skills.audit` (R12; sem ela, o checklist embutido) sobre o head; se aprovada, comenta o relatório com o marcador e grava `auditedSha` + `auditedPatchId` na demanda | agente (nível ≥ `pr`) |
 | `/guia:queue add [D-NNN]` | põe na fila (exige auditoria registrada no head) | agente no nível ≥ `queue`; abaixo, só o usuário |
 | `/guia:approve D-NNN… \| --all` | dá o ok de merge aos itens da fila | **só o usuário** |
 | `/guia:queue` | mostra a fila: ordem, estado, motivo de espera, ETA (média medida do CI × posição) | qualquer um |
@@ -904,7 +915,8 @@ O executor transforma isso em rotina, sem ninguém lembrar:
    `gh api .../dependabot/alerts`) dispara **na hora**, com prioridade
    `hotfix`.
 4. **O lote é uma demanda como as outras:** `chore` "atualizar as dependências
-   do Dependabot em lote", worktree, `pr-bump` (a parte que pede juízo roda no
+   do Dependabot em lote", worktree, a skill de `skills.deps` (padrão
+   `pr-bump`, R12; a parte que pede juízo roda no
    chat Integrador, que é local e tem a skill), um PR só, título
    `🧹 chore(D-NNN): atualizar as dependências do Dependabot em lote`, corpo
    com a tabela *de → para* e o que ficou de fora com o motivo — o formato do
@@ -927,6 +939,82 @@ O executor transforma isso em rotina, sem ninguém lembrar:
 O `doctor` sugere um `dependabot.yml` agrupado (patch/minor por ecossistema,
 `commit-message.prefix` no padrão de commit do projeto, senão todo PR do bot
 nasce reprovado pelo hook — D-684) quando o projeto não tem.
+
+### R12 — Skills configuráveis por etapa
+
+**Pedido do Paulo (07/10/2026).** O processo aciona skills em vários pontos
+(3.14), e hoje os nomes estão espalhados: fixos no código
+(`QUALITY_SKILL_SUGGESTIONS` do D-095, que sugere `tdd-dotnet` até em projeto
+Python), na detecção por padrão de nome do D-054 (skill de commit) e em
+campos soltos que este documento chegou a propor (`audit.skill`,
+`depsSkill`…). O Guia passa a dizer, **para cada etapa, qual skill ela
+aciona**, com um padrão que o projeto pode trocar.
+
+**A configuração** é a seção `skills` do `process.json` (R1), fora de
+`delivery` porque metade das etapas existe também no modo `direct`. Cada
+chave aceita:
+
+| Valor | Significa |
+|---|---|
+| ausente | o padrão do plugin para a etapa |
+| `"nome"` | essa skill (renomeada, própria do projeto, de outro autor) |
+| `["a", "b"]` | as duas, nessa ordem; cada uma ausente é pulada sozinha |
+| `null` | etapa sem skill: o motor não sugere nada e registra "desligada" |
+
+| Etapa | Quando | Padrão do plugin | Portão? |
+|---|---|---|---|
+| `commit` | antes de cada commit (assunto/corpo) | detecção por nome do D-054 (`commit` + `conventional`/`gitmoji`) | não |
+| `ready` | ao entregar um marco | `delivery-report` | não |
+| `quality` | no `finish`, sobre `modifiedFiles` (D-095) | a lista atual de `QUALITY_SKILL_SUGGESTIONS` | não (o gate do D-095 continua exigindo `--quality-checked` ou `--quality-skip`) |
+| `audit` | antes de integrar (`/guia:audit`) | `pr-audit` | **sim** |
+| `security` | trecho sensível dentro da auditoria | `security-audit` | não (é parte da `audit`) |
+| `deps` | lote do Dependabot (R11) | `pr-bump` | **sim** (é a auditoria do lote) |
+| `release` | `/guia:release` | `release` | não |
+| `retro` | fechar demanda com retrabalho (devolvida, `readyCount > 1`) | `kaizen` | não |
+
+Os padrões reproduzem o que o Guia já sugere hoje; os perfis do R2 propõem
+ajustes por stack (num projeto Python, `quality` sem `tdd-dotnet`). O exemplo
+do R1 é o de um projeto que já ajustou.
+
+**Quem decide se a skill existe é o agente, não o motor.** O motor é Python
+e não enxerga a lista de skills da sessão (nem a do Codex/Antigravity). A
+divisão é a do D-095: o motor **resolve e anuncia** ("etapa `quality`: acione
+`clean-code-review`, `clean-architecture-guardian`"), o agente **confere** na
+lista de skills que recebeu, roda as que existem, e o motor **registra** o
+resultado. O registro entra na demanda e no relatório:
+`skillsRun: [{stage, skill, result}]` com `result` = `ran` | `missing` |
+`disabled`, via flag nos verbos que têm etapa (`--skill-ran <nome>`,
+`--skill-missing <nome>`), no mesmo molde de `--quality-skill`.
+
+**Skill ausente: avisa e segue** — a regra geral. A etapa não trava por falta
+de ferramenta; o aviso aparece na saída e o registro `missing` fica no
+relatório, então "a revisão de qualidade não rodou" fica visível depois, não
+silenciosa.
+
+**Exceção: etapa que é portão não vira aprovação por falta de skill.**
+`audit` e `deps` são a última barreira antes da `main`; "pular" ali seria
+aprovar sem auditar. Sem a skill:
+
+1. o agente audita pelo **checklist embutido** do Guia
+   (`core/templates/audit-checklist.md`: fronteira de confiança, livro de
+   alegações, portão hostil antes de executar, Pedido → Teste — o núcleo da
+   `pr-audit`, sem depender dela);
+2. o relatório diz "auditoria pelo checklist embutido, skill `<nome>`
+   ausente", e o marcador é comentado normalmente;
+3. no nível `queue` ou acima, auditoria por checklist **não** aprova
+   sozinha: o item espera o `approve` do usuário (como uma versão maior no
+   R11).
+
+Desligar o portão é outra decisão, com outro interruptor:
+`delivery.audit.enabled = false`. `skills.audit = null` **não** desliga a
+auditoria — só tira a skill, e ela cai no checklist.
+
+**O `doctor` confere sem bloquear.** Com `skills` configurado, ele procura
+cada nome nos lugares conhecidos (`~/.claude/skills/<nome>`,
+`<projeto>/.claude/skills/<nome>`, skills de plugins instalados,
+`.agents/skills/`) e lista `etapa → skill → encontrada | não encontrada`,
+como aviso. É uma pista, não a verdade: a sessão pode ter skills que o disco
+não mostra.
 
 ---
 
@@ -952,6 +1040,9 @@ nasce reprovado pelo hook — D-684) quando o projeto não tem.
    quando a fila esvazia, e segurança passa à frente de tudo.
 10. **O próprio Guia nasce assim** (seção 0): cada passo manual que doer no
     guia-fluxo é um requisito corrigido antes de chegar aos outros projetos.
+11. **Cada etapa diz qual skill aciona** (R12), com padrão trocável por
+    projeto; faltou a skill, a etapa avisa e segue — menos a auditoria, que
+    cai num checklist embutido em vez de aprovar no escuro.
 
 ---
 
@@ -1002,6 +1093,12 @@ roteirizados.
 | Disparo do lote | `on-idle`: só com a fila vazia; alerta de segurança: na hora, `hotfix` |
 | Aprovação do lote | só patch/minor → aprovado; com major → espera `approve` |
 | Fechamento dos PRs do bot | depois do merge do lote, cada PR incorporado fechado com link para o lote |
+| Sem `skills`, sugestões de hoje | `finish` com produto mudado imprime as mesmas skills de `QUALITY_SKILL_SUGGESTIONS` |
+| Override de skill | `skills.quality = ["minha-review"]` → o `finish` anuncia `minha-review` e nenhuma outra |
+| `null` desliga | `skills.retro = null` → nada anunciado; relatório registra `disabled` |
+| Skill ausente segue | `--skill-missing pr-bump` fora de portão → etapa avança, `missing` no relatório |
+| Portão sem skill não aprova sozinho | `skills.audit` ausente no nível `queue` → auditoria pelo checklist, item espera `approve` |
+| `doctor` acha skills | nome configurado sem pasta conhecida → aviso `não encontrada`, exit 0 |
 
 ---
 
@@ -1012,9 +1109,11 @@ roteirizados.
 1. **Base**: schema `delivery` + `autonomy` com padrões que não mudam nada;
    `commit.format`; templates de worktree com junções seguras; demanda pela
    branch; estado na árvore principal; `finish` sem commit no modo `pr`;
-   dívidas do R10.
+   dívidas do R10; seção `skills` com as etapas que já existem (`commit`,
+   `ready`, `quality`) e o registro `skillsRun` (R12).
 2. **Detecção**: `doctor --delivery`, perfis, templates de workflow e de PR.
-3. **Lançar**: `ship`, `audit`, fragmentos de changelog, status `Em PR`.
+3. **Lançar**: `ship`, `audit` (com o checklist embutido do R12),
+   fragmentos de changelog, status `Em PR`.
 4. **Fila**: `queue.json` atômico, lease, laço do executor, devolução,
    congelamento, rótulo da nuvem, Dependabot (R11).
 5. **Autonomia**: níveis, teto, `alwaysHuman`, fechamento automático, skills
