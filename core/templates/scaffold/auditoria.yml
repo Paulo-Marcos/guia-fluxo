@@ -1,0 +1,54 @@
+name: Auditoria
+
+# Gerado por `guia scaffold auditoria` (Guia Fluxo, D-120). Nenhum PR entra na
+# __BASE_BRANCH__ sem o relatorio da auditoria: o comentario do dono com o
+# marcador do SHA auditado vira o status "__STATUS_CONTEXT__", que a protecao
+# da branch exige. Status e do commit: push novo (commit ou rebase) nasce sem
+# ele e pede auditoria do head novo.
+on:
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  registrar:
+    name: Registrar auditoria
+    # So o dono conta: comentario de bot, de app ou de terceiro nao aprova.
+    if: >-
+      github.event.issue.pull_request &&
+      github.event.comment.author_association == 'OWNER' &&
+      contains(github.event.comment.body, 'auditoria-aprovada')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      statuses: write
+    steps:
+      - name: Gravar o status no head do PR
+        # O corpo do comentario entra por variavel de ambiente, nunca
+        # interpolado no script: e texto de fora e viraria comando.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.issue.number }}
+          COMENTARIO: ${{ github.event.comment.body }}
+          LINK: ${{ github.event.comment.html_url }}
+        run: |
+          read -r BASE HEAD < <(gh api "repos/$REPO/pulls/$PR" --jq '"\(.base.ref) \(.head.sha)"')
+          if [ "$BASE" != "__BASE_BRANCH__" ]; then
+            echo "PR contra $BASE: a protecao so vale para a __BASE_BRANCH__."
+            exit 0
+          fi
+          case "$COMENTARIO" in
+            *"<!-- auditoria-aprovada sha=$HEAD -->"*) ;;
+            *)
+              echo "::error::O marcador nao traz o head atual ($HEAD): o PR mudou depois da auditoria. Audite o head novo."
+              exit 1
+              ;;
+          esac
+          gh api "repos/$REPO/statuses/$HEAD" \
+            -f state=success \
+            -f context="__STATUS_CONTEXT__" \
+            -f description="Relatorio da auditoria no PR #$PR" \
+            -f target_url="$LINK"

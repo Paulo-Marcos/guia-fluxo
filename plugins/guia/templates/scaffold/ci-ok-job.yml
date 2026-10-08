@@ -1,0 +1,27 @@
+  # Job agregador (Guia Fluxo, D-120): e o unico check que a protecao precisa
+  # exigir. `needs` lista TODOS os jobs do workflow. Duas licoes caras: check
+  # pulado conta como aprovado na protecao (por isso o always() no job), e um
+  # passo com `if` sem funcao de status herda um success() implicito - com
+  # jobs cancelados por falta de runner, o agregador ficava verde (D-881 no
+  # gerador-cortes). Por isso o passo roda sempre e exige success de cada job.
+  ci-ok:
+    name: CI ok
+    if: always()
+    needs: [__NEEDS__]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Todos os jobs passaram
+        if: always()
+        shell: python
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          import json, os, sys
+
+          resultados = {job: dado["result"] for job, dado in json.loads(os.environ["NEEDS"]).items()}
+          for job, resultado in resultados.items():
+              print(f"{job}: {resultado}")
+          reprovados = [job for job, resultado in resultados.items() if resultado != "success"]
+          if reprovados or not resultados:
+              print(f"::error::Jobs que nao terminaram em success: {', '.join(reprovados) or 'nenhum job para julgar'}")
+              sys.exit(1)

@@ -93,6 +93,20 @@ def _github_facts(slug: str | None, base_branch: str) -> list[dict[str, Any]]:
     return facts
 
 
+def pull_request_jobs(root: Path) -> dict[str, list[str]]:
+    """Jobs de cada workflow que roda no pull_request, por arquivo (D-120).
+
+    Por arquivo porque o `needs` do agregador so enxerga jobs do proprio
+    workflow: misturar arquivos quebraria o CI.
+    """
+    jobs: dict[str, list[str]] = {}
+    for path in _workflows(root):
+        workflow = _load_yaml(path)
+        if "pull_request" in _triggers(workflow):
+            jobs[path.relative_to(root).as_posix()] = list(workflow.get("jobs") or {})
+    return jobs
+
+
 def _audit_workflow(root: Path) -> dict[str, Any]:
     for path in _workflows(root):
         text = path.read_text(encoding="utf-8", errors="replace")
@@ -196,4 +210,4 @@ def print_delivery_facts(
             print(f"- {reason}")
 
 
-__all__ = ["collect_facts", "print_delivery_facts"]
+__all__ = ["collect_facts", "print_delivery_facts", "pull_request_jobs"]

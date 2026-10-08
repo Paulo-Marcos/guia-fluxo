@@ -167,6 +167,11 @@ WRAPPER_REPLACEMENT = "guia.py"
 TEMPLATE_FILES: list[tuple[str, str]] = [
     ("locks/registry.yaml", "locks/registry.yaml"),
     ("locks/lock-ignore.txt", "locks/lock-ignore.txt"),
+    # D-120: andaimes de entrega (`guia scaffold`).
+    ("scaffold/auditoria.yml", "scaffold/auditoria.yml"),
+    ("scaffold/ci-ok-job.yml", "scaffold/ci-ok-job.yml"),
+    ("scaffold/dependabot.yml", "scaffold/dependabot.yml"),
+    ("scaffold/pull_request_template.md", "scaffold/pull_request_template.md"),
 ]
 
 # Templates "promovidos" a partir de outros lugares do core/. F-018

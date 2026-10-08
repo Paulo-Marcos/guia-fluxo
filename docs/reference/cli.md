@@ -214,6 +214,14 @@ Imprime a mensagem de commit da demanda no formato de `delivery.commit.format` (
 
 Propoe o perfil de entrega pelos fatos do `doctor --delivery` (D-119): `solo-direct` (sem remoto GitHub, ou sem CI nem protecao), `pr-basic` (CI no PR, sem auditoria por status) e `pr-audited` (workflow de auditoria). O perfil so preenche chaves que o motor ja usa: `delivery.mode`, `delivery.commit.format` e, no auditado, `delivery.audit.statusContext` (lido do workflow). Sem `--apply`, nada e gravado; com `--apply`, acrescenta ao `process.json` so as chaves ausentes - o que ja esta configurado vence e aparece como mantido. O `doctor --delivery` tambem mostra a proposta.
 
+### `scaffold`
+
+```powershell
+.\core\bin\guia.ps1 scaffold auditoria|pr-template|dependabot|ci-ok|protection
+```
+
+Andaimes de entrega a partir dos modelos do Guia (`templates/scaffold/`, D-120). `auditoria` cria `.github/workflows/auditoria.yml` (comentario do dono com o marcador grava o status de `delivery.audit.statusContext`); `pr-template` cria `.github/pull_request_template.md` com a tabela Pedido -> Teste; `dependabot` cria `.github/dependabot.yml` agrupado, com o prefixo de commit do formato configurado. **Nunca sobrescreve**: arquivo existente (em qualquer grafia conhecida) recusa sem tocar nada. `ci-ok` e `protection` so **imprimem**: o job agregador com o `needs` dos jobs do workflow principal de PR (jobs de outros workflows vao numa nota, para exigir direto na protecao - `needs` nao enxerga outro arquivo), e os `gh api` de merge e protecao com os checks tirados dos fatos. Mudar o GitHub e acao do dono.
+
 ### `worktree`
 
 ```powershell

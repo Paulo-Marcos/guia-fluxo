@@ -1,0 +1,21 @@
+version: 2
+
+# Gerado por `guia scaffold dependabot` (Guia Fluxo, D-120). Correcoes e
+# versoes menores chegam num PR so, agrupadas: PRs soltos se acumulam ate o
+# Dependabot parar de propor versao nova, inclusive as de seguranca.
+#
+# commit-message: o prefixo segue o formato de commit do projeto; sem ele, o
+# Dependabot escreve `build(deps): ...` e o hook de commit reprova.
+# Acrescente um bloco por ecossistema (pip, npm...) no mesmo molde.
+
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "__COMMIT_PREFIX__"
+      include: "scope"
+    groups:
+      actions:
+        update-types: ["minor", "patch"]
