@@ -28,15 +28,15 @@ def marker(sha: str) -> str:
     return f"<!-- auditoria-aprovada sha={sha} -->"
 
 
-def patch_id(root: Path, base_ref: str) -> str | None:
+def patch_id(root: Path, base_ref: str, head: str = "HEAD") -> str | None:
     """`git diff <merge-base>..HEAD | git patch-id --stable` (R8).
 
     Igual entre dois heads = mesmo conteudo de PR, mesmo apos rebase limpo.
     """
-    base = git_output(root, "merge-base", "HEAD", base_ref)
+    base = git_output(root, "merge-base", head, base_ref)
     if not base:
         return None
-    diff = subprocess.run(["git", "diff", f"{base}..HEAD"], cwd=root, capture_output=True)
+    diff = subprocess.run(["git", "diff", f"{base}..{head}"], cwd=root, capture_output=True)
     if diff.returncode != 0 or not diff.stdout:
         return None
     result = subprocess.run(["git", "patch-id", "--stable"], cwd=root, input=diff.stdout, capture_output=True)

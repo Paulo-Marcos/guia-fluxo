@@ -191,6 +191,8 @@ STATUS_CANCELLED = "Cancelada"
 STATUS_IN_PR = "Em PR"
 # D-126 (R3): auditada e enfileirada; o executor integra na ordem.
 STATUS_IN_QUEUE = "Na fila"
+# D-127 (R3): mergeado pelo executor; o finish fecha depois da validacao.
+STATUS_INTEGRATED = "Integrada"
 # Item de backlog ja entregue por outra demanda (ou obsoleto): retirado da
 # lista ativa via `backlog resolve`, mas preservado no arquivo para historico.
 STATUS_RESOLVED = "Resolvida"
@@ -208,6 +210,7 @@ STATUS_TAGS: dict[str, str] = {
     STATUS_CANCELLED: "CANCELADA",
     STATUS_IN_PR: "PR",
     STATUS_IN_QUEUE: "FILA",
+    STATUS_INTEGRATED: "INTEGRADA",
     STATUS_RESOLVED: "RESOLVIDA",
 }
 
@@ -346,6 +349,7 @@ __all__ = [
     "DELIVERY_MODE",
     "STATUS_IN_PR",
     "STATUS_IN_QUEUE",
+    "STATUS_INTEGRATED",
     "DELIVERY_MODE_DIRECT",
     "DELIVERY_MODE_PR",
     "DELIVERY_MODES",

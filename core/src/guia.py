@@ -469,12 +469,13 @@ def build_parser() -> argparse.ArgumentParser:
         "queue",
         help="Fila de integracao (D-126): add | list | remove | pause | resume | priority.",
     )
-    p_queue.add_argument("action", nargs="?", choices=["add", "list", "remove", "pause", "resume", "priority"])
+    p_queue.add_argument("action", nargs="?", choices=["add", "list", "remove", "pause", "resume", "priority", "run"])
     p_queue.add_argument("task_id", nargs="?", help="add/remove/priority: a demanda (add sem id: a branch).")
     p_queue.add_argument("level", nargs="?", choices=["normal", "hotfix"], help="priority: o nivel.")
     p_queue.add_argument("--priority", choices=["normal", "hotfix"], default="normal", help="add: prioridade.")
     p_queue.add_argument("--reason", help="pause: o motivo.")
     p_queue.add_argument("--json", action="store_true", help="list: saida em JSON.")
+    p_queue.add_argument("--once", action="store_true", help="run: integra no maximo um item (D-127).")
     p_queue.set_defaults(func=cmd_queue)
 
     p_approve = sub.add_parser(
