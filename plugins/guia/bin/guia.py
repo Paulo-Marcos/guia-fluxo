@@ -89,6 +89,7 @@ from _cli_deps import (  # noqa: E402
     cmd_depends_remove,
 )
 from _cli_meta import cmd_commit_message, cmd_docs_check, cmd_render  # noqa: E402
+from _cli_audit import cmd_audit  # noqa: E402
 from _cli_changelog import cmd_changelog  # noqa: E402
 from _cli_profile import cmd_profile  # noqa: E402
 from _cli_scaffold import cmd_scaffold  # noqa: E402
@@ -451,6 +452,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_ship.add_argument("--no-changelog", help="Motivo de nao haver fragmento (mudanca so interna); vai para o PR.")
     p_ship.set_defaults(func=cmd_ship)
+
+    p_audit = sub.add_parser(
+        "audit",
+        help="Mostra o que auditar (skill ou checklist embutido); --report comenta no PR, --approve com o marcador (D-123).",
+    )
+    p_audit.add_argument("task_id", nargs="?", help="Sem id, vale a branch (D-110).")
+    p_audit.add_argument("--report", help="Arquivo com o relatorio da auditoria.")
+    p_audit.add_argument("--approve", action="store_true", help="Com --report: aprova (comenta o marcador do head).")
+    p_audit.add_argument("--skill-ran", action="append", default=[], help="Skill de auditoria que rodou.")
+    p_audit.add_argument("--skill-missing", action="append", default=[], help="Skill ausente: usa o checklist embutido.")
+    p_audit.set_defaults(func=cmd_audit)
 
     p_plan = sub.add_parser(
         "plan",

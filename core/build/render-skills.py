@@ -167,6 +167,8 @@ WRAPPER_REPLACEMENT = "guia.py"
 TEMPLATE_FILES: list[tuple[str, str]] = [
     ("locks/registry.yaml", "locks/registry.yaml"),
     ("locks/lock-ignore.txt", "locks/lock-ignore.txt"),
+    # D-123: checklist embutido do `guia audit` (sem a skill de auditoria).
+    ("audit-checklist.md", "audit-checklist.md"),
     # D-120: andaimes de entrega (`guia scaffold`).
     ("scaffold/auditoria.yml", "scaffold/auditoria.yml"),
     ("scaffold/ci-ok-job.yml", "scaffold/ci-ok-job.yml"),
