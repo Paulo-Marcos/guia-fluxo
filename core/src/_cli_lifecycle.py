@@ -20,6 +20,7 @@ from _constants import (
     DELIVERY_MODE,
     DELIVERY_MODE_PR,
     GUIA_DIR,
+    STATUS_IN_PR,
     REGISTRY_FILE,
     DEMAND_TITLE_FILE,
     DOCS_MAP_FILE,
@@ -106,6 +107,7 @@ from _delivery_drift import delivery_drift
 from _delivery_facts import collect_facts, print_delivery_facts
 from _profiles import propose_profile
 from _hooks_check import hooks_path_warnings
+from _ship import parse_request_test
 from _skills import STAGE_QUALITY, STAGE_READY, announce_stage, record_stage
 from _worktree import cleanup_task_worktree
 
@@ -457,6 +459,12 @@ def cmd_ready(args: argparse.Namespace) -> int:
     merge_list(task, "validations", args.validation)
     task["pending"] = args.pending or [MSG_DEFAULT_VALIDATION_PENDING]
 
+    # D-122 (R4): tabela Pedido -> Teste, que o ship poe no corpo do PR.
+    for raw in getattr(args, "request_test", None) or []:
+        item = parse_request_test(raw)
+        if item not in task.setdefault("requestToTest", []):
+            task["requestToTest"].append(item)
+
     # D-054: subject de commit pronto pela skill de convencao do usuario.
     # Persistido na task para o finish (humano) usar sem o agente reconstruir.
     commit_subject = getattr(args, "commit_subject", None)
@@ -489,6 +497,7 @@ _FINISHABLE_STATUSES = frozenset(
         STATUS_AWAITING_VALIDATION,
         STATUS_AWAITING_VALIDATION_ACCENTED,
         STATUS_IN_DEVELOPMENT,
+        STATUS_IN_PR,  # D-122: no modo pr, fecha depois do merge do PR.
     }
 )
 
