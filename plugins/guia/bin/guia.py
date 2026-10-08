@@ -525,6 +525,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_doctor = sub.add_parser("doctor", help="Check process files + manifest + render + lock_api.")
     p_doctor.add_argument("--strict", action="store_true", help="Trata warnings como erros.")
     p_doctor.add_argument("--skip-render", action="store_true", help="Pula `render --check` (uso em CI rapido).")
+    p_doctor.add_argument(
+        "--delivery",
+        action="store_true",
+        help="Fatos de entrega do projeto e do GitHub, cada um com a fonte (D-117).",
+    )
+    p_doctor.add_argument("--json", action="store_true", help="Com --delivery: saida em JSON.")
     p_doctor.set_defaults(func=cmd_doctor)
 
     p_tasks = sub.add_parser("tasks", help="List, show, or filter tasks (F-017).")
