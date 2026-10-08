@@ -136,37 +136,51 @@ def _merge_message(item: dict[str, Any]) -> tuple[str, str]:
     return f"{subject.strip()} (#{item['pr']})", body.strip() + "\n"
 
 
+MERGEABLE_STATES = frozenset({"CLEAN", "HAS_HOOKS", "UNSTABLE"})
+POLL_SECONDS = 20.0
+
+
 def integrate(item: dict[str, Any], base: str, ci_timeout_seconds: float) -> str:
-    """Leva um item ate o merge; devolve 'merged' ou 'waiting'. Levanta Returned."""
-    state = gh_pr_state(ROOT, item["pr"])
-    if state["state"] == "MERGED":
-        return "merged"
-    if state["state"] != "OPEN":
-        raise Returned(f"PR #{item['pr']} esta {state['state']} sem merge")
-    head = state["head"]
-    _carry_or_return(item, head, base)
-    if state["mergeState"] == "DIRTY":
-        raise Returned("conflito com a base: resolva na branch (rebase) e rode o ship")
-    if state["mergeState"] == "BEHIND":
-        new_head, error = gh_pr_update_branch(ROOT, item["pr"])
-        if error:
-            raise Returned(f"conflito ao atualizar a branch: {error}")
-        _log(item["id"], f"branch atualizada: {head[:12]} -> {new_head[:12]}")
-        head = new_head
+    """Leva um item ate o merge; devolve 'merged' ou 'waiting'. Levanta Returned.
+
+    Checks verdes nao bastam: um status exigido que ainda nem existe (ex.: o
+    da auditoria sendo gravado) nao aparece em `gh pr checks`. Quem diz que
+    a protecao liberou e o `mergeStateStatus` do GitHub. `BLOCKED` ate o
+    prazo nao e culpa do autor: o item fica esperando, nao e devolvido.
+    """
+    deadline = time.monotonic() + ci_timeout_seconds
+    while True:
+        heartbeat()
+        state = gh_pr_state(ROOT, item["pr"])
+        if state["state"] == "MERGED":
+            return "merged"
+        if state["state"] != "OPEN":
+            raise Returned(f"PR #{item['pr']} esta {state['state']} sem merge")
+        head = state["head"]
         _carry_or_return(item, head, base)
-    heartbeat()
-    verdict, failing = gh_pr_checks(ROOT, item["pr"], ci_timeout_seconds)
-    if verdict == "fail":
-        raise Returned(f"check vermelho: {', '.join(failing)}")
-    if verdict != "pass":
-        _log(item["id"], "checks ainda pendentes no tempo limite; fica esperando")
-        return "waiting"
-    subject, body = _merge_message(item)
-    error = gh_pr_merge(ROOT, item["pr"], head, subject, body)
-    if error:
-        raise Returned(f"merge recusado: {error}")
-    item["mergedHead"] = head
-    return "merged"
+        if state["mergeState"] == "DIRTY":
+            raise Returned("conflito com a base: resolva na branch (rebase) e rode o ship")
+        if state["mergeState"] == "BEHIND":
+            new_head, error = gh_pr_update_branch(ROOT, item["pr"])
+            if error:
+                raise Returned(f"conflito ao atualizar a branch: {error}")
+            _log(item["id"], f"branch atualizada: {head[:12]} -> {new_head[:12]}")
+            continue
+        remaining = max(deadline - time.monotonic(), 0.0)
+        verdict, failing = gh_pr_checks(ROOT, item["pr"], remaining)
+        if verdict == "fail":
+            raise Returned(f"check vermelho: {', '.join(failing)}")
+        if verdict == "pass" and state["mergeState"] in MERGEABLE_STATES:
+            subject, body = _merge_message(item)
+            error = gh_pr_merge(ROOT, item["pr"], head, subject, body)
+            if error is None:
+                item["mergedHead"] = head
+                return "merged"
+            _log(item["id"], f"merge ainda recusado: {error.splitlines()[0]}")
+        if time.monotonic() >= deadline:
+            _log(item["id"], f"protecao ainda nao liberou no prazo (estado {state['mergeState']}, checks {verdict}); fica esperando")
+            return "waiting"
+        time.sleep(min(POLL_SECONDS, max(deadline - time.monotonic(), 0.0)))
 
 
 def _finish_item(item: dict[str, Any], outcome: str, reason: str | None = None) -> None:

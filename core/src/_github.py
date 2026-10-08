@@ -232,6 +232,8 @@ def gh_pr_merge(cwd: Path, number: int, head: str, subject: str, body: str) -> s
         prs, entry = _fixture_pr(number)
         if entry.get("head") != head:
             return f"o head mudou ({entry.get('head')})"
+        if entry.get("mergeState", "CLEAN") not in ("CLEAN", "HAS_HOOKS", "UNSTABLE"):
+            return "the base branch policy prohibits the merge"
         entry["merged"] = {"matchHead": head, "subject": subject, "body": body}
         entry["state"] = "MERGED"
         _save_fixture_prs(prs)

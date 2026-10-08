@@ -158,6 +158,18 @@ class ExecutorTests(unittest.TestCase):
         self.assertEqual(self._task("D-001")["status"], "Integrada")
         self.assertFalse(lease.exists(), "lease liberada no fim")
 
+    def test_blocked_by_protection_waits_instead_of_returning(self) -> None:
+        """Checks verdes, mas a protecao ainda nao liberou (ex.: o status da
+        auditoria sendo gravado): nao e culpa do autor - o item espera."""
+        process = json.loads((self.sb / ".guia" / "process.json").read_text(encoding="utf-8"))
+        process["delivery"]["queue"] = {"ciTimeoutMinutes": 0.01}
+        (self.sb / ".guia" / "process.json").write_text(json.dumps(process), encoding="utf-8")
+        self._queued("D-001", 1, mergeState="BLOCKED")
+        self._ok("queue", "run")
+        self.assertNotIn("merged", self._pr(1))
+        self.assertEqual(self._queue_ids(), ["D-001"], "continua na fila")
+        self.assertEqual(self._task("D-001")["status"], "Na fila", "nao foi devolvida")
+
 
 if __name__ == "__main__":
     unittest.main()
