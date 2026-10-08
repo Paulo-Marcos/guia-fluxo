@@ -198,6 +198,14 @@ O resultado (skills, achados, dimensoes, ou skip) fica em `task.qualityReview` n
 
 `ready`, `finish` (etapa `quality`) e `commit-message` (etapa `commit`) anunciam no stderr a skill da etapa, lida de `skills.<etapa>` no `process.json` (D-114, R12). O agente confere se ela existe na sessao e registra: `--skill-ran <nome>` / `--skill-missing <nome>` (repetiveis) em `ready` e `finish`; no `finish`, `--quality-skill` tambem conta como `ran`. Etapa com `null` registra `disabled`. O portao de qualidade do D-095 continua exigindo `--quality-checked` ou `--quality-skip`; so a lista de candidatas vem da configuracao.
 
+### `ship`
+
+```powershell
+.\core\bin\guia.ps1 ship [D-NNN] --body "o porque" [--subject "..."] [--unlock-reason "..."] [--no-changelog "motivo"]
+```
+
+Modo `pr` (D-122): leva a demanda do worktree ao PR. Confere, **antes de qualquer efeito**: modo `pr`, branch de demanda, arvore limpa, tabela Pedido -> Teste (`ready --request-test "pedido :: teste"`, obrigatoria salvo `delivery.pr.requestToTest = false`), fragmento de CHANGELOG quando `delivery.changelog.style = fragments` (ou `--no-changelog "motivo"`, que vai para o PR) e o portao `delivery.gate.full` (sem portao, avisa). Depois: empurra a branch, abre ou atualiza o PR (titulo = assunto do commit; corpo = o porque, a tabela, a demanda e `delivery.pr.footer`), grava a mensagem de squash em `.guia/queue/<ID>.msg` (com as marcas `[unlock:]`) e poe a demanda em `Em PR`. A configuracao vem do `process.json` da arvore principal: mudanca de config num PR so vale depois do merge. O `finish` aceita demanda `Em PR`.
+
 ### `changelog`
 
 ```powershell

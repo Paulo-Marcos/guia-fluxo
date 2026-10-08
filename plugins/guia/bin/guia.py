@@ -92,6 +92,7 @@ from _cli_meta import cmd_commit_message, cmd_docs_check, cmd_render  # noqa: E4
 from _cli_changelog import cmd_changelog  # noqa: E402
 from _cli_profile import cmd_profile  # noqa: E402
 from _cli_scaffold import cmd_scaffold  # noqa: E402
+from _cli_ship import cmd_ship  # noqa: E402
 from _cli_worktree import cmd_worktree  # noqa: E402
 from _cli_tasks import (  # noqa: E402
     cmd_stats,
@@ -252,6 +253,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_ready.add_argument("--summary", action="append", default=[])
     p_ready.add_argument("--validation", action="append", default=[])
     p_ready.add_argument("--pending", action="append", default=[])
+    p_ready.add_argument(
+        "--request-test",
+        action="append",
+        default=[],
+        help='Linha da tabela Pedido -> Teste: "pedido :: teste" (repetivel; D-122).',
+    )
     p_ready.add_argument("--run-tests", action="store_true")
     p_ready.add_argument(
         "--commit-subject",
@@ -428,6 +435,22 @@ def build_parser() -> argparse.ArgumentParser:
     p_changelog.add_argument("--version", help="compile: fecha a secao desta versao.")
     p_changelog.add_argument("--date", help="compile: data da versao (padrao: hoje).")
     p_changelog.set_defaults(func=cmd_changelog)
+
+    p_ship = sub.add_parser(
+        "ship",
+        help="Modo pr: confere portao, Pedido -> Teste e fragmento; empurra, abre/atualiza o PR, status Em PR (D-122).",
+    )
+    p_ship.add_argument("task_id", nargs="?", help="Sem id, vale a branch (D-110).")
+    p_ship.add_argument("--body", help="O porque (corpo do commit e do PR).")
+    p_ship.add_argument("--subject", help="Header pronto do commit/titulo do PR.")
+    p_ship.add_argument(
+        "--unlock-reason",
+        action="append",
+        default=[],
+        help='Motivo das marcas [unlock:]: "<trava>=<motivo>" ou "<motivo>" (repetivel).',
+    )
+    p_ship.add_argument("--no-changelog", help="Motivo de nao haver fragmento (mudanca so interna); vai para o PR.")
+    p_ship.set_defaults(func=cmd_ship)
 
     p_plan = sub.add_parser(
         "plan",

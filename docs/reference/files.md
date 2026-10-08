@@ -47,6 +47,7 @@ Configuracao por projeto. Inclui:
 - `skills` (D-114, R12): skill acionada por etapa - `commit` (padrao: deteccao por nome do D-054), `ready` (`delivery-report`), `quality` (a lista de `QUALITY_SKILL_SUGGESTIONS`). Valor: nome, lista, ou `null` (etapa sem skill); ausente = padrao. O motor anuncia, o agente confere se a skill existe e roda, e o resultado fica em `skillsRun` da demanda (`ran`/`missing`/`disabled`, via `--skill-ran`, `--skill-missing` e `--quality-skill`). Skill ausente nao trava a etapa;
 - `delivery.audit.statusContext` (D-118): nome do status que a auditoria grava (padrao: o que o workflow de `issue_comment` grava). O `doctor --delivery` confere que a protecao o exige e que bate com o workflow;
 - `delivery.changelog` (D-121): `style` = `inline` (padrao: entrada escrita no CHANGELOG) ou `fragments` (`guia changelog add`/`compile`); `dir` (padrao `changelog.d`), `file` (padrao `CHANGELOG.md`), `categoryByKind`;
+- `delivery.gate.full` (D-122): comandos do portao completo que o `ship` roda no worktree antes do push (lista; cada um sem shell). `delivery.pr.requestToTest` (padrao `true`) e `delivery.pr.footer` (texto no fim do corpo do PR);
 - `archive.keepInDemandas` (D-090): quantas demandas mais recentes ficam em `.guia/DEMANDAS.md` antes do arquivamento (default `30`). As mais antigas migram para `.guia/historico/DEMANDAS.md`.
 
 ## `.guia/tasks.json`

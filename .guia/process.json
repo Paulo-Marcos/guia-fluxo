@@ -38,6 +38,15 @@
     "changelog": {
       "style": "fragments",
       "dir": "changelog.d"
+    },
+    "gate": {
+      "full": [
+        "python -m pytest -q",
+        "python core/build/render-skills.py --check"
+      ]
+    },
+    "pr": {
+      "footer": "🤖 Generated with [Claude Code](https://claude.com/claude-code)"
     }
   },
   "skills": {

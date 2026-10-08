@@ -14,6 +14,7 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -70,4 +71,66 @@ def gh_api(endpoint: str) -> tuple[Any | None, str | None]:
         return None, "resposta nao e JSON"
 
 
-__all__ = ["FIXTURE_ENV", "gh_api", "gh_status", "repo_slug"]
+def _fixture_prs_path() -> Path | None:
+    path = os.environ.get(FIXTURE_ENV)
+    return Path(path + ".prs.json") if path else None
+
+
+def _fixture_prs() -> list[dict[str, Any]]:
+    path = _fixture_prs_path()
+    return json.loads(path.read_text(encoding="utf-8")) if path and path.exists() else []
+
+
+def gh_pr_find(cwd: Path, branch: str) -> dict[str, Any] | None:
+    """PR aberto da `branch` ({number, url}) ou None."""
+    if _fixture() is not None:
+        return next((pr for pr in _fixture_prs() if pr["head"] == branch), None)
+    result = subprocess.run(
+        ["gh", "pr", "view", branch, "--json", "number,url,state"],
+        cwd=cwd, text=True, encoding="utf-8", capture_output=True,
+    )
+    if result.returncode != 0:
+        return None
+    data = json.loads(result.stdout)
+    return data if data.get("state") == "OPEN" else None
+
+
+def gh_pr_upsert(cwd: Path, base: str, branch: str, title: str, body: str) -> dict[str, Any]:
+    """Abre o PR da `branch` ou atualiza titulo e corpo do que ja existe.
+
+    Escrita no GitHub so por aqui. Corpo vai por arquivo (`--body-file`):
+    nunca por argumento interpolado.
+    """
+    existing = gh_pr_find(cwd, branch)
+    if _fixture() is not None:
+        prs = _fixture_prs()
+        if existing:
+            for pr in prs:
+                if pr["number"] == existing["number"]:
+                    pr.update(title=title, body=body)
+            result = existing
+        else:
+            result = {"number": len(prs) + 1, "url": f"https://example.invalid/pull/{len(prs) + 1}"}
+            prs.append({**result, "head": branch, "base": base, "title": title, "body": body})
+        _fixture_prs_path().write_text(json.dumps(prs, ensure_ascii=False), encoding="utf-8")
+        return {"number": result["number"], "url": result["url"]}
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".md", delete=False) as handle:
+        handle.write(body)
+        body_file = handle.name
+    try:
+        if existing:
+            command = ["gh", "pr", "edit", str(existing["number"]), "--title", title, "--body-file", body_file]
+        else:
+            command = ["gh", "pr", "create", "--base", base, "--head", branch, "--title", title, "--body-file", body_file]
+        result = subprocess.run(command, cwd=cwd, text=True, encoding="utf-8", capture_output=True)
+    finally:
+        os.unlink(body_file)
+    if result.returncode != 0:
+        raise SystemExit(f"gh recusou o PR: {(result.stderr or result.stdout).strip()}")
+    created = gh_pr_find(cwd, branch)
+    if created is None:
+        raise SystemExit("PR criado, mas `gh pr view` nao o encontrou.")
+    return {"number": created["number"], "url": created["url"]}
+
+
+__all__ = ["FIXTURE_ENV", "gh_api", "gh_pr_find", "gh_pr_upsert", "gh_status", "repo_slug"]

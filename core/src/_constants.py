@@ -187,6 +187,8 @@ STATUS_BACKLOG = "Backlog"
 STATUS_PLANNED = "Planejada"
 STATUS_BLOCKED = "Bloqueada"
 STATUS_CANCELLED = "Cancelada"
+# D-122 (R3): modo `pr` - branch empurrada e PR aberto; CI e auditoria correndo.
+STATUS_IN_PR = "Em PR"
 # Item de backlog ja entregue por outra demanda (ou obsoleto): retirado da
 # lista ativa via `backlog resolve`, mas preservado no arquivo para historico.
 STATUS_RESOLVED = "Resolvida"
@@ -202,6 +204,7 @@ STATUS_TAGS: dict[str, str] = {
     STATUS_PLANNED: "PLANEJADA",
     STATUS_BLOCKED: "BLOQUEADA",
     STATUS_CANCELLED: "CANCELADA",
+    STATUS_IN_PR: "PR",
     STATUS_RESOLVED: "RESOLVIDA",
 }
 
@@ -338,6 +341,7 @@ __all__ = [
     "COMMIT_GITMOJI_BY_KIND",
     "DELIVERY_BASE_BRANCH_DEFAULT",
     "DELIVERY_MODE",
+    "STATUS_IN_PR",
     "DELIVERY_MODE_DIRECT",
     "DELIVERY_MODE_PR",
     "DELIVERY_MODES",
