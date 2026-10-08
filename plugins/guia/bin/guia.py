@@ -89,6 +89,7 @@ from _cli_deps import (  # noqa: E402
     cmd_depends_remove,
 )
 from _cli_meta import cmd_commit_message, cmd_docs_check, cmd_render  # noqa: E402
+from _cli_profile import cmd_profile  # noqa: E402
 from _cli_worktree import cmd_worktree  # noqa: E402
 from _cli_tasks import (  # noqa: E402
     cmd_stats,
@@ -397,6 +398,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="remove: descarta mudancas nao commitadas do worktree.",
     )
     p_worktree.set_defaults(func=cmd_worktree)
+
+    p_profile = sub.add_parser(
+        "profile",
+        help="Propoe o perfil de entrega pelos fatos do projeto; --apply grava o bloco delivery (D-119).",
+    )
+    p_profile.add_argument("--apply", action="store_true", help="Grava o bloco sem sobrescrever chaves existentes.")
+    p_profile.add_argument("--name", choices=["solo-direct", "pr-basic", "pr-audited"], help="Perfil no lugar do proposto.")
+    p_profile.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_profile.set_defaults(func=cmd_profile)
 
     p_plan = sub.add_parser(
         "plan",

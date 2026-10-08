@@ -104,6 +104,7 @@ def _ensure_dependencies_met(task: dict[str, Any], verb: str) -> None:
 from _validation_runner import run_validation_commands
 from _delivery_drift import delivery_drift
 from _delivery_facts import collect_facts, print_delivery_facts
+from _profiles import propose_profile
 from _hooks_check import hooks_path_warnings
 from _skills import STAGE_QUALITY, STAGE_READY, announce_stage, record_stage
 from _worktree import cleanup_task_worktree
@@ -1121,7 +1122,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         print(f"FAIL: {f}", file=sys.stderr)
 
     if getattr(args, "delivery", False):
-        print_delivery_facts(facts, drift, as_json=getattr(args, "json", False))
+        print_delivery_facts(facts, drift, propose_profile(facts), as_json=getattr(args, "json", False))
     elif not failures:
         print(MSG_PROCESS_FILES_OK)
     return 1 if failures else 0
