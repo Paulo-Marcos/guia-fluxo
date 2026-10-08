@@ -133,4 +133,26 @@ def gh_pr_upsert(cwd: Path, base: str, branch: str, title: str, body: str) -> di
     return {"number": created["number"], "url": created["url"]}
 
 
-__all__ = ["FIXTURE_ENV", "gh_api", "gh_pr_find", "gh_pr_upsert", "gh_status", "repo_slug"]
+def gh_pr_comment(cwd: Path, number: int, body: str) -> None:
+    """Comenta no PR (corpo por arquivo, nunca por argumento)."""
+    if _fixture() is not None:
+        path = Path(os.environ[FIXTURE_ENV] + ".comments.json")
+        comments = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+        comments.append({"number": number, "body": body})
+        path.write_text(json.dumps(comments, ensure_ascii=False), encoding="utf-8")
+        return
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".md", delete=False) as handle:
+        handle.write(body)
+        body_file = handle.name
+    try:
+        result = subprocess.run(
+            ["gh", "pr", "comment", str(number), "--body-file", body_file],
+            cwd=cwd, text=True, encoding="utf-8", capture_output=True,
+        )
+    finally:
+        os.unlink(body_file)
+    if result.returncode != 0:
+        raise SystemExit(f"gh recusou o comentario: {(result.stderr or result.stdout).strip()}")
+
+
+__all__ = ["FIXTURE_ENV", "gh_api", "gh_pr_comment", "gh_pr_find", "gh_pr_upsert", "gh_status", "repo_slug"]

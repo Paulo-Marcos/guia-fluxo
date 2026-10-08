@@ -206,6 +206,15 @@ O resultado (skills, achados, dimensoes, ou skip) fica em `task.qualityReview` n
 
 Modo `pr` (D-122): leva a demanda do worktree ao PR. Confere, **antes de qualquer efeito**: modo `pr`, branch de demanda, arvore limpa, tabela Pedido -> Teste (`ready --request-test "pedido :: teste"`, obrigatoria salvo `delivery.pr.requestToTest = false`), fragmento de CHANGELOG quando `delivery.changelog.style = fragments` (ou `--no-changelog "motivo"`, que vai para o PR) e o portao `delivery.gate.full` (sem portao, avisa). Depois: empurra a branch, abre ou atualiza o PR (titulo = assunto do commit; corpo = o porque, a tabela, a demanda e `delivery.pr.footer`), grava a mensagem de squash em `.guia/queue/<ID>.msg` (com as marcas `[unlock:]`) e poe a demanda em `Em PR`. A configuracao vem do `process.json` da arvore principal: mudanca de config num PR so vale depois do merge. O `finish` aceita demanda `Em PR`.
 
+### `audit`
+
+```powershell
+.\core\bin\guia.ps1 audit [D-NNN] [--skill-missing pr-audit]
+.\core\bin\guia.ps1 audit [D-NNN] --report relatorio.md [--approve] [--skill-ran <skill>]
+```
+
+Registra a auditoria do PR da demanda (D-123). O motor nao audita: quem audita e a skill de `skills.audit` (padrao `pr-audit`) ou, sem ela, o agente pelo **checklist embutido** (`templates/audit-checklist.md`) - a auditoria e um portao e nao vira aprovacao por falta de skill (R12). Sem `--report`, so le: anuncia a skill, mostra o head, o head no remoto e o patch-id, e com `--skill-missing` imprime o checklist. Com `--report`, comenta o relatorio no PR; com `--approve`, fecha com `<!-- auditoria-aprovada sha=<head> -->` (o `auditoria.yml` grava o status) e grava `audit.auditedSha`, `audit.auditedPatchId` (base do R8) e `audit.via` na demanda. Recusa se o head local nao for o do remoto: o marcador tem de apontar o commit que o GitHub ve.
+
 ### `changelog`
 
 ```powershell
