@@ -35,6 +35,8 @@ Sanity check: confirma layout, dependencias e que os arquivos esperados existem.
 
 **Fatos de entrega (`--delivery`, D-117).** `doctor --delivery [--json]` lista, cada um com a fonte: remoto GitHub, `gh` autenticado, protecao da base (checks exigidos, `strict`, `enforce_admins`, historico linear), metodos de merge e auto-merge, workflow de auditoria (`issue_comment` que grava status, e o contexto), agregador de CI (job com `if: always()` e `needs`), CHANGELOG (Keep a Changelog, `[Unreleased]`, pasta de fragmentos), release (`bin/release.*`, workflow de tag, `VERSION`) e hooks. So leitura, pelo `gh` (nada de token proprio); fato que nao pode ser lido vem vazio com uma nota. Nos testes, `GUIA_GH_FIXTURE` aponta um JSON com as respostas do `gh api`.
 
+**Deriva (`--delivery`, D-118).** No modo `pr`, os fatos sao comparados com o que o processo precisa, e cada diferenca vira aviso `deriva: ...` (e `drift` no JSON): sem protecao na base; status da auditoria fora dos checks exigidos (o merge passa sem auditoria); `delivery.audit.statusContext` diferente do que o workflow grava (todo PR trava); agregador de CI nao exigido; `strict` ou `enforce_admins` desligados; squash desligado; auto-merge ligado. `--strict` reprova. No modo `direct`, nada a comparar.
+
 **Hook `commit-msg` (D-115).** Num repositorio git, o `doctor` confere se o hook das travas vai rodar no worktree onde o comando roda: avisa quando `core.hooksPath` aponta para `NUL`/`/dev/null` (hooks desligados), quando a pasta configurada nao tem `commit-msg`, quando o `config.worktree` diverge da config comum (com `extensions.worktreeConfig`), e quando um projeto com travas nao tem hook configurado nem `commit-msg` em `.git/hooks`. Sao avisos; `--strict` reprova.
 
 ### `feature`

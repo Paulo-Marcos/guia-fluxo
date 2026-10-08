@@ -102,6 +102,7 @@ def _ensure_dependencies_met(task: dict[str, Any], verb: str) -> None:
     )
     raise SystemExit("\n".join(lines))
 from _validation_runner import run_validation_commands
+from _delivery_drift import delivery_drift
 from _delivery_facts import collect_facts, print_delivery_facts
 from _hooks_check import hooks_path_warnings
 from _skills import STAGE_QUALITY, STAGE_READY, announce_stage, record_stage
@@ -1102,6 +1103,14 @@ def cmd_doctor(args: argparse.Namespace) -> int:
             except Exception as exc:
                 failures.append(f"lock_api falhou ao importar: {exc}")
 
+    facts: list[dict[str, Any]] = []
+    drift: list[str] = []
+    if getattr(args, "delivery", False):
+        # D-117/D-118 (R2): fatos com a fonte e a deriva config x GitHub.
+        facts = collect_facts()
+        drift = delivery_drift(facts, read_json(PROCESS_FILE, {}))
+        warnings.extend(f"deriva: {item}" for item in drift)
+
     if getattr(args, "strict", False) and warnings:
         failures.extend(warnings)
         warnings = []
@@ -1112,9 +1121,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         print(f"FAIL: {f}", file=sys.stderr)
 
     if getattr(args, "delivery", False):
-        # D-117 (R2): fatos de entrega com a fonte. So leitura; nao muda o
-        # codigo de saida (a deriva entra na D-118).
-        print_delivery_facts(collect_facts(), as_json=getattr(args, "json", False))
+        print_delivery_facts(facts, drift, as_json=getattr(args, "json", False))
     elif not failures:
         print(MSG_PROCESS_FILES_OK)
     return 1 if failures else 0
