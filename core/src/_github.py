@@ -235,6 +235,7 @@ def gh_pr_merge(cwd: Path, number: int, head: str, subject: str, body: str) -> s
         if entry.get("mergeState", "CLEAN") not in ("CLEAN", "HAS_HOOKS", "UNSTABLE"):
             return "the base branch policy prohibits the merge"
         entry["merged"] = {"matchHead": head, "subject": subject, "body": body}
+        entry["mergeCommit"] = f"{number:040x}"
         entry["state"] = "MERGED"
         _save_fixture_prs(prs)
         return None
@@ -252,6 +253,42 @@ def gh_pr_merge(cwd: Path, number: int, head: str, subject: str, body: str) -> s
     return None if result.returncode == 0 else (result.stderr or result.stdout).strip() or "merge falhou"
 
 
+def gh_pr_merge_commit(cwd: Path, number: int) -> str | None:
+    """SHA do commit de squash na base (D-128)."""
+    if _fixture() is not None:
+        _prs, entry = _fixture_pr(number)
+        return entry.get("mergeCommit")
+    data = _gh_json(cwd, "pr", "view", str(number), "--json", "mergeCommit")
+    return (data.get("mergeCommit") or {}).get("oid")
+
+
+def gh_commit_ci(cwd: Path, sha: str, timeout_seconds: float, poll_seconds: float = 30.0) -> tuple[str, list[str]]:
+    """CI dos workflows no commit `sha` da base: ("pass" | "fail" | "pending", falhas).
+
+    O CI do PR prova o PR; o da main prova a combinacao (D-128).
+    """
+    if _fixture() is not None:
+        entry = next((pr for pr in _fixture_prs() if pr.get("mergeCommit") == sha), {})
+        verdict = entry.get("mainCi", "pass")
+        return verdict, (["ci da main"] if verdict == "fail" else [])
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        result = subprocess.run(
+            ["gh", "run", "list", "--commit", sha, "--json", "name,status,conclusion"],
+            cwd=cwd, text=True, encoding="utf-8", capture_output=True,
+        )
+        runs = json.loads(result.stdout) if result.returncode == 0 and result.stdout.strip() else []
+        done = [run for run in runs if run.get("status") == "completed"]
+        failing = [run["name"] for run in done if run.get("conclusion") not in ("success", "skipped", "neutral")]
+        if failing:
+            return "fail", failing
+        if runs and len(done) == len(runs):
+            return "pass", []
+        if time.monotonic() > deadline:
+            return "pending", []
+        time.sleep(poll_seconds)
+
+
 def pr_patch_id(cwd: Path, number: int, head: str, base_branch: str) -> str | None:
     """Patch-id do PR no `head` (R8): igual = mesmo conteudo, mesmo apos rebase."""
     if _fixture() is not None:
@@ -266,10 +303,12 @@ def pr_patch_id(cwd: Path, number: int, head: str, base_branch: str) -> str | No
 __all__ = [
     "FIXTURE_ENV",
     "gh_api",
+    "gh_commit_ci",
     "gh_pr_checks",
     "gh_pr_comment",
     "gh_pr_find",
     "gh_pr_merge",
+    "gh_pr_merge_commit",
     "gh_pr_state",
     "gh_pr_update_branch",
     "gh_pr_upsert",

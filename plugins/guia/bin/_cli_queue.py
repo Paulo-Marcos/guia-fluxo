@@ -104,12 +104,18 @@ def _remove(args: argparse.Namespace) -> int:
 
 
 def _set_paused(paused: bool, reason: str | None) -> int:
-    def change(data: dict[str, Any]) -> None:
+    def change(data: dict[str, Any]) -> str | None:
         data["paused"] = paused
         data["pausedReason"] = reason if paused else None
+        frozen = data.get("frozenReason")
+        if not paused:
+            # D-128: retomar tambem descongela - decisao do dono, depois de a
+            # main voltar ao verde.
+            data["frozenReason"] = None
+        return frozen
 
-    mutate(change)
-    print("Fila pausada." if paused else "Fila retomada.")
+    frozen = mutate(change)
+    print("Fila pausada." if paused else "Fila retomada." + (f" Estava congelada: {frozen}" if frozen else ""))
     return 0
 
 
