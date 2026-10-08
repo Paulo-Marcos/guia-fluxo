@@ -189,6 +189,8 @@ STATUS_BLOCKED = "Bloqueada"
 STATUS_CANCELLED = "Cancelada"
 # D-122 (R3): modo `pr` - branch empurrada e PR aberto; CI e auditoria correndo.
 STATUS_IN_PR = "Em PR"
+# D-126 (R3): auditada e enfileirada; o executor integra na ordem.
+STATUS_IN_QUEUE = "Na fila"
 # Item de backlog ja entregue por outra demanda (ou obsoleto): retirado da
 # lista ativa via `backlog resolve`, mas preservado no arquivo para historico.
 STATUS_RESOLVED = "Resolvida"
@@ -205,6 +207,7 @@ STATUS_TAGS: dict[str, str] = {
     STATUS_BLOCKED: "BLOQUEADA",
     STATUS_CANCELLED: "CANCELADA",
     STATUS_IN_PR: "PR",
+    STATUS_IN_QUEUE: "FILA",
     STATUS_RESOLVED: "RESOLVIDA",
 }
 
@@ -342,6 +345,7 @@ __all__ = [
     "DELIVERY_BASE_BRANCH_DEFAULT",
     "DELIVERY_MODE",
     "STATUS_IN_PR",
+    "STATUS_IN_QUEUE",
     "DELIVERY_MODE_DIRECT",
     "DELIVERY_MODE_PR",
     "DELIVERY_MODES",

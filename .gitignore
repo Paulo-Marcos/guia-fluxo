@@ -19,3 +19,6 @@ Thumbs.db
 .guia/current-task.json
 .guia/historico/
 .guia/queue/
+.guia/queue.json
+.guia/queue.lock
+.guia/queue.json.*.tmp

@@ -215,6 +215,18 @@ Modo `pr` (D-122): leva a demanda do worktree ao PR. Confere, **antes de qualque
 
 Registra a auditoria do PR da demanda (D-123). O motor nao audita: quem audita e a skill de `skills.audit` (padrao `pr-audit`) ou, sem ela, o agente pelo **checklist embutido** (`templates/audit-checklist.md`) - a auditoria e um portao e nao vira aprovacao por falta de skill (R12). Sem `--report`, so le: anuncia a skill, mostra o head, o head no remoto e o patch-id, e com `--skill-missing` imprime o checklist. Com `--report`, comenta o relatorio no PR; com `--approve`, fecha com `<!-- auditoria-aprovada sha=<head> -->` (o `auditoria.yml` grava o status) e grava `audit.auditedSha`, `audit.auditedPatchId` (base do R8) e `audit.via` na demanda. Recusa se o head local nao for o do remoto: o marcador tem de apontar o commit que o GitHub ve.
 
+### `queue` e `approve`
+
+```powershell
+.\core\bin\guia.ps1 queue [list] [--json]
+.\core\bin\guia.ps1 queue add [D-NNN] [--priority hotfix]
+.\core\bin\guia.ps1 queue remove|priority D-NNN [normal|hotfix]
+.\core\bin\guia.ps1 queue pause --reason "..." | resume
+.\core\bin\guia.ps1 approve D-NNN ... | --all
+```
+
+Fila de integracao (D-126, R5). Estado em `.guia/queue.json` (local, na arvore principal), escrito sob trava de arquivo (`O_EXCL`) com gravacao em temporario + troca atomica - varios chats podem enfileirar ao mesmo tempo. `add` exige PR aberto (`ship`), auditoria aprovada **no head atual** (`audit --approve`) e a mensagem de squash; a demanda vai a `Na fila`. A ordem e FIFO com `hotfix` a frente; item com dependencia aberta ou sem aprovacao espera **sem bloquear os de tras**, e a listagem diz o motivo. `approve` e o ok de merge - acao do usuario, pela mesma regra de comportamento do `finish`. `remove` devolve a demanda a `Em PR`. Quem integra e o executor (`queue run`, D-127).
+
 ### `changelog`
 
 ```powershell
