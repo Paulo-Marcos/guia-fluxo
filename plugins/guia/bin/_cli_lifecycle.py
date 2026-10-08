@@ -102,6 +102,7 @@ def _ensure_dependencies_met(task: dict[str, Any], verb: str) -> None:
     )
     raise SystemExit("\n".join(lines))
 from _validation_runner import run_validation_commands
+from _delivery_facts import collect_facts, print_delivery_facts
 from _hooks_check import hooks_path_warnings
 from _skills import STAGE_QUALITY, STAGE_READY, announce_stage, record_stage
 from _worktree import cleanup_task_worktree
@@ -1110,10 +1111,13 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     for f in failures:
         print(f"FAIL: {f}", file=sys.stderr)
 
-    if failures:
-        return 1
-    print(MSG_PROCESS_FILES_OK)
-    return 0
+    if getattr(args, "delivery", False):
+        # D-117 (R2): fatos de entrega com a fonte. So leitura; nao muda o
+        # codigo de saida (a deriva entra na D-118).
+        print_delivery_facts(collect_facts(), as_json=getattr(args, "json", False))
+    elif not failures:
+        print(MSG_PROCESS_FILES_OK)
+    return 1 if failures else 0
 
 
 __all__ = [
