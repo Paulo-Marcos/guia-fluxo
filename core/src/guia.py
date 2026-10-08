@@ -90,6 +90,7 @@ from _cli_deps import (  # noqa: E402
 )
 from _cli_meta import cmd_commit_message, cmd_docs_check, cmd_render  # noqa: E402
 from _cli_profile import cmd_profile  # noqa: E402
+from _cli_scaffold import cmd_scaffold  # noqa: E402
 from _cli_worktree import cmd_worktree  # noqa: E402
 from _cli_tasks import (  # noqa: E402
     cmd_stats,
@@ -407,6 +408,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_profile.add_argument("--name", choices=["solo-direct", "pr-basic", "pr-audited"], help="Perfil no lugar do proposto.")
     p_profile.add_argument("--json", action="store_true", help="Saida em JSON.")
     p_profile.set_defaults(func=cmd_profile)
+
+    p_scaffold = sub.add_parser(
+        "scaffold",
+        help="Gera andaimes de entrega (auditoria, pr-template, dependabot) ou imprime ci-ok/protection (D-120).",
+    )
+    p_scaffold.add_argument("target", choices=["auditoria", "pr-template", "dependabot", "ci-ok", "protection"])
+    p_scaffold.set_defaults(func=cmd_scaffold)
 
     p_plan = sub.add_parser(
         "plan",
