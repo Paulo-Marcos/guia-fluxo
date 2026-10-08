@@ -169,11 +169,15 @@ def _render_value(value: Any) -> str:
 
 
 def print_delivery_facts(
-    facts: list[dict[str, Any]], drift: list[str] | None = None, as_json: bool = False
+    facts: list[dict[str, Any]],
+    drift: list[str] | None = None,
+    profile: tuple[str, list[str]] | None = None,
+    as_json: bool = False,
 ) -> None:
     drift = drift or []
+    profile_data = {"name": profile[0], "reasons": profile[1]} if profile else None
     if as_json:
-        print(json.dumps({"facts": facts, "drift": drift}, ensure_ascii=False, indent=2))
+        print(json.dumps({"facts": facts, "drift": drift, "profile": profile_data}, ensure_ascii=False, indent=2))
         return
     print("=== doctor --delivery: fatos ===")
     for fact in facts:
@@ -186,6 +190,10 @@ def print_delivery_facts(
         print("- nenhuma")
     for item in drift:
         print(f"- {item}")
+    if profile_data:
+        print(f"=== perfil proposto: {profile_data['name']} (aplicar: guia profile --apply) ===")
+        for reason in profile_data["reasons"]:
+            print(f"- {reason}")
 
 
 __all__ = ["collect_facts", "print_delivery_facts"]

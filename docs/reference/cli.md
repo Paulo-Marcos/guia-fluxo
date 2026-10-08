@@ -206,6 +206,14 @@ O resultado (skills, achados, dimensoes, ou skip) fica em `task.qualityReview` n
 
 Imprime a mensagem de commit da demanda no formato de `delivery.commit.format` (D-112). No modo `pr` o `finish` nao commita, entao e esta mensagem que o agente usa no `git commit -F` e no corpo do squash. No formato `gitmoji-conventional`: header `<emoji> <tipo>(D-NNN): titulo` (feature -> `✨ feat`, bug -> `🐛 fix`, chore -> `🧹 chore`), corpo = `--body`, uma marca `[unlock:<trava>] motivo: ...` por trava que os arquivos declarados tocam e `Co-Authored-By` de `delivery.commit.coAuthor`. A operacao de cada arquivo (adicao, modificacao, delecao) vem do git contra a base (`merge-base` com `origin/<baseBranch>`), nao do disco: arquivo novo conta como adicao. Trava tocada sem motivo recusa (exit 1) citando cada uma; `--unlock-reason` aceita `<trava>=<motivo>` ou um `<motivo>` para todas. Sem id, vale a branch (D-110). O `finish` com commit (modo `direct`) aceita o mesmo `--unlock-reason`.
 
+### `profile`
+
+```powershell
+.\core\bin\guia.ps1 profile [--apply] [--name solo-direct|pr-basic|pr-audited] [--json]
+```
+
+Propoe o perfil de entrega pelos fatos do `doctor --delivery` (D-119): `solo-direct` (sem remoto GitHub, ou sem CI nem protecao), `pr-basic` (CI no PR, sem auditoria por status) e `pr-audited` (workflow de auditoria). O perfil so preenche chaves que o motor ja usa: `delivery.mode`, `delivery.commit.format` e, no auditado, `delivery.audit.statusContext` (lido do workflow). Sem `--apply`, nada e gravado; com `--apply`, acrescenta ao `process.json` so as chaves ausentes - o que ja esta configurado vence e aparece como mantido. O `doctor --delivery` tambem mostra a proposta.
+
 ### `worktree`
 
 ```powershell
