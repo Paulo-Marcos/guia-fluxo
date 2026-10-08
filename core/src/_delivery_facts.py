@@ -168,9 +168,12 @@ def _render_value(value: Any) -> str:
     return str(value)
 
 
-def print_delivery_facts(facts: list[dict[str, Any]], as_json: bool = False) -> None:
+def print_delivery_facts(
+    facts: list[dict[str, Any]], drift: list[str] | None = None, as_json: bool = False
+) -> None:
+    drift = drift or []
     if as_json:
-        print(json.dumps({"facts": facts}, ensure_ascii=False, indent=2))
+        print(json.dumps({"facts": facts, "drift": drift}, ensure_ascii=False, indent=2))
         return
     print("=== doctor --delivery: fatos ===")
     for fact in facts:
@@ -178,6 +181,11 @@ def print_delivery_facts(facts: list[dict[str, Any]], as_json: bool = False) -> 
         print(f"    fonte: {fact['source']}")
         if fact.get("note"):
             print(f"    nota:  {fact['note']}")
+    print("=== deriva (configuracao x GitHub) ===")
+    if not drift:
+        print("- nenhuma")
+    for item in drift:
+        print(f"- {item}")
 
 
 __all__ = ["collect_facts", "print_delivery_facts"]
