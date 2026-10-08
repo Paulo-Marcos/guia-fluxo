@@ -198,6 +198,15 @@ O resultado (skills, achados, dimensoes, ou skip) fica em `task.qualityReview` n
 
 `ready`, `finish` (etapa `quality`) e `commit-message` (etapa `commit`) anunciam no stderr a skill da etapa, lida de `skills.<etapa>` no `process.json` (D-114, R12). O agente confere se ela existe na sessao e registra: `--skill-ran <nome>` / `--skill-missing <nome>` (repetiveis) em `ready` e `finish`; no `finish`, `--quality-skill` tambem conta como `ran`. Etapa com `null` registra `disabled`. O portao de qualidade do D-095 continua exigindo `--quality-checked` ou `--quality-skip`; so a lista de candidatas vem da configuracao.
 
+### `changelog`
+
+```powershell
+.\core\bin\guia.ps1 changelog add [D-NNN] [--category <Categoria>] [--text "..."]
+.\core\bin\guia.ps1 changelog compile [--version X.Y.Z] [--date AAAA-MM-DD]
+```
+
+CHANGELOG por fragmentos (D-121). `add` cria `changelog.d/<ID>.<categoria>.md` na arvore de trabalho (o worktree da demanda): categoria pelo kind (`delivery.changelog.categoryByKind`; padrao feature -> Added, bug -> Fixed, chore -> Changed), `--category` para trocar; fragmento existente recusa. O fragmento viaja no PR, e dois PRs nao disputam mais o topo do CHANGELOG. `compile` (na release) junta os fragmentos no `[Unreleased]` - ou, com `--version`, fecha a secao da versao e abre um `[Unreleased]` vazio -, agrupados na ordem do Keep a Changelog e por id numerico, preservando as entradas ja escritas, e apaga os fragmentos.
+
 ### `commit-message`
 
 ```powershell
