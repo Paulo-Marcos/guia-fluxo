@@ -125,8 +125,20 @@ def _priority(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run(args: argparse.Namespace) -> int:
+    from _executor import run  # import tardio: so o `run` precisa do executor
+    from _state import read_json
+    from _constants import PROCESS_FILE
+
+    merged = run(read_json(PROCESS_FILE, {}), once=args.once)
+    print(f"Executor: {merged} PR(s) integrado(s).")
+    return 0
+
+
 def cmd_queue(args: argparse.Namespace) -> int:
     action = args.action or "list"
+    if action == "run":
+        return _run(args)
     if action == "add":
         return _enqueue(args)
     if action == "remove":

@@ -28,18 +28,21 @@ def marker(sha: str) -> str:
     return f"<!-- auditoria-aprovada sha={sha} -->"
 
 
-def patch_id(root: Path, base_ref: str) -> str | None:
-    """`git diff <merge-base>..HEAD | git patch-id --stable` (R8).
+def patch_id(root: Path, base_ref: str, head: str = "HEAD") -> str | None:
+    """`git diff <merge-base>..<head> | git patch-id --verbatim` (R8).
 
     Igual entre dois heads = mesmo conteudo de PR, mesmo apos rebase limpo.
+    `--verbatim`, nao `--stable`: o padrao descarta espaco em branco, e mudar
+    so a indentacao de um bloco Python (que muda o comportamento) daria o
+    mesmo id - o executor carregaria a auditoria sobre codigo diferente.
     """
-    base = git_output(root, "merge-base", "HEAD", base_ref)
+    base = git_output(root, "merge-base", head, base_ref)
     if not base:
         return None
-    diff = subprocess.run(["git", "diff", f"{base}..HEAD"], cwd=root, capture_output=True)
+    diff = subprocess.run(["git", "diff", f"{base}..{head}"], cwd=root, capture_output=True)
     if diff.returncode != 0 or not diff.stdout:
         return None
-    result = subprocess.run(["git", "patch-id", "--stable"], cwd=root, input=diff.stdout, capture_output=True)
+    result = subprocess.run(["git", "patch-id", "--verbatim"], cwd=root, input=diff.stdout, capture_output=True)
     output = result.stdout.decode("ascii", errors="replace").split()
     return output[0] if output else None
 

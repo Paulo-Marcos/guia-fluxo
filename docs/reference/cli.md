@@ -225,7 +225,13 @@ Registra a auditoria do PR da demanda (D-123). O motor nao audita: quem audita e
 .\core\bin\guia.ps1 approve D-NNN ... | --all
 ```
 
-Fila de integracao (D-126, R5). Estado em `.guia/queue.json` (local, na arvore principal), escrito sob trava de arquivo (`O_EXCL`) com gravacao em temporario + troca atomica - varios chats podem enfileirar ao mesmo tempo. `add` exige PR aberto (`ship`), auditoria aprovada **no head atual** (`audit --approve`) e a mensagem de squash; a demanda vai a `Na fila`. A ordem e FIFO com `hotfix` a frente; item com dependencia aberta ou sem aprovacao espera **sem bloquear os de tras**, e a listagem diz o motivo. `approve` e o ok de merge - acao do usuario, pela mesma regra de comportamento do `finish`. `remove` devolve a demanda a `Em PR`. Quem integra e o executor (`queue run`, D-127).
+Fila de integracao (D-126, R5). Estado em `.guia/queue.json` (local, na arvore principal), escrito sob trava de arquivo (`O_EXCL`) com gravacao em temporario + troca atomica - varios chats podem enfileirar ao mesmo tempo. `add` exige PR aberto (`ship`), auditoria aprovada **no head atual** (`audit --approve`) e a mensagem de squash; a demanda vai a `Na fila`. A ordem e FIFO com `hotfix` a frente; item com dependencia aberta ou sem aprovacao espera **sem bloquear os de tras**, e a listagem diz o motivo. `approve` e o ok de merge - acao do usuario, pela mesma regra de comportamento do `finish`. `remove` devolve a demanda a `Em PR`. Quem integra e o executor.
+
+```powershell
+.\core\bin\guia.ps1 queue run [--once]
+```
+
+**Executor (D-127, R5 + R8).** Mecanica pura no motor, sem LLM. Um executor por repositorio: lease em `.guia/queue/executor.lease` com batimento (segundo `run` com lease viva recusa e diz quem roda; lease sem batimento ha `delivery.queue.leaseStaleMinutes`, padrao 10, e assumida). Por item elegivel, na ordem da fila: le o PR (mergeado por fora reconcilia; fechado devolve); head diferente do auditado so segue se o **patch-id** for o mesmo - ai comenta o marcador do head novo com `carry-from=<sha> patch-id=<id>` (R8), senao devolve; `BEHIND` faz `gh pr update-branch --rebase` (conflito devolve; head novo passa de novo pelo patch-id); espera os checks exigidos ate `delivery.queue.ciTimeoutMinutes` (padrao 40; vermelho devolve, estouro deixa esperando); `gh pr merge --squash --match-head-commit` com a mensagem de `.guia/queue/<ID>.msg` e ` (#N)` no assunto; demanda `Integrada`. **Devolver** tira o item da fila, volta a demanda a `Em desenvolvimento` com `queue.returnReason`, e o executor segue para o proximo. `--once` integra no maximo um item. Fila pausada ou congelada: nada roda.
 
 ### `changelog`
 

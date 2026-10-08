@@ -21,6 +21,7 @@ from _constants import (
     DELIVERY_MODE_PR,
     GUIA_DIR,
     STATUS_IN_PR,
+    STATUS_INTEGRATED,
     REGISTRY_FILE,
     DEMAND_TITLE_FILE,
     DOCS_MAP_FILE,
@@ -498,6 +499,7 @@ _FINISHABLE_STATUSES = frozenset(
         STATUS_AWAITING_VALIDATION_ACCENTED,
         STATUS_IN_DEVELOPMENT,
         STATUS_IN_PR,  # D-122: no modo pr, fecha depois do merge do PR.
+        STATUS_INTEGRATED,  # D-127: mergeada pelo executor da fila.
     }
 )
 

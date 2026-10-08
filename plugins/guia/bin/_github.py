@@ -15,6 +15,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -84,7 +85,7 @@ def _fixture_prs() -> list[dict[str, Any]]:
 def gh_pr_find(cwd: Path, branch: str) -> dict[str, Any] | None:
     """PR aberto da `branch` ({number, url}) ou None."""
     if _fixture() is not None:
-        return next((pr for pr in _fixture_prs() if pr["head"] == branch), None)
+        return next((pr for pr in _fixture_prs() if pr.get("headRef") == branch), None)
     result = subprocess.run(
         ["gh", "pr", "view", branch, "--json", "number,url,state"],
         cwd=cwd, text=True, encoding="utf-8", capture_output=True,
@@ -111,7 +112,7 @@ def gh_pr_upsert(cwd: Path, base: str, branch: str, title: str, body: str) -> di
             result = existing
         else:
             result = {"number": len(prs) + 1, "url": f"https://example.invalid/pull/{len(prs) + 1}"}
-            prs.append({**result, "head": branch, "base": base, "title": title, "body": body})
+            prs.append({**result, "headRef": branch, "base": base, "title": title, "body": body})
         _fixture_prs_path().write_text(json.dumps(prs, ensure_ascii=False), encoding="utf-8")
         return {"number": result["number"], "url": result["url"]}
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".md", delete=False) as handle:
@@ -155,4 +156,124 @@ def gh_pr_comment(cwd: Path, number: int, body: str) -> None:
         raise SystemExit(f"gh recusou o comentario: {(result.stderr or result.stdout).strip()}")
 
 
-__all__ = ["FIXTURE_ENV", "gh_api", "gh_pr_comment", "gh_pr_find", "gh_pr_upsert", "gh_status", "repo_slug"]
+def _save_fixture_prs(prs: list[dict[str, Any]]) -> None:
+    _fixture_prs_path().write_text(json.dumps(prs, ensure_ascii=False), encoding="utf-8")
+
+
+def _fixture_pr(number: int) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    prs = _fixture_prs()
+    entry = next((pr for pr in prs if pr["number"] == number), None)
+    if entry is None:
+        raise SystemExit(f"PR #{number} nao existe no fixture.")
+    return prs, entry
+
+
+def _gh_json(cwd: Path, *args: str) -> Any:
+    result = subprocess.run(["gh", *args], cwd=cwd, text=True, encoding="utf-8", capture_output=True)
+    if result.returncode != 0:
+        raise SystemExit(f"gh {' '.join(args[:3])} falhou: {(result.stderr or result.stdout).strip()}")
+    return json.loads(result.stdout)
+
+
+def gh_pr_state(cwd: Path, number: int) -> dict[str, Any]:
+    """{state, head, mergeState} do PR (D-127)."""
+    if _fixture() is not None:
+        _prs, entry = _fixture_pr(number)
+        return {"state": entry.get("state", "OPEN"), "head": entry.get("head"), "mergeState": entry.get("mergeState", "CLEAN")}
+    data = _gh_json(cwd, "pr", "view", str(number), "--json", "state,headRefOid,mergeStateStatus")
+    return {"state": data["state"], "head": data["headRefOid"], "mergeState": data["mergeStateStatus"]}
+
+
+def gh_pr_update_branch(cwd: Path, number: int) -> tuple[str | None, str | None]:
+    """Rebase da branch do PR na base: (head novo, erro)."""
+    if _fixture() is not None:
+        prs, entry = _fixture_pr(number)
+        after = entry.get("afterUpdate") or {}
+        if after.get("conflict"):
+            return None, "conflito no rebase com a base"
+        entry["head"] = after.get("head", entry.get("head"))
+        entry["mergeState"] = "CLEAN"
+        _save_fixture_prs(prs)
+        return entry["head"], None
+    result = subprocess.run(
+        ["gh", "pr", "update-branch", str(number), "--rebase"],
+        cwd=cwd, text=True, encoding="utf-8", capture_output=True,
+    )
+    if result.returncode != 0:
+        return None, (result.stderr or result.stdout).strip() or "update-branch falhou"
+    return gh_pr_state(cwd, number)["head"], None
+
+
+def gh_pr_checks(cwd: Path, number: int, timeout_seconds: float, poll_seconds: float = 20.0) -> tuple[str, list[str]]:
+    """Espera os checks exigidos: ("pass" | "fail" | "pending", checks que falharam)."""
+    if _fixture() is not None:
+        _prs, entry = _fixture_pr(number)
+        return entry.get("checks", "pass"), list(entry.get("failing") or [])
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        result = subprocess.run(
+            ["gh", "pr", "checks", str(number), "--required", "--json", "name,bucket"],
+            cwd=cwd, text=True, encoding="utf-8", capture_output=True,
+        )
+        checks = json.loads(result.stdout or "[]") if result.stdout.strip().startswith("[") else []
+        failing = [c["name"] for c in checks if c.get("bucket") in ("fail", "cancel")]
+        if failing:
+            return "fail", failing
+        if checks and all(c.get("bucket") in ("pass", "skipping") for c in checks):
+            return "pass", []
+        if time.monotonic() > deadline:
+            return "pending", []
+        time.sleep(poll_seconds)
+
+
+def gh_pr_merge(cwd: Path, number: int, head: str, subject: str, body: str) -> str | None:
+    """Squash preso ao head (`--match-head-commit`); devolve o erro ou None."""
+    if _fixture() is not None:
+        prs, entry = _fixture_pr(number)
+        if entry.get("head") != head:
+            return f"o head mudou ({entry.get('head')})"
+        if entry.get("mergeState", "CLEAN") not in ("CLEAN", "HAS_HOOKS", "UNSTABLE"):
+            return "the base branch policy prohibits the merge"
+        entry["merged"] = {"matchHead": head, "subject": subject, "body": body}
+        entry["state"] = "MERGED"
+        _save_fixture_prs(prs)
+        return None
+    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".md", delete=False) as handle:
+        handle.write(body)
+        body_file = handle.name
+    try:
+        result = subprocess.run(
+            ["gh", "pr", "merge", str(number), "--squash", "--match-head-commit", head,
+             "--subject", subject, "--body-file", body_file],
+            cwd=cwd, text=True, encoding="utf-8", capture_output=True,
+        )
+    finally:
+        os.unlink(body_file)
+    return None if result.returncode == 0 else (result.stderr or result.stdout).strip() or "merge falhou"
+
+
+def pr_patch_id(cwd: Path, number: int, head: str, base_branch: str) -> str | None:
+    """Patch-id do PR no `head` (R8): igual = mesmo conteudo, mesmo apos rebase."""
+    if _fixture() is not None:
+        _prs, entry = _fixture_pr(number)
+        return (entry.get("patchIds") or {}).get(head)
+    from _audit import patch_id  # import tardio: _audit importa este modulo
+
+    subprocess.run(["git", "fetch", "-q", "origin", base_branch, f"refs/pull/{number}/head"], cwd=cwd, capture_output=True)
+    return patch_id(cwd, f"origin/{base_branch}", head)
+
+
+__all__ = [
+    "FIXTURE_ENV",
+    "gh_api",
+    "gh_pr_checks",
+    "gh_pr_comment",
+    "gh_pr_find",
+    "gh_pr_merge",
+    "gh_pr_state",
+    "gh_pr_update_branch",
+    "gh_pr_upsert",
+    "gh_status",
+    "pr_patch_id",
+    "repo_slug",
+]
