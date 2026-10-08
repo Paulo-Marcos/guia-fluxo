@@ -89,6 +89,7 @@ from _cli_deps import (  # noqa: E402
     cmd_depends_remove,
 )
 from _cli_meta import cmd_commit_message, cmd_docs_check, cmd_render  # noqa: E402
+from _cli_changelog import cmd_changelog  # noqa: E402
 from _cli_profile import cmd_profile  # noqa: E402
 from _cli_scaffold import cmd_scaffold  # noqa: E402
 from _cli_worktree import cmd_worktree  # noqa: E402
@@ -415,6 +416,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_scaffold.add_argument("target", choices=["auditoria", "pr-template", "dependabot", "ci-ok", "protection"])
     p_scaffold.set_defaults(func=cmd_scaffold)
+
+    p_changelog = sub.add_parser(
+        "changelog",
+        help="CHANGELOG por fragmentos: add cria changelog.d/<ID>.<categoria>.md; compile junta no CHANGELOG (D-121).",
+    )
+    p_changelog.add_argument("action", choices=["add", "compile"])
+    p_changelog.add_argument("task_id", nargs="?", help="add: a demanda (sem id, vale a branch).")
+    p_changelog.add_argument("--category", help="add: Added|Changed|Deprecated|Removed|Fixed|Security (padrao: pelo kind).")
+    p_changelog.add_argument("--text", help="add: a entrada (o porque, com o id no fim).")
+    p_changelog.add_argument("--version", help="compile: fecha a secao desta versao.")
+    p_changelog.add_argument("--date", help="compile: data da versao (padrao: hoje).")
+    p_changelog.set_defaults(func=cmd_changelog)
 
     p_plan = sub.add_parser(
         "plan",

@@ -34,6 +34,10 @@
     "commit": {
       "format": "gitmoji-conventional",
       "coAuthor": "Claude Opus 5.5 <noreply@anthropic.com>"
+    },
+    "changelog": {
+      "style": "fragments",
+      "dir": "changelog.d"
     }
   },
   "skills": {
