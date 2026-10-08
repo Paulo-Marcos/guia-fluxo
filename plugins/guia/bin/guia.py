@@ -92,6 +92,7 @@ from _cli_meta import cmd_commit_message, cmd_docs_check, cmd_render  # noqa: E4
 from _cli_audit import cmd_audit  # noqa: E402
 from _cli_changelog import cmd_changelog  # noqa: E402
 from _cli_profile import cmd_profile  # noqa: E402
+from _cli_queue import cmd_approve, cmd_queue  # noqa: E402
 from _cli_scaffold import cmd_scaffold  # noqa: E402
 from _cli_ship import cmd_ship  # noqa: E402
 from _cli_worktree import cmd_worktree  # noqa: E402
@@ -463,6 +464,26 @@ def build_parser() -> argparse.ArgumentParser:
     p_audit.add_argument("--skill-ran", action="append", default=[], help="Skill de auditoria que rodou.")
     p_audit.add_argument("--skill-missing", action="append", default=[], help="Skill ausente: usa o checklist embutido.")
     p_audit.set_defaults(func=cmd_audit)
+
+    p_queue = sub.add_parser(
+        "queue",
+        help="Fila de integracao (D-126): add | list | remove | pause | resume | priority.",
+    )
+    p_queue.add_argument("action", nargs="?", choices=["add", "list", "remove", "pause", "resume", "priority"])
+    p_queue.add_argument("task_id", nargs="?", help="add/remove/priority: a demanda (add sem id: a branch).")
+    p_queue.add_argument("level", nargs="?", choices=["normal", "hotfix"], help="priority: o nivel.")
+    p_queue.add_argument("--priority", choices=["normal", "hotfix"], default="normal", help="add: prioridade.")
+    p_queue.add_argument("--reason", help="pause: o motivo.")
+    p_queue.add_argument("--json", action="store_true", help="list: saida em JSON.")
+    p_queue.set_defaults(func=cmd_queue)
+
+    p_approve = sub.add_parser(
+        "approve",
+        help="Ok de merge para itens da fila (acao do usuario, como o finish) (D-126).",
+    )
+    p_approve.add_argument("task_ids", nargs="*")
+    p_approve.add_argument("--all", action="store_true", help="Aprova todos os itens esperando.")
+    p_approve.set_defaults(func=cmd_approve)
 
     p_plan = sub.add_parser(
         "plan",
