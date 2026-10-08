@@ -30,16 +30,20 @@ from _constants import (
     STATUS_IN_DEVELOPMENT,
     STATUS_INTEGRATED,
 )
+from _git_ops import git_output
 from _github import (
+    gh_commit_ci,
     gh_pr_checks,
     gh_pr_comment,
     gh_pr_merge,
+    gh_pr_merge_commit,
     gh_pr_state,
     gh_pr_update_branch,
     pr_patch_id,
 )
 from _merge_queue import find, load, mutate, ordered
 from _tasks import find_task, save_task
+from _worktree import remove_worktree
 
 LEASE_FILE = GUIA_DIR / "queue" / "executor.lease"
 LEASE_STALE_MINUTES_DEFAULT = 10
@@ -207,6 +211,62 @@ def _finish_item(item: dict[str, Any], outcome: str, reason: str | None = None) 
     save_task(task)
 
 
+def _cleanup_worktree(item_id: str) -> None:
+    """Protocolo seguro da D-113: desfaz juncoes, recusa link restante, sem --force."""
+    task = find_task(item_id)
+    worktree = (task or {}).get("worktree") or {}
+    if not worktree.get("created"):
+        return
+    try:
+        remove_worktree(task)
+    except SystemExit as reason:
+        print(f"  {item_id}: worktree mantido ({worktree.get('path')}): {reason}")
+        return
+    save_task(task)
+    print(f"  {item_id}: worktree removido ({worktree.get('path')}).")
+
+
+def _update_main_tree() -> None:
+    """Principal limpa: pull --ff-only; suja: so fetch - nunca pisa no trabalho do dono."""
+    dirty = git_output(ROOT, "status", "--porcelain", "--untracked-files=no")
+    if dirty:
+        git_output(ROOT, "fetch", "-q", "origin")
+        print("  arvore principal suja: so fetch (rode `git pull --ff-only` quando ela estiver limpa).")
+        return
+    if git_output(ROOT, "pull", "-q", "--ff-only") is None:
+        print("  pull --ff-only da arvore principal falhou: confira a branch local.")
+        return
+    print("  arvore principal atualizada (pull --ff-only).")
+
+
+def _watch_main_ci(item: dict[str, Any], ci_timeout_seconds: float) -> None:
+    """O CI do PR prova o PR; o da main prova a combinacao. Vermelho congela."""
+    sha = gh_pr_merge_commit(ROOT, item["pr"])
+    if not sha:
+        print(f"  {item['id']}: commit do squash nao encontrado; CI da main nao acompanhado.")
+        return
+    verdict, failing = gh_commit_ci(ROOT, sha, ci_timeout_seconds)
+    if verdict == "fail":
+        reason = f"main vermelha em {sha[:12]} depois do PR #{item['pr']} ({', '.join(failing)})"
+
+        def freeze(data: dict[str, Any]) -> None:
+            data["frozenReason"] = reason
+
+        mutate(freeze)
+        print(f"  FILA CONGELADA: {reason}. Corrija a main e rode `guia queue resume`.")
+    elif verdict == "pending":
+        print(f"  {item['id']}: CI da main em {sha[:12]} ainda sem resultado no prazo; acompanhe.")
+    else:
+        print(f"  {item['id']}: CI da main verde em {sha[:12]}.")
+
+
+def _after_merge(item: dict[str, Any], ci_timeout_seconds: float) -> None:
+    """R5 passo 6 (D-128): limpar, atualizar a principal e provar a combinacao."""
+    _cleanup_worktree(item["id"])
+    _update_main_tree()
+    _watch_main_ci(item, ci_timeout_seconds)
+
+
 def run(config: dict[str, Any], once: bool = False) -> int:
     """Uma passada pela fila; devolve quantos itens foram integrados."""
     delivery = config.get("delivery") or {}
@@ -237,6 +297,8 @@ def run(config: dict[str, Any], once: bool = False) -> int:
                 continue
             if outcome == "merged":
                 _finish_item(item, "merged")
+                heartbeat()
+                _after_merge(item, ci_timeout)
                 merged += 1
                 if once:
                     break
