@@ -83,6 +83,17 @@ class ChangelogFragmentTests(unittest.TestCase):
         self.assertNotEqual(self._run("changelog", "add", "D-001", "--category", "Security", "--text", "b").returncode, 0)
         self.assertEqual((self.sb / "changelog.d" / "D-001.security.md").read_text(encoding="utf-8"), "- a\n")
 
+    def test_add_refuses_paths_outside_the_fragment_dir(self) -> None:
+        """Categoria e pasta entram no caminho: nada pode sair de changelog.d/."""
+        self._ok("chore", "x")
+        result = self._run("changelog", "add", "D-001", "--category", "/../../fora", "--text", "a")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(list(self.sb.rglob("fora*")), [])
+        process = self.sb / ".guia" / "process.json"
+        process.write_text('{"delivery": {"changelog": {"dir": "../fora"}}}', encoding="utf-8")
+        self.assertNotEqual(self._run("changelog", "add", "D-001", "--text", "a").returncode, 0)
+        self.assertFalse((self.sb.parent / "fora").exists())
+
     def test_compile_merges_into_unreleased_keeping_inline_entries(self) -> None:
         folder = self.sb / "changelog.d"
         folder.mkdir()

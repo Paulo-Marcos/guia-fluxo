@@ -50,9 +50,20 @@ def _category_name(raw: str) -> str:
     return next((name for name in CATEGORY_ORDER if name.lower() == raw.lower()), raw.capitalize())
 
 
+def _inside_root(root: Path, rel: str) -> Path:
+    """Caminho de `delivery.changelog` (dir ou file): relativo e sem `..` - vem do process.json versionado."""
+    candidate = Path(rel)
+    if candidate.is_absolute() or ".." in candidate.parts or not candidate.parts:
+        raise SystemExit(f"delivery.changelog: caminho invalido {rel!r} - use relativo, sem '..'.")
+    return root / candidate
+
+
 def add_fragment(root: Path, settings: dict[str, Any], task: dict[str, Any], category: str | None, text: str | None) -> Path:
     category = _category_name(category or settings["categoryByKind"].get(task.get("kind", ""), "Changed"))
-    path = root / settings["dir"] / f"{task['id']}.{category.lower()}.md"
+    # A categoria entra no nome do arquivo: so as do Keep a Changelog.
+    if category not in CATEGORY_ORDER:
+        raise SystemExit(f"Categoria {category!r} invalida: use uma de {', '.join(CATEGORY_ORDER)}.")
+    path = _inside_root(root, settings["dir"]) / f"{task['id']}.{category.lower()}.md"
     if path.exists():
         raise SystemExit(f"{path.relative_to(root).as_posix()} ja existe: edite o fragmento em vez de recriar.")
     body = (text or f"{task['title']} ({task['id']})").strip()
@@ -97,8 +108,8 @@ def _parse_categories(body: str) -> tuple[list[str], dict[str, list[str]]]:
 
 def compile_fragments(root: Path, settings: dict[str, Any], version: str | None = None, date: str | None = None) -> list[Path]:
     """Junta os fragmentos no CHANGELOG; devolve os fragmentos consumidos."""
-    fragments = _fragments(root / settings["dir"])
-    changelog = root / settings["file"]
+    fragments = _fragments(_inside_root(root, settings["dir"]))
+    changelog = _inside_root(root, settings["file"])
     text = changelog.read_text(encoding="utf-8")
     if not fragments and version is None:
         return []
