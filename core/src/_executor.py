@@ -260,11 +260,32 @@ def _watch_main_ci(item: dict[str, Any], ci_timeout_seconds: float) -> None:
         print(f"  {item['id']}: CI da main verde em {sha[:12]}.")
 
 
+def _close_dependabot_prs(item_id: str) -> None:
+    """D-129: lote do Dependabot integrado fecha os PRs do bot incorporados."""
+    task = find_task(item_id)
+    if task and task.get("dependabot"):
+        from _dependabot import close_incorporated
+
+        closed = close_incorporated(task)
+        print(f"  {item_id}: PRs do Dependabot fechados: {', '.join(f'#{n}' for n in closed) or 'nenhum'}.")
+
+
 def _after_merge(item: dict[str, Any], ci_timeout_seconds: float) -> None:
     """R5 passo 6 (D-128): limpar, atualizar a principal e provar a combinacao."""
+    _close_dependabot_prs(item["id"])
     _cleanup_worktree(item["id"])
     _update_main_tree()
     _watch_main_ci(item, ci_timeout_seconds)
+
+
+def _dependabot_on_idle(config: dict[str, Any]) -> None:
+    """D-129 (R11): fila vazia -> lote do Dependabot, se houver bumps e nenhum lote aberto."""
+    from _dependabot import on_idle
+
+    lote = on_idle(config)
+    if lote:
+        prs = ", ".join(f"#{n}" for n in lote["dependabot"]["prs"])
+        print(f"Fila vazia: lote do Dependabot criado como {lote['id']} ({prs}). Rode a pr-bump num chat.")
 
 
 def run(config: dict[str, Any], once: bool = False) -> int:
@@ -285,6 +306,8 @@ def run(config: dict[str, Any], once: bool = False) -> int:
             status_of = lambda task_id: (find_task(task_id) or {}).get("status")  # noqa: E731
             eligible = [item for item, why in ordered(data["items"], status_of) if why is None and item["id"] not in tried]
             if not eligible:
+                if not data["items"]:
+                    _dependabot_on_idle(config)
                 break
             item = eligible[0]
             tried.add(item["id"])
