@@ -22,7 +22,9 @@ import time
 from pathlib import Path
 from typing import Any
 
+from _auto_finish import try_auto_finish
 from _clock import now_iso
+from _cloud_import import import_labeled
 from _constants import (
     DELIVERY_BASE_BRANCH_DEFAULT,
     GUIA_DIR,
@@ -30,6 +32,7 @@ from _constants import (
     STATUS_IN_DEVELOPMENT,
     STATUS_INTEGRATED,
 )
+from _dependabot import close_incorporated, on_idle
 from _git_ops import git_output
 from _github import (
     gh_commit_ci,
@@ -44,6 +47,9 @@ from _github import (
 from _merge_queue import find, load, mutate, ordered
 from _tasks import find_task, save_task
 from _worktree import remove_worktree
+
+# D-137: tudo importado no topo - o executor remove o worktree da demanda no
+# meio da passada, e um import tardio rodando dali acharia o modulo sumido.
 
 LEASE_FILE = GUIA_DIR / "queue" / "executor.lease"
 LEASE_STALE_MINUTES_DEFAULT = 10
@@ -268,16 +274,12 @@ def _close_dependabot_prs(item_id: str) -> None:
     """D-129: lote do Dependabot integrado fecha os PRs do bot incorporados."""
     task = find_task(item_id)
     if task and task.get("dependabot"):
-        from _dependabot import close_incorporated
-
         closed = close_incorporated(task)
         print(f"  {item_id}: PRs do Dependabot fechados: {', '.join(f'#{n}' for n in closed) or 'nenhum'}.")
 
 
 def _auto_finish(item: dict[str, Any], config: dict[str, Any], sha: str | None, verdict: str | None) -> None:
     """D-135 (R7): no pilot, fecha a demanda quando todas as condicoes valem."""
-    from _auto_finish import try_auto_finish
-
     task = find_task(item["id"])
     if task is None:
         return
@@ -302,8 +304,6 @@ def _after_merge(item: dict[str, Any], ci_timeout_seconds: float, config: dict[s
 
 def _import_cloud_prs() -> None:
     """D-130: ao iniciar, traz os PRs da nuvem (rotulo guia:fila) sem auditoria."""
-    from _cloud_import import import_labeled
-
     # Etapa acessoria: falha do gh aqui nao pode parar a integracao da fila.
     try:
         imported, warnings = import_labeled()
@@ -318,8 +318,6 @@ def _import_cloud_prs() -> None:
 
 def _dependabot_on_idle(config: dict[str, Any]) -> None:
     """D-129 (R11): fila vazia -> lote do Dependabot, se houver bumps e nenhum lote aberto."""
-    from _dependabot import on_idle
-
     lote = on_idle(config)
     if lote:
         prs = ", ".join(f"#{n}" for n in lote["dependabot"]["prs"])

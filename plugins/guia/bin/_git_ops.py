@@ -92,6 +92,25 @@ def git_changed_files() -> list[str]:
     return [line.strip() for line in output.splitlines() if line.strip()]
 
 
+def changed_against_base(base_branch: str) -> list[str]:
+    """Tudo o que a branch atual muda contra a base (D-137): o que o squash leva.
+
+    Mesma base de `name_status_against_base` (merge-base com
+    `origin/<base_branch>`, sem remoto HEAD), commitado ou nao, mais os novos
+    nao rastreados (e nao ignorados). Roda no CWD (o worktree da demanda).
+    """
+    cwd = Path.cwd()
+
+    def _out(*args: str) -> str:
+        result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True)
+        return result.stdout if result.returncode == 0 else ""
+
+    base = _out("merge-base", "HEAD", f"origin/{base_branch}").strip() or "HEAD"
+    names = _out("diff", "--name-only", "--no-renames", base).splitlines()
+    names += _out("ls-files", "--others", "--exclude-standard").splitlines()
+    return list(dict.fromkeys(name for name in names if name.strip()))
+
+
 def name_status_against_base(files: Iterable[str], base_branch: str) -> list[str]:
     """Linhas `name-status` dos `files` contra a base da branch atual (D-112).
 

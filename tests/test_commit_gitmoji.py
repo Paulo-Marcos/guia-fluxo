@@ -150,5 +150,65 @@ class CommitMessageVerbTests(unittest.TestCase):
         self.assertIn("[unlock:adicoes] motivo: arquivo novo pedido", message)
 
 
+@unittest.skipUnless(shutil.which("git"), "git nao disponivel")
+class PrModeBranchFilesTests(unittest.TestCase):
+    """D-137: no modo `pr` as marcas vem do que a branch muda (git), nao so do declarado.
+
+    O squash leva a branch inteira; sem isso, um `ready` sem `--file` deixava a
+    mensagem sem `[unlock:]` e o alwaysHuman (D-134) aprovava sozinho.
+    """
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        base = Path(self._tmp.name)
+        self.sb = base / "app"
+        (self.sb / "core" / "src").mkdir(parents=True)
+        (self.sb / "core" / "lock").mkdir(parents=True)
+        for src in CORE_SRC.glob("*.py"):
+            if not src.name.startswith("__"):
+                shutil.copy2(src, self.sb / "core" / "src" / src.name)
+        shutil.copy2(CORE_LOCK / "lock_api.py", self.sb / "core" / "lock" / "lock_api.py")
+        (self.sb / ".guia" / "locks").mkdir(parents=True)
+        (self.sb / ".guia" / "locks" / "registry.yaml").write_text(REGISTRY, encoding="utf-8")
+        (self.sb / ".guia" / "process.json").write_text(json.dumps({"delivery": {
+            "mode": "pr", "commit": {"format": "gitmoji-conventional", "coAuthor": "Agente <a@b>"}}}), encoding="utf-8")
+        (self.sb / ".gitignore").write_text(".guia/\ncore/\n", encoding="utf-8")
+        (self.sb / "x.txt").write_text("x\n", encoding="utf-8")
+        remote = base / "remote.git"
+        subprocess.run(["git", "init", "-q", "--bare", str(remote)], capture_output=True)
+        for args in (("init", "-q", "-b", "main"), ("config", "user.email", "t@t"), ("config", "user.name", "t"),
+                     ("add", "."), ("commit", "-q", "-m", "seed"), ("remote", "add", "origin", str(remote)),
+                     ("push", "-q", "-u", "origin", "main"), ("checkout", "-q", "-b", "d-001-mexer")):
+            self.assertEqual(self._git(*args).returncode, 0, msg=str(args))
+        result = self._run("chore", "mexer")
+        self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+        (self.sb / "novo.txt").write_text("n\n", encoding="utf-8")
+        self._git("add", "novo.txt")
+        self._git("commit", "-q", "-m", "wip")
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    def _git(self, *args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(["git", *args], cwd=self.sb, capture_output=True, text=True, encoding="utf-8")
+
+    def _run(self, *args: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [sys.executable, "core/src/guia.py", *args],
+            cwd=self.sb, capture_output=True, text=True, encoding="utf-8",
+        )
+
+    def test_undeclared_new_file_on_the_branch_still_gets_the_mark(self) -> None:
+        result = self._run("commit-message", "D-001", "--unlock-reason", "pedido do teste")
+        self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+        self.assertIn("[unlock:adicoes] motivo: pedido do teste", result.stdout)
+        self.assertNotIn("homologado", result.stdout, "x.txt nao mudou na branch")
+
+    def test_mark_without_reason_still_refuses(self) -> None:
+        result = self._run("commit-message", "D-001")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("adicoes", result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -171,5 +171,20 @@ class ExecutorTests(unittest.TestCase):
         self.assertEqual(self._task("D-001")["status"], "Na fila", "nao foi devolvida")
 
 
+class ExecutorImportsTests(unittest.TestCase):
+    def test_no_import_inside_functions(self) -> None:
+        """D-137: o executor apaga o worktree no meio da passada; import tardio
+        rodando de la (dogfood) achava o modulo sumido. Tudo no topo."""
+        import ast
+
+        tree = ast.parse((CORE_SRC / "_executor.py").read_text(encoding="utf-8"))
+        late = [
+            node.lineno
+            for func in ast.walk(tree) if isinstance(func, (ast.FunctionDef, ast.AsyncFunctionDef))
+            for node in ast.walk(func) if isinstance(node, (ast.Import, ast.ImportFrom))
+        ]
+        self.assertEqual(late, [], f"imports dentro de funcao nas linhas {late}")
+
+
 if __name__ == "__main__":
     unittest.main()
