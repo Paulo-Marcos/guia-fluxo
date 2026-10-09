@@ -389,10 +389,16 @@ def demand_title(task: dict[str, Any]) -> str:
         "demandTitleFormat",
         process.get("chatTitleFormat", DEMAND_TITLE_FORMAT_DEFAULT),
     )
+    # D-133: nivel de autonomia acima de manual aparece junto da etapa
+    # (#FILA·queue), para o dono ver de relance o que deu a cada chat.
+    from _autonomy import LEVEL_DEFAULT, effective_level
+
+    level = effective_level(task, process)
+    tag = status_tag(task["status"]) + (f"·{level}" if level != LEVEL_DEFAULT else "")
     return template.format(
         id=task["id"],
         kindMarker=kind_marker(task.get("kind", "")),
-        statusTag=status_tag(task["status"]),
+        statusTag=tag,
         title=task["title"],
     )
 

@@ -90,6 +90,7 @@ from _cli_deps import (  # noqa: E402
 )
 from _cli_meta import cmd_commit_message, cmd_docs_check, cmd_render  # noqa: E402
 from _cli_audit import cmd_audit  # noqa: E402
+from _cli_autonomy import cmd_autonomy  # noqa: E402
 from _cli_changelog import cmd_changelog  # noqa: E402
 from _cli_deps_bot import cmd_deps  # noqa: E402
 from _cli_profile import cmd_profile  # noqa: E402
@@ -486,6 +487,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_approve.add_argument("task_ids", nargs="*")
     p_approve.add_argument("--all", action="store_true", help="Aprova todos os itens esperando.")
     p_approve.set_defaults(func=cmd_approve)
+
+    p_autonomy = sub.add_parser(
+        "autonomy",
+        help="Nivel de autonomia da demanda: manual | pr | queue | pilot (D-133). Subir e do usuario.",
+    )
+    p_autonomy.add_argument("tokens", nargs="*", help="[nivel] [D-NNN] - sem nivel, mostra.")
+    p_autonomy.add_argument("--by", choices=["user", "agent"], default="user",
+                            help="Quem muda: o agente so pode descer.")
+    p_autonomy.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_autonomy.set_defaults(func=cmd_autonomy)
 
     p_deps_bot = sub.add_parser(
         "deps",
