@@ -1,5 +1,5 @@
 ---
-description: PRIMARY TRIGGER — create a new `D-NNN` chore task for maintenance that deserves a trace but isn't a feature or bug: small refactor, dependency upgrade, build/lint tweak, config or doc fix. Options: `--context "<what + why>"`, `--origin "<source>"`, `--status backlog|planned|in-development` (default `in-development`). For new capabilities use `feature`; for broken behavior use `bug`.
+description: "PRIMARY TRIGGER — create a new `D-NNN` chore task for maintenance that deserves a trace but isn't a feature or bug: small refactor, dependency upgrade, build/lint tweak, config or doc fix. Options: `--context \"<what + why>\"`, `--origin \"<source>\"`, `--status backlog|planned|in-development` (default `in-development`). For new capabilities use `feature`; for broken behavior use `bug`."
 ---
 
 # Chore

@@ -1,5 +1,5 @@
 ---
-description: PLAN — mark a task as `Planejada` (triaged but not started yet). Accepts transition from `Backlog` (parked item that gained priority) or from `Em desenvolvimento` (deprioritized but already known). Options: `--note "<rationale>"`. To begin work use `start` (already triaged) or `promote` (still needs triage); to park without deciding use `backlog`.
+description: "PLAN — mark a task as `Planejada` (triaged but not started yet). Accepts transition from `Backlog` (parked item that gained priority) or from `Em desenvolvimento` (deprioritized but already known). Options: `--note \"<rationale>\"`. To begin work use `start` (already triaged) or `promote` (still needs triage); to park without deciding use `backlog`."
 ---
 
 # Plan

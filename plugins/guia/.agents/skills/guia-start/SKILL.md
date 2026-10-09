@@ -1,6 +1,6 @@
 ---
 name: guia-start
-description: START — begin work on a `Planejada` or `Backlog` task (status → `Em desenvolvimento`). Assumes triage is done (kind already decided); use `promote` when kind still needs deciding. Options: `--note "<starting note>"`. To resume from `Bloqueada` use `unblock`; to create a fresh task use `feature`/`bug`/`chore`.
+description: "START — begin work on a `Planejada` or `Backlog` task (status → `Em desenvolvimento`). Assumes triage is done (kind already decided); use `promote` when kind still needs deciding. Options: `--note \"<starting note>\"`. To resume from `Bloqueada` use `unblock`; to create a fresh task use `feature`/`bug`/`chore`."
 ---
 
 # Start

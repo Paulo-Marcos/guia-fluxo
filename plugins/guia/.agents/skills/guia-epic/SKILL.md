@@ -1,6 +1,6 @@
 ---
 name: guia-epic
-description: EPIC — create an `E-NNN` epic to orchestrate a large piece of work that breaks down into smaller stories (D-049). The epic itself does no implementation; it aggregates children. Use `feature/bug/chore "..." --under E-NNN` to attach a child story; `status E-NNN` prints the aggregated tree (closed/total children); `finish E-NNN` is REFUSED while any child is in a non-terminal status (Em desenvolvimento / Aguardando validacao / Planejada / Backlog / Bloqueada). No nested epics (2-level hierarchy only). `cancel` on an epic does NOT cascade: children remain as-is.
+description: "EPIC — create an `E-NNN` epic to orchestrate a large piece of work that breaks down into smaller stories (D-049). The epic itself does no implementation; it aggregates children. Use `feature/bug/chore \"...\" --under E-NNN` to attach a child story; `status E-NNN` prints the aggregated tree (closed/total children); `finish E-NNN` is REFUSED while any child is in a non-terminal status (Em desenvolvimento / Aguardando validacao / Planejada / Backlog / Bloqueada). No nested epics (2-level hierarchy only). `cancel` on an epic does NOT cascade: children remain as-is."
 ---
 
 # Epic

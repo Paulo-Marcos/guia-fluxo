@@ -1,6 +1,6 @@
 ---
 name: guia-bug
-description: PRIMARY TRIGGER — create a new `D-NNN` bug task for a regression, defect, or incorrect behavior. Options: `--context "<symptom + impact>"`, `--origin "<source>"`, `--status backlog|planned|in-development` (default `in-development`). For new capabilities use `feature`; for maintenance without behavior change use `chore`.
+description: "PRIMARY TRIGGER — create a new `D-NNN` bug task for a regression, defect, or incorrect behavior. Options: `--context \"<symptom + impact>\"`, `--origin \"<source>\"`, `--status backlog|planned|in-development` (default `in-development`). For new capabilities use `feature`; for maintenance without behavior change use `chore`."
 ---
 
 # Bug

@@ -1,5 +1,5 @@
 ---
-description: REFERENCE/BACKGROUND ONLY — overview of the Guia Fluxo task-process pipeline (D-NNN tasks, status states, locks, chat-rename, worktree). Use directly when the developer asks for the process overview ("explain Guia Fluxo", "how does this pipeline work"), the installation guide, or the portability checklist. Not a competitor to the action verbs — those route to their own shims first.
+description: "REFERENCE/BACKGROUND ONLY — overview of the Guia Fluxo task-process pipeline (D-NNN tasks, status states, locks, chat-rename, worktree). Use directly when the developer asks for the process overview (\"explain Guia Fluxo\", \"how does this pipeline work\"), the installation guide, or the portability checklist. Not a competitor to the action verbs — those route to their own shims first."
 ---
 
 # Guia Fluxo

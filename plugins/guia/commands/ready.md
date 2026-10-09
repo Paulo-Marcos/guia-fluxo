@@ -1,5 +1,5 @@
 ---
-description: HANDOFF to developer validation — does NOT close the task. **The agent runs this itself when implementation ends**, never the human. The gate that forces human-in-the-loop before `finish`. Options: `--file <path>` (changed files, repeatable), `--summary "<note>"` (implementation notes, repeatable), `--validation "<cmd>"` (validations that passed, repeatable), `--pending "<gap>"` (manual checks still needed, repeatable). To close after validation use `finish`; to inspect without changing state use `status`.
+description: "HANDOFF to developer validation — does NOT close the task. **The agent runs this itself when implementation ends**, never the human. The gate that forces human-in-the-loop before `finish`. Options: `--file <path>` (changed files, repeatable), `--summary \"<note>\"` (implementation notes, repeatable), `--validation \"<cmd>\"` (validations that passed, repeatable), `--pending \"<gap>\"` (manual checks still needed, repeatable). To close after validation use `finish`; to inspect without changing state use `status`."
 ---
 
 # Ready

@@ -183,3 +183,118 @@ verbs:
         body_file: bodies/upgrade.md
       claude_command:
         body_file: bodies/upgrade.md
+
+  # D-136: verbos da entrega por PR (R4); os USER-ONLY saem com disable-model-invocation.
+  ship:
+    description: |
+      HANDOFF TO PR — from the demand's worktree (`delivery.mode: pr`), run the full gate, check the changelog fragment and the Request -> Test table, push, open or update the PR (title = commit subject, body built from the demand) and save the squash message to `.guia/queue/D-NNN.msg` (with `[unlock:]` marks computed from the branch diff and `Co-Authored-By`); status -> `Em PR`. Options: `--subject`, `--body "<why>"`, `--unlock-reason "<lock>=<reason>"`, `--no-changelog "<reason>"`. Agent at autonomy level >= `pr`. Before: `ready`; after: `audit`.
+    targets:
+      agent_skill:
+        body_file: bodies/ship.md
+      claude_command:
+        body_file: bodies/ship.md
+
+  audit:
+    description: |
+      AUDIT — show what to audit on the PR head (the `skills.audit` skill, default `pr-audit`, or the built-in checklist when it is missing), then record the result: `--report <file>` comments it on the PR; `--approve` adds the `<!-- auditoria-aprovada sha=<head> -->` marker and saves `auditedSha` + `auditedPatchId`; `--finding SEV=N` (repeatable) records open findings for the `pilot` auto-finish. Also `--skill-ran`, `--skill-missing`. Agent at level >= `pr`. Before: `ship`; after: `queue add`.
+    targets:
+      agent_skill:
+        body_file: bodies/audit.md
+      claude_command:
+        body_file: bodies/audit.md
+
+  queue:
+    description: |
+      QUEUE — show the merge queue (order, state, why each item waits; `--json`), put an audited PR in it (`add [D-NNN] [--priority hotfix]`, requires the approved audit on the current head; at level >= `queue` it enters approved unless something in `alwaysHuman` holds it), or bring labeled cloud PRs in (`import`). Agent may `add` at level >= `queue`. For pause/resume/remove/priority/run use `queue-control` (user-only); for the merge ok use `approve`.
+    targets:
+      agent_skill:
+        body_file: bodies/queue.md
+      claude_command:
+        body_file: bodies/queue.md
+
+  queue-control:
+    description: |
+      USER-ONLY — control the merge queue: `queue pause --reason "..."`, `queue resume` (also unfreezes after a red main), `queue remove D-NNN` (back to `Em PR`), `queue priority D-NNN hotfix|normal`, and `queue run [--once]` (the executor: update-branch, wait for checks, squash merge, clean up, watch main CI; run it from the main tree). Only the developer invokes it. To list or add use `queue`.
+    frontmatter:
+      disable-model-invocation: true
+    targets:
+      agent_skill:
+        body_file: bodies/queue-control.md
+      claude_command:
+        body_file: bodies/queue-control.md
+
+  approve:
+    description: |
+      USER-ONLY — give the merge ok to waiting queue items: `approve D-NNN [D-NNN ...]` or `approve --all`. Required below level `queue` and whenever `alwaysHuman` holds an item (paths like `.github/**`, or an `[unlock:]` mark). Only the developer invokes it, like `finish`. To see what waits use `queue`.
+    frontmatter:
+      disable-model-invocation: true
+    targets:
+      agent_skill:
+        body_file: bodies/approve.md
+      claude_command:
+        body_file: bodies/approve.md
+
+  autonomy:
+    description: |
+      USER-ONLY — show or set the demand's autonomy level, cumulative: `manual` (implement + `ready`), `pr` (+ `ship`, `audit`), `queue` (+ enqueue already approved), `pilot` (+ close the demand itself when the R7 conditions hold). `autonomy [D-NNN]` shows; `autonomy <level> [D-NNN]` sets, capped by `autonomy.ceiling`. Raising is the developer's; an agent may only lower (`--by agent`). Only the developer invokes it.
+    frontmatter:
+      disable-model-invocation: true
+    targets:
+      agent_skill:
+        body_file: bodies/autonomy.md
+      claude_command:
+        body_file: bodies/autonomy.md
+
+  deps:
+    description: |
+      READ-ONLY by default — show open Dependabot PRs and what the executor will do with them (security first, then the batch when the queue is empty); `--now` creates the batch demand right away (agent at level >= `queue`). `--json` for machine output. The batch is worked like any demand (`pr-bump` skill).
+    targets:
+      agent_skill:
+        body_file: bodies/deps.md
+      claude_command:
+        body_file: bodies/deps.md
+
+  changelog:
+    description: |
+      CHANGELOG — `changelog add [D-NNN] --text "<entry with the id>" [--category Added|Changed|Deprecated|Removed|Fixed|Security]` writes the demand's fragment in `changelog.d/` (with `delivery.changelog.style: fragments`; never edit CHANGELOG.md in a PR). `changelog compile --version X.Y.Z` folds the fragments into CHANGELOG.md at release time (developer).
+    targets:
+      agent_skill:
+        body_file: bodies/changelog.md
+      claude_command:
+        body_file: bodies/changelog.md
+
+  worktree:
+    description: |
+      WORKTREE — `worktree add D-NNN` creates the demand's isolated worktree and branch (`d-NNN-<slug>`, following the PR branch from origin when one exists); `worktree remove D-NNN [--force]` removes it safely (junctions undone first). Options: `--path`, `--branch`. Run from the main tree.
+    targets:
+      agent_skill:
+        body_file: bodies/worktree.md
+      claude_command:
+        body_file: bodies/worktree.md
+
+  profile:
+    description: |
+      SETUP — propose the delivery profile from the repository facts (`solo-direct`, `pr-basic`, `pr-audited`); `--apply` writes the block without overwriting existing keys, `--name` picks another profile, `--json` for machine output. Changing delivery defaults is the developer's decision: show the proposal and ask before `--apply`.
+    targets:
+      agent_skill:
+        body_file: bodies/profile.md
+      claude_command:
+        body_file: bodies/profile.md
+
+  scaffold:
+    description: |
+      SETUP — generate delivery scaffolding: `scaffold auditoria` (audit status workflow), `pr-template`, `dependabot`; or print `ci-ok` (aggregator job) and `protection` (branch protection command) for the developer to apply. Applying GitHub settings is the developer's decision.
+    targets:
+      agent_skill:
+        body_file: bodies/scaffold.md
+      claude_command:
+        body_file: bodies/scaffold.md
+
+  commit-message:
+    description: |
+      COMMIT MESSAGE — print the commit message in the configured format (`gitmoji-conventional`: `<emoji> <type>(D-NNN): <title>`, the why as body, `[unlock:<lock>] motivo: ...` marks and `Co-Authored-By`). In `pr` mode the marks come from the branch diff against the base. Options: `--subject`, `--body`, `--unlock-reason "<lock>=<reason>"` (required when a lock is touched). Use it to commit before `ship`.
+    targets:
+      agent_skill:
+        body_file: bodies/commit-message.md
+      claude_command:
+        body_file: bodies/commit-message.md

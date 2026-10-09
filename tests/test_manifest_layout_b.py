@@ -150,5 +150,48 @@ class SharedBodyCacheTests(unittest.TestCase):
         self.assertNotIn("core\\bin\\guia.ps1", claude_out)
 
 
+class DeliveryCommandsTests(unittest.TestCase):
+    """D-136 (R4/R6): os verbos da entrega por PR viram comandos; os so do
+    usuario saem com `disable-model-invocation: true`, os do agente nao."""
+
+    USER_ONLY = ("approve", "autonomy", "queue-control")
+    AGENT = ("ship", "audit", "queue", "deps", "changelog", "worktree", "profile", "scaffold", "commit-message")
+
+    @staticmethod
+    def _frontmatter(path: Path) -> dict:
+        text = path.read_text(encoding="utf-8")
+        return yaml.safe_load(text.split("---", 2)[1])
+
+    def test_user_only_commands_block_model_invocation(self) -> None:
+        dist = REPO_ROOT / "plugins" / "guia"
+        for verb in self.USER_ONLY:
+            for path in (dist / "commands" / f"{verb}.md", dist / ".agents" / "skills" / f"guia-{verb}" / "SKILL.md"):
+                front = self._frontmatter(path)
+                self.assertIs(front.get("disable-model-invocation"), True, msg=str(path))
+                self.assertTrue(front["description"].startswith("USER-ONLY"), msg=str(path))
+
+    def test_every_rendered_frontmatter_is_strict_yaml(self) -> None:
+        """Sem aspas, o `: ` das descricoes quebrava o YAML; a trava acima
+        nao pode depender de um parser tolerante."""
+        dist = REPO_ROOT / "plugins" / "guia"
+        paths = [*(dist / "commands").glob("*.md"), *(dist / ".agents" / "skills").glob("*/SKILL.md")]
+        self.assertTrue(paths)
+        for path in paths:
+            self.assertIsInstance(self._frontmatter(path), dict, msg=str(path))
+
+    def test_agent_commands_stay_invocable(self) -> None:
+        dist = REPO_ROOT / "plugins" / "guia" / "commands"
+        for verb in self.AGENT:
+            front = self._frontmatter(dist / f"{verb}.md")
+            self.assertNotIn("disable-model-invocation", front, msg=verb)
+
+    def test_queue_control_owns_the_user_only_queue_actions(self) -> None:
+        body = (REPO_ROOT / "plugins" / "guia" / "commands" / "queue-control.md").read_text(encoding="utf-8")
+        for action in ("queue pause", "queue resume", "queue remove", "queue priority", "queue run"):
+            self.assertIn(action, body)
+        agent_body = (REPO_ROOT / "plugins" / "guia" / "commands" / "queue.md").read_text(encoding="utf-8")
+        self.assertNotIn("queue pause", agent_body)
+
+
 if __name__ == "__main__":
     unittest.main()
