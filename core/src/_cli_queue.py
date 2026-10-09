@@ -6,8 +6,11 @@ import argparse
 import json
 from typing import Any
 
+from _autonomy import effective_level, human_reasons, implicit_approval, rank
 from _clock import now_iso
-from _constants import STATUS_IN_PR, STATUS_IN_QUEUE
+from _constants import DELIVERY_BASE_BRANCH_DEFAULT, PROCESS_FILE, ROOT, STATUS_IN_PR, STATUS_IN_QUEUE
+from _git_ops import git_output
+from _state import read_json
 from _merge_queue import PRIORITY_NORMAL, STATE_WAITING, find, load, mutate, ordered
 from _ship import QUEUE_DIR
 from _tasks import find_task, find_task_or_current, save_task
@@ -16,6 +19,17 @@ from _tasks import find_task, find_task_or_current, save_task
 def _status_of(task_id: str) -> str | None:
     task = find_task(task_id)
     return task.get("status") if task else None
+
+
+def _pr_changed_paths(pr: dict[str, Any], config: dict[str, Any]) -> list[str] | None:
+    """Arquivos que o PR muda, pelo git (D-134): nunca pela lista declarada."""
+    base = (config.get("delivery") or {}).get("baseBranch") or DELIVERY_BASE_BRANCH_DEFAULT
+    branch = pr.get("branch")
+    if not branch:
+        return None
+    git_output(ROOT, "fetch", "-q", "origin", base, branch)
+    names = git_output(ROOT, "diff", "--name-only", f"origin/{base}...origin/{branch}")
+    return None if names is None else [line for line in names.splitlines() if line.strip()]
 
 
 def _enqueue(args: argparse.Namespace) -> int:
@@ -34,6 +48,14 @@ def _enqueue(args: argparse.Namespace) -> int:
         )
     if not message.is_file():
         raise SystemExit(f"Sem a mensagem de squash {message}: rode `guia ship` de novo.")
+    config = read_json(PROCESS_FILE, {})
+    reasons: list[str] = []
+    approval = None
+    if rank(effective_level(task, config)) >= rank("queue"):
+        # D-134: so com autonomia para aprovar sozinho faz sentido conferir o
+        # alwaysHuman; abaixo disso o item espera o approve de qualquer jeito.
+        reasons = human_reasons(_pr_changed_paths(pr, config), message.read_text(encoding="utf-8"), config)
+        approval = implicit_approval(task, config, reasons)
 
     def add(data: dict[str, Any]) -> None:
         existing = find(data, task["id"])
@@ -57,7 +79,8 @@ def _enqueue(args: argparse.Namespace) -> int:
             "dependsOn": list(task.get("dependsOn") or []),
             "auditedSha": audit["auditedSha"],
             "auditedPatchId": audit.get("auditedPatchId"),
-            "approval": None,
+            "approval": approval,
+            "humanReason": "; ".join(reasons) or None,
             "mergeMessageFile": message.relative_to(QUEUE_DIR.parent.parent).as_posix(),
             "state": STATE_WAITING,
             "attempts": 0,
@@ -68,6 +91,10 @@ def _enqueue(args: argparse.Namespace) -> int:
     task["status"] = STATUS_IN_QUEUE
     save_task(task)
     print(f"{task['id']} na fila (PR #{pr['number']}, prioridade {args.priority}).")
+    if approval:
+        print(f"Aprovado pela autonomia (nivel {approval['level']}): o executor integra sem novo ok.")
+    elif reasons:
+        print(f"alwaysHuman: espera o approve do dono - {'; '.join(reasons)}.")
     return 0
 
 

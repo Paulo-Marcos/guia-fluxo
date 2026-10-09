@@ -110,6 +110,8 @@ def waiting_reason(item: dict[str, Any], status_of: Callable[[str], str | None])
         # D-130: item importado da nuvem chega sem auditoria.
         return "sem auditoria: no PC, guia worktree add e audit --approve ANTES do ship (o ship executa o codigo), depois ship e queue add"
     if not item.get("approval"):
+        if item.get("humanReason"):
+            return f"aguarda o dono (alwaysHuman: {item['humanReason']}) - guia approve"
         return "sem aprovacao de merge (guia approve)"
     return None
 
