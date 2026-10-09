@@ -49,6 +49,7 @@ Configuracao por projeto. Inclui:
 - `delivery.changelog` (D-121): `style` = `inline` (padrao: entrada escrita no CHANGELOG) ou `fragments` (`guia changelog add`/`compile`); `dir` (padrao `changelog.d`), `file` (padrao `CHANGELOG.md`), `categoryByKind`;
 - `delivery.gate.full` (D-122): comandos do portao completo que o `ship` roda no worktree antes do push (lista; cada um sem shell). `delivery.pr.requestToTest` (padrao `true`) e `delivery.pr.footer` (texto no fim do corpo do PR);
 - `delivery.queue` (D-127): `ciTimeoutMinutes` (padrao 40) e `leaseStaleMinutes` (padrao 10) do executor da fila;
+- `delivery.dependencies.trigger` (D-129): `on-idle` (padrao: o executor cria o lote do Dependabot com a fila vazia) ou outro valor para so `guia deps --now`;
 - `archive.keepInDemandas` (D-090): quantas demandas mais recentes ficam em `.guia/DEMANDAS.md` antes do arquivamento (default `30`). As mais antigas migram para `.guia/historico/DEMANDAS.md`.
 
 ## `.guia/tasks.json`

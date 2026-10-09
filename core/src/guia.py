@@ -91,6 +91,7 @@ from _cli_deps import (  # noqa: E402
 from _cli_meta import cmd_commit_message, cmd_docs_check, cmd_render  # noqa: E402
 from _cli_audit import cmd_audit  # noqa: E402
 from _cli_changelog import cmd_changelog  # noqa: E402
+from _cli_deps_bot import cmd_deps  # noqa: E402
 from _cli_profile import cmd_profile  # noqa: E402
 from _cli_queue import cmd_approve, cmd_queue  # noqa: E402
 from _cli_scaffold import cmd_scaffold  # noqa: E402
@@ -485,6 +486,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_approve.add_argument("task_ids", nargs="*")
     p_approve.add_argument("--all", action="store_true", help="Aprova todos os itens esperando.")
     p_approve.set_defaults(func=cmd_approve)
+
+    p_deps_bot = sub.add_parser(
+        "deps",
+        help="PRs do Dependabot: inventario e triagem; --now cria o lote (D-129).",
+    )
+    p_deps_bot.add_argument("--now", action="store_true", help="Cria a demanda do lote agora.")
+    p_deps_bot.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_deps_bot.set_defaults(func=cmd_deps)
 
     p_plan = sub.add_parser(
         "plan",

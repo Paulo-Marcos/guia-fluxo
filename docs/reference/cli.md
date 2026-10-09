@@ -235,6 +235,14 @@ Fila de integracao (D-126, R5). Estado em `.guia/queue.json` (local, na arvore p
 
 **Depois do merge (D-128).** Para cada PR integrado: remove o worktree da demanda pelo protocolo seguro da D-113 (sem `--force`; nao conseguindo, avisa e mantem); atualiza a arvore principal - limpa, `git pull --ff-only`; suja, so `fetch`, com aviso (nunca pisa no trabalho do dono); e acompanha o CI no commit do squash na main ate `delivery.queue.ciTimeoutMinutes`: o CI do PR prova o PR, o da main prova a combinacao. **Vermelho congela a fila** (`frozenReason`), e nada mais integra em cima da main quebrada; sem resultado no prazo, so avisa. `queue resume` descongela. Rode o executor a partir da arvore principal: ele remove o worktree das demandas, e o Windows nao deixa remover a pasta em que o processo esta.
 
+### `deps`
+
+```powershell
+.\core\bin\guia.ps1 deps [--now] [--json]
+```
+
+Os PRs do Dependabot (D-129, R11). Inventaria os PRs abertos do bot e os tria: **bump** = so manifesto ou lockfile, ou so linhas `uses:` de workflow; o resto vai como item comum para a `pr-audit`; rotulo `security` marca prioridade. `--now` cria a demanda do lote (`chore` Planejada, com os PRs em `dependabot.prs`) - uma por vez. O executor cria o lote sozinho quando a fila esvazia (`delivery.dependencies.trigger = on-idle`, padrao). Quem junta as versoes e roda o portao e a skill `pr-bump`, num chat; o lote segue o fluxo normal (ship, audit, fila) e, integrado, o executor fecha cada PR do bot incorporado com link para o lote. PR do bot nunca entra na fila normal nem recebe `update-branch`.
+
 ### `changelog`
 
 ```powershell

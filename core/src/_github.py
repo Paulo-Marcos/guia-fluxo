@@ -289,6 +289,48 @@ def gh_commit_ci(cwd: Path, sha: str, timeout_seconds: float, poll_seconds: floa
         time.sleep(poll_seconds)
 
 
+def _fixture_closed_path() -> Path:
+    return Path(os.environ[FIXTURE_ENV] + ".closed.json")
+
+
+def gh_bot_prs(cwd: Path) -> list[dict[str, Any]]:
+    """PRs abertos do Dependabot: numero, titulo, rotulos, arquivos e diff (D-129)."""
+    fixture = _fixture()
+    if fixture is not None:
+        path = _fixture_closed_path()
+        closed = {c["number"] for c in json.loads(path.read_text(encoding="utf-8"))} if path.exists() else set()
+        return [pr for pr in fixture.get("__dependabot__", []) if pr["number"] not in closed]
+    prs = _gh_json(cwd, "pr", "list", "--author", "app/dependabot", "--state", "open",
+                   "--json", "number,title,labels,files")
+    result = []
+    for pr in prs:
+        diff = subprocess.run(["gh", "pr", "diff", str(pr["number"])], cwd=cwd, text=True,
+                              encoding="utf-8", errors="replace", capture_output=True)
+        result.append({
+            "number": pr["number"],
+            "title": pr.get("title", ""),
+            "labels": [label.get("name", "") for label in pr.get("labels") or []],
+            "files": [f.get("path", "") for f in pr.get("files") or []],
+            "diff": diff.stdout if diff.returncode == 0 else "",
+        })
+    return result
+
+
+def gh_pr_close(cwd: Path, number: int, comment: str) -> None:
+    """Fecha o PR com um comentario (D-129: PR do bot incorporado ao lote)."""
+    if _fixture() is not None:
+        path = _fixture_closed_path()
+        closed = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+        closed.append({"number": number, "comment": comment})
+        path.write_text(json.dumps(closed, ensure_ascii=False), encoding="utf-8")
+        return
+    state = _gh_json(cwd, "pr", "view", str(number), "--json", "state")
+    if state.get("state") != "OPEN":
+        return
+    subprocess.run(["gh", "pr", "close", str(number), "--comment", comment],
+                   cwd=cwd, text=True, encoding="utf-8", capture_output=True)
+
+
 def pr_patch_id(cwd: Path, number: int, head: str, base_branch: str) -> str | None:
     """Patch-id do PR no `head` (R8): igual = mesmo conteudo, mesmo apos rebase."""
     if _fixture() is not None:
@@ -303,8 +345,10 @@ def pr_patch_id(cwd: Path, number: int, head: str, base_branch: str) -> str | No
 __all__ = [
     "FIXTURE_ENV",
     "gh_api",
+    "gh_bot_prs",
     "gh_commit_ci",
     "gh_pr_checks",
+    "gh_pr_close",
     "gh_pr_comment",
     "gh_pr_find",
     "gh_pr_merge",
