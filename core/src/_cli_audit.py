@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from _audit import AUDIT_CHECKLIST, audit_target, record_audit
+from _audit import AUDIT_CHECKLIST, audit_target, delta_range, record_audit
 from _cli_lifecycle import _plugin_templates_dir
 from _constants import PROCESS_FILE
 from _skills import STAGE_AUDIT, announce_stage, record_stage, stage_skills
@@ -45,6 +45,11 @@ def cmd_audit(args: argparse.Namespace) -> int:
     if not args.report:
         announce_stage(STAGE_AUDIT, config)
         print(f"{task['id']}: head {target['head']} (remoto {target['remoteHead'] or '-'}), patch-id {target['patchId'] or '-'}")
+        delta = delta_range(target["root"], task.get("audit"), target)
+        if delta:
+            # D-140 (R8): o PR mudou desde a auditoria aprovada - audite so o delta.
+            print(f"Auditoria de delta: o head mudou desde a aprovada ({task['audit']['auditedSha'][:12]}).")
+            print(f"Audite so o que mudou: git range-diff {delta}")
         if use_checklist:
             print("Sem a skill de auditoria: audite pelo checklist embutido abaixo.\n")
             _print_checklist()

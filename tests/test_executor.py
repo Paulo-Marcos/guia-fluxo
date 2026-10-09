@@ -124,6 +124,7 @@ class ExecutorTests(unittest.TestCase):
         returned = self._task("D-001")
         self.assertEqual(returned["status"], "Em desenvolvimento")
         self.assertIn("mudou depois da auditoria", returned["queue"]["returnReason"])
+        self.assertIn("auditoria de delta", returned["queue"]["returnReason"])  # D-140
         self.assertEqual(self._task("D-002")["status"], "Integrada")
         self.assertEqual(self._queue_ids(), [])
 

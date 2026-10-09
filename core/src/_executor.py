@@ -123,7 +123,10 @@ def _carry_or_return(item: dict[str, Any], head: str, base: str) -> None:
         return
     patch = pr_patch_id(ROOT, item["pr"], head, base)
     if not patch or patch != item.get("auditedPatchId"):
-        raise Returned(f"o PR mudou depois da auditoria (head {head[:12]}, patch-id diferente): audite o head novo")
+        raise Returned(
+            f"o PR mudou depois da auditoria (head {head[:12]}, patch-id diferente): "
+            "auditoria de delta - `guia audit` mostra o range-diff do que mudou"
+        )
     gh_pr_comment(ROOT, item["pr"], (
         f"Auditoria carregada pelo executor do Guia: rebase limpo, mesmo conteudo.\n"
         f"carry-from={item['auditedSha']} patch-id={patch}\n\n"
