@@ -316,6 +316,15 @@ def gh_bot_prs(cwd: Path) -> list[dict[str, Any]]:
     return result
 
 
+def gh_labeled_prs(cwd: Path, label: str) -> list[dict[str, Any]]:
+    """PRs abertos com o rotulo `label`: numero, titulo, branch e head (D-130)."""
+    fixture = _fixture()
+    if fixture is not None:
+        return list(fixture.get("__labeled__", []))
+    return _gh_json(cwd, "pr", "list", "--label", label, "--state", "open",
+                    "--json", "number,title,headRefName,headRefOid")
+
+
 def gh_pr_close(cwd: Path, number: int, comment: str) -> None:
     """Fecha o PR com um comentario (D-129: PR do bot incorporado ao lote)."""
     if _fixture() is not None:
@@ -347,6 +356,7 @@ __all__ = [
     "gh_api",
     "gh_bot_prs",
     "gh_commit_ci",
+    "gh_labeled_prs",
     "gh_pr_checks",
     "gh_pr_close",
     "gh_pr_comment",

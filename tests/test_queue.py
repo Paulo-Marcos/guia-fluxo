@@ -29,7 +29,7 @@ HEAD = "a" * 40
 class QueueOrderTests(unittest.TestCase):
     def _item(self, task_id: str, at: str, **extra) -> dict:
         return {"id": task_id, "state": "waiting", "priority": "normal", "enqueuedAt": at,
-                "approval": {"by": "user"}, "dependsOn": [], **extra}
+                "approval": {"by": "user"}, "dependsOn": [], "auditedSha": "a" * 40, **extra}
 
     def test_fifo_hotfix_first_and_waits_do_not_block(self) -> None:
         items = [

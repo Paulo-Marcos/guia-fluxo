@@ -106,6 +106,9 @@ def waiting_reason(item: dict[str, Any], status_of: Callable[[str], str | None])
     open_deps = [dep for dep in item.get("dependsOn") or [] if status_of(dep) not in _TERMINAL]
     if open_deps:
         return f"depende de {', '.join(open_deps)} (aberta)"
+    if not item.get("auditedSha"):
+        # D-130: item importado da nuvem chega sem auditoria.
+        return "sem auditoria: no PC, guia worktree add e audit --approve ANTES do ship (o ship executa o codigo), depois ship e queue add"
     if not item.get("approval"):
         return "sem aprovacao de merge (guia approve)"
     return None

@@ -278,6 +278,22 @@ def _after_merge(item: dict[str, Any], ci_timeout_seconds: float) -> None:
     _watch_main_ci(item, ci_timeout_seconds)
 
 
+def _import_cloud_prs() -> None:
+    """D-130: ao iniciar, traz os PRs da nuvem (rotulo guia:fila) sem auditoria."""
+    from _cloud_import import import_labeled
+
+    # Etapa acessoria: falha do gh aqui nao pode parar a integracao da fila.
+    try:
+        imported, warnings = import_labeled()
+    except SystemExit as reason:
+        print(f"aviso: importacao da nuvem falhou ({reason}); a fila segue.")
+        return
+    for warning in warnings:
+        print(f"aviso: {warning}")
+    if imported:
+        print(f"Importados da nuvem (sem auditoria, nao integram ainda): {', '.join(imported)}")
+
+
 def _dependabot_on_idle(config: dict[str, Any]) -> None:
     """D-129 (R11): fila vazia -> lote do Dependabot, se houver bumps e nenhum lote aberto."""
     from _dependabot import on_idle
@@ -295,6 +311,7 @@ def run(config: dict[str, Any], once: bool = False) -> int:
     base = delivery.get("baseBranch") or DELIVERY_BASE_BRANCH_DEFAULT
     ci_timeout = float(queue_cfg.get("ciTimeoutMinutes") or CI_TIMEOUT_MINUTES_DEFAULT) * 60
     acquire_lease(float(queue_cfg.get("leaseStaleMinutes") or LEASE_STALE_MINUTES_DEFAULT))
+    _import_cloud_prs()
     merged = 0
     tried: set[str] = set()
     try:

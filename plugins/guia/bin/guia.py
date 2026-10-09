@@ -470,7 +470,7 @@ def build_parser() -> argparse.ArgumentParser:
         "queue",
         help="Fila de integracao (D-126): add | list | remove | pause | resume | priority.",
     )
-    p_queue.add_argument("action", nargs="?", choices=["add", "list", "remove", "pause", "resume", "priority", "run"])
+    p_queue.add_argument("action", nargs="?", choices=["add", "list", "remove", "pause", "resume", "priority", "run", "import"])
     p_queue.add_argument("task_id", nargs="?", help="add/remove/priority: a demanda (add sem id: a branch).")
     p_queue.add_argument("level", nargs="?", choices=["normal", "hotfix"], help="priority: o nivel.")
     p_queue.add_argument("--priority", choices=["normal", "hotfix"], default="normal", help="add: prioridade.")
