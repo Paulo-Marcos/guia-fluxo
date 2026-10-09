@@ -36,7 +36,14 @@ def _enqueue(args: argparse.Namespace) -> int:
         raise SystemExit(f"Sem a mensagem de squash {message}: rode `guia ship` de novo.")
 
     def add(data: dict[str, Any]) -> None:
-        if find(data, task["id"]):
+        existing = find(data, task["id"])
+        if existing and not existing.get("auditedSha"):
+            # D-130: item importado da nuvem - a auditoria do PC o completa.
+            existing.update(auditedSha=audit["auditedSha"], auditedPatchId=audit.get("auditedPatchId"),
+                            head=pr.get("head"), mergeMessageFile=message.relative_to(QUEUE_DIR.parent.parent).as_posix())
+            existing.setdefault("log", []).append({"at": now_iso(), "msg": "auditoria do PC registrada"})
+            return
+        if existing:
             raise SystemExit(f"{task['id']} ja esta na fila.")
         data["items"].append({
             "id": task["id"],
@@ -141,8 +148,20 @@ def _run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _import(_args: argparse.Namespace) -> int:
+    from _cloud_import import import_labeled
+
+    imported, warnings = import_labeled()
+    for warning in warnings:
+        print(f"aviso: {warning}")
+    print(f"Importados da nuvem: {', '.join(imported) or 'nenhum'}")
+    return 0
+
+
 def cmd_queue(args: argparse.Namespace) -> int:
     action = args.action or "list"
+    if action == "import":
+        return _import(args)
     if action == "run":
         return _run(args)
     if action == "add":

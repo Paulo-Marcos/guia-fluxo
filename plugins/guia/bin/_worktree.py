@@ -36,7 +36,7 @@ from _constants import (
     PROCESS_FILE,
     ROOT,
 )
-from _git_ops import git_branch_exists, git_worktree_add, git_worktree_remove, run_git
+from _git_ops import git_branch_exists, git_output, git_worktree_add, git_worktree_remove, run_git
 from _paths import slugify
 from _state import read_json
 
@@ -185,8 +185,15 @@ def create_worktree(
     """Cria o worktree da demanda pelo modelo do modo `pr` (D-113)."""
     settings = worktree_settings()
     path = path or _render(settings["path"], task, settings["baseBranch"])
-    branch = branch or _render(settings["branch"], task, settings["baseBranch"])
     start = _render(settings["from"], task, settings["baseBranch"])
+    # D-130: demanda com PR (ex.: aberto pela nuvem) segue a branch do PR, a
+    # partir do que ja foi empurrado, em vez de nascer de novo da base.
+    pr_branch = (task.get("pr") or {}).get("branch")
+    if not branch and pr_branch:
+        run_git("fetch", "-q", "origin", pr_branch, check=False)
+        if git_output(ROOT, "rev-parse", "--verify", "--quiet", f"refs/remotes/origin/{pr_branch}"):
+            branch, start = pr_branch, f"origin/{pr_branch}"
+    branch = branch or _render(settings["branch"], task, settings["baseBranch"])
     if git_branch_exists(branch):
         raise SystemExit(f"Branch ja existe: {branch}. Use --branch <outro-nome> ou apague a anterior.")
     absolute_path = (ROOT / path).resolve()
