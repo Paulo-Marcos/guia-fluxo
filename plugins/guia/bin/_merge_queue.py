@@ -32,6 +32,25 @@ def _empty() -> dict[str, Any]:
     return {"schemaVersion": 1, "paused": False, "pausedReason": None, "frozenReason": None, "items": []}
 
 
+RETRY_SECONDS = 0.02
+# D-132: no Windows, arquivo em "exclusao pendente" (outro processo acabou de
+# liberar a trava) ou aberto por outro processo devolve PermissionError, nao
+# FileExistsError. E contencao passageira: espera e tenta de novo.
+_BUSY = (FileExistsError, PermissionError)
+
+
+def _retry(action: Callable[[], Any], what: str) -> Any:
+    """Repete `action` enquanto o Windows disser PermissionError, ate o prazo."""
+    deadline = time.monotonic() + LOCK_TIMEOUT_SECONDS
+    while True:
+        try:
+            return action()
+        except PermissionError:
+            if time.monotonic() > deadline:
+                raise SystemExit(f"Fila: {what} bloqueado por outro processo ha mais de {LOCK_TIMEOUT_SECONDS:.0f}s.")
+            time.sleep(RETRY_SECONDS)
+
+
 @contextmanager
 def _locked() -> Iterator[None]:
     deadline = time.monotonic() + LOCK_TIMEOUT_SECONDS
@@ -40,22 +59,22 @@ def _locked() -> Iterator[None]:
         try:
             fd = os.open(LOCK_FILE, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
             break
-        except FileExistsError:
+        except _BUSY:
             try:
                 if time.time() - LOCK_FILE.stat().st_mtime > LOCK_STALE_SECONDS:
                     LOCK_FILE.unlink(missing_ok=True)
                     continue
-            except FileNotFoundError:
-                continue
+            except (FileNotFoundError, PermissionError):
+                pass
             if time.monotonic() > deadline:
                 raise SystemExit(f"Fila ocupada: {LOCK_FILE} ha mais de {LOCK_TIMEOUT_SECONDS:.0f}s.")
-            time.sleep(0.02)
+            time.sleep(RETRY_SECONDS)
     try:
         os.write(fd, str(os.getpid()).encode("ascii"))
         os.close(fd)
         yield
     finally:
-        LOCK_FILE.unlink(missing_ok=True)
+        _retry(lambda: LOCK_FILE.unlink(missing_ok=True), "liberar a trava")
 
 
 def load() -> dict[str, Any]:
@@ -67,7 +86,8 @@ def load() -> dict[str, Any]:
 def _save(data: dict[str, Any]) -> None:
     temporary = QUEUE_FILE.with_name(f"{QUEUE_FILE.name}.{os.getpid()}.tmp")
     temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    os.replace(temporary, QUEUE_FILE)
+    # D-132: no Windows a troca falha enquanto outro processo le o arquivo.
+    _retry(lambda: os.replace(temporary, QUEUE_FILE), "gravar a fila")
 
 
 def mutate(change: Callable[[dict[str, Any]], Any]) -> Any:
