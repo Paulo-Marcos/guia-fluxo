@@ -287,7 +287,8 @@ RESERVED_FRONTMATTER_KEYS = frozenset({"name", "description"})
 # Frontmatter extras suportados (achado 4.11). Sao copiados verbatim
 # para o frontmatter como `key: value` quando declarados em
 # `verbs.<verb>.frontmatter` no manifest. Listas viram blocos YAML.
-ALLOWED_EXTRA_KEYS = frozenset({"allowed-tools", "model"})
+# D-136: `disable-model-invocation` marca os comandos so do usuario (R4/R6).
+ALLOWED_EXTRA_KEYS = frozenset({"allowed-tools", "model", "disable-model-invocation"})
 
 
 def _format_frontmatter_value(value: object) -> str:
@@ -325,7 +326,10 @@ def render_skill_md(
     lines = ["---"]
     if include_name:
         lines.append(f"name: {name}")
-    lines.append(f"description: {desc}")
+    # D-136: entre aspas (JSON e YAML valido) - sem elas o `: ` das descricoes
+    # (`Options: ...`) quebrava o YAML estrito, e uma chave como
+    # `disable-model-invocation` dependeria de um parser tolerante.
+    lines.append(f"description: {json.dumps(desc, ensure_ascii=False)}")
     if extras:
         for key, value in extras.items():
             if key in RESERVED_FRONTMATTER_KEYS:

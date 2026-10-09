@@ -1,6 +1,6 @@
 ---
 name: guia-status
-description: READ-ONLY — show the current active task and its demand title. Optional: `<D-NNN>` to inspect a specific task instead of the current one. Never creates, modifies, advances, or closes a task. To create use `feature`/`bug`/`chore`; for state transitions use `ready`/`finish`/`block`/`unblock`/`cancel`.
+description: "READ-ONLY — show the current active task and its demand title. Optional: `<D-NNN>` to inspect a specific task instead of the current one. Never creates, modifies, advances, or closes a task. To create use `feature`/`bug`/`chore`; for state transitions use `ready`/`finish`/`block`/`unblock`/`cancel`."
 ---
 
 # Status

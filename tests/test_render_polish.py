@@ -136,7 +136,7 @@ class FrontmatterExtrasTests(unittest.TestCase):
                 # claude_command e um plugin command flat: sem `name:` (vem do
                 # stem do arquivo). O frontmatter leva description + extras.
                 self.assertNotIn("name: test", content)
-                self.assertIn("description: Test description.", content)
+                self.assertIn('description: "Test description."', content)  # D-136: entre aspas
             finally:
                 sys.modules.pop("render_skills_probe", None)
 

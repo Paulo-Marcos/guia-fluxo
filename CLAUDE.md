@@ -28,6 +28,18 @@ Este repo **e um plugin Claude Code oficial**: `plugins/guia/.claude-plugin/plug
 | `/guia:unblock` | `unblock` | — | Retomar task pausada. |
 | `/guia:init` | `init` | — | Setup do projeto: semeia `.guia/` + deploya lock config (`.guia/locks/registry.yaml`, `lock-ignore.txt`) + `.githooks/commit-msg` + `hooksPath`. Opcional (auto-init ja cobre `.guia/`); `--no-locks` so semeia estado. |
 | `/guia:upgrade` | `upgrade` | — | Migra projeto **existente** do layout antigo (`FEATURES.md` + `features/` na raiz) para o atual (`.guia/DEMANDAS.md` + `.guia/locks/`). Idempotente; `--dry-run` lista o plano sem mutar. |
+| `/guia:ship` | `ship` | — | Modo `pr`: portao completo, push, PR aberto/atualizado e mensagem de squash em `.guia/queue/D-NNN.msg`; status -> `Em PR`. Agente no nivel >= `pr`. |
+| `/guia:audit` | `audit` | — | Auditoria do head do PR (skill `pr-audit` ou checklist embutido); `--report --approve` comenta o marcador; `--finding SEV=N` para o `pilot`. |
+| `/guia:queue` | `queue` | — | Mostra a fila, `add` (exige auditoria no head) e `import` (PRs da nuvem). |
+| `/guia:queue-control` | `queue-control` | — | **So do usuario** (`disable-model-invocation`): `queue pause/resume/remove/priority/run`. |
+| `/guia:approve` | `approve` | — | **So do usuario**: ok de merge aos itens da fila (`--all`). |
+| `/guia:autonomy` | `autonomy` | — | **So do usuario**: nivel da demanda `manual < pr < queue < pilot`; o agente so desce (`--by agent`). |
+| `/guia:deps` | `deps` | — | PRs do Dependabot e o que o executor fara; `--now` cria o lote. |
+| `/guia:changelog` | `changelog` | — | `add` grava o fragmento em `changelog.d/`; `compile` so na release. |
+| `/guia:worktree` | `worktree` | — | `add`/`remove` do worktree isolado da demanda (`d-NNN-<slug>`). |
+| `/guia:profile` | `profile` | — | Propoe o perfil de entrega pelos fatos do repo; `--apply` so com ok do dono. |
+| `/guia:scaffold` | `scaffold` | — | Andaimes de entrega (auditoria, pr-template, dependabot) e o texto de `ci-ok`/`protection`. |
+| `/guia:commit-message` | `commit-message` | — | Mensagem no formato configurado, com `[unlock:]` (no modo `pr`, pelo diff da branch). |
 
 > **Removido na Fase 4 do ADR-0011 (2026-06-07):** `/guia:issue` deixou de existir; use `/guia:bug`. Tasks antigas com `kind=issue` continuam navegaveis (renderizam como "Bug (legacy)" 🐛). IDs novos sao `D-NNN` neutros (ADR-0011); legacy `F-NNN`/`I-NNN`/`B-NNN` continuam aceitos como entrada.
 

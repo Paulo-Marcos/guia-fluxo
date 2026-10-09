@@ -1,5 +1,5 @@
 ---
-description: RESUME a paused task — moves status from `Bloqueada` back to `Em desenvolvimento`. Inverse of `block`. Options: `--note "<what unblocked>"`. Fails if the task wasn't `Bloqueada` (preserves flow states).
+description: "RESUME a paused task — moves status from `Bloqueada` back to `Em desenvolvimento`. Inverse of `block`. Options: `--note \"<what unblocked>\"`. Fails if the task wasn't `Bloqueada` (preserves flow states)."
 ---
 
 # Unblock

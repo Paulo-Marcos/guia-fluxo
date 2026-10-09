@@ -1,5 +1,5 @@
 ---
-description: TERMINAL CANCEL — closes the task with `status=Cancelada` (terminal, does not return). Use when the task will NOT be completed: created by mistake, scope dropped, wrong promote. Required: `--reason "<motive>"`. Options: `--keep-worktree` (default removes the worktree if present), `--set-current` (default clears current-task.json if the cancelled task was current). For a temporary pause that will resume use `block`; for a validated close use `finish`.
+description: "TERMINAL CANCEL — closes the task with `status=Cancelada` (terminal, does not return). Use when the task will NOT be completed: created by mistake, scope dropped, wrong promote. Required: `--reason \"<motive>\"`. Options: `--keep-worktree` (default removes the worktree if present), `--set-current` (default clears current-task.json if the cancelled task was current). For a temporary pause that will resume use `block`; for a validated close use `finish`."
 ---
 
 # Cancel
