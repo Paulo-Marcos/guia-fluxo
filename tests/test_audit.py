@@ -128,6 +128,52 @@ class AuditTests(unittest.TestCase):
         self.assertIn("ship", result.stdout + result.stderr)
         self.assertEqual(self._comments(), [])
 
+    def _rebase_with_change(self) -> tuple[str, str | None]:
+        """A main anda; o autor faz rebase e muda algo (o patch-id nao bate). Devolve (H1, base1)."""
+        audit = self._task()["audit"]
+        (self.main / "outro.txt").write_text("outro\n", encoding="utf-8")
+        _git(self.main, "add", "outro.txt")
+        _git(self.main, "commit", "-q", "-m", "main andou")
+        _git(self.main, "push", "-q", "origin", "main")
+        _git(self.wt, "fetch", "-q", "origin")
+        self.assertEqual(_git(self.wt, "rebase", "-q", "origin/main").returncode, 0)
+        (self.wt / "app.txt").write_text("app com nota corrigida\n", encoding="utf-8")
+        _git(self.wt, "commit", "-q", "-am", "ajuste no rebase")
+        branch = _git(self.wt, "branch", "--show-current").stdout.strip()
+        self.assertEqual(_git(self.wt, "push", "-q", "-f", "origin", branch).returncode, 0)
+        return audit["auditedSha"], audit.get("auditedBase")
+
+    def test_new_head_after_approval_is_audited_as_delta(self) -> None:
+        """D-140 (R8): so o que mudou, pelo range-diff, e o registro diz de onde partiu."""
+        self._ok(self.wt, "audit", "--report", str(self.report), "--approve")
+        old_head, old_base = self._rebase_with_change()
+        new_base = _git(self.wt, "merge-base", "HEAD", "origin/main").stdout.strip()
+        expected = f"{old_base}..{old_head} {new_base}..{self._head()}"
+        self.assertIn(f"git range-diff {expected}", self._ok(self.wt, "audit").stdout)
+        self._ok(self.wt, "audit", "--report", str(self.report), "--approve")
+        audit = self._task()["audit"]
+        self.assertEqual((audit["mode"], audit["deltaFrom"], audit["range"]), ("delta", old_head, expected))
+        self.assertEqual(audit["auditedBase"], new_base)
+        self.assertTrue(self._comments()[-1]["body"].startswith(f"Auditoria de delta desde {old_head[:12]}"))
+
+    def test_without_the_audited_base_the_audit_is_full(self) -> None:
+        """Auditoria antiga sem `auditedBase`: diff inteiro, o lado seguro."""
+        self._ok(self.wt, "audit", "--report", str(self.report), "--approve")
+        self.assertEqual(self._task()["audit"]["mode"], "full")
+        self._rebase_with_change()
+        path = self.main / ".guia" / "tasks.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data["tasks"][0]["audit"].pop("auditedBase")
+        path.write_text(json.dumps(data), encoding="utf-8")
+        self.assertNotIn("range-diff", self._ok(self.wt, "audit").stdout)
+        self._ok(self.wt, "audit", "--report", str(self.report), "--approve")
+        self.assertEqual(self._task()["audit"]["mode"], "full")
+
+    def test_rejected_audit_never_becomes_a_delta_base(self) -> None:
+        self._ok(self.wt, "audit", "--report", str(self.report))
+        self._rebase_with_change()
+        self.assertNotIn("range-diff", self._ok(self.wt, "audit").stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

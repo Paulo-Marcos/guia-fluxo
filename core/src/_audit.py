@@ -59,7 +59,27 @@ def audit_target(config: dict[str, Any], cwd: Path | None = None) -> dict[str, A
         "head": git_output(root, "rev-parse", "HEAD"),
         "remoteHead": remote.split()[0] if remote else None,
         "patchId": patch_id(root, f"origin/{base}"),
+        # D-140: a base auditada - sem ela nao ha range-diff depois do rebase.
+        "base": git_output(root, "merge-base", "HEAD", f"origin/{base}"),
     }
+
+
+def delta_range(root: Path, previous: dict[str, Any] | None, target: dict[str, Any]) -> str | None:
+    """R8 (D-140): head novo depois de uma auditoria aprovada -> so o que mudou.
+
+    Devolve os dois intervalos do `git range-diff <base-velha>..<head-velho>
+    <base-nova>..<head-novo>`, ou None quando falta qualquer peca (auditoria
+    anterior nao aprovada, base nao gravada, commit antigo fora do repositorio
+    local): ai a auditoria e do diff inteiro, o lado seguro.
+    """
+    if not previous or previous.get("result") != RESULT_APPROVED:
+        return None
+    old_head, old_base, head, base = previous.get("auditedSha"), previous.get("auditedBase"), target["head"], target.get("base")
+    if not (old_head and old_base and head and base) or old_head == head:
+        return None
+    if any(git_output(root, "cat-file", "-e", f"{sha}^{{commit}}") is None for sha in (old_head, old_base)):
+        return None
+    return f"{old_base}..{old_head} {base}..{head}"
 
 
 def record_audit(task: dict[str, Any], target: dict[str, Any], report: str, approve: bool, via: str) -> dict[str, Any]:
@@ -74,18 +94,26 @@ def record_audit(task: dict[str, Any], target: dict[str, Any], report: str, appr
             f"O head local ({target['head']}) nao e o do remoto ({target['remoteHead']}): o marcador "
             "tem de apontar o commit que o GitHub ve. Rode `guia ship` (ou push) e audite de novo."
         )
+    previous = task.get("audit")
+    delta = delta_range(target["root"], previous, target)
     body = report.rstrip() + "\n"
+    if delta:
+        body = f"Auditoria de delta desde {previous['auditedSha'][:12]}: `git range-diff {delta}`\n\n" + body
     if approve:
         body += "\n" + marker(target["head"]) + "\n"
     gh_pr_comment(target["root"], pr["number"], body)
     task["audit"] = {
         "result": RESULT_APPROVED if approve else RESULT_REJECTED,
         "auditedSha": target["head"],
+        "auditedBase": target.get("base"),
         "auditedPatchId": target["patchId"],
+        "mode": "delta" if delta else "full",
         "via": via,
         "at": now_iso(),
     }
+    if delta:
+        task["audit"].update(deltaFrom=previous["auditedSha"], range=delta)
     return task["audit"]
 
 
-__all__ = ["AUDIT_CHECKLIST", "audit_target", "marker", "patch_id", "record_audit"]
+__all__ = ["AUDIT_CHECKLIST", "audit_target", "delta_range", "marker", "patch_id", "record_audit"]

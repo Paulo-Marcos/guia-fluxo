@@ -47,7 +47,16 @@ falha com o código do base e passa com o do head.
 
 Cada item do pedido tem teste; item sem teste fica "faltando" no relatório.
 
-## 6. Relatório
+## 6. Delta (head novo depois de uma auditoria aprovada)
+
+Quando `guia audit` mostra `git range-diff ...`, o PR mudou desde a auditoria
+aprovada (conflito resolvido, contexto da base diferente). Audite **só o que o
+range-diff mostra** com o mesmo rigor das seções 1 a 4: commit novo ou
+alterado é dado novo, e mudança nas linhas de contexto também conta. O
+relatório diz que é delta, de qual head partiu, e o portão roda de novo no
+head novo.
+
+## 7. Relatório
 
 Achados do mais grave ao menos (`CRÍTICO`, `BLOQUEANTE`, `CORRIGIR`,
 `DETALHE`, `INCERTO`), com arquivo e linha; o livro de alegações; e a
