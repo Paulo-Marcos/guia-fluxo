@@ -1,0 +1,84 @@
+diff --git a/pr-audit/SKILL.md b/pr-audit/SKILL.md
+index 9f83b96..7dcd1e9 100644
+--- a/pr-audit/SKILL.md
++++ b/pr-audit/SKILL.md
+@@ -62,6 +62,10 @@ se a issue veio da mesma fonte.
+    auditar uma combinação que não vai para a main. O conflito se resolve na
+    branch, nunca no merge.
+ 
++**Já houve auditoria aprovada deste PR, e o head mudou?** Veja
++[Head novo depois da aprovação](#head-novo-depois-da-aprovação): rebase limpo
++carrega a aprovação pelo patch-id, e o resto é auditado só no delta.
++
+ **Sem PR no GitHub** (branch de chip, worktree, commits locais ainda não
+ enviados): o "PR" é um intervalo. `BASE=$(git merge-base origin/main <ramo>)`,
+ `HEAD=$(git rev-parse <ramo>)`; os metadados saem de
+@@ -187,6 +191,49 @@ Diff inteiro mais o código em volta. Cubra:
+ 8. **Autoria** — commits do autor preservados; nada de reescrever histórico
+    para parecer que foi ele.
+ 
++## Head novo depois da aprovação
++
++Um rebase que não muda o que o PR faz não pede auditoria nova; um que muda
++pede auditoria **do que mudou**, não do diff inteiro de novo.
++
++**1. Procedência por patch-id.** Compare o conteúdo do head aprovado com o
++novo, cada um contra a sua própria base:
++
++```powershell
++git diff $(git merge-base origin/main <head-velho>)..<head-velho> | git patch-id --verbatim
++git diff $(git merge-base origin/main <head-novo>)..<head-novo>   | git patch-id --verbatim
++```
++
++`--verbatim`, nunca `--stable`: o padrão ignora espaço em branco, e mudar só a
++indentação de um bloco Python muda o comportamento. **Iguais:** mesmo
++conteúdo — a aprovação vale para o head novo, com uma linha de procedência
++(`carry-from=<head-velho> patch-id=<id>`) no comentário do marcador. Não há o
++que reauditar; o CI roda de novo de qualquer jeito e prova a combinação. (Com
++o Guia, o executor da fila faz isso sozinho.)
++
++**2. Modo delta** (patch-id diferente: conflito resolvido, ou a base mexeu em
++linhas de contexto). Fixe os quatro SHAs — base e head aprovados, base e head
++novos — e audite o que o range-diff mostra:
++
++```powershell
++git range-diff <base-velha>..<head-velho> <base-nova>..<head-novo>
++```
++
++Com o Guia, `guia audit` imprime esse comando e registra a auditoria como
++`mode = delta`.
++
++- **Fase 2 no delta:** todo commit novo ou alterado no range-diff, e as
++  mudanças de contexto, passam pelo portão hostil com o mesmo rigor. As
++  checagens mecânicas (`git diff --check`, travas, padrão de commit) rodam no
++  intervalo **inteiro** novo — são baratas e pegam o que o delta esconde.
++- **Fase 3 inteira:** o portão completo roda no head novo, sempre. O delta
++  reduz a leitura, não a execução.
++- **Fase 4 no delta:** o que mudou e onde ele toca o que já foi aprovado.
++- **Volte à auditoria completa** quando: o range-diff não se lê com segurança
++  (grande, reordenado, commits fundidos); o delta toca workflows, `AGENTS.md`,
++  travas, `.claude/settings.json` ou dependências; a aprovação anterior não
++  foi do dono; ou falta qualquer um dos quatro SHAs.
++
+ ## Severidades
+ 
+ | Marca | Quando |
+@@ -215,6 +262,7 @@ Achados primeiro, do mais grave ao menos, com `arquivo:linha`:
+ 
+ Portão hostil: limpo | bloqueado por <achado>
+ Head auditado: <SHA>
++Modo: completo | delta desde <SHA aprovado> (`git range-diff ...`, relatório original: <link>)
+ Portão local: <comandos e resultado, ou o que não rodou e por quê>
+ CI do GitHub: <resultado e ressalvas>
+ 
+@@ -243,7 +291,9 @@ Só com o "ok" do desenvolvedor, um PR por vez:
+    push sobre commits do autor, salvo ordem explícita.
+ 2. Corrija dentro do PR o que ele precisa para entrar — não mergeie defeito
+    conhecido prometendo conserto depois.
+-3. Head novo → repita a Fase 2 no diff inteiro e o portão completo uma vez.
++3. Head novo → [Head novo depois da aprovação](#head-novo-depois-da-aprovação):
++   patch-id igual carrega a aprovação; diferente, Fase 2 e 4 no delta e o
++   portão completo uma vez.
+ 4. Mergeie pela estratégia que o `AGENTS.md` do base manda (squash leva a
+    mensagem do commit em `--subject`/`--body-file`, com as marcas `[unlock:]`)
+    e **confira o CI no SHA do merge** na main: PR verde não valida a combinação.

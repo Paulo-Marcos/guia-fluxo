@@ -48,3 +48,7 @@ core/templates/.githooks/*   text eol=lf
 *.tar                   binary
 *.woff                  binary
 *.woff2                 binary
+
+# D-141: propostas de patch (unified diff) - a linha de contexto vazia e um
+# espaco, sintaxe do formato; LF para o `git apply` funcionar em qualquer lugar.
+*.patch                 text eol=lf -whitespace
