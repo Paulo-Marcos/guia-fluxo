@@ -16,12 +16,14 @@ from _constants import (
     COMMIT_FORMAT_LEGACY,
     COMMIT_GITMOJI_BY_KIND,
     DELIVERY_BASE_BRANCH_DEFAULT,
+    DELIVERY_MODE,
+    DELIVERY_MODE_PR,
     MSG_GIT_NOT_FOUND,
     MSG_NO_FILES_FOR_COMMIT,
     MSG_NONE_PLACEHOLDER,
     PROCESS_FILE,
 )
-from _git_ops import git_commit, git_ignored_files, has_git, name_status_against_base
+from _git_ops import changed_against_base, git_commit, git_ignored_files, has_git, name_status_against_base
 from _state import read_json
 
 
@@ -94,7 +96,13 @@ def compose_commit_message(
     settings = commit_settings()
     if settings["format"] != COMMIT_FORMAT_GITMOJI:
         return build_commit_message(task, commit_body, subject_override)
-    trailers = unlock_trailers(_product_files(task), unlock_reasons or [], settings["baseBranch"])
+    files = _product_files(task)
+    if DELIVERY_MODE == DELIVERY_MODE_PR:
+        # D-137: no modo pr o squash leva a branch inteira - as marcas vem do
+        # git, nao so do declarado (um `ready` sem --file deixava a mensagem
+        # sem [unlock:] e o alwaysHuman da D-134 aprovava sozinho).
+        files += [name for name in changed_against_base(settings["baseBranch"]) if name not in files]
+    trailers = unlock_trailers(files, unlock_reasons or [], settings["baseBranch"])
     return build_commit_message(
         task,
         commit_body,
