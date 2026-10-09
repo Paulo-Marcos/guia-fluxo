@@ -50,7 +50,7 @@ Configuracao por projeto. Inclui:
 - `delivery.gate.full` (D-122): comandos do portao completo que o `ship` roda no worktree antes do push (lista; cada um sem shell). `delivery.pr.requestToTest` (padrao `true`) e `delivery.pr.footer` (texto no fim do corpo do PR);
 - `delivery.queue` (D-127): `ciTimeoutMinutes` (padrao 40) e `leaseStaleMinutes` (padrao 10) do executor da fila;
 - `delivery.dependencies.trigger` (D-129): `on-idle` (padrao: o executor cria o lote do Dependabot com a fila vazia) ou outro valor para so `guia deps --now`;
-- `autonomy` (D-133): `default` (padrao `manual`) e `ceiling` (padrao `pilot`) dos niveis `manual` < `pr` < `queue` < `pilot`; `alwaysHuman` (globs que sempre param no dono) e `alwaysHumanLocks` (`"*"` ou lista de travas cujo `[unlock:]` para no dono) (D-134);
+- `autonomy` (D-133): `default` (padrao `manual`) e `ceiling` (padrao `pilot`) dos niveis `manual` < `pr` < `queue` < `pilot`; `alwaysHuman` (globs que sempre param no dono) e `alwaysHumanLocks` (`"*"` ou lista de travas cujo `[unlock:]` para no dono) (D-134); `autoFinish` (D-135, R7: `kinds`, `bugRequiresRegressionTest`, `requireMainGreen`, `maxOpenFindings`, `blockIfUiChanged`, `uiPaths`, `testPaths`, `blockIfAlwaysHuman`, `remindAfterDays`; cada chave sobrepoe o padrao);
 - `archive.keepInDemandas` (D-090): quantas demandas mais recentes ficam em `.guia/DEMANDAS.md` antes do arquivamento (default `30`). As mais antigas migram para `.guia/historico/DEMANDAS.md`.
 
 ## `.guia/tasks.json`

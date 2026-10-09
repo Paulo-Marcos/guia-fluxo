@@ -239,12 +239,15 @@ def _update_main_tree() -> None:
     print("  arvore principal atualizada (pull --ff-only).")
 
 
-def _watch_main_ci(item: dict[str, Any], ci_timeout_seconds: float) -> None:
-    """O CI do PR prova o PR; o da main prova a combinacao. Vermelho congela."""
+def _watch_main_ci(item: dict[str, Any], ci_timeout_seconds: float) -> tuple[str | None, str | None]:
+    """O CI do PR prova o PR; o da main prova a combinacao. Vermelho congela.
+
+    Devolve (sha do squash, veredito) para a R7 (D-135).
+    """
     sha = gh_pr_merge_commit(ROOT, item["pr"])
     if not sha:
         print(f"  {item['id']}: commit do squash nao encontrado; CI da main nao acompanhado.")
-        return
+        return None, None
     verdict, failing = gh_commit_ci(ROOT, sha, ci_timeout_seconds)
     if verdict == "fail":
         reason = f"main vermelha em {sha[:12]} depois do PR #{item['pr']} ({', '.join(failing)})"
@@ -258,6 +261,7 @@ def _watch_main_ci(item: dict[str, Any], ci_timeout_seconds: float) -> None:
         print(f"  {item['id']}: CI da main em {sha[:12]} ainda sem resultado no prazo; acompanhe.")
     else:
         print(f"  {item['id']}: CI da main verde em {sha[:12]}.")
+    return sha, verdict
 
 
 def _close_dependabot_prs(item_id: str) -> None:
@@ -270,12 +274,30 @@ def _close_dependabot_prs(item_id: str) -> None:
         print(f"  {item_id}: PRs do Dependabot fechados: {', '.join(f'#{n}' for n in closed) or 'nenhum'}.")
 
 
-def _after_merge(item: dict[str, Any], ci_timeout_seconds: float) -> None:
+def _auto_finish(item: dict[str, Any], config: dict[str, Any], sha: str | None, verdict: str | None) -> None:
+    """D-135 (R7): no pilot, fecha a demanda quando todas as condicoes valem."""
+    from _auto_finish import try_auto_finish
+
+    task = find_task(item["id"])
+    if task is None:
+        return
+    checks = try_auto_finish(task, item, config, verdict, sha)
+    if checks is None:
+        return
+    if task.get("finish", {}).get("mode") == "auto":
+        print(f"  {item['id']}: fechada pelo pilot (R7) como {task['status']}.")
+        return
+    failed = "; ".join(f"{c['check']}: {c['evidence']}" for c in checks if not c["ok"])
+    print(f"  {item['id']}: pilot nao fechou - {failed}. Fica Integrada para o dono.")
+
+
+def _after_merge(item: dict[str, Any], ci_timeout_seconds: float, config: dict[str, Any]) -> None:
     """R5 passo 6 (D-128): limpar, atualizar a principal e provar a combinacao."""
     _close_dependabot_prs(item["id"])
     _cleanup_worktree(item["id"])
     _update_main_tree()
-    _watch_main_ci(item, ci_timeout_seconds)
+    sha, verdict = _watch_main_ci(item, ci_timeout_seconds)
+    _auto_finish(item, config, sha, verdict)
 
 
 def _import_cloud_prs() -> None:
@@ -338,7 +360,7 @@ def run(config: dict[str, Any], once: bool = False) -> int:
             if outcome == "merged":
                 _finish_item(item, "merged")
                 heartbeat()
-                _after_merge(item, ci_timeout)
+                _after_merge(item, ci_timeout, config)
                 merged += 1
                 if once:
                     break

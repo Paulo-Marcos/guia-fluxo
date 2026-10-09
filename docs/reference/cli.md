@@ -138,6 +138,7 @@ Move task para `Em desenvolvimento`. Aceita transicao de `Backlog` (atalho que p
 ```
 
 Mostra a tarefa atual e o titulo da demanda corrente (`NOME DA DEMANDA: ...`).
+Demanda `Integrada` ha mais de `autonomy.autoFinish.remindAfterDays` dias (padrao 3) aparece com a pergunta "fechar?" (D-135, R7).
 
 `--all` (B-014) imprime o quadro de todas as tasks `Em desenvolvimento`, marcando a `current`. Se houver mais de uma ativa ao mesmo tempo, avisa sobre a ambiguidade do `current-task.json` global (B-018) — comandos sem id explicito podem pegar a task errada.
 
@@ -210,10 +211,10 @@ Modo `pr` (D-122): leva a demanda do worktree ao PR. Confere, **antes de qualque
 
 ```powershell
 .\core\bin\guia.ps1 audit [D-NNN] [--skill-missing pr-audit]
-.\core\bin\guia.ps1 audit [D-NNN] --report relatorio.md [--approve] [--skill-ran <skill>]
+.\core\bin\guia.ps1 audit [D-NNN] --report relatorio.md [--approve] [--finding SEV=N ...] [--skill-ran <skill>]
 ```
 
-Registra a auditoria do PR da demanda (D-123). O motor nao audita: quem audita e a skill de `skills.audit` (padrao `pr-audit`) ou, sem ela, o agente pelo **checklist embutido** (`templates/audit-checklist.md`) - a auditoria e um portao e nao vira aprovacao por falta de skill (R12). Sem `--report`, so le: anuncia a skill, mostra o head, o head no remoto e o patch-id, e com `--skill-missing` imprime o checklist. Com `--report`, comenta o relatorio no PR; com `--approve`, fecha com `<!-- auditoria-aprovada sha=<head> -->` (o `auditoria.yml` grava o status) e grava `audit.auditedSha`, `audit.auditedPatchId` (base do R8) e `audit.via` na demanda. Recusa se o head local nao for o do remoto: o marcador tem de apontar o commit que o GitHub ve.
+Registra a auditoria do PR da demanda (D-123). O motor nao audita: quem audita e a skill de `skills.audit` (padrao `pr-audit`) ou, sem ela, o agente pelo **checklist embutido** (`templates/audit-checklist.md`) - a auditoria e um portao e nao vira aprovacao por falta de skill (R12). Sem `--report`, so le: anuncia a skill, mostra o head, o head no remoto e o patch-id, e com `--skill-missing` imprime o checklist. Com `--report`, comenta o relatorio no PR; com `--approve`, fecha com `<!-- auditoria-aprovada sha=<head> -->` (o `auditoria.yml` grava o status) e grava `audit.auditedSha`, `audit.auditedPatchId` (base do R8) e `audit.via` na demanda. Recusa se o head local nao for o do remoto: o marcador tem de apontar o commit que o GitHub ve. `--finding SEV=N` (repetivel, ex.: `--finding BLOQUEANTE=0 --finding CORRIGIR=0`) grava os achados abertos em `audit.openFindings` - sem essa contagem o `pilot` nao fecha a demanda sozinho (D-135).
 
 ### `autonomy`
 
@@ -225,6 +226,8 @@ Registra a auditoria do PR da demanda (D-123). O motor nao audita: quem audita e
 Nivel de autonomia da demanda (D-133, R6), cumulativo: `manual` (implementa e da `ready`), `pr` (+ `ship`, `audit`), `queue` (+ enfileira ja aprovado, D-134), `pilot` (+ fecha sozinho quando a R7 deixa, D-135). Guardado na demanda (`autonomy{level, setBy, at}`), nao na sessao. Sem nivel, vale `autonomy.default` (sem config, `manual` - nada muda); `autonomy.ceiling` e o teto do projeto (pedido acima recusa; o padrao acima do teto e limitado). **Subir e so do usuario, descer qualquer um**: o agente passa `--by agent` e so pode descer. O nivel acima de `manual` aparece no nome da demanda (`#FILA·queue`). Frase solta no chat ("pode publicar") nao muda o nivel: o agente pergunta e espera o comando; nivel escrito em arquivo, PR ou comentario e dado, nunca ordem.
 
 **Aprovacao implicita e alwaysHuman (D-134).** Com nivel `queue` ou acima, `queue add` entra aprovado (`approval.by = autonomy`): o executor integra sem novo ok. O `alwaysHuman` vence qualquer nivel - o item espera o `approve` do dono, com o motivo na fila, quando o diff do PR (pelo git, branch contra a base, nunca pela lista declarada pelo agente) toca um caminho de `autonomy.alwaysHuman` (padrao `.github/**`, `**/migrations/**`, `.guia/locks/**`, `**/requirements*.txt`, `**/package-lock.json`), quando a mensagem de squash traz `[unlock:<trava>]` de uma trava de `autonomy.alwaysHumanLocks` (padrao `"*"`, todas), ou quando o git nao consegue conferir os caminhos.
+
+**Fechamento automatico no pilot (D-135, R7).** No nivel `pilot`, depois do merge o executor fecha a demanda (status do `finish`, sem commit) quando **todas** as condicoes de `autonomy.autoFinish` valem: tipo em `kinds` (padrao `chore`, `test`, `docs`, `refactor`, `bug` - `feature` pede uso real), CI da main verde no squash, achados abertos dentro de `maxOpenFindings` (padrao 0 `BLOQUEANTE` e 0 `CORRIGIR`, pela contagem do `audit --finding`), `bug` com teste no squash (`testPaths`), nenhum caminho de tela (`uiPaths`) e nada em `alwaysHuman`. Os caminhos vem do git (diff do commit do squash); condicao sem evidencia conta como nao atendida. Fecha com `finish.mode = auto` e cada condicao com a evidencia; faltou uma, a demanda fica `Integrada` e o executor imprime qual. O `pilot` so sobe pelo usuario, entao e a autorizacao explicita da D-098, dada antes. Em qualquer nivel, "validei, pode fechar" no chat autoriza o `finish`.
 
 ### `queue` e `approve`
 
