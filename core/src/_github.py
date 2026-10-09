@@ -235,7 +235,8 @@ def gh_pr_merge(cwd: Path, number: int, head: str, subject: str, body: str) -> s
         if entry.get("mergeState", "CLEAN") not in ("CLEAN", "HAS_HOOKS", "UNSTABLE"):
             return "the base branch policy prohibits the merge"
         entry["merged"] = {"matchHead": head, "subject": subject, "body": body}
-        entry["mergeCommit"] = f"{number:040x}"
+        # D-135: o roteiro pode trazer o squash real (para o diff da R7).
+        entry["mergeCommit"] = entry.get("squashSha") or f"{number:040x}"
         entry["state"] = "MERGED"
         _save_fixture_prs(prs)
         return None

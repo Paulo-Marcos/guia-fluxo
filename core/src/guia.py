@@ -463,6 +463,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_audit.add_argument("task_id", nargs="?", help="Sem id, vale a branch (D-110).")
     p_audit.add_argument("--report", help="Arquivo com o relatorio da auditoria.")
     p_audit.add_argument("--approve", action="store_true", help="Com --report: aprova (comenta o marcador do head).")
+    p_audit.add_argument(
+        "--finding", action="append", default=[], metavar="SEV=N",
+        help="Com --report: achados abertos por severidade (ex.: BLOQUEANTE=0), usados pelo pilot (D-135).",
+    )
     p_audit.add_argument("--skill-ran", action="append", default=[], help="Skill de auditoria que rodou.")
     p_audit.add_argument("--skill-missing", action="append", default=[], help="Skill ausente: usa o checklist embutido.")
     p_audit.set_defaults(func=cmd_audit)

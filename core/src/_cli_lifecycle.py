@@ -355,9 +355,12 @@ def cmd_status(args: argparse.Namespace) -> int:
     import json
 
     if getattr(args, "all", False):
-        return _status_board()
+        _status_board()
+        _print_close_reminders()
+        return 0
 
     task = find_task_or_current(args.task_id)
+    _print_close_reminders()
     # D-049: Epic ganha visualizacao agregada (arvore + progresso). JSON
     # cru desaparece para epics, que sao orquestradores; quem quiser o
     # JSON usa `tasks show <id>`.
@@ -397,6 +400,14 @@ def _print_epic_tree(epic: dict[str, Any]) -> None:
             f"{open_count} filho(s) nao estiverem em status terminal "
             "(Validada/Finalizada/Resolvida/Cancelada)."
         )
+
+
+def _print_close_reminders() -> None:
+    """D-135 (R7): o empurrao - `Integrada` antiga pergunta "fechar?"."""
+    from _auto_finish import stale_integrated
+
+    for task, days in stale_integrated(read_json(PROCESS_FILE, {})):
+        print(f"Integrada ha {days} dias: {task['id']} {task.get('title', '')} - fechar? (finish {task['id']})")
 
 
 def _status_board() -> int:

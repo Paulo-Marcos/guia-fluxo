@@ -23,6 +23,16 @@ def _print_checklist() -> None:
     print(path.read_text(encoding="utf-8"))
 
 
+def _parse_findings(values: list[str]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for value in values:
+        severity, _, number = value.partition("=")
+        if not severity.strip() or not number.strip().isdigit():
+            raise SystemExit(f"--finding {value!r}: use SEVERIDADE=N (ex.: BLOQUEANTE=0).")
+        counts[severity.strip().upper()] = int(number)
+    return counts
+
+
 def cmd_audit(args: argparse.Namespace) -> int:
     """Mostra o que auditar; com --report, comenta no PR (e aprova com --approve)."""
     task = find_task_or_current(args.task_id)
@@ -43,6 +53,9 @@ def cmd_audit(args: argparse.Namespace) -> int:
     report = Path(args.report).read_text(encoding="utf-8")
     via = "checklist" if use_checklist else ", ".join(args.skill_ran or skills)
     audit = record_audit(task, target, report, args.approve, via)
+    if args.finding:
+        # D-135: contagem de achados abertos por severidade, para a R7.
+        audit["openFindings"] = _parse_findings(args.finding)
     record_stage(task, STAGE_AUDIT, config, args.skill_ran, args.skill_missing)
     save_task(task)
     verdict = "aprovada, marcador comentado" if args.approve else "registrada sem aprovacao (sem marcador)"
