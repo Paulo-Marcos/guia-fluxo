@@ -124,10 +124,19 @@ def _gate_candidates(root: Path) -> tuple[list[str], str]:
         return [f"powershell -NoProfile -ExecutionPolicy Bypass -File {GATE_SCRIPT}"], f"achei {GATE_SCRIPT}"
     if (root / "pyproject.toml").is_file() or (root / "tests").is_dir():
         return ["python -m pytest -q"], "projeto Python na raiz (pyproject.toml ou tests/)"
-    package = root / "package.json"
-    if package.is_file() and "test" in (json.loads(package.read_text(encoding="utf-8") or "{}").get("scripts") or {}):
+    if "test" in _package_scripts(root / "package.json"):
         return ["npm test"], "package.json na raiz com o script test"
     return [], f"nenhum portao de um comando so na raiz (sugestao: um {GATE_SCRIPT} que rode tudo)"
+
+
+def _package_scripts(path: Path) -> dict[str, Any]:
+    """Scripts do package.json; malformado ou ausente, nenhum (so pula a sugestao)."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    scripts = data.get("scripts") if isinstance(data, dict) else None
+    return scripts if isinstance(scripts, dict) else {}
 
 
 def _heavy_dirs(root: Path) -> list[str]:
