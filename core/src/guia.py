@@ -93,6 +93,7 @@ from _cli_audit import cmd_audit  # noqa: E402
 from _cli_autonomy import cmd_autonomy  # noqa: E402
 from _cli_changelog import cmd_changelog  # noqa: E402
 from _cli_deps_bot import cmd_deps  # noqa: E402
+from _cli_configure import cmd_configure  # noqa: E402
 from _cli_profile import cmd_profile  # noqa: E402
 from _cli_queue import cmd_approve, cmd_queue  # noqa: E402
 from _cli_scaffold import cmd_scaffold  # noqa: E402
@@ -420,6 +421,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_profile.add_argument("--name", choices=["solo-direct", "pr-basic", "pr-audited"], help="Perfil no lugar do proposto.")
     p_profile.add_argument("--json", action="store_true", help="Saida em JSON.")
     p_profile.set_defaults(func=cmd_profile)
+
+    p_configure = sub.add_parser(
+        "configure",
+        help="Configurador da entrega: cada etapa explicada, o que o Guia viu e a recomendacao (D-143).",
+    )
+    p_configure.add_argument("--plan", action="store_true", help="Mostra o plano das etapas (com os --set ja aplicados).")
+    p_configure.add_argument("--set", action="append", default=[], metavar="ETAPA=VALOR",
+                             help="Escolha de uma etapa (repetivel); sem --yes e simulacao.")
+    p_configure.add_argument("--yes", action="store_true", help="Com --set: grava o process.json (backup em .guia/backups/).")
+    p_configure.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_configure.set_defaults(func=cmd_configure)
 
     p_scaffold = sub.add_parser(
         "scaffold",
