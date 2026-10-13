@@ -38,6 +38,7 @@ Esta separacao nao se confunde com [`../README.md`](../README.md) (porta de entr
 
 ## Explanation
 
+- [O fluxo de entrega, de ponta a ponta](explanation/fluxo-de-entrega.md) - da demanda a release no modo `pr`: quem faz cada passo e por que.
 - [Visao geral do processo](explanation/visao-geral.md) - skill, script, JSON, YAML, hooks.
 - [Por que o script e fonte da verdade](explanation/por-que-script-fonte-da-verdade.md)
 - [Por que travar arquivos](explanation/por-que-lock.md) - tres camadas de defesa.
