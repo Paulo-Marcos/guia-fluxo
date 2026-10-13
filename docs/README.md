@@ -17,6 +17,7 @@ Esta separacao nao se confunde com [`../README.md`](../README.md) (porta de entr
 
 ## How-to
 
+- [Configurar a entrega num projeto](how-to/configurar-entrega.md) - o configurador, no chat ou no terminal.
 - [Instalar em outro projeto](how-to/instalar-em-outro-projeto.md)
 - [Configurar hooks git](how-to/configurar-hooks-git.md)
 - [Promover item do backlog](how-to/promover-backlog.md)

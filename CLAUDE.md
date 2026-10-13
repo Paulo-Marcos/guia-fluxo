@@ -37,6 +37,7 @@ Este repo **e um plugin Claude Code oficial**: `plugins/guia/.claude-plugin/plug
 | `/guia:deps` | `deps` | — | PRs do Dependabot e o que o executor fara; `--now` cria o lote. |
 | `/guia:changelog` | `changelog` | — | `add` grava o fragmento em `changelog.d/`; `compile` so na release. |
 | `/guia:worktree` | `worktree` | — | `add`/`remove` do worktree isolado da demanda (`d-NNN-<slug>`). |
+| `/guia:configure` | `configure` | — | **So do usuario**: configura/atualiza a entrega uma etapa por vez - o que se decide, o que o Guia viu, a recomendacao e o porque. No terminal: `configure` (`--pendentes` = so o que falta). |
 | `/guia:profile` | `profile` | — | Propoe o perfil de entrega pelos fatos do repo; `--apply` so com ok do dono. |
 | `/guia:scaffold` | `scaffold` | — | Andaimes de entrega (auditoria, pr-template, dependabot) e o texto de `ci-ok`/`protection`. |
 | `/guia:commit-message` | `commit-message` | — | Mensagem no formato configurado, com `[unlock:]` (no modo `pr`, pelo diff da branch). |

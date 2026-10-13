@@ -298,3 +298,15 @@ verbs:
         body_file: bodies/commit-message.md
       claude_command:
         body_file: bodies/commit-message.md
+
+  # D-145: o configurador conduzido no chat; so do usuario (mexe na autonomia).
+  configure:
+    description: |
+      USER-ONLY — configure (or update) the project's delivery settings one explained step at a time: for each decision (delivery mode, base branch, commit format/co-author, audit status, CHANGELOG style, ship gate, worktree junctions/env files, skills per stage, autonomy default/ceiling, locks that always stop at the owner) show what it is, what the Guia saw in the project, the current value and the recommendation with its why, then ask. Built on `configure --plan --json` / `--set ID=VALUE` / `--yes` (writes only `.guia/process.json`, with a backup). Only the developer invokes it (it sets autonomy). For a single demand's level use `autonomy`.
+    frontmatter:
+      disable-model-invocation: true
+    targets:
+      agent_skill:
+        body_file: bodies/configure.md
+      claude_command:
+        body_file: bodies/configure.md

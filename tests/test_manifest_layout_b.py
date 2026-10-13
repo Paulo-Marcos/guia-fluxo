@@ -154,7 +154,7 @@ class DeliveryCommandsTests(unittest.TestCase):
     """D-136 (R4/R6): os verbos da entrega por PR viram comandos; os so do
     usuario saem com `disable-model-invocation: true`, os do agente nao."""
 
-    USER_ONLY = ("approve", "autonomy", "queue-control")
+    USER_ONLY = ("approve", "autonomy", "queue-control", "configure")  # D-145: configure mexe na autonomia
     AGENT = ("ship", "audit", "queue", "deps", "changelog", "worktree", "profile", "scaffold", "commit-message")
 
     @staticmethod
