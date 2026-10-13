@@ -26,6 +26,9 @@ STAGE_READY = "ready"
 STAGE_QUALITY = "quality"
 # D-123: portao - sem a skill, o agente audita pelo checklist embutido.
 STAGE_AUDIT = "audit"
+# D-149: juntar as versoes do lote do Dependabot - juizo de compatibilidade e
+# supply-chain, nunca mecanica do motor. Configuravel (padrao pr-bump).
+STAGE_DEPS = "deps"
 
 # Padroes que reproduzem o que o Guia ja sugeria. `commit` sem skill fixa:
 # vale a deteccao por nome do D-054 (skill com `commit` + `conventional` ou
@@ -35,6 +38,7 @@ SKILL_STAGE_DEFAULTS: dict[str, tuple[str, ...]] = {
     STAGE_READY: ("delivery-report",),
     STAGE_QUALITY: tuple(QUALITY_SKILL_SUGGESTIONS),
     STAGE_AUDIT: ("pr-audit",),
+    STAGE_DEPS: ("pr-bump",),
 }
 COMMIT_AUTODETECT_HINT = "deteccao por nome (D-054: `commit` + `conventional`/`gitmoji`)"
 
@@ -63,11 +67,11 @@ def announce_stage(stage: str, config: dict[str, Any]) -> None:
         print(f"Guia Fluxo: etapa {stage} sem skill (desligada em skills.{stage}).", file=sys.stderr)
     elif skills:
         # Portao (R12): sem a skill, a auditoria cai no checklist, nao "segue".
-        fallback = (
-            "se nao existir na sessao, rode `guia audit --skill-missing <nome>` e audite pelo checklist embutido"
-            if stage == STAGE_AUDIT
-            else "se nao existir na sessao, siga e registre com --skill-missing"
-        )
+        fallback = {
+            STAGE_AUDIT: "se nao existir na sessao, rode `guia audit --skill-missing <nome>` e audite pelo checklist embutido",
+            # Sem a skill, juntar versoes vira palpite: para e avisa o dono.
+            STAGE_DEPS: "se nao existir na sessao, PARE e avise o dono: juntar versoes exige juizo",
+        }.get(stage, "se nao existir na sessao, siga e registre com --skill-missing")
         print(f"Guia Fluxo: etapa {stage} -> acione {', '.join(skills)} ({fallback}).", file=sys.stderr)
     elif stage == STAGE_COMMIT:
         print(f"Guia Fluxo: etapa commit -> {COMMIT_AUTODETECT_HINT}.", file=sys.stderr)
