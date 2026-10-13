@@ -276,6 +276,15 @@ CHANGELOG por fragmentos (D-121). `add` cria `changelog.d/<ID>.<categoria>.md` n
 
 Imprime a mensagem de commit da demanda no formato de `delivery.commit.format` (D-112). No modo `pr` o `finish` nao commita, entao e esta mensagem que o agente usa no `git commit -F` e no corpo do squash. No formato `gitmoji-conventional`: header `<emoji> <tipo>(D-NNN): titulo` (feature -> `✨ feat`, bug -> `🐛 fix`, chore -> `🧹 chore`), corpo = `--body`, uma marca `[unlock:<trava>] motivo: ...` por trava que os arquivos declarados tocam e `Co-Authored-By` de `delivery.commit.coAuthor`. A operacao de cada arquivo (adicao, modificacao, delecao) vem do git contra a base (`merge-base` com `origin/<baseBranch>`), nao do disco: arquivo novo conta como adicao. Trava tocada sem motivo recusa (exit 1) citando cada uma; `--unlock-reason` aceita `<trava>=<motivo>` ou um `<motivo>` para todas. Sem id, vale a branch (D-110). O `finish` com commit (modo `direct`) aceita o mesmo `--unlock-reason`.
 
+### `configure`
+
+```powershell
+.\core\bin\guia.ps1 configure [--plan] [--json]
+.\core\bin\guia.ps1 configure --set ETAPA=VALOR [--set ...] [--yes] [--json]
+```
+
+O configurador da entrega (D-143, epico E-008). Mostra, etapa por etapa, **o que se decide**, **o que o Guia viu no projeto** (os fatos do `doctor --delivery`), as opcoes com a **recomendada e o porque**, o valor atual e o status: `nova` (falta decidir), `padrao` (ausente, mas o padrao do motor ja e o recomendado), `ok` (igual a recomendacao) ou `difere`. Etapas: modo de entrega, branch base, formato e coautoria do commit, status da auditoria, estilo do CHANGELOG, portao do `ship`, juncoes e arquivos de ambiente do worktree, skills do `ready`/qualidade/auditoria, nivel padrao e teto de autonomia, travas que sempre param no dono. As do modo `pr` so se aplicam com `mode=pr` - o plano segue as respostas ja dadas em `--set`. `--set` sem `--yes` e simulacao (mostra `chave: antes -> depois`); com `--yes` grava **so** o `.guia/process.json`, com o anterior em `.guia/backups/`. Valores: `padrao` remove a chave (vale o padrao do motor), listas por virgula ou JSON, `nenhuma` = lista vazia. O que muda o GitHub (protecao, workflow de auditoria, script de release) sai em notas "Fora do process.json" para o dono aplicar. Rodado de novo, serve de atualizador.
+
 ### `profile`
 
 ```powershell

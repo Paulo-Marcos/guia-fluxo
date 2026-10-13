@@ -20,5 +20,6 @@ Thumbs.db
 .guia/historico/
 .guia/queue/
 .guia/queue.json
+.guia/backups/
 .guia/queue.lock
 .guia/queue.json.*.tmp
