@@ -6,6 +6,14 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-13
+
+### Added
+- **Auditoria de delta: depois de um rebase que mudou o PR, audita-se só o que mudou (D-140, épico E-007, R8).** A aprovação grava a base auditada; quando o patch-id não bate e o executor devolve o PR, o `guia audit` seguinte mostra o `git range-diff` entre o par base/head aprovado e o novo e registra `audit.mode = delta` com `deltaFrom` e `range`. Sem base gravada, auditoria anterior reprovada ou commit antigo ausente, volta ao diff inteiro. O checklist embutido ganhou a seção Delta. Testes em `tests/test_audit.py`.
+- **Configurador da entrega: `guia configure` explica cada etapa e recomenda (D-143, épico E-008).** Cada decisão do `process.json` vira uma etapa com o que se decide, o que o Guia viu no projeto, as opções com a recomendada e o porquê, o valor atual e o status (`nova`, `padrao`, `ok`, `difere`) — rodado de novo, serve de atualizador. `--set ETAPA=VALOR` simula; com `--yes` grava só o `process.json`, com backup em `.guia/backups/`. O que muda o GitHub sai em notas para o dono aplicar. Testes em `tests/test_configure.py`.
+- **Painel do terminal do configurador (D-144, épico E-008).** `guia configure` num terminal pergunta uma etapa por vez, com a explicação, o que o Guia viu e a recomendada: Enter aceita, número escolhe, `m` mantém, `q` sai sem gravar. O plano se refaz a cada resposta, e nada é gravado sem o `s` final. `--pendentes` pergunta só o que falta decidir ou difere da recomendação. Testes em `tests/test_configure_terminal.py`.
+- **`/guia:configure`: o agente conduz a configuração no chat, uma etapa por vez (D-145, épico E-008).** Sobre o plano do motor, o agente explica cada decisão (o que é, o que o Guia viu, o valor atual, a recomendação e o porquê), pergunta com as opções e só grava com o ok do dono. É um comando só do usuário (`disable-model-invocation`), porque mexe na autonomia. Novo how-to: `docs/how-to/configurar-entrega.md`.
+
 ## [0.6.0] - 2026-10-09
 
 ### Added
