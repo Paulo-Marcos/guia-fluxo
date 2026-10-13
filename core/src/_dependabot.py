@@ -15,6 +15,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from _autonomy import LEVELS, rank, settings as autonomy_settings
+from _clock import now_iso
 from _constants import KIND_CHORE, ROOT, STATUS_PLANNED, TASKS_FILE
 from _features_md import upsert_features_entry
 from _github import gh_bot_prs, gh_pr_close
@@ -84,21 +86,37 @@ def open_lote() -> dict[str, Any] | None:
     return next((t for t in tasks if t.get("dependabot") and t.get("status") not in _CLOSED_STATUSES), None)
 
 
-def create_lote(inv: dict[str, Any]) -> dict[str, Any] | None:
-    """Cria a demanda do lote (Planejada: quem a executa e um chat com a pr-bump)."""
+def lote_level(config: dict[str, Any]) -> str | None:
+    """Nivel de autonomia dos lotes novos (D-149): `delivery.dependencies.autonomy`, limitado pelo teto.
+
+    None = o lote segue o `autonomy.default` como qualquer demanda.
+    """
+    wanted = (((config.get("delivery") or {}).get("dependencies") or {}).get("autonomy"))
+    if wanted not in LEVELS:
+        return None
+    ceiling = autonomy_settings(config)["ceiling"]
+    return LEVELS[min(rank(wanted), rank(ceiling))]
+
+
+def create_lote(inv: dict[str, Any], config: dict[str, Any] | None = None) -> dict[str, Any] | None:
+    """Cria a demanda do lote (Planejada: quem a executa e um chat com a skill da etapa deps)."""
     if not inv["bumps"] or open_lote():
         return None
     data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
     numbers = [b["number"] for b in inv["bumps"]]
     context = (
         "Lote dos PRs do Dependabot " + ", ".join(f"#{n}" for n in numbers)
-        + ": rode a skill pr-bump num chat (junta tudo, piso de supply-chain, portao uma vez), "
-        "um PR so com `Closes #N` de cada um."
+        + ": `/guia:deps --now` conduz o lote (skill da etapa deps, padrao pr-bump: junta tudo, piso de "
+        "supply-chain, portao uma vez), um PR so com `Closes #N` de cada um."
         + (" Inclui atualizacao de SEGURANCA: prioridade hotfix na fila." if inv["security"] else "")
     )
     task = new_task(next_task_id(KIND_CHORE, data.get("tasks", [])), KIND_CHORE, LOTE_TITLE, context,
                     "Dependabot (executor do Guia)", status=STATUS_PLANNED)
     task["dependabot"] = {"prs": numbers, "security": inv["security"]}
+    level = lote_level(config or {})
+    if level:
+        # Nivel dado pela configuracao do dono (o configurador), nao pelo agente.
+        task["autonomy"] = {"level": level, "setBy": "config", "at": now_iso()}
     data.setdefault("tasks", []).insert(0, task)
     write_json(TASKS_FILE, data)
     upsert_features_entry(task)
@@ -110,7 +128,7 @@ def on_idle(config: dict[str, Any]) -> dict[str, Any] | None:
     trigger = ((config.get("delivery") or {}).get("dependencies") or {}).get("trigger", TRIGGER_ON_IDLE)
     if trigger != TRIGGER_ON_IDLE:
         return None
-    return create_lote(inventory())
+    return create_lote(inventory(), config)
 
 
 def close_incorporated(task: dict[str, Any]) -> list[int]:
@@ -124,4 +142,4 @@ def close_incorporated(task: dict[str, Any]) -> list[int]:
     return closed
 
 
-__all__ = ["LOTE_TITLE", "close_incorporated", "create_lote", "inventory", "on_idle", "open_lote", "triage"]
+__all__ = ["LOTE_TITLE", "close_incorporated", "create_lote", "inventory", "lote_level", "on_idle", "open_lote", "triage"]

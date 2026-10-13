@@ -142,6 +142,35 @@ class DepsCliTests(unittest.TestCase):
         self.assertEqual(sorted(c["number"] for c in closed), [11, 12])
         self.assertTrue(all("#90" in c["comment"] for c in closed))
 
+    def _process(self, data: dict) -> None:
+        (self.sb / ".guia" / "process.json").write_text(json.dumps(data), encoding="utf-8")
+
+    def test_lote_gets_the_configured_level_capped_by_the_ceiling(self) -> None:
+        """D-149: `delivery.dependencies.autonomy` da o nivel do lote, nunca acima do teto."""
+        self._process({"delivery": {"mode": "pr", "dependencies": {"autonomy": "pilot"}},
+                       "autonomy": {"default": "pr", "ceiling": "queue"}})
+        self._ok("deps", "--now")
+        autonomy = self._lotes()[0]["autonomy"]
+        self.assertEqual((autonomy["level"], autonomy["setBy"]), ("queue", "config"))
+
+    def test_without_lote_level_the_lote_follows_the_default(self) -> None:
+        self._process({"delivery": {"mode": "pr"}, "autonomy": {"default": "pr"}})
+        data = json.loads(self._ok("deps", "--now", "--json").stdout)
+        self.assertNotIn("autonomy", self._lotes()[0])
+        self.assertEqual((data["openLote"], data["level"]), (self._lotes()[0]["id"], "pr"))
+
+    def test_deps_reports_the_lote_level_and_the_stage_skill(self) -> None:
+        """D-149: o roteiro le o lote, o nivel e a skill da etapa deps (configuravel)."""
+        self._ok("deps", "--now")
+        data = json.loads(self._ok("deps", "--json").stdout)
+        self.assertEqual(data["skills"], ["pr-bump"])
+        self.assertTrue(data["security"])
+        self._process({"delivery": {"mode": "pr"}, "skills": {"deps": "minha-deps"}})
+        out = self._ok("deps")
+        self.assertIn("skill: minha-deps", out.stdout)
+        self.assertIn("etapa deps -> acione minha-deps", out.stderr)
+        self.assertIn("PARE", out.stderr, "sem a skill, juntar versoes vira palpite")
+
 
 if __name__ == "__main__":
     unittest.main()

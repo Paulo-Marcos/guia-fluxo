@@ -34,7 +34,7 @@ from _constants import (
     PROCESS_FILE,
 )
 from _profiles import PROFILE_SOLO_DIRECT, propose_profile
-from _skills import SKILL_STAGE_DEFAULTS, STAGE_AUDIT, STAGE_QUALITY, STAGE_READY
+from _skills import SKILL_STAGE_DEFAULTS, STAGE_AUDIT, STAGE_DEPS, STAGE_QUALITY, STAGE_READY
 from _state import write_json
 
 BACKUP_DIR = GUIA_DIR / "backups"
@@ -330,6 +330,9 @@ STEPS: tuple[Step, ...] = (
     _skills_step(STAGE_AUDIT, "Skill de auditoria",
                  "A skill que audita o PR antes do merge. Sem ela, o agente usa o checklist embutido do Guia - "
                  "a auditoria nunca vira aprovacao por falta de skill."),
+    _skills_step(STAGE_DEPS, "Skill das dependencias",
+                 "A skill que resolve o lote do Dependabot no `/guia:deps --now`: junta as versoes, aplica o piso "
+                 "de supply-chain e roda o portao uma vez. Sem ela o lote para e avisa - juntar versoes exige juizo."),
     Step(
         "autonomy-default", "Autonomia", "Nivel padrao de autonomia",
         "Ate onde o agente vai sozinho em cada demanda. manual: implementa e da ready. pr: + abre o PR e "
@@ -346,6 +349,17 @@ STEPS: tuple[Step, ...] = (
         ("autonomy", "ceiling"), "choice", "pilot",
         lambda ctx: ("queue", "a fila aprova sozinha o que e seguro; fechar sozinho (pilot) fica para depois de medir"),
         options=lambda ctx: [Option(level, LEVEL_LABELS[level], "") for level in LEVELS],
+    ),
+    Step(
+        "deps-autonomy", "Autonomia", "Nivel do lote de dependencias",
+        "Ate onde o `/guia:deps --now` vai sozinho com o lote do Dependabot. pr: lanca o PR e audita. queue: + "
+        "entra na fila. pilot: + integra e fecha, e so pergunta quando ha algo alem de versao (codigo, linha de "
+        "base, trava) ou a skill achar uma decisao. Limitado pelo teto do projeto. Padrao: o nivel padrao.",
+        ("delivery", "dependencies", "autonomy"), "choice", None,
+        lambda ctx: (ctx.get(("delivery", "dependencies", "autonomy")), "o ja configurado (ou o nivel padrao)")
+        if ctx.get(("delivery", "dependencies", "autonomy")) else (None, "segue o nivel padrao ate voce decidir"),
+        options=lambda ctx: [Option(level, LEVEL_LABELS[level], "") for level in LEVELS],
+        applies=_is_pr,
     ),
     Step(
         "always-human-locks", "Autonomia", "Travas que sempre param no dono",
