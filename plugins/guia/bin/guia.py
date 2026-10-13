@@ -431,6 +431,10 @@ def build_parser() -> argparse.ArgumentParser:
                              help="Escolha de uma etapa (repetivel); sem --yes e simulacao.")
     p_configure.add_argument("--yes", action="store_true", help="Com --set: grava o process.json (backup em .guia/backups/).")
     p_configure.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_configure.add_argument("--interactive", action="store_true",
+                             help="Painel do terminal: uma etapa por vez (padrao num terminal sem outras flags) (D-144).")
+    p_configure.add_argument("--pendentes", action="store_true",
+                             help="No painel: so as etapas que faltam decidir (nova) ou diferem da recomendacao.")
     p_configure.set_defaults(func=cmd_configure)
 
     p_scaffold = sub.add_parser(

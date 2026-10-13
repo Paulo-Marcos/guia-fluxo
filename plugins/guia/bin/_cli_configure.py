@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import textwrap
 from typing import Any
 
 from _configure import STEPS, apply_answers, build_plan, outside_notes, save
+from _configure_tty import run as run_terminal
 from _constants import ROOT, PROCESS_FILE
 from _delivery_facts import collect_facts
 from _state import read_json
@@ -57,23 +59,35 @@ def print_plan(plan: list[dict[str, Any]]) -> None:
     print("Valores: `padrao` volta ao padrao do motor; listas separadas por virgula; `nenhuma` = lista vazia.")
 
 
-def print_changes(changes: list[dict[str, Any]], notes: list[str], written: bool, backup: Any) -> None:
+SIMULATION_HINT = "Simulacao: nada gravado. Repita com --yes para gravar."
+
+
+def print_changes(changes: list[dict[str, Any]], notes: list[str], written: bool, backup: Any,
+                  hint: str | None = SIMULATION_HINT) -> None:
     if not changes:
         print("Nada muda: as escolhas ja sao as do process.json.")
     for change in changes:
         print(f"  {change['path']}: {_show(change['before'])} -> {_show(change['after'])}")
     if changes and written:
         print(f"Gravado em {PROCESS_FILE}" + (f" (anterior em {backup})" if backup else "") + ".")
-    elif changes:
-        print("Simulacao: nada gravado. Repita com --yes para gravar.")
+    elif changes and hint:
+        print(hint)
     for note in notes:
         print(f"Fora do process.json (aplique voce): {note}")
+
+
+def _print_summary(changes: list[dict[str, Any]], notes: list[str], written: bool, backup: Any) -> None:
+    print_changes(changes, notes, written, backup, hint=None)
 
 
 def cmd_configure(args: argparse.Namespace) -> int:
     """Plano das etapas (o que decidir, o que o Guia viu, a recomendacao) e a gravacao."""
     config = read_json(PROCESS_FILE, {})
     facts = collect_facts()
+    asked = not (args.plan or args.set or args.json)
+    if args.interactive or (asked and sys.stdin.isatty()):
+        # D-144: o painel do terminal - uma etapa por vez, sobre o mesmo plano.
+        return run_terminal(config, facts, ROOT, _print_step, _print_summary, only_pending=args.pendentes)
     updated, changes = apply_answers(config, _answers(args.set))
     if args.set and not args.plan:
         backup = save(updated) if args.yes and changes else None
