@@ -47,16 +47,31 @@
     },
     "pr": {
       "footer": "🤖 Generated with [Claude Code](https://claude.com/claude-code)"
+    },
+    "baseBranch": "main",
+    "audit": {
+      "statusContext": "Auditoria registrada"
+    },
+    "worktree": {
+      "junctions": [],
+      "envFiles": []
     }
   },
   "skills": {
     "quality": [
       "clean-code-review",
       "clean-architecture-guardian"
+    ],
+    "ready": [
+      "delivery-report"
+    ],
+    "audit": [
+      "pr-audit"
     ]
   },
   "autonomy": {
-    "default": "queue",
-    "ceiling": "queue"
+    "default": "pilot",
+    "ceiling": "pilot",
+    "alwaysHumanLocks": "*"
   }
 }
