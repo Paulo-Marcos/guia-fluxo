@@ -185,6 +185,13 @@ class DeliveryCommandsTests(unittest.TestCase):
             front = self._frontmatter(dist / f"{verb}.md")
             self.assertNotIn("disable-model-invocation", front, msg=verb)
 
+    def test_deps_now_conducts_the_batch_end_to_end(self) -> None:
+        """D-151: `/guia:deps --now` conduz o lote - skill da etapa, so pergunta decisao real, depois o condutor."""
+        body = (REPO_ROOT / "plugins" / "guia" / "commands" / "deps.md").read_text(encoding="utf-8")
+        for piece in ("deps --now --json", "stop and tell the developer", "Only ask when there is a real decision",
+                      "next <D-NNN> --json", "Never run `finish`"):
+            self.assertIn(piece, body)
+
     def test_queue_control_owns_the_user_only_queue_actions(self) -> None:
         body = (REPO_ROOT / "plugins" / "guia" / "commands" / "queue-control.md").read_text(encoding="utf-8")
         for action in ("queue pause", "queue resume", "queue remove", "queue priority", "queue run"):
