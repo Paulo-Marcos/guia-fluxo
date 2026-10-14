@@ -45,3 +45,6 @@ guia configure --set mode=pr --yes           # grava (anterior em .guia/backups/
   `.guia/locks/registry.yaml` pelo template do perfil (`adicoes`, `testes` ou `nenhum`, os mesmos do
   `init --locks`), com o anterior em `.guia/backups/registry.yaml.<data-hora>`. Travas proprias do
   projeto aparecem como `personalizado`, e a recomendacao e manter.
+- As etapas **Modelos** (`models-triage`, `models-normal`, `models-fable`) ligam a triagem de modelo por
+  demanda (`triage`), escolhem o modelo das demandas normais (Sonnet por padrao) e a politica do Fable
+  (`ask`: sugere e pergunta antes). Para saber se o Sonnet basta, olhe `model --summary` antes de mudar.

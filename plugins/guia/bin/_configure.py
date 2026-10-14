@@ -434,6 +434,44 @@ STEPS: tuple[Step, ...] = (
         applies=lambda ctx: (ctx.get(("autonomy", "ceiling")) or "pilot") == "pilot",
     ),
     Step(
+        "models-triage", "Modelos", "Triagem de modelo por demanda",
+        "Ao criar ou comecar uma demanda, o agente le o pedido e o codigo e o `triage` recomenda modelo e esforco por "
+        "uma regua fixa (trivial: Haiku; normal: Sonnet; complexa: Opus; extrema: Opus max), com o porque. O `model` "
+        "registra o que foi de fato usado e `model --summary` mostra onde um modelo mais barato bastaria. off: sem triagem.",
+        ("models", "enabled"), "choice", "on",
+        lambda ctx: ("on", "a recomendacao e barata e da a medida para decidir quando o Sonnet basta"),
+        options=lambda ctx: [
+            Option("on", "recomendar modelo e esforco", "o chat mostra a recomendacao; trocar de modelo e sua decisao"),
+            Option("off", "sem triagem", "o agente nao recomenda modelo"),
+        ],
+    ),
+    Step(
+        "models-normal", "Modelos", "Modelo das demandas normais",
+        "Demanda normal: ate 2 areas, sem risco nem incerteza - a maioria. sonnet: o padrao, mais barato e rapido; "
+        "opus: mais folga de raciocinio a um custo maior. As complexas ja vao para Opus; a auditoria nunca fica abaixo de Opus.",
+        ("models", "tiers", "normal"), "choice", "sonnet",
+        lambda ctx: ("sonnet", "suba para opus so se `model --summary` mostrar que o Sonnet nao deu conta"),
+        options=lambda ctx: [
+            Option("sonnet", "Sonnet 5.5", "padrao: o suficiente para mudanca contida"),
+            Option("opus", "Opus 5.5", "mais capaz, mais caro"),
+        ],
+        applies=lambda ctx: ctx.get(("models", "enabled")) != "off",
+    ),
+    Step(
+        "models-fable", "Modelos", "Politica do Fable",
+        "Fable 5.1 e o mais capaz, para raciocinio exigente e trabalho longo, e custa bem mais que o Opus. Entra so nas "
+        "demandas extremas (varios riscos com incerteza, ou irreversivel com risco). ask: sugere e pergunta antes; "
+        "suggest: sugere sem pedir confirmacao; never: nunca sugere (fica Opus max).",
+        ("models", "fable"), "choice", "ask",
+        lambda ctx: ("ask", "custo alto: a decisao de usar fica com voce, caso a caso"),
+        options=lambda ctx: [
+            Option("ask", "sugere e pergunta", "padrao"),
+            Option("suggest", "so sugere", "o agente cita o Fable sem perguntar"),
+            Option("never", "nunca", "extrema fica no Opus max"),
+        ],
+        applies=lambda ctx: ctx.get(("models", "enabled")) != "off",
+    ),
+    Step(
         "locks-profile", "Travas", "Perfil de travas",
         "Quais arquivos pedem [unlock:] no commit. adicoes: todo arquivo novo. testes: alterar, apagar ou "
         "renomear um teste existente; arquivo novo fica livre. nenhum: nada travado. Gravar TROCA o "

@@ -35,7 +35,8 @@ def settings(config: dict[str, Any]) -> dict[str, Any]:
     """`models` do process.json: modelo por faixa e a politica do Fable (D-155)."""
     custom = config.get("models") or {}
     tiers = {**MODELS_DEFAULT, **(custom.get("tiers") or {})}
-    return {"enabled": custom.get("enabled", True), "tiers": tiers, "fable": custom.get("fable", "ask")}
+    enabled = custom.get("enabled", "on") not in (False, "off")
+    return {"enabled": enabled, "tiers": tiers, "fable": custom.get("fable", "ask")}
 
 
 def tier_of(kind: str, scope: int, risks: list[str], uncertain: bool, irreversible: bool) -> tuple[str, list[str]]:
