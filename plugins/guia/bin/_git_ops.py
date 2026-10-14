@@ -53,7 +53,8 @@ def git_output(cwd: Path, *args: str) -> str | None:
     se tratam igual. Nunca levanta.
     """
     try:
-        result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True)
+        result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True,
+                                encoding="utf-8", errors="replace")
     except (FileNotFoundError, OSError):
         return None
     return result.stdout.strip() if result.returncode == 0 else None
@@ -102,7 +103,8 @@ def changed_against_base(base_branch: str) -> list[str]:
     cwd = Path.cwd()
 
     def _out(*args: str) -> str:
-        result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True)
+        result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True,
+                                encoding="utf-8", errors="replace")
         return result.stdout if result.returncode == 0 else ""
 
     base = _out("merge-base", "HEAD", f"origin/{base_branch}").strip() or "HEAD"
@@ -126,7 +128,8 @@ def name_status_against_base(files: Iterable[str], base_branch: str) -> list[str
     cwd = Path.cwd()
 
     def _out(*args: str) -> str | None:
-        result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True)
+        result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True,
+                                encoding="utf-8", errors="replace")
         return result.stdout if result.returncode == 0 else None
 
     base = (_out("merge-base", "HEAD", f"origin/{base_branch}") or "").strip() or "HEAD"
