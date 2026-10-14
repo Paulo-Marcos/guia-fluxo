@@ -294,6 +294,14 @@ O condutor (D-152): o proximo passo da demanda, decidido pelo motor a partir do 
 
 Em que chat a demanda e feita, para voltar a ele (D-157). Sem `--title`, imprime `NOME DO CHAT: ...` - um nome estavel, sem a etiqueta de status (que muda) - para o agente renomear a sessao; com `--title`, grava o nome na demanda (`chat.title`). Chat dedicado a demanda: o agente renomeia e grava; chat com varias demandas: nao renomeia para uma delas, grava o nome que o chat ja tem. Quando a fila devolve (`DEVOLVIDA - ... - volte ao chat: ...`) ou deixa a demanda `Integrada` sem fechar, ela aponta o chat; `next` mostra `[chat: ...]` e `status --all` lista as **Pendencias** (devolvidas e integradas por fechar) com o chat de cada uma.
 
+### `triage`
+
+```powershell
+.\core\bin\guia.ps1 triage [D-NNN] --scope N [--risk auth|migration|concurrency|security|prod|data] [--uncertain] [--irreversible] [--json]
+```
+
+Modelo e esforco recomendados para a demanda (D-153). O agente informa os sinais (alcance, riscos, incerteza, reversibilidade) e o motor aplica a regua fixa: **trivial** (chore/docs/test, 1 area, sem risco) -> Haiku 5.5, `low`; **normal** (ate 2 areas, sem risco) -> Sonnet 5.5, `medium`; **complexa** (3+ areas, qualquer risco ou incerteza) -> Opus 5.5, `high`; **extrema** (2+ riscos com incerteza, ou irreversivel com risco) -> Opus 5.5 `max`, com o Fable 5.1 so como sugestao (com pergunta, por padrao). A auditoria nunca fica abaixo de Opus. Grava `triage` na demanda, com o porque; sem sinais, mostra a gravada. `models.tiers` e `models.fable` (`ask`/`suggest`/`never`) ajustam a regua.
+
 ### `model`
 
 ```powershell

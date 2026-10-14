@@ -97,6 +97,7 @@ from _cli_deps_bot import cmd_deps  # noqa: E402
 from _cli_configure import cmd_configure  # noqa: E402
 from _cli_chat import cmd_chat  # noqa: E402
 from _cli_next import cmd_next  # noqa: E402
+from _cli_triage import cmd_triage  # noqa: E402
 from _cli_model import cmd_model  # noqa: E402
 from _cli_profile import cmd_profile  # noqa: E402
 from _cli_queue import cmd_approve, cmd_queue  # noqa: E402
@@ -458,6 +459,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_next.add_argument("task_id", nargs="?", help="Sem id, vale a branch (D-110).")
     p_next.add_argument("--json", action="store_true", help="Saida em JSON.")
     p_next.set_defaults(func=cmd_next)
+
+    p_triage = sub.add_parser(
+        "triage",
+        help="Modelo e esforco recomendados para a demanda, pelos sinais que o agente informa (D-153).",
+    )
+    p_triage.add_argument("task_id", nargs="?", help="Sem id, vale a branch (D-110).")
+    p_triage.add_argument("--scope", type=int, help="Quantos modulos/camadas a demanda toca.")
+    p_triage.add_argument("--risk", action="append", default=[],
+                          help="Risco: auth, migration, concurrency, security, prod, data (repetivel).")
+    p_triage.add_argument("--uncertain", action="store_true", help="A causa ou a solucao e desconhecida.")
+    p_triage.add_argument("--irreversible", action="store_true", help="Dificil de desfazer.")
+    p_triage.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_triage.set_defaults(func=cmd_triage)
 
     p_model = sub.add_parser(
         "model",
