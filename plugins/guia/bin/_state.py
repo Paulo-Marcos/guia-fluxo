@@ -17,11 +17,15 @@ def read_json(path: Path, default: Any) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def write_json(path: Path, payload: Any) -> None:
+def write_json(path: Path, payload: Any, readable: bool = False) -> None:
+    """Grava o JSON. `readable` (D-159) e para arquivo versionado que o dono le
+    (o process.json): acento e emoji como texto e quebra de linha LF - sem ele,
+    o emoji vira escape \\uXXXX e o Windows grava CRLF, diff a toa no git."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps(payload, ensure_ascii=True, indent=2) + "\n",
+        json.dumps(payload, ensure_ascii=not readable, indent=2) + "\n",
         encoding="utf-8",
+        newline="\n" if readable else None,
     )
 
 

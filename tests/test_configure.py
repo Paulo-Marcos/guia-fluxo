@@ -166,6 +166,17 @@ class ConfigureTests(unittest.TestCase):
         self.assertIn("Fora do process.json", out)
         self.assertIn("scaffold protection", out)
 
+    def test_saved_file_stays_readable(self) -> None:
+        """D-159: emoji e acento como texto e LF - o process.json e versionado e lido pelo dono."""
+        footer = "\U0001F916 Gerado com o Claude Code - configuração"
+        self.process.write_text(json.dumps({"delivery": {"pr": {"footer": footer}}}), encoding="utf-8")
+        self._ok("--set", "mode=pr", "--yes")
+        raw = self.process.read_bytes()
+        self.assertIn(footer.encode("utf-8"), raw)
+        self.assertNotIn(b"\\u", raw, "nada de escape \\uXXXX")
+        self.assertNotIn(b"\r\n", raw, "LF, nao CRLF")
+        self.assertEqual(self._config()["delivery"]["pr"]["footer"], footer)
+
 
 if __name__ == "__main__":
     unittest.main()

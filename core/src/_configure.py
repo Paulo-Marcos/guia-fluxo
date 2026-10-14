@@ -484,7 +484,7 @@ def save(config: dict[str, Any]) -> Path | None:
         BACKUP_DIR.mkdir(parents=True, exist_ok=True)
         backup = BACKUP_DIR / f"process.json.{datetime.now().strftime('%Y%m%d-%H%M%S')}"
         shutil.copy2(PROCESS_FILE, backup)
-    write_json(PROCESS_FILE, config)
+    write_json(PROCESS_FILE, config, readable=True)
     return backup
 
 
