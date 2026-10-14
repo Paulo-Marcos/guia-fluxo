@@ -38,8 +38,11 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        # D-168: tres pontos = desde o merge-base. Com dois pontos, o que entrou
+        # na main depois da base do PR aparecia invertido (teste criado na main
+        # virava "delete") e a trava barrava um PR que nao tocou nele.
         run: |
-          git diff --name-status --diff-filter=ACMRD "$BASE_SHA" "$HEAD_SHA" > /tmp/files.txt
+          git diff --name-status --diff-filter=ACMRD "$BASE_SHA...$HEAD_SHA" > /tmp/files.txt
           git log --format=%B "$BASE_SHA..$HEAD_SHA" > /tmp/messages.txt
           echo "::group::Arquivos do PR"
           cat /tmp/files.txt
