@@ -10,6 +10,7 @@ from _autonomy import effective_level, human_reasons, implicit_approval, rank
 from _clock import now_iso
 from _constants import DELIVERY_BASE_BRANCH_DEFAULT, PROCESS_FILE, ROOT, STATUS_IN_PR, STATUS_IN_QUEUE
 from _git_ops import git_output
+from _github import gh_pr_state
 from _state import read_json
 from _dependabot import lote_human_reasons
 from _merge_queue import PRIORITY_HOTFIX, PRIORITY_NORMAL, STATE_WAITING, find, load, mutate, ordered
@@ -33,6 +34,14 @@ def _pr_changed_paths(pr: dict[str, Any], config: dict[str, Any]) -> list[str] |
     return None if names is None else [line for line in names.splitlines() if line.strip()]
 
 
+def _live_head(pr: dict[str, Any]) -> str | None:
+    """Head do PR no GitHub agora (D-162); None sem `gh` (vale o gravado)."""
+    try:
+        return gh_pr_state(ROOT, pr["number"]).get("head")
+    except SystemExit:
+        return None
+
+
 def _enqueue(args: argparse.Namespace) -> int:
     task = find_task_or_current(args.task_id)
     pr = task.get("pr") or {}
@@ -42,6 +51,9 @@ def _enqueue(args: argparse.Namespace) -> int:
         raise SystemExit(f"{task['id']} sem PR: rode `guia ship` antes.")
     if audit.get("result") != "approved":
         raise SystemExit(f"{task['id']} sem auditoria aprovada: rode `guia audit --report ... --approve`.")
+    # D-162: rebase + push fora do `ship` deixa o `pr.head` gravado para tras;
+    # a auditoria vale contra o head que o PR tem AGORA, e o registro o segue.
+    pr["head"] = _live_head(pr) or pr.get("head")
     if audit.get("auditedSha") != pr.get("head"):
         raise SystemExit(
             f"A auditoria e do head {audit.get('auditedSha')}, mas o PR esta em {pr.get('head')}: "
