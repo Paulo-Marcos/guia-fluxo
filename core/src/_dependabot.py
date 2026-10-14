@@ -15,10 +15,12 @@ import re
 from pathlib import Path
 from typing import Any
 
+import _locks
 from _autonomy import LEVELS, rank, settings as autonomy_settings
 from _clock import now_iso
 from _constants import KIND_CHORE, ROOT, STATUS_PLANNED, TASKS_FILE
 from _features_md import upsert_features_entry
+from _git_ops import git_output
 from _github import gh_bot_prs, gh_pr_close
 from _state import read_json, write_json
 from _tasks import next_task_id, new_task
@@ -65,6 +67,50 @@ def _classify(pr: dict[str, Any]) -> dict[str, Any]:
         "security": "security" in labels,
         "reason": "; ".join(reasons) or None,
     }
+
+
+def _is_dependency_file(path: str) -> bool:
+    return any(fnmatch.fnmatch(Path(path).name, pattern) for pattern in DEPENDENCY_FILES)
+
+
+def _version_only(status: str, path: str, diff: str, fragment_prefix: str) -> bool:
+    """O arquivo e so versao: manifesto/lockfile modificado, workflow so com `uses:`, ou o fragmento do lote."""
+    if status == "A" and path.startswith(fragment_prefix) and path.endswith(".md"):
+        return True
+    if status != "M":
+        return False  # lockfile novo, arquivo apagado ou renomeado: decisao do dono
+    if path.startswith(".github/workflows/"):
+        return _workflow_change_is_only_uses(diff, path)
+    return _is_dependency_file(path)
+
+
+def lote_human_reasons(task: dict[str, Any], base: str, branch: str | None, config: dict[str, Any]) -> list[str]:
+    """No pilot (D-150): por que o lote precisa do dono - vazio = so versao, segue sozinho.
+
+    Arquivo por arquivo, pelo git (nunca pela lista declarada): manifesto ou
+    lockfile modificado, workflow em que toda linha mudada e `uses:` e o
+    fragmento de changelog do proprio lote seguem. Qualquer outro arquivo -
+    codigo, linha de base de catraca, lockfile novo - para no dono. Trava
+    tocada tambem para (o dono pode ter travado o proprio requirements.txt);
+    so a adicao do fragmento do lote nao conta.
+    """
+    if not branch:
+        return ["caminhos do PR nao conferidos pelo git"]
+    git_output(ROOT, "fetch", "-q", "origin", base, branch)
+    span = f"origin/{base}...origin/{branch}"
+    names = git_output(ROOT, "diff", "--name-status", "--no-renames", span)
+    if names is None:
+        return ["caminhos do PR nao conferidos pelo git"]
+    diff = git_output(ROOT, "diff", span, "--", ".github/workflows") or ""
+    fragment_prefix = f"{(((config.get('delivery') or {}).get('changelog') or {}).get('dir') or 'changelog.d')}/{task['id']}."
+    entries = [line.split("\t", 1) for line in names.splitlines() if "\t" in line]
+    beyond = [path for status, path in entries if not _version_only(status[0], path, diff, fragment_prefix)]
+    reasons = [f"o lote mexe alem de versao: {', '.join(beyond)}"] if beyond else []
+    lines = [f"{status}\t{path}" for status, path in entries if not path.startswith(fragment_prefix)]
+    blocked = sorted({m.lock["id"] for m in _locks.lock_api.find_blocked(_locks.lock_api.events_from_name_status(lines))})
+    if blocked:
+        reasons.append("toca trava: " + ", ".join(blocked))
+    return reasons
 
 
 def triage(prs: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -142,4 +188,4 @@ def close_incorporated(task: dict[str, Any]) -> list[int]:
     return closed
 
 
-__all__ = ["LOTE_TITLE", "close_incorporated", "create_lote", "inventory", "lote_level", "on_idle", "open_lote", "triage"]
+__all__ = ["LOTE_TITLE", "close_incorporated", "create_lote", "inventory", "lote_human_reasons", "lote_level", "on_idle", "open_lote", "triage"]
