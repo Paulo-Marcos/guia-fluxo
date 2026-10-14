@@ -276,6 +276,14 @@ CHANGELOG por fragmentos (D-121). `add` cria `changelog.d/<ID>.<categoria>.md` n
 
 Imprime a mensagem de commit da demanda no formato de `delivery.commit.format` (D-112). No modo `pr` o `finish` nao commita, entao e esta mensagem que o agente usa no `git commit -F` e no corpo do squash. No formato `gitmoji-conventional`: header `<emoji> <tipo>(D-NNN): titulo` (feature -> `✨ feat`, bug -> `🐛 fix`, chore -> `🧹 chore`), corpo = `--body`, uma marca `[unlock:<trava>] motivo: ...` por trava que os arquivos declarados tocam e `Co-Authored-By` de `delivery.commit.coAuthor`. A operacao de cada arquivo (adicao, modificacao, delecao) vem do git contra a base (`merge-base` com `origin/<baseBranch>`), nao do disco: arquivo novo conta como adicao. Trava tocada sem motivo recusa (exit 1) citando cada uma; `--unlock-reason` aceita `<trava>=<motivo>` ou um `<motivo>` para todas. Sem id, vale a branch (D-110). O `finish` com commit (modo `direct`) aceita o mesmo `--unlock-reason`.
 
+### `next`
+
+```powershell
+.\core\bin\guia.ps1 next [D-NNN] [--json]
+```
+
+O condutor (D-152): o proximo passo da demanda, decidido pelo motor a partir do status, do nivel de autonomia e da fila - `ready`, `ship`, `audit`, `queue-add`, `stop` (com o motivo e quem destrava: `dono`, `agente` ou `fila`) ou `done`. Depois do `ready` o agente repete `next` e executa o passo ate ouvir `stop`/`done`, sem improvisar o fluxo. `manual` (ou modo `direct`) para logo apos o `ready`, como sempre; `pr` faz `ship` e auditoria; `queue` e `pilot` ainda entram na fila. O chat encerra no `queue add`: integrar, limpar e fechar e da fila (`queue run`). So leitura.
+
 ### `configure`
 
 ```powershell

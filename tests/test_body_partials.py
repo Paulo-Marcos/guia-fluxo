@@ -79,6 +79,7 @@ class PartialFilesExistTests(unittest.TestCase):
         expected = {
             "title_context_rules.md",
             "lock_protocol.md",
+            "conductor.md",  # D-152: o condutor, incluido no ready
             "post_cli.agent.md",
             "post_cli.claude.md",
             "run_cmd.agent.md",

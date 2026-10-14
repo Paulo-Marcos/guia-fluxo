@@ -94,6 +94,7 @@ from _cli_autonomy import cmd_autonomy  # noqa: E402
 from _cli_changelog import cmd_changelog  # noqa: E402
 from _cli_deps_bot import cmd_deps  # noqa: E402
 from _cli_configure import cmd_configure  # noqa: E402
+from _cli_next import cmd_next  # noqa: E402
 from _cli_profile import cmd_profile  # noqa: E402
 from _cli_queue import cmd_approve, cmd_queue  # noqa: E402
 from _cli_scaffold import cmd_scaffold  # noqa: E402
@@ -436,6 +437,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_configure.add_argument("--pendentes", action="store_true",
                              help="No painel: so as etapas que faltam decidir (nova) ou diferem da recomendacao.")
     p_configure.set_defaults(func=cmd_configure)
+
+    p_next = sub.add_parser(
+        "next",
+        help="O proximo passo da demanda segundo o estado e o nivel de autonomia (D-152): ship, audit, queue-add, stop, done.",
+    )
+    p_next.add_argument("task_id", nargs="?", help="Sem id, vale a branch (D-110).")
+    p_next.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_next.set_defaults(func=cmd_next)
 
     p_scaffold = sub.add_parser(
         "scaffold",
