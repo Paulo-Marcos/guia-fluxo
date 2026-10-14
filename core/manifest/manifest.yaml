@@ -214,7 +214,7 @@ verbs:
 
   queue-control:
     description: |
-      USER-ONLY — control the merge queue: `queue pause --reason "..."`, `queue resume` (also unfreezes after a red main), `queue remove D-NNN` (back to `Em PR`), `queue priority D-NNN hotfix|normal`, and `queue run [--once]` (the executor: update-branch, wait for checks, squash merge, clean up, watch main CI; run it from the main tree). Only the developer invokes it. To list or add use `queue`.
+      USER-ONLY — control the merge queue: `queue pause --reason "..."`, `queue resume` (also unfreezes after a red main), `queue remove D-NNN` (back to `Em PR`), `queue priority D-NNN hotfix|normal`, and `queue run` - this chat becomes the QUEUE MANAGER: it runs the executor (update-branch, checks, squash merge, clean up, close) and resolves the PR conflicts it leaves in the queue (rebase onto main preserving both intents, gate, delta audit, ship, back to the queue), handing to the owner only what needs a decision. Run it from the main tree. Only the developer invokes it. To list or add use `queue`.
     frontmatter:
       disable-model-invocation: true
     targets:
