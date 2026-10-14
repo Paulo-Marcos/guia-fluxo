@@ -26,7 +26,7 @@ Este repo **e um plugin Claude Code oficial**: `plugins/guia/.claude-plugin/plug
 | `/guia:cancel` | `cancel` | — | Encerrar task como Cancelada (terminal). Exige `--reason`. |
 | `/guia:block` | `block` | — | Pausar task preservando WIP. Exige `--reason`. |
 | `/guia:unblock` | `unblock` | — | Retomar task pausada. |
-| `/guia:init` | `init` | — | Setup do projeto: semeia `.guia/` + deploya lock config (`.guia/locks/registry.yaml`, `lock-ignore.txt`) + `.githooks/commit-msg` + `hooksPath`. Opcional (auto-init ja cobre `.guia/`); `--no-locks` so semeia estado. |
+| `/guia:init` | `init` | — | Setup do projeto: semeia `.guia/` + deploya lock config (`.guia/locks/registry.yaml`, `lock-ignore.txt`) + `.githooks/commit-msg` + `hooksPath`. Opcional (auto-init ja cobre `.guia/`); `--locks <perfil>` escolhe as travas (adicoes, testes ou nenhum - D-158); `--no-locks` so semeia estado. |
 | `/guia:upgrade` | `upgrade` | — | Migra projeto **existente** do layout antigo (`FEATURES.md` + `features/` na raiz) para o atual (`.guia/DEMANDAS.md` + `.guia/locks/`). Idempotente; `--dry-run` lista o plano sem mutar. |
 | `/guia:ship` | `ship` | — | Modo `pr`: portao completo, push, PR aberto/atualizado e mensagem de squash em `.guia/queue/D-NNN.msg`; status -> `Em PR`. Agente no nivel >= `pr`. |
 | `/guia:audit` | `audit` | — | Auditoria do head do PR (skill `pr-audit` ou checklist embutido); `--report --approve` comenta o marcador; `--finding SEV=N` para o `pilot`. |
