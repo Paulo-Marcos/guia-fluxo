@@ -23,7 +23,7 @@ Repeat until nothing is left to do:
 3. **Resolve each conflict**, one demand at a time:
    1. `worktree add <D-NNN>` (it follows the PR branch from `origin`), then `git fetch origin`.
    2. `git rebase origin/main` and resolve, **preserving the intent of both sides**: the change already in `main` and the change of this PR. Keep each commit's message - its `[unlock:]` marks must stay in the commit that touches the locked file.
-   3. The project gate passes in the worktree (`ship` runs it; a failure is fixed, never bypassed).
+   3. **Regenerate what is generated** from sources the rebase merged (e.g. this repo's `python core/build/render-skills.py`, then `--check`): git sees no conflict in a generated file, but it can still be stale - a `conflito: check vermelho depois da atualizacao` is usually this (D-169). Then the project gate passes in the worktree (`ship` runs it; a failure is fixed, never bypassed).
    4. `git push --force-with-lease` to the PR branch (the queue's own update already rewrites PR branches this way), then `ship <D-NNN>` to refresh the PR and the squash message.
    5. Audit **only what changed**: `audit <D-NNN>` prints the `git range-diff`; run the audit skill (default `pr-audit`, delta mode) and record it with `audit --report ... --approve --finding BLOQUEANTE=<n> --finding CORRIGIR=<n>` when it passes.
    6. `queue add <D-NNN>`: the item goes back to waiting in its place. The owner's approval is kept only if nothing sensitive was added.
