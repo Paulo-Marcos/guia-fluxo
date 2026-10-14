@@ -35,6 +35,8 @@ brigam entre si.
 | 13 | Validar e fechar | **voce** | `/guia:finish D-NNN` | so quem usou de verdade diz que esta bom (no nivel `pilot`, fecha sozinho quando prova que e seguro) |
 | 14 | Release | **voce** autoriza | script de release / `guia changelog compile` | junta os fragmentos, fecha a versao, tag no commit da main com CI verde |
 
+**Quem conduz (D-152).** Do passo 4 ao 9, o agente nao decide sozinho o que vem depois: ele pergunta ao motor (`guia next`) e executa a resposta, ate o `queue add`. O nivel de autonomia diz ate onde vai - no `manual` para no `ready`; no `pilot` vai ate a fila. Dali em diante e da fila (`queue run`).
+
 ## Tres ideias que seguram o fluxo
 
 **1. O chat lanca e fica livre.** O agente para no passo 9. A parte mecanica (atualizar branch,

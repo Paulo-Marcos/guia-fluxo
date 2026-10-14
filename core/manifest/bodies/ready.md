@@ -28,4 +28,4 @@ O subject e persistido na task e o `finish` (humano) o consome automaticamente â
 
 {{include_per_target: _partials/post_cli}}
 
-Then **stop and wait** for the developer to validate. Do not run `finish` until the developer confirms validation in real use.
+{{include: _partials/conductor.md}}
