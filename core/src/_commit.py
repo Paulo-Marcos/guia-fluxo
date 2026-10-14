@@ -7,6 +7,7 @@ that previously caused `commit_task` to see staged files as unrelated
 
 from __future__ import annotations
 
+import re
 import subprocess
 from typing import Any
 
@@ -25,6 +26,16 @@ from _constants import (
 )
 from _git_ops import changed_against_base, git_commit, git_ignored_files, has_git, name_status_against_base
 from _state import read_json
+
+
+# A marca de verdade comeca a linha, como esta mensagem a escreve
+# (`[unlock:<trava>] motivo: ...`). Citada no meio de uma frase e so texto (D-172).
+UNLOCK_MARK_RE = re.compile(r"^[ \t]*\[unlock:([a-z0-9_\-]+)\]", re.IGNORECASE | re.MULTILINE)
+
+
+def unlock_marks(message: str) -> set[str]:
+    """Travas que a mensagem desbloqueia: so as marcas no inicio de linha."""
+    return {m.lower() for m in UNLOCK_MARK_RE.findall(message or "")}
 
 
 def commit_settings() -> dict[str, Any]:
