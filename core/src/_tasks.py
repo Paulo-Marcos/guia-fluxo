@@ -403,6 +403,18 @@ def demand_title(task: dict[str, Any]) -> str:
     )
 
 
+def chat_name(task: dict[str, Any]) -> str:
+    """Nome estavel do chat da demanda (D-157): sem a etiqueta de status, que
+    muda e deixaria o nome do chat velho."""
+    return f"{task['id']} {kind_marker(task.get('kind', ''))} {task['title']}"
+
+
+def chat_hint(task: dict[str, Any]) -> str:
+    """` - volte ao chat: <nome>` quando a demanda sabe em que chat foi feita (D-157)."""
+    chat = (task.get("chat") or {}).get("title")
+    return f" - volte ao chat: {chat}" if chat else ""
+
+
 def current_task_payload(task: dict[str, Any]) -> dict[str, str]:
     return {
         "taskId": task["id"],

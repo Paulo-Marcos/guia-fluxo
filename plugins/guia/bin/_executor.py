@@ -46,7 +46,7 @@ from _github import (
     pr_patch_id,
 )
 from _merge_queue import find, load, mutate, ordered
-from _tasks import find_task, save_task
+from _tasks import chat_hint, find_task, save_task
 from _worktree import remove_worktree
 
 # D-137: tudo importado no topo - o executor remove o worktree da demanda no
@@ -217,7 +217,7 @@ def _finish_item(item: dict[str, Any], outcome: str, reason: str | None = None) 
         queue = task.setdefault("queue", {})
         queue.update(returnReason=reason, returnedAt=now_iso())
         queue["returnCount"] = queue.get("returnCount", 0) + 1
-        print(f"{item['id']}: DEVOLVIDA - {reason}")
+        print(f"{item['id']}: DEVOLVIDA - {reason}{chat_hint(task)}")
     save_task(task)
 
 
@@ -317,7 +317,7 @@ def _auto_finish(item: dict[str, Any], config: dict[str, Any], sha: str | None, 
         print(f"  {item['id']}: fechada pelo pilot (R7) como {task['status']}.")
         return
     failed = "; ".join(f"{c['check']}: {c['evidence']}" for c in checks if not c["ok"])
-    print(f"  {item['id']}: pilot nao fechou - {failed}. Fica Integrada para o dono.")
+    print(f"  {item['id']}: pilot nao fechou - {failed}. Fica Integrada para o dono{chat_hint(task)}.")
 
 
 def _after_merge(item: dict[str, Any], ci_timeout_seconds: float, config: dict[str, Any]) -> None:

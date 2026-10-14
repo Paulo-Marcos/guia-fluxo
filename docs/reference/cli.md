@@ -284,6 +284,14 @@ Imprime a mensagem de commit da demanda no formato de `delivery.commit.format` (
 
 O condutor (D-152): o proximo passo da demanda, decidido pelo motor a partir do status, do nivel de autonomia e da fila - `ready`, `ship`, `audit`, `queue-add`, `stop` (com o motivo e quem destrava: `dono`, `agente` ou `fila`) ou `done`. Depois do `ready` o agente repete `next` e executa o passo ate ouvir `stop`/`done`, sem improvisar o fluxo. `manual` (ou modo `direct`) para logo apos o `ready`, como sempre; `pr` faz `ship` e auditoria; `queue` e `pilot` ainda entram na fila. O chat encerra no `queue add`: integrar, limpar e fechar e da fila (`queue run`). So leitura.
 
+### `chat`
+
+```powershell
+.\core\bin\guia.ps1 chat [D-NNN] [--title "<nome do chat>"] [--json]
+```
+
+Em que chat a demanda e feita, para voltar a ele (D-157). Sem `--title`, imprime `NOME DO CHAT: ...` - um nome estavel, sem a etiqueta de status (que muda) - para o agente renomear a sessao; com `--title`, grava o nome na demanda (`chat.title`). Chat dedicado a demanda: o agente renomeia e grava; chat com varias demandas: nao renomeia para uma delas, grava o nome que o chat ja tem. Quando a fila devolve (`DEVOLVIDA - ... - volte ao chat: ...`) ou deixa a demanda `Integrada` sem fechar, ela aponta o chat; `next` mostra `[chat: ...]` e `status --all` lista as **Pendencias** (devolvidas e integradas por fechar) com o chat de cada uma.
+
 ### `configure`
 
 ```powershell
