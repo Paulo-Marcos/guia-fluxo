@@ -97,6 +97,7 @@ from _cli_deps_bot import cmd_deps  # noqa: E402
 from _cli_configure import cmd_configure  # noqa: E402
 from _cli_chat import cmd_chat  # noqa: E402
 from _cli_next import cmd_next  # noqa: E402
+from _cli_model import cmd_model  # noqa: E402
 from _cli_profile import cmd_profile  # noqa: E402
 from _cli_queue import cmd_approve, cmd_queue  # noqa: E402
 from _cli_scaffold import cmd_scaffold  # noqa: E402
@@ -457,6 +458,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_next.add_argument("task_id", nargs="?", help="Sem id, vale a branch (D-110).")
     p_next.add_argument("--json", action="store_true", help="Saida em JSON.")
     p_next.set_defaults(func=cmd_next)
+
+    p_model = sub.add_parser(
+        "model",
+        help="O modelo usado na demanda (chat e cada subagente), ao lado do recomendado (D-154); --summary compara todas.",
+    )
+    p_model.add_argument("task_id", nargs="?", help="Sem id, vale a branch (D-110).")
+    p_model.add_argument("--who", default="chat", help="chat ou subagent.")
+    p_model.add_argument("--model", help="haiku, sonnet, opus ou fable.")
+    p_model.add_argument("--purpose", help="Para que (ex.: implementar, localizar codigo, auditar).")
+    p_model.add_argument("--effort", help="Esforco usado (low, medium, high, xhigh, max).")
+    p_model.add_argument("--summary", action="store_true", help="Resumo de todas as demandas: acima/igual/abaixo do recomendado.")
+    p_model.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_model.set_defaults(func=cmd_model)
 
     p_chat = sub.add_parser(
         "chat",

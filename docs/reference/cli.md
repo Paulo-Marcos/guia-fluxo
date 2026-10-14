@@ -294,6 +294,16 @@ O condutor (D-152): o proximo passo da demanda, decidido pelo motor a partir do 
 
 Em que chat a demanda e feita, para voltar a ele (D-157). Sem `--title`, imprime `NOME DO CHAT: ...` - um nome estavel, sem a etiqueta de status (que muda) - para o agente renomear a sessao; com `--title`, grava o nome na demanda (`chat.title`). Chat dedicado a demanda: o agente renomeia e grava; chat com varias demandas: nao renomeia para uma delas, grava o nome que o chat ja tem. Quando a fila devolve (`DEVOLVIDA - ... - volte ao chat: ...`) ou deixa a demanda `Integrada` sem fechar, ela aponta o chat; `next` mostra `[chat: ...]` e `status --all` lista as **Pendencias** (devolvidas e integradas por fechar) com o chat de cada uma.
 
+### `model`
+
+```powershell
+.\core\bin\guia.ps1 model [D-NNN] --who chat|subagent --model haiku|sonnet|opus|fable --purpose "<para que>" [--effort X] [--json]
+.\core\bin\guia.ps1 model [D-NNN] [--json]        # o que a demanda registrou
+.\core\bin\guia.ps1 model --summary [--json]      # todas as demandas: acima/igual/abaixo do recomendado
+```
+
+O modelo de fato usado (D-154, epico E-010), ao lado do recomendado. O chat registra o seu uma vez; cada subagente delegado e registrado com a finalidade (localizar/ler: haiku; mudar 1-2 arquivos: sonnet; revisar/auditar: opus, nunca abaixo). O recomendado vem da triagem (`triage`, D-153); finalidade de auditoria tem piso Opus; sem triagem fica `sem triagem`. Grava `modelsUsed` na demanda e imprime `MODELO USADO D-NNN: ...`. O `--summary` lista o que rodou **acima** do recomendado - onde um modelo mais barato provavelmente bastaria.
+
 ### `configure`
 
 ```powershell
