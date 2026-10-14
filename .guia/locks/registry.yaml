@@ -4,8 +4,12 @@
 
 version: 1
 locks:
-- id: adicoes-exigem-autorizacao
-  description: Qualquer arquivo novo exige autorizacao explicita
-  operations: [add]
+- id: testes-sao-contrato
+  description: Testes garantem o comportamento; alterar/apagar exige autorizacao
+  locked_at: '2026-10-13'
+  operations:
+  - modify
+  - delete
+  - rename
   files:
-  - '*'
+  - tests/*

@@ -7,7 +7,7 @@ Wrapper PowerShell `core/bin/guia.ps1` localiza o Python adequado e invoca `core
 ### `init`
 
 ```powershell
-.\core\bin\guia.ps1 init [--project-name "nome-do-projeto"] [--no-locks] [--force]
+.\core\bin\guia.ps1 init [--project-name "nome-do-projeto"] [--locks adicoes|testes|nenhum] [--no-locks] [--force]
 ```
 
 Inicializa o Guia Fluxo no projeto atual. Sempre semeia `.guia/` (JSONs vazios, `process.json` com o nome do projeto, `demand-title.txt` zerado). Por padrao tambem deploya, a partir do `templates/` do plugin (`${CLAUDE_PLUGIN_ROOT}/templates/`), a config de lock por-projeto e o hook:
@@ -15,7 +15,7 @@ Inicializa o Guia Fluxo no projeto atual. Sempre semeia `.guia/` (JSONs vazios, 
 - `.guia/locks/registry.yaml`, `.guia/locks/lock-ignore.txt`
 - `.githooks/commit-msg` + `git config core.hooksPath .githooks` (so se ainda nao definido)
 
-Idempotente e **nunca clobbera** arquivos existentes (imprime `+` para escritos e `=` para preservados). `--no-locks` faz so o seed de `.guia/`; `--force` sobrescreve. No Claude Code o auto-init ja cria `.guia/` no primeiro comando — rode `init` para optar pelos locks.
+Idempotente e **nunca clobbera** arquivos existentes (imprime `+` para escritos e `=` para preservados). `--locks <perfil>` escolhe o registry de travas (D-158): `adicoes` (default) = todo arquivo novo exige `[unlock:adicoes-exigem-autorizacao]`; `testes` = testes existentes travados para modify/delete/rename (`testes-sao-contrato`), arquivo novo e producao livres; `nenhum` = registry vazio com o hook instalado. Se o registry ja existe, o perfil nao e aplicado (aviso) sem `--force`. `--no-locks` faz so o seed de `.guia/`; `--force` sobrescreve. No Claude Code o auto-init ja cria `.guia/` no primeiro comando — rode `init` para optar pelos locks.
 
 ### `upgrade`
 

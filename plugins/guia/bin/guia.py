@@ -69,6 +69,7 @@ from _cli_creation import (  # noqa: E402
     cmd_promote,
 )
 from _cli_lifecycle import (  # noqa: E402
+    LOCK_PROFILES,
     cmd_block,
     cmd_cancel,
     cmd_doctor,
@@ -193,6 +194,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-locks",
         action="store_true",
         help="Seed .guia/ only; skip the lock registry, commit-msg hook and hooksPath.",
+    )
+    p_init.add_argument(
+        "--locks",
+        choices=sorted(LOCK_PROFILES),
+        default=None,
+        help=(
+            "Lock profile for .guia/locks/registry.yaml (default: adicoes). "
+            "adicoes = any new file needs [unlock]; testes = existing tests "
+            "locked (modify/delete/rename), new files free; nenhum = empty registry."
+        ),
     )
     p_init.set_defaults(func=cmd_init)
 

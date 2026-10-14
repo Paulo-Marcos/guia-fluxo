@@ -21,7 +21,7 @@ Por padrão o plugin só cria o `.guia/`. Para ligar os **locks** de arquivo, ro
 2. deploya `.guia/locks/registry.yaml`, `.guia/locks/lock-ignore.txt` e `.githooks/commit-msg` do `templates/` do plugin (`${CLAUDE_PLUGIN_ROOT}/templates/`), sem sobrescrever o que já existir;
 3. configura `git core.hooksPath .githooks` — **só se ainda não estiver definido**.
 
-`--no-locks` faz só o seed do `.guia/`; `--force` sobrescreve. O `commit-msg` é robusto: acha o validador em `${CLAUDE_PLUGIN_ROOT}/bin/check-lock.py` quando o commit roda dentro de uma sessão Claude e **degrada com aviso** (libera o commit sem checar) se não achar — ou seja, os locks valem dentro do Claude Code; num terminal puro fora da sessão eles não são aplicados.
+`--locks <perfil>` escolhe as travas iniciais: `adicoes` (padrão — todo arquivo novo pede autorização), `testes` (testes existentes viram contrato; criar arquivo, inclusive teste novo, fica livre) ou `nenhum` (sem travas, hook instalado). Ex.: `/guia:init --locks testes`. Ajuste os padrões de `files` em `.guia/locks/registry.yaml` ao layout de testes do projeto. `--no-locks` faz só o seed do `.guia/`; `--force` sobrescreve. O `commit-msg` é robusto: acha o validador em `${CLAUDE_PLUGIN_ROOT}/bin/check-lock.py` quando o commit roda dentro de uma sessão Claude e **degrada com aviso** (libera o commit sem checar) se não achar — ou seja, os locks valem dentro do Claude Code; num terminal puro fora da sessão eles não são aplicados.
 
 > **Já usa `core.hooksPath` próprio (Husky etc.)?** O `init` **não** sobrescreve — ele só configura o hooksPath se ainda não houver um. Nesse caso, copie o `.githooks/commit-msg` do plugin para a sua pasta de hooks à mão para somar a checagem de locks.
 
