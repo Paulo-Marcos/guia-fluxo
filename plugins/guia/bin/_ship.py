@@ -9,6 +9,7 @@ mensagem de squash gravada em `.guia/queue/<ID>.msg` e status `Em PR`.
 from __future__ import annotations
 
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -84,6 +85,24 @@ def _check_gate(root: Path, commands: list[str]) -> None:
             _refuse(f"portao falhou em `{command}` (exit {result.returncode}):\n{tail}")
 
 
+_UNLOCK_MARK = re.compile(r"\[unlock:([a-z0-9_\-]+)\]", re.IGNORECASE)
+
+
+def _marks_that_survive_rebase(root: Path, base: str) -> set[str]:
+    """Travas desbloqueadas em commits que o rebase da fila mantem (D-167).
+
+    O `update-branch --rebase` do GitHub descarta commit vazio e merge: uma marca
+    so neles some, e o lock-check do PR reprova depois (visto na D-157, PR #49).
+    """
+    shas = (git_output(root, "log", "--no-merges", "--format=%H", f"origin/{base}..HEAD") or "").split()
+    marks: set[str] = set()
+    for sha in shas:
+        if not (git_output(root, "diff-tree", "--no-commit-id", "--name-only", "-r", sha) or "").strip():
+            continue  # commit vazio: o rebase o descarta
+        marks |= {m.lower() for m in _UNLOCK_MARK.findall(git_output(root, "log", "-1", "--format=%B", sha) or "")}
+    return marks
+
+
 def preflight(task: dict[str, Any], config: dict[str, Any], args: Any, cwd: Path) -> dict[str, Any]:
     """Todas as conferencias; devolve o contexto do envio. Nao muda nada."""
     if DELIVERY_MODE != DELIVERY_MODE_PR:
@@ -108,8 +127,16 @@ def preflight(task: dict[str, Any], config: dict[str, Any], args: Any, cwd: Path
                 f"sem fragmento de changelog para {task['id']}: `guia changelog add`, "
                 'ou --no-changelog "<motivo>" para mudanca so interna.'
             )
-    _check_gate(root, list((delivery.get("gate") or {}).get("full") or []))
+    # A mensagem antes do portao (D-167): recusa por marca chega em segundos.
     message = compose_commit_message(task, args.unlock_reason, args.body, args.subject or task.get("commitSubject"))
+    missing = sorted({m.lower() for m in _UNLOCK_MARK.findall(message)} - _marks_that_survive_rebase(root, base))
+    if missing:
+        _refuse(
+            "a(s) trava(s) " + ", ".join(missing) + " precisam da marca [unlock:<trava>] num commit que muda arquivos "
+            "(o commit que toca o arquivo travado). Commit vazio ou merge some no rebase da fila e o lock-check do PR "
+            "reprova. Refaca o commit da mudanca com a mensagem do `commit-message` (ela ja traz a marca)."
+        )
+    _check_gate(root, list((delivery.get("gate") or {}).get("full") or []))
     return {"root": root, "base": base, "branch": branch, "message": message, "delivery": delivery}
 
 
