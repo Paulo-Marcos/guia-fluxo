@@ -247,7 +247,7 @@ verbs:
 
   deps:
     description: |
-      READ-ONLY by default — show open Dependabot PRs and what the executor will do with them (security first, then the batch when the queue is empty); `--now` creates the batch demand right away (agent at level >= `queue`). `--json` for machine output. The batch is worked like any demand (`pr-bump` skill).
+      DEPENDENCIES — without flags, READ-ONLY: show open Dependabot PRs, the open batch, its autonomy level and the `deps` stage skill. `--now` creates the batch demand (or takes the open one) and CONDUCTS it end to end: worktree, the `deps` stage skill (default `pr-bump`, configurable), ready, then the engine-driven ship/audit/queue add - the batch's level decides how far; at `pilot`, it stops only when something goes beyond versions or the skill finds a real decision. `--json` for machine output.
     targets:
       agent_skill:
         body_file: bodies/deps.md
