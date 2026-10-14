@@ -40,6 +40,7 @@ Generated bin/ (motor standalone do plugin):
 Generated templates/:
     plugins/guia/templates/.githooks/commit-msg
     plugins/guia/templates/locks/registry.yaml
+    plugins/guia/templates/locks/registry.{testes,nenhum}.yaml  (perfis do init --locks, D-158)
     plugins/guia/templates/locks/lock-ignore.txt
 
 Version sync (D-097/ADR-0019):
@@ -166,6 +167,8 @@ WRAPPER_REPLACEMENT = "guia.py"
 # estrutural por extensao: arquivos .yaml passam por yaml.safe_load.
 TEMPLATE_FILES: list[tuple[str, str]] = [
     ("locks/registry.yaml", "locks/registry.yaml"),
+    ("locks/registry.testes.yaml", "locks/registry.testes.yaml"),
+    ("locks/registry.nenhum.yaml", "locks/registry.nenhum.yaml"),
     ("locks/lock-ignore.txt", "locks/lock-ignore.txt"),
     # D-123: checklist embutido do `guia audit` (sem a skill de auditoria).
     ("audit-checklist.md", "audit-checklist.md"),

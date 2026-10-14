@@ -62,3 +62,15 @@ Ver [convencoes-de-lock.md](convencoes-de-lock.md) para detalhes de granularidad
 O template inclui um lock global `adicoes-exigem-autorizacao` com `operations: [add]` e `files: ["*"]`. Resultado: **qualquer arquivo novo exige autorizacao explicita**, exceto caminhos em `lock-ignore.txt`.
 
 Motivo: agentes adoram criar arquivos novos para "organizar". O lock global obriga o agente a pedir antes - mesma postura que o lock de modificacao impoe para edicao.
+
+## Perfis no `init` (D-158)
+
+O lock global de adicao e o default, mas nem todo projeto quer esse porteiro. `init --locks <perfil>` escolhe o ponto de partida:
+
+| Perfil | Trava | Livre |
+| --- | --- | --- |
+| `adicoes` (default) | criar qualquer arquivo | editar |
+| `testes` | alterar, apagar ou renomear teste existente (`testes-sao-contrato`) | criar arquivo (inclusive teste novo), editar producao |
+| `nenhum` | nada (hook instalado) | tudo |
+
+O perfil `testes` parte da ideia de que **teste e contrato**: o agente pode acrescentar clausulas (testes novos), mas reescrever uma clausula assinada pede a sua assinatura. Os padroes cobrem os layouts comuns (`tests/`, `__tests__/`, `test_*.py`, `*.test.*`, `*.spec.*`, `*Tests/`); ajuste `files` ao seu projeto.

@@ -1,0 +1,27 @@
+# Schema e protocolo: docs/reference/registry-yaml.md e docs/explanation/por-que-lock.md.
+# Edicao via CLI (recomendado): python core/lock/check-lock.py lock|unlock
+# Ou edite manualmente preservando o schema abaixo.
+#
+# Perfil `testes` (init --locks testes): testes existentes sao contrato.
+# Criar arquivo novo (inclusive teste novo) e mexer em producao fica livre;
+# alterar, apagar ou renomear um teste existente exige [unlock:testes-sao-contrato].
+# Ajuste `files` ao layout de testes do seu projeto.
+
+version: 1
+locks:
+- id: testes-sao-contrato
+  description: Testes garantem o comportamento; alterar/apagar exige autorizacao
+  operations: [modify, delete, rename]
+  files:
+  - 'tests/*'
+  - '*/tests/*'
+  - 'test/*'
+  - '*/test/*'
+  - '*__tests__/*'
+  - 'test_*.py'
+  - '*/test_*.py'
+  - '*_test.py'
+  - '*_test.go'
+  - '*.test.*'
+  - '*.spec.*'
+  - '*Tests/*'

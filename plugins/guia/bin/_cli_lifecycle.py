@@ -153,11 +153,22 @@ def ensure_initialized() -> None:
 # ROOT. Lock data + commit-msg hook turn a virgin project into a fully
 # process-guarded one. Auto-init (D-075) seeds `.guia/` only; the lock
 # setup is opt-in via `init` (skip with `init --no-locks`).
+_REGISTRY_DEST = ".guia/locks/registry.yaml"
 _LOCK_TEMPLATES: list[tuple[str, str]] = [
-    ("locks/registry.yaml", ".guia/locks/registry.yaml"),
     ("locks/lock-ignore.txt", ".guia/locks/lock-ignore.txt"),
     (".githooks/commit-msg", ".githooks/commit-msg"),
 ]
+
+# D-158: perfil de travas escolhido no `init --locks <perfil>`. Cada perfil
+# e so um template de registry diferente; o resto do setup (lock-ignore,
+# commit-msg, hooksPath) e identico. `adicoes` e o default historico.
+LOCK_PROFILES: dict[str, str] = {
+    "adicoes": "locks/registry.yaml",
+    "testes": "locks/registry.testes.yaml",
+    "nenhum": "locks/registry.nenhum.yaml",
+}
+DEFAULT_LOCK_PROFILE = "adicoes"
+PROFILE_NO_LOCKS = "nenhum"
 
 
 def _plugin_templates_dir() -> Path | None:
@@ -181,20 +192,25 @@ def _plugin_templates_dir() -> Path | None:
     return None
 
 
-def deploy_lock_templates(force: bool = False) -> tuple[list[str], list[str]]:
+def deploy_lock_templates(
+    force: bool = False, profile: str = DEFAULT_LOCK_PROFILE
+) -> tuple[list[str], list[str]]:
     """Copy the per-project lock config + commit-msg hook into ROOT.
 
-    Idempotent and non-clobbering by default: existing files are preserved
-    (returned in `skipped`) unless `force=True`. Returns
-    `(written, skipped)` as ROOT-relative path strings. Templates absent
-    from the bundle are quietly ignored (degrades on partial source clones).
+    `profile` (D-158) picks which registry template lands in
+    `.guia/locks/registry.yaml` (see LOCK_PROFILES). Idempotent and
+    non-clobbering by default: existing files are preserved (returned in
+    `skipped`) unless `force=True`. Returns `(written, skipped)` as
+    ROOT-relative path strings. Templates absent from the bundle are quietly
+    ignored (degrades on partial source clones).
     """
     templates_dir = _plugin_templates_dir()
     written: list[str] = []
     skipped: list[str] = []
     if templates_dir is None:
         return written, skipped
-    for src_rel, dst_rel in _LOCK_TEMPLATES:
+    templates = [(LOCK_PROFILES[profile], _REGISTRY_DEST), *_LOCK_TEMPLATES]
+    for src_rel, dst_rel in templates:
         src = templates_dir / src_rel
         if not src.exists():
             continue
@@ -253,11 +269,19 @@ def cmd_init(args: argparse.Namespace) -> int:
     print(f"Guia Fluxo initialized for {args.project_name}.")
     if getattr(args, "no_locks", False):
         return 0
-    written, skipped = deploy_lock_templates(force=args.force)
+    requested_profile = getattr(args, "locks", None)
+    profile = requested_profile or DEFAULT_LOCK_PROFILE
+    written, skipped = deploy_lock_templates(force=args.force, profile=profile)
     for rel in written:
-        print(f"  + {rel}")
+        print(f"  + {rel}" + (f" (perfil {profile})" if rel == _REGISTRY_DEST else ""))
     for rel in skipped:
         print(f"  = {rel} (preservado)")
+    if _REGISTRY_DEST in skipped and requested_profile:
+        print(
+            f"Aviso: registry ja existia - perfil '{profile}' NAO aplicado. "
+            "Use --force para sobrescrever (descarta as travas atuais).",
+            file=sys.stderr,
+        )
     hook_present = any(
         rel.startswith(".githooks/") for rel in (*written, *skipped)
     )
@@ -267,7 +291,7 @@ def cmd_init(args: argparse.Namespace) -> int:
             print("  + git core.hooksPath -> .githooks")
         elif configured:
             print(f"  = git core.hooksPath ja definido ({configured}) - preservado")
-    if written:
+    if written and profile != PROFILE_NO_LOCKS:
         print(
             "Locks ativos: arquivos travados em .guia/locks/registry.yaml exigem "
             "[unlock:<id>] motivo: <razao> na mensagem de commit."
@@ -1154,6 +1178,8 @@ __all__ = [
     "initialize_project",
     "ensure_initialized",
     "deploy_lock_templates",
+    "LOCK_PROFILES",
+    "DEFAULT_LOCK_PROFILE",
     "configure_hooks_path",
     "cmd_init",
     "cmd_status",

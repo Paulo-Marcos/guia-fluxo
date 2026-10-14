@@ -11,6 +11,11 @@ init
 ```
 
 Useful flags:
+- `--locks <perfil>` — which lock profile seeds `.guia/locks/registry.yaml`:
+  - `adicoes` (default) — any new file needs `[unlock:adicoes-exigem-autorizacao]` in the commit.
+  - `testes` — existing tests are a contract: modify/delete/rename needs `[unlock:testes-sao-contrato]`; new files (new tests included) and production code stay free. Tell the developer to adjust the `files` patterns to their test layout.
+  - `nenhum` — empty registry, hook installed; lock homologated files later with `check-lock.py lock`.
+  If the developer is setting up a new app and did not say which profile, ask once before running.
 - `--no-locks` — seed `.guia/` only; skip the lock registry, the `commit-msg` hook and `core.hooksPath`.
 - `--force` — overwrite existing state/templates (destructive; rarely needed).
 - `--project-name "<name>"` — override the project name (default: the directory name).

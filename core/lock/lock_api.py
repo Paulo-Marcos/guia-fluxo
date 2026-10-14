@@ -78,7 +78,7 @@ UNLOCK_RE = re.compile(r"\[unlock:([a-z0-9_\-]+)\]", re.IGNORECASE)
 MOTIVO_RE = re.compile(r"motivo\s*:", re.IGNORECASE)
 
 REGISTRY_HEADER = (
-    "# Veja features/README.md para o protocolo e formato.\n"
+    "# Schema e protocolo: docs/reference/registry-yaml.md e docs/explanation/por-que-lock.md.\n"
     "# Edicao via CLI (recomendado): python core/lock/check-lock.py lock|unlock\n"
     "# Ou edite manualmente preservando o schema abaixo.\n"
     "\n"
