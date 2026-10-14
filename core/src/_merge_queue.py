@@ -24,6 +24,8 @@ LOCK_STALE_SECONDS = 120.0
 PRIORITY_HOTFIX = "hotfix"
 PRIORITY_NORMAL = "normal"
 STATE_WAITING = "waiting"
+# D-164: conflito que o gerente da fila resolve - o item fica, os outros seguem.
+STATE_CONFLICT = "conflict"
 OPEN_STATES = frozenset({STATE_WAITING, "integrating"})
 _TERMINAL = frozenset({"Validada", "Finalizada", "Resolvida", "Cancelada", "Integrada"})
 
@@ -101,6 +103,8 @@ def mutate(change: Callable[[dict[str, Any]], Any]) -> Any:
 
 def waiting_reason(item: dict[str, Any], status_of: Callable[[str], str | None]) -> str | None:
     """Por que o item ainda nao integra (None = elegivel)."""
+    if item.get("state") == STATE_CONFLICT:
+        return f"conflito: {item.get('conflictReason')} - o gerente da fila resolve (queue-control run)"
     if item.get("state") != STATE_WAITING:
         return f"estado {item.get('state')}"
     open_deps = [dep for dep in item.get("dependsOn") or [] if status_of(dep) not in _TERMINAL]

@@ -13,7 +13,7 @@ from _git_ops import git_output
 from _github import gh_pr_state
 from _state import read_json
 from _dependabot import lote_human_reasons
-from _merge_queue import PRIORITY_HOTFIX, PRIORITY_NORMAL, STATE_WAITING, find, load, mutate, ordered
+from _merge_queue import PRIORITY_HOTFIX, PRIORITY_NORMAL, STATE_CONFLICT, STATE_WAITING, find, load, mutate, ordered
 from _ship import QUEUE_DIR
 from _tasks import find_task, find_task_or_current, save_task
 
@@ -81,6 +81,16 @@ def _enqueue(args: argparse.Namespace) -> int:
 
     def add(data: dict[str, Any]) -> None:
         existing = find(data, task["id"])
+        if existing and existing.get("state") == STATE_CONFLICT:
+            # D-164: o gerente resolveu - o item volta a esperar no mesmo lugar.
+            # A aprovacao do dono so fica se a resolucao nao trouxe nada sensivel novo.
+            kept = (existing.get("approval") or {}).get("by") == "user" and existing.get("humanReason") == ("; ".join(reasons) or None)
+            existing.update(auditedSha=audit["auditedSha"], auditedPatchId=audit.get("auditedPatchId"), head=pr.get("head"),
+                            mergeMessageFile=message.relative_to(QUEUE_DIR.parent.parent).as_posix(), state=STATE_WAITING,
+                            conflictReason=None, approval=approval or (existing.get("approval") if kept else None),
+                            humanReason="; ".join(reasons) or None)
+            existing.setdefault("log", []).append({"at": now_iso(), "msg": "conflito resolvido pelo gerente; de volta a fila"})
+            return
         if existing and not existing.get("auditedSha"):
             # D-130: item importado da nuvem - a auditoria do PC o completa.
             existing.update(auditedSha=audit["auditedSha"], auditedPatchId=audit.get("auditedPatchId"),

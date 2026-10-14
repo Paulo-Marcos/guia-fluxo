@@ -45,7 +45,7 @@ from _github import (
     gh_pr_update_branch,
     pr_patch_id,
 )
-from _merge_queue import find, load, mutate, ordered
+from _merge_queue import STATE_CONFLICT, find, load, mutate, ordered
 from _tasks import chat_hint, find_task, save_task
 from _worktree import remove_worktree
 
@@ -59,6 +59,15 @@ CI_TIMEOUT_MINUTES_DEFAULT = 40
 
 class Returned(Exception):
     """O item volta ao autor com este motivo."""
+
+
+class Conflict(Returned):
+    """D-164: o PR conflita com a base, ou mudou depois da auditoria. Com
+    `delivery.queue.conflicts = manager`, fica na fila para o gerente resolver
+    em vez de voltar ao autor; com `return` (padrao), volta como sempre."""
+
+
+CONFLICTS_MANAGER, CONFLICTS_RETURN = "manager", "return"
 
 
 # --- lease -----------------------------------------------------------------
@@ -124,7 +133,7 @@ def _carry_or_return(item: dict[str, Any], head: str, base: str) -> None:
         return
     patch = pr_patch_id(ROOT, item["pr"], head, base)
     if not patch or patch != item.get("auditedPatchId"):
-        raise Returned(
+        raise Conflict(
             f"o PR mudou depois da auditoria (head {head[:12]}, patch-id diferente): "
             "auditoria de delta - `guia audit` mostra o range-diff do que mudou"
         )
@@ -173,11 +182,11 @@ def integrate(item: dict[str, Any], base: str, ci_timeout_seconds: float) -> str
         head = state["head"]
         _carry_or_return(item, head, base)
         if state["mergeState"] == "DIRTY":
-            raise Returned("conflito com a base: resolva na branch (rebase) e rode o ship")
+            raise Conflict("conflito com a base: resolva na branch (rebase) e rode o ship")
         if state["mergeState"] == "BEHIND":
             new_head, error = gh_pr_update_branch(ROOT, item["pr"])
             if error:
-                raise Returned(f"conflito ao atualizar a branch: {error}")
+                raise Conflict(f"conflito ao atualizar a branch: {error}")
             _log(item["id"], f"branch atualizada: {head[:12]} -> {new_head[:12]}")
             continue
         remaining = max(deadline - time.monotonic(), 0.0)
@@ -219,6 +228,17 @@ def _finish_item(item: dict[str, Any], outcome: str, reason: str | None = None) 
         queue["returnCount"] = queue.get("returnCount", 0) + 1
         print(f"{item['id']}: DEVOLVIDA - {reason}{chat_hint(task)}")
     save_task(task)
+
+
+def _hold_conflict(item: dict[str, Any], reason: str) -> None:
+    """D-164: o item fica na fila em `conflict`, com o motivo; o executor segue."""
+    def mark(data: dict[str, Any]) -> None:
+        current = find(data, item["id"])
+        if current is not None:
+            current.update(state=STATE_CONFLICT, conflictReason=reason, conflictAt=now_iso())
+
+    mutate(mark)
+    print(f"{item['id']}: CONFLITO - {reason} - fica na fila para o gerente (queue-control run).")
 
 
 def _cleanup_worktree(item_id: str) -> None:
@@ -380,6 +400,12 @@ def run(config: dict[str, Any], once: bool = False) -> int:
             heartbeat()
             try:
                 outcome = integrate(item, base, ci_timeout)
+            except Conflict as reason:
+                if queue_cfg.get("conflicts", CONFLICTS_RETURN) == CONFLICTS_MANAGER:
+                    _hold_conflict(item, str(reason))
+                else:
+                    _finish_item(item, "returned", str(reason))
+                continue
             except Returned as reason:
                 _finish_item(item, "returned", str(reason))
                 continue
@@ -395,4 +421,4 @@ def run(config: dict[str, Any], once: bool = False) -> int:
     return merged
 
 
-__all__ = ["LEASE_FILE", "Returned", "acquire_lease", "integrate", "release_lease", "run"]
+__all__ = ["CONFLICTS_MANAGER", "CONFLICTS_RETURN", "Conflict", "LEASE_FILE", "Returned", "acquire_lease", "integrate", "release_lease", "run"]
