@@ -443,6 +443,10 @@ def cmd_pretool(args: argparse.Namespace) -> int:
     fica para o hook commit-msg (segunda linha de defesa). Aqui protegemos o
     caso real: editar um arquivo homologado/travado existente.
 
+    Arquivo que ainda nao existe e `add`, nunca `modify` (D-158): sem essa
+    distincao, um lock `modify` em `tests/*` (perfil `testes`) barraria a
+    criacao de um teste novo - justamente o que o perfil quer liberar.
+
     Degrada liberando (exit 0) em QUALQUER falha (JSON ruim, I/O, infra
     ausente): um hook quebrado nao pode travar trabalho legitimo - mesma
     filosofia do cmd_hook (commit-msg).
@@ -462,7 +466,7 @@ def cmd_pretool(args: argparse.Namespace) -> int:
         if isinstance(cwd, str) and cwd.strip():
             _retarget_repo_root(cwd)
         rel = _pretool_rel_path(payload)
-        if rel is None:
+        if rel is None or lock_api.infer_operation(rel) == lock_api.OPERATION_ADD:
             return 0
         events = lock_api.events_from_paths([rel], lock_api.OPERATION_MODIFY)
         blocked = lock_api.find_blocked(events)

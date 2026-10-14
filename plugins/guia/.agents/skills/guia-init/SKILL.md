@@ -1,6 +1,6 @@
 ---
 name: guia-init
-description: "SETUP — initialize Guia Fluxo in the CURRENT project: seed `.guia/` state and deploy the per-project lock config (`.guia/locks/registry.yaml`, `.guia/locks/lock-ignore.txt`) + `.githooks/commit-msg`, then set `git core.hooksPath`. Idempotent and never clobbers existing state. Options: `--no-locks` (seed `.guia/` only), `--force` (overwrite), `--project-name \"<name>\"`. Often optional — the engine auto-creates `.guia/` on the first task command; run `init` to opt into file locks. To create a demand use `feature`/`bug`/`chore`."
+description: "SETUP — initialize Guia Fluxo in the CURRENT project: seed `.guia/` state and deploy the per-project lock config (`.guia/locks/registry.yaml`, `.guia/locks/lock-ignore.txt`) + `.githooks/commit-msg`, then set `git core.hooksPath`. Idempotent and never clobbers existing state. Options: `--locks adicoes|testes|nenhum` (lock profile: `adicoes` default = any new file needs unlock; `testes` = existing tests locked for modify/delete/rename, new files free; `nenhum` = empty registry + hook), `--no-locks` (seed `.guia/` only), `--force` (overwrite), `--project-name \"<name>\"`. Often optional — the engine auto-creates `.guia/` on the first task command; run `init` to opt into file locks. To create a demand use `feature`/`bug`/`chore`."
 ---
 
 # Init
@@ -22,6 +22,11 @@ init
 ```
 
 Useful flags:
+- `--locks <perfil>` — which lock profile seeds `.guia/locks/registry.yaml`:
+  - `adicoes` (default) — any new file needs `[unlock:adicoes-exigem-autorizacao]` in the commit.
+  - `testes` — existing tests are a contract: modify/delete/rename needs `[unlock:testes-sao-contrato]`; new files (new tests included) and production code stay free. Tell the developer to adjust the `files` patterns to their test layout.
+  - `nenhum` — empty registry, hook installed; lock homologated files later with `check-lock.py lock`.
+  If the developer is setting up a new app and did not say which profile, ask once before running.
 - `--no-locks` — seed `.guia/` only; skip the lock registry, the `commit-msg` hook and `core.hooksPath`.
 - `--force` — overwrite existing state/templates (destructive; rarely needed).
 - `--project-name "<name>"` — override the project name (default: the directory name).

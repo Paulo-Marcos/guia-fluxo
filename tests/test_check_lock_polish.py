@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import tempfile
@@ -39,15 +40,25 @@ class DryRunTests(unittest.TestCase):
         self.assertEqual(registry_before, registry_after)
 
     def test_dry_run_detects_existing_id(self) -> None:
-        # `adicoes-exigem-autorizacao` ja existe no registry do repo
-        result = _run(
-            "lock",
-            "adicoes-exigem-autorizacao",
-            "--description",
-            "x",
-            "--dry-run",
-            "FEATURES.md",
-        )
+        # Registry isolado: o teste nao depende das travas reais do repo
+        # (que mudam conforme o perfil escolhido - D-158).
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            locks = project / ".guia" / "locks"
+            locks.mkdir(parents=True)
+            (locks / "registry.yaml").write_text(
+                "version: 1\nlocks:\n- id: ja-existe\n  files: ['*']\n",
+                encoding="utf-8",
+            )
+            env = {**os.environ, "GUIA_PROJECT_ROOT": str(project)}
+            result = subprocess.run(
+                [sys.executable, str(CHECK_LOCK), "lock", "ja-existe",
+                 "--description", "x", "--dry-run", "--allow-missing", "FEATURES.md"],
+                cwd=project,
+                capture_output=True,
+                text=True,
+                env=env,
+            )
         self.assertEqual(result.returncode, 1, msg=result.stdout)
         self.assertIn("ja existe", result.stderr)
 

@@ -1,0 +1,9 @@
+# Schema e protocolo: docs/reference/registry-yaml.md e docs/explanation/por-que-lock.md.
+# Edicao via CLI (recomendado): python core/lock/check-lock.py lock|unlock
+# Ou edite manualmente preservando o schema abaixo.
+#
+# Perfil `nenhum` (init --locks nenhum): nenhuma trava ativa, mas o hook
+# commit-msg ja esta instalado - trave arquivos homologados quando quiser.
+
+version: 1
+locks: []
