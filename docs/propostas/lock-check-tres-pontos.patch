@@ -1,0 +1,15 @@
+diff --git a/.github/workflows/lock-check.yml b/.github/workflows/lock-check.yml
+index 9fc9009..3b2acab 100644
+--- a/.github/workflows/lock-check.yml
++++ b/.github/workflows/lock-check.yml
+@@ -56,7 +56,9 @@ jobs:
+         run: |
+           BASE="${{ steps.range.outputs.base }}"
+           HEAD="${{ steps.range.outputs.head }}"
+-          git diff --name-status --diff-filter=ACMRD "$BASE" "$HEAD" > .changed-files
++          # Tres pontos: so o que o PR mudou desde que saiu da base (com dois pontos,
++          # o que entrou na main depois aparecia como mudanca do PR).
++          git diff --name-status --diff-filter=ACMRD "$BASE...$HEAD" > .changed-files
+           git log "$BASE..$HEAD" --pretty=%B > .commit-messages || git log -1 --pretty=%B > .commit-messages
+           echo "---- arquivos alterados ----"
+           cat .changed-files
