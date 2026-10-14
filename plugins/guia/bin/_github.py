@@ -192,6 +192,7 @@ def gh_pr_update_branch(cwd: Path, number: int) -> tuple[str | None, str | None]
         if after.get("conflict"):
             return None, "conflito no rebase com a base"
         entry["head"] = after.get("head", entry.get("head"))
+        entry["checks"] = after.get("checks", entry.get("checks"))
         entry["mergeState"] = "CLEAN"
         _save_fixture_prs(prs)
         return entry["head"], None

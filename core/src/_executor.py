@@ -172,6 +172,7 @@ def integrate(item: dict[str, Any], base: str, ci_timeout_seconds: float) -> str
     prazo nao e culpa do autor: o item fica esperando, nao e devolvido.
     """
     deadline = time.monotonic() + ci_timeout_seconds
+    updated = False
     while True:
         heartbeat()
         state = gh_pr_state(ROOT, item["pr"])
@@ -188,10 +189,16 @@ def integrate(item: dict[str, Any], base: str, ci_timeout_seconds: float) -> str
             if error:
                 raise Conflict(f"conflito ao atualizar a branch: {error}")
             _log(item["id"], f"branch atualizada: {head[:12]} -> {new_head[:12]}")
+            updated = True
             continue
         remaining = max(deadline - time.monotonic(), 0.0)
         verdict, failing = gh_pr_checks(ROOT, item["pr"], remaining)
         if verdict == "fail":
+            if updated:
+                # D-169: o rebase passou, mas o CI reprovou - conflito que o git nao ve
+                # (arquivo gerado defasado, contrato que a main mudou). E do gerente.
+                raise Conflict(f"check vermelho depois da atualizacao da fila: {', '.join(failing)} - "
+                               "rebase, regenere o que e gerado e rode o portao")
             raise Returned(f"check vermelho: {', '.join(failing)}")
         if verdict == "pass" and state["mergeState"] in MERGEABLE_STATES:
             subject, body = _merge_message(item)
