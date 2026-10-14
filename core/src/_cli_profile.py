@@ -26,7 +26,7 @@ def cmd_profile(args: argparse.Namespace) -> int:
     if args.apply:
         process = read_json(PROCESS_FILE, {})
         process["delivery"], added, kept = merge_missing(process.get("delivery") or {}, block)
-        write_json(PROCESS_FILE, process)
+        write_json(PROCESS_FILE, process, readable=True)
     if args.json:
         print(json.dumps({
             "profile": chosen,
