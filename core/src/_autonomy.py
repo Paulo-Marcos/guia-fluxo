@@ -15,10 +15,10 @@ so do usuario (D-136).
 from __future__ import annotations
 
 import fnmatch
-import re
 from typing import Any
 
 from _clock import now_iso
+from _commit import unlock_marks
 
 LEVELS = ("manual", "pr", "queue", "pilot")
 LEVEL_DEFAULT = "manual"
@@ -33,7 +33,6 @@ ALWAYS_HUMAN_DEFAULT = (
     "**/requirements*.txt",
     "**/package-lock.json",
 )
-_UNLOCK_RE = re.compile(r"\[unlock:([a-z0-9_\-]+)\]", re.IGNORECASE)
 
 
 def rank(level: str) -> int:
@@ -97,7 +96,7 @@ def human_reasons(changed_paths: list[str] | None, merge_message: str, config: d
         touched = sorted({p for p in changed_paths for pat in patterns if _matches(p, pat)})
         if touched:
             reasons.append("toca caminho alwaysHuman: " + ", ".join(touched))
-    marked = sorted({m.lower() for m in _UNLOCK_RE.findall(merge_message or "")})
+    marked = sorted(unlock_marks(merge_message or ""))
     held = [lock for lock in marked if locks == "*" or lock in (locks or [])]
     if held:
         reasons.append("desbloqueia trava: " + ", ".join(held))
