@@ -43,7 +43,7 @@ O pack é um plugin publicado. Pré-requisito: **Python 3.10+** no PATH. No proj
 
 Pronto — os atalhos `/guia:feature`, `/guia:bug`, etc. ficam disponíveis. O motor vai embutido no plugin (`${CLAUDE_PLUGIN_ROOT}/bin/guia.py`), se ancora no projeto onde você está e cria o `.guia/` sozinho no primeiro comando. **Nada de clonar o repo nem rodar `init` à mão** — os únicos arquivos que aparecem no seu projeto são o estado `.guia/`.
 
-Opcional: rode `/guia:init` uma vez para ativar os **locks**. Ele semeia o `.guia/`, instala a config de lock (`.guia/locks/registry.yaml`, `.guia/locks/lock-ignore.txt`) e o hook `commit-msg`, e aponta o `git core.hooksPath` para `.githooks/`. É idempotente e nunca sobrescreve o que já existe; pule (ou passe `--no-locks`) se não quiser locks.
+Opcional: rode `/guia:init` uma vez para ativar os **locks**. Ele semeia o `.guia/`, instala a config de lock (`.guia/locks/registry.yaml`, `.guia/locks/lock-ignore.txt`) e o hook `commit-msg`, e aponta o `git core.hooksPath` para `.githooks/`. É idempotente e nunca sobrescreve o que já existe; escolha as travas iniciais com `--locks`: `adicoes` (padrão — todo arquivo novo pede autorização), `testes` (testes existentes viram contrato; criar arquivo, inclusive teste novo, fica livre) ou `nenhum` (sem travas, hook instalado). Pule (ou passe `--no-locks`) se não quiser locks.
 
 ### Codex / Antigravity — cópia manual
 
