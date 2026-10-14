@@ -128,6 +128,44 @@ class PostMergeTests(unittest.TestCase):
         self.assertIsNone(self._queue()["frozenReason"])
         self.assertIn("CI da main", out)
 
+    def _queue_real_branch(self, extra_commit: bool) -> str:
+        """D-001 na fila com a branch real do worktree; `extra_commit` = trabalho local que nao entrou."""
+        task = json.loads((self.main / ".guia" / "tasks.json").read_text(encoding="utf-8"))["tasks"]
+        branch = next(t for t in task if t["id"] == "D-001")["worktree"]["branch"]
+        head = _git(self.main, "rev-parse", branch).stdout.strip()
+        self._queued("D-001", 1)
+        path = self.main / ".guia" / "tasks.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        for item in data["tasks"]:
+            if item["id"] == "D-001":
+                item["pr"].update(branch=branch, head=head)
+                item["audit"]["auditedSha"] = head
+        path.write_text(json.dumps(data), encoding="utf-8")
+        queue = self._queue()
+        queue["items"][0].update(branch=branch, auditedSha=head)
+        (self.main / ".guia" / "queue.json").write_text(json.dumps(queue), encoding="utf-8")
+        self.prs[-1]["head"] = head
+        Path(str(self.fixture) + ".prs.json").write_text(json.dumps(self.prs), encoding="utf-8")
+        if extra_commit:
+            (self.worktree / "local.txt").write_text("so aqui\n", encoding="utf-8")
+            _git(self.worktree, "add", "local.txt")
+            _git(self.worktree, "commit", "-q", "-m", "trabalho que nao foi para o PR")
+        return branch
+
+    def test_integrated_local_branch_is_deleted(self) -> None:
+        """D-156 (D-131): a fila limpa tudo - worktree e a branch local ja integrada."""
+        branch = self._queue_real_branch(extra_commit=False)
+        out = self._ok("queue", "run").stdout
+        self.assertIn(f"branch local {branch} apagada", out)
+        self.assertEqual(_git(self.main, "branch", "--list", branch).stdout.strip(), "")
+
+    def test_local_branch_with_unmerged_work_is_kept(self) -> None:
+        """A branch que guarda trabalho que nao entrou nunca e apagada."""
+        branch = self._queue_real_branch(extra_commit=True)
+        out = self._ok("queue", "run").stdout
+        self.assertIn(branch, _git(self.main, "branch", "--list", branch).stdout)
+        self.assertIn("mantida", out)
+
 
 if __name__ == "__main__":
     unittest.main()

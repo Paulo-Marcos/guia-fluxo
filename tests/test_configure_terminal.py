@@ -19,6 +19,9 @@ from pathlib import Path
 
 from conftest_paths import CORE_LOCK, CORE_SRC
 
+# O Enter aceita o teto recomendado (queue): etapas so do pilot somem (D-156).
+ENTER_CEILING = "autonomy-ceiling=queue"
+
 
 def _git(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
@@ -73,14 +76,14 @@ class ConfigureTerminalTests(unittest.TestCase):
 
     def test_direct_hides_the_pr_steps_and_writes_on_yes(self) -> None:
         # 1 = direct na etapa do modo; Enter aceita o resto; "s" grava.
-        result = self._talk("1", *[""] * (self._prompts("mode=direct") - 1), "s")
+        result = self._talk("1", *[""] * (self._prompts("mode=direct", ENTER_CEILING) - 1), "s")
         self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
         self.assertNotIn("Portao do ship", result.stdout, "modo direct: sem as etapas do pr")
         self.assertEqual(self._config()["delivery"]["mode"], "direct")
         self.assertTrue(list((self.main / ".guia" / "backups").iterdir()))
 
     def test_pr_shows_its_steps_and_typed_values(self) -> None:
-        rest = self._prompts("mode=pr") - 7  # modo, 5 etapas, portao
+        rest = self._prompts("mode=pr", ENTER_CEILING) - 7  # modo, 5 etapas, portao
         lines = ["2", "", "", "", "", "", "pytest -q, npm test"] + [""] * rest + ["s"]
         result = self._talk(*lines)
         self.assertIn("Portao do ship", result.stdout)
@@ -89,7 +92,7 @@ class ConfigureTerminalTests(unittest.TestCase):
         self.assertEqual(config["delivery"]["gate"]["full"], ["pytest -q", "npm test"])
 
     def test_no_means_nothing_written(self) -> None:
-        result = self._talk("2", *[""] * (self._prompts("mode=pr") - 1), "n")
+        result = self._talk("2", *[""] * (self._prompts("mode=pr", ENTER_CEILING) - 1), "n")
         self.assertIn("Nada gravado", result.stdout)
         self.assertNotIn("delivery", self._config())
 
@@ -99,7 +102,7 @@ class ConfigureTerminalTests(unittest.TestCase):
         self.assertNotIn("delivery", self._config())
 
     def test_bad_value_asks_again(self) -> None:
-        result = self._talk("talvez", "1", *[""] * (self._prompts("mode=direct") - 1), "s")
+        result = self._talk("talvez", "1", *[""] * (self._prompts("mode=direct", ENTER_CEILING) - 1), "s")
         self.assertIn("tente de novo", result.stdout)
         self.assertEqual(self._config()["delivery"]["mode"], "direct")
 

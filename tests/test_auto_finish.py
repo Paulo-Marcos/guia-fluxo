@@ -125,6 +125,17 @@ class AutoFinishTests(unittest.TestCase):
         task = self._integrate("feature", {"app.txt": "novo\n"}, {"BLOQUEANTE": 0, "CORRIGIR": 0})
         self.assertEqual(task["status"], "Integrada")
         self.assertIn("pilot nao fechou - tipo permitido", self.out)
+        # D-156: o porque fica na demanda - o condutor e o status o repetem.
+        failed = [c["check"] for c in task["autoFinish"]["checks"] if not c["ok"]]
+        self.assertEqual(failed, ["tipo permitido"])
+
+    def test_queue_closes_features_when_the_owner_includes_them(self) -> None:
+        """D-156: com `feature` em autoFinish.kinds, a fila fecha a demanda por completo."""
+        self.process["autonomy"]["autoFinish"] = {"kinds": ["chore", "bug", "feature"]}
+        self._write_process()
+        task = self._integrate("feature", {"app.txt": "novo\n"}, {"BLOQUEANTE": 0, "CORRIGIR": 0})
+        self.assertEqual(task["status"], "Validada", self.out)
+        self.assertEqual(task["finish"]["mode"], "auto")
 
     def test_bug_needs_the_regression_test_in_the_squash(self) -> None:
         task = self._integrate("bug", {"app.txt": "fix\n"}, {"BLOQUEANTE": 0, "CORRIGIR": 0})
