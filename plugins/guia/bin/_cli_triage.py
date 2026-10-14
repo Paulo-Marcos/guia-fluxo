@@ -8,15 +8,19 @@ import json
 from _constants import PROCESS_FILE
 from _state import read_json
 from _tasks import find_task_or_current, save_task
-from _triage import describe, recommend
+from _triage import describe, recommend, settings
 
 
 def cmd_triage(args: argparse.Namespace) -> int:
     """Com sinais, recalcula e grava; sem, mostra a triagem gravada."""
     task = find_task_or_current(args.task_id)
     signals = args.scope is not None or args.risk or args.uncertain or args.irreversible
+    config = read_json(PROCESS_FILE, {})
+    if signals and not settings(config)["enabled"]:
+        print(f"{task['id']}: triagem desligada neste projeto (models.enabled = off; `configure` liga).")
+        return 0
     if signals:
-        task["triage"] = recommend(task, read_json(PROCESS_FILE, {}), args.scope or 1, list(args.risk),
+        task["triage"] = recommend(task, config, args.scope or 1, list(args.risk),
                                    bool(args.uncertain), bool(args.irreversible))
         save_task(task)
     triage = task.get("triage")
