@@ -41,3 +41,7 @@ guia configure --set mode=pr --yes           # grava (anterior em .guia/backups/
   release compilando os fragmentos.
 - Conferir que a configuracao bate com o GitHub: `guia doctor --delivery`.
 - Errou? O arquivo anterior esta em `.guia/backups/process.json.<data-hora>`.
+- A etapa **Perfil de travas** (`locks-profile`) e a unica que grava fora do `process.json`: troca o
+  `.guia/locks/registry.yaml` pelo template do perfil (`adicoes`, `testes` ou `nenhum`, os mesmos do
+  `init --locks`), com o anterior em `.guia/backups/registry.yaml.<data-hora>`. Travas proprias do
+  projeto aparecem como `personalizado`, e a recomendacao e manter.

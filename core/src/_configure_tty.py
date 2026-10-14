@@ -72,7 +72,7 @@ def run(config: dict[str, Any], facts: list[dict[str, Any]], root: Path, show_st
     if ask("Gravar? [s/N]: ").strip().lower() not in ("s", "sim", "y", "yes"):
         say("Nada gravado.")
         return 0
-    backup = save(updated)
+    backup = save(updated, changes)
     show_changes(changes, [], True, backup)
     return 0
 

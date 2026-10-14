@@ -8,9 +8,10 @@ morar num lugar so.
 
 Serve de atualizador: rodado de novo, cada etapa vem com o valor atual e o
 status (`nova`: falta decidir; `padrao`: ausente, mas o padrao do motor ja e o
-recomendado; `ok`: igual a recomendacao; `difere`: escolha diferente). So
-grava o process.json (local), com backup; o que muda o GitHub fica em notas
-para o dono aplicar.
+recomendado; `ok`: igual a recomendacao; `difere`: escolha diferente). Grava o
+process.json (local), com backup; o que muda o GitHub fica em notas para o dono
+aplicar. A excecao e o perfil de travas (D-161, decisao do Paulo): a etapa
+`locks-profile` grava o registry pelos ganchos `read`/`write` da Step.
 """
 
 from __future__ import annotations
@@ -33,7 +34,10 @@ from _constants import (
     DELIVERY_MODE_PR,
     GUIA_DIR,
     PROCESS_FILE,
+    ROOT,
 )
+from _lock_profiles import PROFILE_CUSTOM, detect_profile, write_profile
+from _paths import plugin_templates_dir
 from _profiles import PROFILE_SOLO_DIRECT, propose_profile
 from _skills import SKILL_STAGE_DEFAULTS, STAGE_AUDIT, STAGE_DEPS, STAGE_QUALITY, STAGE_READY
 from _state import write_json
@@ -48,6 +52,7 @@ LEVEL_LABELS = {
     "queue": "+ enfileira ja aprovado",
     "pilot": "+ fecha a demanda quando e seguro",
 }
+REGISTRY_REL = ".guia/locks/registry.yaml"
 GATE_SCRIPT = "bin/portao.ps1"
 HEAVY_DIRS = (".venv", "venv", "node_modules")
 
@@ -90,6 +95,10 @@ class Step:
     seen: Callable[[Context], list[str]] = lambda ctx: []
     applies: Callable[[Context], bool] = lambda ctx: True
     note: str | None = None
+    # D-161: valor que mora fora do process.json (ex.: o registry de travas).
+    # `read` da o valor atual; `write` grava o escolhido e devolve o backup.
+    read: Callable[[Context], Any] | None = None
+    write: Callable[[Any], Path | None] | None = None
 
 
 # --- caminhos no process.json ------------------------------------------------
@@ -228,6 +237,39 @@ def _lock_options(ctx: Context) -> list[Option]:
         options.append(Option(others, label + " - sem adicoes-exigem-autorizacao",
                               "quase todo PR traz arquivo novo; com ela, quase todo PR espera o approve"))
     return options
+
+
+LOCK_PROFILE_OPTIONS = (
+    Option("adicoes", "todo arquivo novo pede [unlock:]", "o agente nao cria arquivo sem voce saber"),
+    Option("testes", "teste existente vira contrato; arquivo novo livre", "o comportamento garantido nao muda escondido"),
+    Option("nenhum", "nada travado; o hook fica instalado", "trave depois so o que for homologado"),
+)
+
+
+def _registry() -> Path:
+    import _locks  # tardio, como _lock_ids: o registry e do projeto, nao do plugin
+
+    return _locks.lock_api.REGISTRY
+
+
+def _templates_available() -> bool:
+    """Sem os templates do plugin nao ha perfil para gravar: a etapa nao se aplica."""
+    templates = plugin_templates_dir()
+    return templates is not None and (templates / "locks").is_dir()
+
+
+def _read_lock_profile(ctx: Context) -> str | None:
+    return detect_profile(_registry(), plugin_templates_dir())
+
+
+def _recommend_lock_profile(ctx: Context) -> tuple[Any, str]:
+    if _read_lock_profile(ctx) == PROFILE_CUSTOM:
+        return PROFILE_CUSTOM, "manter: o registry tem travas proprias, que trocar de perfil apagaria"
+    return "testes", "quase todo PR traz arquivo novo; travar so os testes existentes protege o comportamento sem parar cada PR"
+
+
+def _write_lock_profile(profile: Any) -> Path | None:
+    return write_profile(str(profile), plugin_templates_dir(), _registry(), BACKUP_DIR)
 
 
 def _skills_step(stage: str, title: str, explain: str) -> Step:
@@ -378,6 +420,19 @@ STEPS: tuple[Step, ...] = (
         applies=lambda ctx: (ctx.get(("autonomy", "ceiling")) or "pilot") == "pilot",
     ),
     Step(
+        "locks-profile", "Travas", "Perfil de travas",
+        "Quais arquivos pedem [unlock:] no commit. adicoes: todo arquivo novo. testes: alterar, apagar ou "
+        "renomear um teste existente; arquivo novo fica livre. nenhum: nada travado. Gravar TROCA o "
+        ".guia/locks/registry.yaml pelo template do perfil - o anterior vai para .guia/backups/.",
+        (REGISTRY_REL,), "choice", None, _recommend_lock_profile,
+        options=lambda ctx: list(LOCK_PROFILE_OPTIONS),
+        seen=lambda ctx: [f"travas do projeto: {', '.join(_lock_ids()) or 'nenhuma'}"],
+        applies=lambda ctx: _templates_available(),
+        read=_read_lock_profile,
+        write=_write_lock_profile,
+        note="Unica etapa que grava fora do process.json (D-161). `personalizado`: travas proprias, mantidas.",
+    ),
+    Step(
         "always-human-locks", "Autonomia", "Travas que sempre param no dono",
         "No nivel queue ou acima, PR que desbloqueia uma destas travas ([unlock:]) espera o seu approve, "
         "mesmo aprovado pela autonomia. Caminhos sensiveis (.github/**, migrations, lockfiles) sempre param.",
@@ -426,6 +481,14 @@ def apply_answers(config: dict[str, Any], answers: dict[str, str]) -> tuple[dict
         if step is None:
             raise SystemExit(f"Etapa desconhecida {step_id!r}: use uma de {', '.join(STEPS_BY_ID)}.")
         value = parse_value(step, raw)
+        if step.write:
+            # D-161: fora do process.json - a config nao muda; o save grava pelo `write`.
+            before = step.read(Context([], updated, ROOT)) if step.read else None
+            after = before if value == KEEP_DEFAULT else value
+            if before != after:
+                changes.append({"step": step_id, "path": ".".join(step.path), "before": before, "after": after,
+                                "external": True})
+            continue
         before = get_path(updated, step.path)
         if value == KEEP_DEFAULT:
             _del_path(updated, step.path)
@@ -448,7 +511,7 @@ def build_plan(config: dict[str, Any], facts: list[dict[str, Any]], root: Path) 
     ctx = Context(facts, config, root)
     plan = []
     for step in STEPS:
-        current = ctx.get(step.path)
+        current = step.read(ctx) if step.read else ctx.get(step.path)
         recommended, why = step.recommend(ctx)
         status = _status(current, step.default, recommended)
         plan.append({
@@ -477,8 +540,19 @@ def outside_notes(config: dict[str, Any], facts: list[dict[str, Any]]) -> list[s
     return notes
 
 
-def save(config: dict[str, Any]) -> Path | None:
-    """Grava o process.json; o anterior vai para .guia/backups/ (None se nao havia)."""
+def save(config: dict[str, Any], changes: list[dict[str, Any]] | None = None) -> Path | None:
+    """Grava o process.json; o anterior vai para .guia/backups/ (None se nao havia).
+
+    D-161: mudanca `external` (fora do process.json) grava pelo `write` da
+    etapa, que guarda o backup em `change["backup"]`; so mudanca externa nao
+    reescreve o process.json.
+    """
+    external = [change for change in changes or [] if change.get("external")]
+    for change in external:
+        written = STEPS_BY_ID[change["step"]].write(change["after"])
+        change["backup"] = str(written) if written else None
+    if changes is not None and len(external) == len(changes):
+        return None
     backup = None
     if PROCESS_FILE.is_file():
         BACKUP_DIR.mkdir(parents=True, exist_ok=True)

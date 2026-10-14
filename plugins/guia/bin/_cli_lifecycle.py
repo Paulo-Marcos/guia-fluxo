@@ -9,13 +9,14 @@ from __future__ import annotations
 
 import argparse
 import copy
-import os
 import sys
 from pathlib import Path
 from typing import Any
 
 from _clock import now_iso, today
 from _commit import commit_task
+from _lock_profiles import DEFAULT_LOCK_PROFILE, LOCK_PROFILES, PROFILE_NO_LOCKS
+from _paths import plugin_templates_dir
 from _constants import (
     DELIVERY_MODE,
     DELIVERY_MODE_PR,
@@ -159,37 +160,13 @@ _LOCK_TEMPLATES: list[tuple[str, str]] = [
     (".githooks/commit-msg", ".githooks/commit-msg"),
 ]
 
-# D-158: perfil de travas escolhido no `init --locks <perfil>`. Cada perfil
-# e so um template de registry diferente; o resto do setup (lock-ignore,
-# commit-msg, hooksPath) e identico. `adicoes` e o default historico.
-LOCK_PROFILES: dict[str, str] = {
-    "adicoes": "locks/registry.yaml",
-    "testes": "locks/registry.testes.yaml",
-    "nenhum": "locks/registry.nenhum.yaml",
-}
-DEFAULT_LOCK_PROFILE = "adicoes"
-PROFILE_NO_LOCKS = "nenhum"
+# D-158: o perfil de travas do `init --locks <perfil>` so troca o template do
+# registry; o resto do setup (lock-ignore, commit-msg, hooksPath) e identico.
+# Os perfis moram em _lock_profiles, que o configure tambem usa (D-161).
 
 
-def _plugin_templates_dir() -> Path | None:
-    """Locate the bundled `templates/` dir shipped with the engine.
-
-    Prefers `${CLAUDE_PLUGIN_ROOT}/templates` (the installed plugin, set by
-    Claude Code when a skill runs); falls back to `<engine>/../templates`,
-    which resolves to the shipped `plugins/guia/templates` (dogfood) or
-    `core/templates` (source clone). Returns None when no candidate exists
-    (e.g. a source clone where the commit-msg hook lives under core/hooks
-    and was never promoted) - the caller degrades to seeding `.guia/` only.
-    """
-    candidates: list[Path] = []
-    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
-    if plugin_root:
-        candidates.append(Path(plugin_root) / "templates")
-    candidates.append(Path(__file__).resolve().parent.parent / "templates")
-    for candidate in candidates:
-        if candidate.is_dir():
-            return candidate
-    return None
+# D-161: mora em _paths (o configure tambem usa); o alias mantem os imports antigos.
+_plugin_templates_dir = plugin_templates_dir
 
 
 def deploy_lock_templates(
