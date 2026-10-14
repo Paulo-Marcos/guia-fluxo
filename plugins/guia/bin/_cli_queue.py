@@ -11,7 +11,8 @@ from _clock import now_iso
 from _constants import DELIVERY_BASE_BRANCH_DEFAULT, PROCESS_FILE, ROOT, STATUS_IN_PR, STATUS_IN_QUEUE
 from _git_ops import git_output
 from _state import read_json
-from _merge_queue import PRIORITY_NORMAL, STATE_WAITING, find, load, mutate, ordered
+from _dependabot import lote_human_reasons
+from _merge_queue import PRIORITY_HOTFIX, PRIORITY_NORMAL, STATE_WAITING, find, load, mutate, ordered
 from _ship import QUEUE_DIR
 from _tasks import find_task, find_task_or_current, save_task
 
@@ -51,11 +52,20 @@ def _enqueue(args: argparse.Namespace) -> int:
     config = read_json(PROCESS_FILE, {})
     reasons: list[str] = []
     approval = None
-    if rank(effective_level(task, config)) >= rank("queue"):
+    level = effective_level(task, config)
+    if rank(level) >= rank("queue"):
         # D-134: so com autonomia para aprovar sozinho faz sentido conferir o
         # alwaysHuman; abaixo disso o item espera o approve de qualquer jeito.
-        reasons = human_reasons(_pr_changed_paths(pr, config), message.read_text(encoding="utf-8"), config)
+        if task.get("dependabot") and level == "pilot":
+            # D-150: no pilot, o lote so para no dono no que vai alem de versao.
+            base = (config.get("delivery") or {}).get("baseBranch") or DELIVERY_BASE_BRANCH_DEFAULT
+            reasons = lote_human_reasons(task, base, pr.get("branch"), config)
+        else:
+            reasons = human_reasons(_pr_changed_paths(pr, config), message.read_text(encoding="utf-8"), config)
         approval = implicit_approval(task, config, reasons)
+    priority = args.priority
+    if (task.get("dependabot") or {}).get("security"):
+        priority = PRIORITY_HOTFIX  # D-150: atualizacao de seguranca passa a frente
 
     def add(data: dict[str, Any]) -> None:
         existing = find(data, task["id"])
@@ -75,7 +85,7 @@ def _enqueue(args: argparse.Namespace) -> int:
             "worktree": (task.get("worktree") or {}).get("path"),
             "enqueuedAt": now_iso(),
             "enqueuedBy": "chat",
-            "priority": args.priority,
+            "priority": priority,
             "dependsOn": list(task.get("dependsOn") or []),
             "auditedSha": audit["auditedSha"],
             "auditedPatchId": audit.get("auditedPatchId"),
@@ -90,7 +100,7 @@ def _enqueue(args: argparse.Namespace) -> int:
     mutate(add)
     task["status"] = STATUS_IN_QUEUE
     save_task(task)
-    print(f"{task['id']} na fila (PR #{pr['number']}, prioridade {args.priority}).")
+    print(f"{task['id']} na fila (PR #{pr['number']}, prioridade {priority}).")
     if approval:
         print(f"Aprovado pela autonomia (nivel {approval['level']}): o executor integra sem novo ok.")
     elif reasons:
