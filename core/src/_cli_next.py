@@ -18,7 +18,8 @@ def cmd_next(args: argparse.Namespace) -> int:
         print(json.dumps({"task": task["id"], **step}, ensure_ascii=False, indent=2))
         return 0
     owner = f" (destrava: {step['owner']})" if step["owner"] else ""
-    print(f"{task['id']} [nivel {step['level']}]: {step['step']} - {step['why']}{owner}")
+    chat = f" [chat: {step['chat']}]" if step.get("chat") else ""
+    print(f"{task['id']} [nivel {step['level']}]: {step['step']} - {step['why']}{owner}{chat}")
     return 0
 
 

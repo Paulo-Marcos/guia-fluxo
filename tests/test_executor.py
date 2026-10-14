@@ -119,7 +119,10 @@ class ExecutorTests(unittest.TestCase):
     def test_changed_patch_returns_and_the_next_item_still_integrates(self) -> None:
         self._queued("D-001", 1, mergeState="BEHIND", afterUpdate={"head": B}, patchIds={A: "pid-a", B: "pid-outro"})
         self._queued("D-002", 2)
-        self._ok("queue", "run")
+        self._ok("chat", "D-001", "--title", "Chat da D-001")  # D-157
+        out = self._ok("queue", "run").stdout
+        self.assertIn("DEVOLVIDA", out)
+        self.assertIn("volte ao chat: Chat da D-001", out, "a fila diz para qual chat voltar")
         self.assertNotIn("merged", self._pr(1))
         returned = self._task("D-001")
         self.assertEqual(returned["status"], "Em desenvolvimento")

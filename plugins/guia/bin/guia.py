@@ -95,6 +95,7 @@ from _cli_autonomy import cmd_autonomy  # noqa: E402
 from _cli_changelog import cmd_changelog  # noqa: E402
 from _cli_deps_bot import cmd_deps  # noqa: E402
 from _cli_configure import cmd_configure  # noqa: E402
+from _cli_chat import cmd_chat  # noqa: E402
 from _cli_next import cmd_next  # noqa: E402
 from _cli_profile import cmd_profile  # noqa: E402
 from _cli_queue import cmd_approve, cmd_queue  # noqa: E402
@@ -456,6 +457,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_next.add_argument("task_id", nargs="?", help="Sem id, vale a branch (D-110).")
     p_next.add_argument("--json", action="store_true", help="Saida em JSON.")
     p_next.set_defaults(func=cmd_next)
+
+    p_chat = sub.add_parser(
+        "chat",
+        help="Em que chat a demanda e feita (D-157): sem --title mostra o nome sugerido; com --title grava, e a fila aponta para ele.",
+    )
+    p_chat.add_argument("task_id", nargs="?", help="Sem id, vale a branch (D-110).")
+    p_chat.add_argument("--title", help="O nome do chat em que a demanda e feita.")
+    p_chat.add_argument("--json", action="store_true", help="Saida em JSON.")
+    p_chat.set_defaults(func=cmd_chat)
 
     p_scaffold = sub.add_parser(
         "scaffold",

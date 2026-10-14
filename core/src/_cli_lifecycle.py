@@ -380,6 +380,7 @@ def cmd_status(args: argparse.Namespace) -> int:
 
     if getattr(args, "all", False):
         _status_board()
+        _print_pending_with_owner()
         _print_close_reminders()
         return 0
 
@@ -432,6 +433,24 @@ def _print_close_reminders() -> None:
 
     for task, days in stale_integrated(read_json(PROCESS_FILE, {})):
         print(f"Integrada ha {days} dias: {task['id']} {task.get('title', '')} - fechar? (finish {task['id']})")
+
+
+def _print_pending_with_owner() -> None:
+    """D-157: o que voltou para o dono ou para um chat - com o chat de cada um."""
+    from _tasks import chat_hint
+
+    pending = [
+        (task, f"devolvida: {task['queue']['returnReason']}")
+        for task in list_tasks(status=STATUS_IN_DEVELOPMENT)
+        if (task.get("queue") or {}).get("returnReason")
+    ]
+    for task in list_tasks(status=STATUS_INTEGRATED):
+        failed = [c["check"] for c in (task.get("autoFinish") or {}).get("checks") or [] if not c.get("ok")]
+        pending.append((task, "integrada; fechar e do dono" + (f" ({', '.join(failed)})" if failed else "")))
+    if pending:
+        print("\nPendencias:")
+    for task, why in pending:
+        print(f"  {task['id']} {task.get('title', '')} - {why}{chat_hint(task)}")
 
 
 def _status_board() -> int:

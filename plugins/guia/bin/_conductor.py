@@ -83,7 +83,13 @@ def _integrated(task: dict[str, Any], level: str) -> dict[str, Any]:
 
 
 def next_step(task: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
-    """O proximo passo da demanda segundo o estado, o nivel e a fila."""
+    """O proximo passo da demanda segundo o estado, o nivel e a fila (com o chat dela, D-157)."""
+    step = _next(task, config)
+    step["chat"] = (task.get("chat") or {}).get("title")
+    return step
+
+
+def _next(task: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     level = effective_level(task, config)
     status = task.get("status")
     if status == STATUS_IN_DEVELOPMENT:
