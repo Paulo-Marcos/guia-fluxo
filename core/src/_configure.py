@@ -351,6 +351,20 @@ STEPS: tuple[Step, ...] = (
         applies=_is_pr,
     ),
     Step(
+        "queue-conflicts", "Fila", "O que a fila faz com conflito",
+        "Quando um PR conflita com a main (ou muda depois da auditoria). `manager`: ele fica na fila e o gerente "
+        "(o chat que roda `/guia:queue-control run`) resolve - rebase preservando as duas intencoes, portao, auditoria "
+        "do delta, de volta a fila - e so o que pede decisao chega ao dono. `return`: volta ao autor, que resolve no chat dele.",
+        ("delivery", "queue", "conflicts"), "choice", "return",
+        lambda ctx: ("manager", "conflito e o trabalho que a fila existe para fazer; voce so ve o que pede decisao")
+        if _is_pr(ctx) else ("return", "sem fila no modo direct"),
+        options=lambda ctx: [
+            Option("manager", "o gerente da fila resolve", "a fila segue sozinha; decisao vai ao dono com o chat"),
+            Option("return", "volta ao autor", "cada chat resolve o proprio conflito"),
+        ],
+        applies=_is_pr,
+    ),
+    Step(
         "worktree-junctions", "Worktree", "Juncoes do worktree",
         "Pastas da arvore principal que o worktree da demanda enxerga por juncao, sem reinstalar "
         "(ex.: backend/.venv, frontend/node_modules). Removidas com seguranca no fim.",
