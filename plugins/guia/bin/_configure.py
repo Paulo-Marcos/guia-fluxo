@@ -23,6 +23,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
+from _auto_finish import AUTO_FINISH_DEFAULT
 from _autonomy import LEVELS, rank
 from _constants import (
     COMMIT_FORMAT_GITMOJI,
@@ -360,6 +361,21 @@ STEPS: tuple[Step, ...] = (
         if ctx.get(("delivery", "dependencies", "autonomy")) else (None, "segue o nivel padrao ate voce decidir"),
         options=lambda ctx: [Option(level, LEVEL_LABELS[level], "") for level in LEVELS],
         applies=_is_pr,
+    ),
+    Step(
+        "auto-finish-kinds", "Autonomia", "Que tipos a fila fecha sozinha",
+        "No pilot, depois do merge a fila fecha a demanda quando todas as condicoes provam que e seguro (main verde, "
+        "auditoria sem achados, sem tela, nada sensivel; bug com teste). Esta etapa escolhe os tipos. O padrao deixa "
+        "`feature` de fora: capacidade nova pede uso real antes do 'esta bom' - fica Integrada esperando o seu finish.",
+        ("autonomy", "autoFinish", "kinds"), "list", list(AUTO_FINISH_DEFAULT["kinds"]),
+        lambda ctx: (ctx.get(("autonomy", "autoFinish", "kinds")) or list(AUTO_FINISH_DEFAULT["kinds"]),
+                     "o ja configurado" if ctx.get(("autonomy", "autoFinish", "kinds")) else "o padrao do Guia (sem feature)"),
+        options=lambda ctx: [
+            Option(list(AUTO_FINISH_DEFAULT["kinds"]), "chore, test, docs, refactor, bug", "feature espera o seu finish"),
+            Option([*AUTO_FINISH_DEFAULT["kinds"], "feature"], "todos, inclusive feature",
+                   "a fila fecha tudo que as condicoes provarem; voce so entra quando algo nao se prova"),
+        ],
+        applies=lambda ctx: (ctx.get(("autonomy", "ceiling")) or "pilot") == "pilot",
     ),
     Step(
         "always-human-locks", "Autonomia", "Travas que sempre param no dono",

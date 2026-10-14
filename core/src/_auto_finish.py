@@ -115,6 +115,10 @@ def try_auto_finish(task: dict[str, Any], item: dict[str, Any], config: dict[str
     checks = evaluate(task, item, config, main_ci, squash_paths(sha))
     if all(c["ok"] for c in checks):
         auto_finish(task, checks, config)
+    else:
+        # D-156: o porque fica na demanda - o condutor e o status o repetem.
+        task["autoFinish"] = {"at": now_iso(), "checks": checks}
+        save_task(task)
     return checks
 
 

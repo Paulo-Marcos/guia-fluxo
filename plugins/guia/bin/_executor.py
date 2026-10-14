@@ -22,6 +22,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from _audit import patch_id
 from _auto_finish import try_auto_finish
 from _clock import now_iso
 from _cloud_import import import_labeled
@@ -235,6 +236,29 @@ def _cleanup_worktree(item_id: str) -> None:
     print(f"  {item_id}: worktree removido ({worktree.get('path')}).")
 
 
+def _delete_local_branch(item: dict[str, Any], base: str) -> None:
+    """D-156 (absorve a D-131): a branch local da demanda sai junto com o worktree.
+
+    So quando ela nao guarda nada que nao entrou: a ponta e o head integrado,
+    ou tem o mesmo conteudo (patch-id) do auditado - o caso de depois de um
+    rebase pelo executor, quando a ponta local e o head antigo. Divergiu, fica.
+    """
+    branch = item.get("branch")
+    tip = git_output(ROOT, "rev-parse", "--verify", "-q", f"refs/heads/{branch}") if branch else None
+    if not tip:
+        return
+    same = tip == item.get("auditedSha") or (
+        bool(item.get("auditedPatchId")) and patch_id(ROOT, f"origin/{base}", tip) == item["auditedPatchId"]
+    )
+    if not same:
+        print(f"  {item['id']}: branch local {branch} mantida - tem conteudo que nao entrou ({tip[:12]}).")
+        return
+    if git_output(ROOT, "branch", "-D", branch) is None:
+        print(f"  {item['id']}: branch local {branch} mantida - o git recusou (em uso?).")
+        return
+    print(f"  {item['id']}: branch local {branch} apagada (ja integrada).")
+
+
 def _update_main_tree() -> None:
     """Principal limpa: pull --ff-only; suja: so fetch - nunca pisa no trabalho do dono."""
     dirty = git_output(ROOT, "status", "--porcelain", "--untracked-files=no")
@@ -300,6 +324,7 @@ def _after_merge(item: dict[str, Any], ci_timeout_seconds: float, config: dict[s
     """R5 passo 6 (D-128): limpar, atualizar a principal e provar a combinacao."""
     _close_dependabot_prs(item["id"])
     _cleanup_worktree(item["id"])
+    _delete_local_branch(item, (config.get("delivery") or {}).get("baseBranch") or DELIVERY_BASE_BRANCH_DEFAULT)
     _update_main_tree()
     sha, verdict = _watch_main_ci(item, ci_timeout_seconds)
     _auto_finish(item, config, sha, verdict)
