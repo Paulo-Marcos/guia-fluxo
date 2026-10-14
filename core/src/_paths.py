@@ -5,6 +5,7 @@ Separated from _constants because these are functions, not literals.
 
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 
@@ -40,4 +41,25 @@ def slugify(value: str, max_length: int = 80) -> str:
     return cleaned[:max_length] or "task"
 
 
-__all__ = ["relative", "normalize_path", "slugify"]
+def plugin_templates_dir() -> Path | None:
+    """Locate the bundled `templates/` dir shipped with the engine.
+
+    Prefers `${CLAUDE_PLUGIN_ROOT}/templates` (the installed plugin, set by
+    Claude Code when a skill runs); falls back to `<engine>/../templates`,
+    which resolves to the shipped `plugins/guia/templates` (dogfood) or
+    `core/templates` (source clone). Returns None when no candidate exists
+    (e.g. a source clone where the commit-msg hook lives under core/hooks
+    and was never promoted) - the caller degrades to seeding `.guia/` only.
+    """
+    candidates: list[Path] = []
+    plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT")
+    if plugin_root:
+        candidates.append(Path(plugin_root) / "templates")
+    candidates.append(Path(__file__).resolve().parent.parent / "templates")
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+    return None
+
+
+__all__ = ["relative", "normalize_path", "plugin_templates_dir", "slugify"]

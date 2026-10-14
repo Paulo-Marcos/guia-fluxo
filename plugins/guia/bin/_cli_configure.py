@@ -69,7 +69,11 @@ def print_changes(changes: list[dict[str, Any]], notes: list[str], written: bool
     for change in changes:
         print(f"  {change['path']}: {_show(change['before'])} -> {_show(change['after'])}")
     if changes and written:
-        print(f"Gravado em {PROCESS_FILE}" + (f" (anterior em {backup})" if backup else "") + ".")
+        if any(not change.get("external") for change in changes):
+            print(f"Gravado em {PROCESS_FILE}" + (f" (anterior em {backup})" if backup else "") + ".")
+        for change in (c for c in changes if c.get("external")):
+            # D-161: o que a etapa gravou fora do process.json, com o proprio backup.
+            print(f"Gravado em {change['path']}" + (f" (anterior em {change['backup']})" if change.get("backup") else "") + ".")
     elif changes and hint:
         print(hint)
     for note in notes:
@@ -90,7 +94,7 @@ def cmd_configure(args: argparse.Namespace) -> int:
         return run_terminal(config, facts, ROOT, _print_step, _print_summary, only_pending=args.pendentes)
     updated, changes = apply_answers(config, _answers(args.set))
     if args.set and not args.plan:
-        backup = save(updated) if args.yes and changes else None
+        backup = save(updated, changes) if args.yes and changes else None
         notes = outside_notes(updated, facts)
         if args.json:
             print(json.dumps({"changes": changes, "written": bool(args.yes and changes), "notes": notes,
