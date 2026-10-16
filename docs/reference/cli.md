@@ -294,6 +294,14 @@ O condutor (D-152): o proximo passo da demanda, decidido pelo motor a partir do 
 
 Em que chat a demanda e feita, para voltar a ele (D-157). Sem `--title`, imprime `NOME DO CHAT: ...` - um nome estavel, sem a etiqueta de status (que muda) - para o agente renomear a sessao; com `--title`, grava o nome na demanda (`chat.title`). Chat dedicado a demanda: o agente renomeia e grava; chat com varias demandas: nao renomeia para uma delas, grava o nome que o chat ja tem. Quando a fila devolve (`DEVOLVIDA - ... - volte ao chat: ...`) ou deixa a demanda `Integrada` sem fechar, ela aponta o chat; `next` mostra `[chat: ...]` e `status --all` lista as **Pendencias** (devolvidas e integradas por fechar) com o chat de cada uma.
 
+### `dashboard`
+
+```powershell
+.\core\bin\guia.ps1 dashboard [--port 8765] [--no-open] [--scan <pasta>] [--add <pasta>] [--remove <pasta>] [--depth N] [--list] [--json] [--serve]
+```
+
+Painel local, somente leitura (D-175). Sobe um servidor so em `127.0.0.1` (responde apenas a `Host` local) e abre o navegador: os projetos do Guia cadastrados na maquina, as demandas de cada um por etapa (Backlog, Planejada, Em desenvolvimento, Aguardando validacao, Em PR, Na fila, Integrada, Bloqueada) e as concluidas recentes, a fila de integracao na ordem do executor (hotfix a frente, depois FIFO) com a **ponta**, o **proximo a integrar** (o primeiro elegivel) e o motivo de espera de cada item, e se o **executor da fila** esta vivo (pelo `.guia/queue/executor.lease`: batimento mais novo que `queue.leaseStaleMinutes`). A pagina se atualiza a cada 5 s. O cadastro mora em `~/.guia/projects.json` (`GUIA_HOME` muda a pasta): rodar `dashboard` dentro de um projeto o cadastra; `--scan` procura projetos (pastas com `.guia/tasks.json`, o que deixa worktrees de fora) ate `--depth` niveis; `--add`/`--remove` mexem em um. Com `--add`/`--remove`/`--scan` o comando so cadastra e sai, a menos que venha `--serve`. Nao faz auto-init: roda de qualquer pasta. O servidor fica no ar ate Ctrl+C - num agente, rode-o em segundo plano.
+
 ### `triage`
 
 ```powershell
