@@ -6,6 +6,22 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-16
+
+### Added
+- **Painel local para acompanhar projetos e fila: `guia dashboard` (D-175).** Abre no navegador os projetos do Guia na máquina (`--scan`/`--add`), as demandas de cada um por etapa, a fila de integração na ordem do executor - a ponta, o próximo a integrar e por que cada item espera - e se o executor está vivo. Somente leitura, só em 127.0.0.1, sem dependência nova. Testes em `tests/test_dashboard.py` e `tests/test_dashboard_port.py`.
+- **Toda etapa termina dizendo o próximo passo, e o condutor sabe se o executor da fila está vivo (D-176).** `ready`, `ship`, `audit` e `queue add` agora fecham com a linha `PROXIMO PASSO:` do condutor - quem chama o motor pelo terminal, sem o texto da skill, não improvisa mais (no gerador-cortes, chats mergeavam com `gh` por fora da fila ou perguntavam o que o nível já autorizava). O `stop` de quem está na fila lê o `executor.lease`: com executor vivo, é o fim do chat; sem ele, o dono roda o `queue run`.
+
+### Changed
+- **O trilho do condutor está no texto de toda etapa, e o ready não manda parar acima do manual (D-177).** No gerador-cortes os chats chamavam ready/ship/audit pelo terminal sem o texto do ready - o único que falava do `next` - e paravam para perguntar, ou mergeavam com `gh` por fora da fila. Agora feature, bug, chore, start, ship e audit trazem o condutor; o ready separa o `manual` (para e entrega) dos níveis `pr`/`queue`/`pilot` (segue sem perguntar); e o condutor proíbe `gh pr merge`, explica o `stop` com executor vivo e diz que arquivo novo sob trava só de modify/delete/rename não pede unlock.
+- **O portão completo roda em paralelo e não repete o mesmo conteúdo (D-182).** A suíte levava ~29 min em série e o `ship` a rodava de novo sobre o commit que acabara de passar. Agora o portão é `python -m pytest -q -n auto` (`pytest-xdist`, em `requirements-dev.txt`, também no CI), o novo `guia gate` roda o portão e grava o tree aprovado em `.guia/gate-passed.json`, e o `ship` pula um tree já gravado com os mesmos comandos (`--rerun-gate` força).
+
+### Fixed
+- **O workflow de release publica as notas do CHANGELOG e não falha se o Release já existe (D-174).** Na 0.8.0 o Release criado à mão segundos antes fez o `release.yml` falhar ("tag already exists"), e ele publicaria notas geradas dos commits. Agora a tag é o único gatilho: o workflow confere tag × `VERSION`, tira a seção da versão do `CHANGELOG.md` e cria o Release, ou só atualiza as notas se ele já existir. Testes em `tests/test_release_workflow.py` rodam o `run:` do próprio workflow.
+- **O auto-finish do `pilot` não conta arquivo de teste como mudança de tela (D-179).** `uiPaths` (`frontend/src/**`, `**/*.tsx`) casava os testes do frontend, e uma demanda que só tocou teste ficava `Integrada` esperando o dono (D-931 no gerador-cortes). O que casa com `testPaths` sai da conta de tela.
+- **O condutor não manda `ship` em demanda que deu `ready` antes do primeiro PR do projeto (D-180).** Ao passar para o modo pr, as demandas que esperavam validação no fluxo antigo já tinham o código direto na base; o `next` mandava abrir um PR que não existe (D-898..D-911 no gerador-cortes). Agora ele para e diz ao dono: legado - valide e decida o `finish` ou o `cancel`.
+- **`check-lock check` e o hook PreToolUse tratam arquivo novo ainda não commitado como adição (D-181).** Decidiam add × modify pelo disco: um teste novo já escrito saía como `modify` numa trava que só guarda modify/delete/rename, e o chat parava para pedir um unlock que o hook do commit (status A) nunca exigiria. Agora a operação vem do git - fora do HEAD é adição; sem git, vale o disco como antes.
+
 ## [0.8.0] - 2026-10-14
 
 ### Added
