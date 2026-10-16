@@ -31,3 +31,5 @@ Every bug is fixed in this order — the test is the proof that the bug existed 
 Record the before/after in `ready --validation` (e.g. "test X failed on HEAD before the fix, passes after").
 
 Then continue with the investigation and fix.
+
+{{include: _partials/conductor.md}}
