@@ -28,7 +28,6 @@ from _clock import now_iso
 from _cloud_import import import_labeled
 from _constants import (
     DELIVERY_BASE_BRANCH_DEFAULT,
-    GUIA_DIR,
     ROOT,
     STATUS_IN_DEVELOPMENT,
     STATUS_INTEGRATED,
@@ -45,6 +44,8 @@ from _github import (
     gh_pr_update_branch,
     pr_patch_id,
 )
+from _lease import LEASE_FILE, LEASE_STALE_MINUTES_DEFAULT
+from _lease import read_lease as _read_lease
 from _merge_queue import STATE_CONFLICT, find, load, mutate, ordered
 from _tasks import chat_hint, find_task, save_task
 from _worktree import remove_worktree
@@ -52,8 +53,6 @@ from _worktree import remove_worktree
 # D-137: tudo importado no topo - o executor remove o worktree da demanda no
 # meio da passada, e um import tardio rodando dali acharia o modulo sumido.
 
-LEASE_FILE = GUIA_DIR / "queue" / "executor.lease"
-LEASE_STALE_MINUTES_DEFAULT = 10
 CI_TIMEOUT_MINUTES_DEFAULT = 40
 
 
@@ -71,13 +70,6 @@ CONFLICTS_MANAGER, CONFLICTS_RETURN = "manager", "return"
 
 
 # --- lease -----------------------------------------------------------------
-
-
-def _read_lease() -> dict[str, Any] | None:
-    try:
-        return json.loads(LEASE_FILE.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None
 
 
 def acquire_lease(stale_minutes: float) -> None:
