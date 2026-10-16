@@ -79,7 +79,10 @@ def evaluate(task: dict[str, Any], item: dict[str, Any], config: dict[str, Any],
         tests = _matching(paths or [], conf["testPaths"])
         check("teste de regressao", bool(tests), ", ".join(tests) or "nenhum teste no squash")
     if conf["blockIfUiChanged"]:
-        ui = _matching(paths or [], conf["uiPaths"])
+        # D-179: teste nao e tela - `frontend/src/**` e `*.tsx` casavam os testes
+        # do frontend, e uma demanda que so tocou teste nao fechava sozinha.
+        tests_only = set(_matching(paths or [], conf["testPaths"]))
+        ui = [p for p in _matching(paths or [], conf["uiPaths"]) if p not in tests_only]
         check("sem mudanca de tela", paths is not None and not ui,
               "caminhos do squash nao conferidos" if paths is None else (", ".join(ui) or "nenhum caminho de tela"))
     findings = (task.get("audit") or {}).get("openFindings")
