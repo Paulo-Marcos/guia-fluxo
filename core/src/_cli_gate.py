@@ -8,7 +8,7 @@ from pathlib import Path
 
 from _changelog import work_root
 from _constants import PROCESS_FILE
-from _gate import gate_commands, passed_entry, record_pass, run_gate
+from _gate import describe_pass, gate_commands, passed_entry, record_pass, run_gate
 from _state import read_json
 
 
@@ -21,7 +21,7 @@ def cmd_gate(args: argparse.Namespace) -> int:
     root = work_root(Path.cwd())
     entry = None if args.rerun else passed_entry(root, commands)
     if entry:
-        print(f"portao ja passou neste tree em {entry.get('at')} (commit {str(entry.get('head'))[:12]}); --rerun roda de novo.")
+        print(f"{describe_pass(entry)}; --rerun roda de novo.")
         return 0
     failure = run_gate(root, commands)
     if failure:

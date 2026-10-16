@@ -27,7 +27,7 @@ from _constants import (
     STATUS_IN_DEVELOPMENT,
     STATUS_IN_PR,
 )
-from _gate import gate_commands, passed_entry, record_pass, run_gate
+from _gate import describe_pass, gate_commands, passed_entry, record_pass, run_gate
 from _git_ops import current_branch, git_output
 from _github import gh_pr_upsert
 
@@ -75,11 +75,7 @@ def _check_gate(root: Path, commands: list[str], rerun: bool) -> None:
         return
     entry = None if rerun else passed_entry(root, commands)
     if entry:
-        print(
-            f"Guia Fluxo: portao ja passou neste tree em {entry.get('at')} (commit {str(entry.get('head'))[:12]}) "
-            "- nao roda de novo (--rerun-gate forca).",
-            file=sys.stderr,
-        )
+        print(f"Guia Fluxo: {describe_pass(entry)} - nao roda de novo (--rerun-gate forca).", file=sys.stderr)
         return
     failure = run_gate(root, commands)
     if failure:
