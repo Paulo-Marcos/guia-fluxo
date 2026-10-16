@@ -96,6 +96,7 @@ from _cli_changelog import cmd_changelog  # noqa: E402
 from _cli_deps_bot import cmd_deps  # noqa: E402
 from _cli_configure import cmd_configure  # noqa: E402
 from _cli_chat import cmd_chat  # noqa: E402
+from _cli_dashboard import add_dashboard_parser  # noqa: E402
 from _cli_next import cmd_next  # noqa: E402
 from _cli_triage import cmd_triage  # noqa: E402
 from _cli_model import cmd_model  # noqa: E402
@@ -495,6 +496,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_chat.add_argument("--json", action="store_true", help="Saida em JSON.")
     p_chat.set_defaults(func=cmd_chat)
 
+    add_dashboard_parser(sub)
+
     p_scaffold = sub.add_parser(
         "scaffold",
         help="Gera andaimes de entrega (auditoria, pr-template, dependabot) ou imprime ci-ok/protection (D-120).",
@@ -806,8 +809,8 @@ def build_parser() -> argparse.ArgumentParser:
 # Commands that must NOT auto-init the project (D-075). `init` seeds it
 # itself; `doctor` reports `.guia/` health and must not mask a missing dir;
 # `render` is a dev-only build step over the manifest, unrelated to project
-# state.
-_NO_AUTO_INIT = frozenset({"init", "doctor", "render", "upgrade"})
+# state; `dashboard` (D-175) only reads and may run from any folder.
+_NO_AUTO_INIT = frozenset({"init", "doctor", "render", "upgrade", "dashboard"})
 
 
 def main(argv: list[str] | None = None) -> int:

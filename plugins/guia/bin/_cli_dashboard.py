@@ -1,0 +1,148 @@
+"""CLI handler: dashboard - painel local dos projetos e da fila (D-175).
+
+Sem flags, registra o projeto atual (quando tem `.guia/`) e sobe um servidor
+HTTP so em 127.0.0.1 que serve a pagina e `/api/snapshot`. Somente leitura:
+o painel nunca muda estado; quem muda e o motor dentro de cada projeto.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import socket
+import threading
+import webbrowser
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+
+from _constants import ROOT
+from _dashboard import add_projects, is_project, load_projects, overview, registry_file, remove_project, scan
+from _dashboard_page import PAGE_HTML
+
+DEFAULT_PORT = 8765
+_PORT_TRIES = 10
+
+
+def _handler(port_ref: list[int]) -> type[BaseHTTPRequestHandler]:
+    class Handler(BaseHTTPRequestHandler):
+        def _send(self, code: int, body: bytes, content_type: str) -> None:
+            self.send_response(code)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_GET(self) -> None:  # noqa: N802 - nome da API do http.server
+            # Contra DNS rebinding: so responde a quem chamou pelo endereco local.
+            host = (self.headers.get("Host") or "").lower()
+            if host not in {f"127.0.0.1:{port_ref[0]}", f"localhost:{port_ref[0]}"}:
+                self._send(403, b"host nao permitido", "text/plain; charset=utf-8")
+                return
+            path = self.path.split("?", 1)[0]
+            if path == "/":
+                self._send(200, PAGE_HTML.encode("utf-8"), "text/html; charset=utf-8")
+            elif path == "/api/snapshot":
+                body = json.dumps(overview(load_projects()), ensure_ascii=False).encode("utf-8")
+                self._send(200, body, "application/json; charset=utf-8")
+            else:
+                self._send(404, b"nao encontrado", "text/plain; charset=utf-8")
+
+        def log_message(self, format: str, *args: object) -> None:  # noqa: A002
+            return  # o terminal fica limpo; o painel faz polling a cada poucos segundos
+
+    return Handler
+
+
+class _ExclusiveServer(ThreadingHTTPServer):
+    """Porta so nossa. O HTTPServer liga SO_REUSEADDR, que no Windows deixa um
+    segundo processo ocupar a mesma porta: dois paineis dividiriam a porta e a
+    busca pela proxima livre nunca andaria."""
+
+    allow_reuse_address = False
+
+    def server_bind(self) -> None:
+        if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
+
+
+def _bind(port: int) -> ThreadingHTTPServer:
+    port_ref = [port]
+    last_error: OSError | None = None
+    for candidate in range(port, port + _PORT_TRIES):
+        port_ref[0] = candidate
+        try:
+            return _ExclusiveServer(("127.0.0.1", candidate), _handler(port_ref))
+        except OSError as exc:
+            last_error = exc
+    raise SystemExit(f"Nenhuma porta livre entre {port} e {port + _PORT_TRIES - 1}: {last_error}")
+
+
+def _serve(args: argparse.Namespace) -> int:
+    server = _bind(args.port)
+    url = f"http://127.0.0.1:{server.server_address[1]}/"
+    print(f"PAINEL: {url}")
+    print(f"Projetos: {len(load_projects())} (cadastro em {registry_file()}). Ctrl+C encerra.")
+    if not args.no_open:
+        threading.Timer(0.4, webbrowser.open, args=(url,)).start()
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nPainel encerrado.")
+    finally:
+        server.server_close()
+    return 0
+
+
+def cmd_dashboard(args: argparse.Namespace) -> int:
+    changed = False
+    for raw in args.add:
+        path = Path(raw)
+        if not is_project(path):
+            raise SystemExit(f"{path} nao tem .guia/tasks.json: nao e um projeto do Guia.")
+        added = add_projects([path])
+        print(f"Cadastrado: {added[0]}" if added else f"Ja cadastrado: {path.resolve()}")
+        changed = True
+    for raw in args.remove:
+        print(f"Removido: {raw}" if remove_project(Path(raw)) else f"Nao estava cadastrado: {raw}")
+        changed = True
+    for raw in args.scan:
+        found = scan(Path(raw), depth=args.depth)
+        added = add_projects(found)
+        print(f"{raw}: {len(found)} projeto(s) encontrado(s), {len(added)} novo(s).")
+        for path in added:
+            print(f"  + {path}")
+        changed = True
+    if is_project(ROOT):
+        add_projects([ROOT])
+    if args.list:
+        for path in load_projects():
+            print(path)
+        return 0
+    if args.json:
+        print(json.dumps(overview(load_projects()), ensure_ascii=False, indent=2))
+        return 0
+    if changed and not args.serve:
+        return 0
+    return _serve(args)
+
+
+def add_dashboard_parser(sub: argparse._SubParsersAction) -> None:  # type: ignore[type-arg]
+    p = sub.add_parser(
+        "dashboard",
+        help="Painel local (D-175): projetos da maquina, demandas por etapa e a fila de integracao, no navegador. Somente leitura.",
+    )
+    p.add_argument("--port", type=int, default=DEFAULT_PORT, help=f"Porta local (padrao {DEFAULT_PORT}; tenta as seguintes se ocupada).")
+    p.add_argument("--no-open", action="store_true", help="Nao abre o navegador.")
+    p.add_argument("--add", action="append", default=[], metavar="PASTA", help="Cadastra um projeto. Repetivel.")
+    p.add_argument("--remove", action="append", default=[], metavar="PASTA", help="Tira um projeto do cadastro. Repetivel.")
+    p.add_argument("--scan", action="append", default=[], metavar="PASTA", help="Procura projetos do Guia sob a pasta e cadastra. Repetivel.")
+    p.add_argument("--depth", type=int, default=3, help="Profundidade do --scan (padrao 3).")
+    p.add_argument("--list", action="store_true", help="Lista os projetos cadastrados e sai.")
+    p.add_argument("--json", action="store_true", help="Imprime o retrato de todos os projetos em JSON e sai.")
+    p.add_argument("--serve", action="store_true", help="Com --add/--remove/--scan, sobe o painel em seguida.")
+    p.set_defaults(func=cmd_dashboard)
+
+
+__all__ = ["add_dashboard_parser", "cmd_dashboard"]
