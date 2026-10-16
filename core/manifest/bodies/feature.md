@@ -20,3 +20,5 @@ Useful flags:
 {{include: _partials/lock_protocol.md}}
 
 Then continue with the implementation.
+
+{{include: _partials/conductor.md}}

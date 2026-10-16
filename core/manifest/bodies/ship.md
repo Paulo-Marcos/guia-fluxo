@@ -10,6 +10,8 @@ ship [D-NNN] --subject "<emoji> <type>(D-NNN): <title>" --body "<why>" --unlock-
 
 - Commit first (`commit-message` builds the message); ship pushes what is committed.
 - Without an id, the demand comes from the `d-NNN-*` branch.
-- Next step: `audit` on the new head.
+- Next step: `audit` on the new head - at levels `pr`/`queue`/`pilot`, go on without asking.
 
 {{include_per_target: _partials/post_cli}}
+
+{{include: _partials/conductor.md}}
