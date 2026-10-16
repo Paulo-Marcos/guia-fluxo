@@ -8,6 +8,7 @@ from typing import Any
 
 from _autonomy import effective_level, human_reasons, implicit_approval, rank
 from _clock import now_iso
+from _conductor import announce_next
 from _constants import DELIVERY_BASE_BRANCH_DEFAULT, PROCESS_FILE, ROOT, STATUS_IN_PR, STATUS_IN_QUEUE
 from _git_ops import git_output
 from _github import gh_pr_state
@@ -127,6 +128,7 @@ def _enqueue(args: argparse.Namespace) -> int:
         print(f"Aprovado pela autonomia (nivel {approval['level']}): o executor integra sem novo ok.")
     elif reasons:
         print(f"alwaysHuman: espera o approve do dono - {'; '.join(reasons)}.")
+    announce_next(task, config)
     return 0
 
 

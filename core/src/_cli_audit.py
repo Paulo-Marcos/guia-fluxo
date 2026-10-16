@@ -8,6 +8,7 @@ from pathlib import Path
 
 from _audit import AUDIT_CHECKLIST, audit_target, delta_range, record_audit
 from _cli_lifecycle import _plugin_templates_dir
+from _conductor import announce_next
 from _constants import PROCESS_FILE
 from _skills import STAGE_AUDIT, announce_stage, record_stage, stage_skills
 from _state import read_json
@@ -65,6 +66,7 @@ def cmd_audit(args: argparse.Namespace) -> int:
     save_task(task)
     verdict = "aprovada, marcador comentado" if args.approve else "registrada sem aprovacao (sem marcador)"
     print(f"{task['id']}: auditoria {verdict} no PR #{task['pr']['number']} - head {audit['auditedSha']}")
+    announce_next(task, config)
     return 0
 
 

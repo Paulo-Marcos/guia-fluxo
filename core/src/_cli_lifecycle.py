@@ -15,6 +15,7 @@ from typing import Any
 
 from _clock import now_iso, today
 from _commit import commit_task
+from _conductor import announce_next
 from _lock_profiles import DEFAULT_LOCK_PROFILE, LOCK_PROFILES, PROFILE_NO_LOCKS
 from _paths import plugin_templates_dir
 from _constants import (
@@ -517,6 +518,7 @@ def cmd_ready(args: argparse.Namespace) -> int:
 
     print(f"{task['id']} moved to {task['status']}.")
     print_demand_title(task)
+    announce_next(task, config)
     return 0
 
 
