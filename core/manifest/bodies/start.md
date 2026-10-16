@@ -18,3 +18,5 @@ Accepts transition from `Backlog` (shortcut that skips `Planejada`) or `Planejad
 Tasks promoted from `Backlog` enter `.guia/DEMANDAS.md`.
 
 {{include_per_target: _partials/post_cli}}
+
+{{include: _partials/conductor.md}}

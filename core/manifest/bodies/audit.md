@@ -11,5 +11,8 @@ audit [D-NNN] --report report.md --approve --finding BLOQUEANTE=0 --finding CORR
 
 - The marker must point at the head GitHub sees: push (or `ship`) first.
 - Without `--finding`, the `pilot` level never closes the demand on its own.
+- Next step after an approved audit: `queue add` (levels `queue`/`pilot`) - never merge the PR yourself.
 
 {{include_per_target: _partials/post_cli}}
+
+{{include: _partials/conductor.md}}

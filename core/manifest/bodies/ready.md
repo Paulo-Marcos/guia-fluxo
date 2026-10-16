@@ -1,6 +1,11 @@
 # Ready
 
-**The agent (you) calls this when implementation ends** — not the human. `ready` is the handoff to human validation; the human then validates in real use, and you call `finish` afterward. Do not skip `ready` and go straight to `finish` — that bypasses the human-in-the-loop gate.
+**The agent (you) calls this when implementation ends** — not the human. What comes after depends on the demand's autonomy level (the engine applies it; see "Then: let the engine conduct" below):
+
+- `manual` (or `delivery.mode: direct`): `ready` is the handoff — the developer validates in real use and decides the `finish`. Stop here.
+- `pr`, `queue`, `pilot`: `ready` is NOT a stop. Go straight on to `ship`, `audit` and (at `queue`/`pilot`) `queue add`, without asking — the level already authorizes them.
+
+Never skip `ready` and never run `finish` yourself — closing stays with the developer (or, at `pilot`, with the queue's auto-finish).
 
 {{include_per_target: _partials/run_cmd}}
 
