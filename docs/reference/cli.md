@@ -205,7 +205,15 @@ O resultado (skills, achados, dimensoes, ou skip) fica em `task.qualityReview` n
 .\core\bin\guia.ps1 ship [D-NNN] --body "o porque" [--subject "..."] [--unlock-reason "..."] [--no-changelog "motivo"]
 ```
 
-Modo `pr` (D-122): leva a demanda do worktree ao PR. Confere, **antes de qualquer efeito**: modo `pr`, branch de demanda, arvore limpa, tabela Pedido -> Teste (`ready --request-test "pedido :: teste"`, obrigatoria salvo `delivery.pr.requestToTest = false`), fragmento de CHANGELOG quando `delivery.changelog.style = fragments` (ou `--no-changelog "motivo"`, que vai para o PR) e o portao `delivery.gate.full` (sem portao, avisa). Depois: empurra a branch, abre ou atualiza o PR (titulo = assunto do commit; corpo = o porque, a tabela, a demanda e `delivery.pr.footer`), grava a mensagem de squash em `.guia/queue/<ID>.msg` (com as marcas `[unlock:]`) e poe a demanda em `Em PR`. A configuracao vem do `process.json` da arvore principal: mudanca de config num PR so vale depois do merge. O `finish` aceita demanda `Em PR`. **Marca que sobrevive a fila (D-167):** cada `[unlock:<trava>]` que o PR precisa tem de estar num commit que muda arquivos - commit vazio ou merge some no `update-branch --rebase` da fila e o lock-check reprova; o `ship` recusa antes do portao e manda refazer o commit da mudanca com a mensagem do `commit-message`.
+Modo `pr` (D-122): leva a demanda do worktree ao PR. Confere, **antes de qualquer efeito**: modo `pr`, branch de demanda, arvore limpa, tabela Pedido -> Teste (`ready --request-test "pedido :: teste"`, obrigatoria salvo `delivery.pr.requestToTest = false`), fragmento de CHANGELOG quando `delivery.changelog.style = fragments` (ou `--no-changelog "motivo"`, que vai para o PR) e o portao `delivery.gate.full` (sem portao, avisa; tree que ja passou nele - `gate` ou ship anterior - nao roda de novo, `--rerun-gate` forca, D-182). Depois: empurra a branch, abre ou atualiza o PR (titulo = assunto do commit; corpo = o porque, a tabela, a demanda e `delivery.pr.footer`), grava a mensagem de squash em `.guia/queue/<ID>.msg` (com as marcas `[unlock:]`) e poe a demanda em `Em PR`. A configuracao vem do `process.json` da arvore principal: mudanca de config num PR so vale depois do merge. O `finish` aceita demanda `Em PR`. **Marca que sobrevive a fila (D-167):** cada `[unlock:<trava>]` que o PR precisa tem de estar num commit que muda arquivos - commit vazio ou merge some no `update-branch --rebase` da fila e o lock-check reprova; o `ship` recusa antes do portao e manda refazer o commit da mudanca com a mensagem do `commit-message`.
+
+### `gate`
+
+```powershell
+.\core\bin\guia.ps1 gate [--rerun]
+```
+
+Roda o `delivery.gate.full` na arvore atual (D-182). Passando com a arvore limpa, grava `HEAD^{tree}` e a impressao dos comandos em `.guia/gate-passed.json` (estado local); o `ship` nao roda de novo o portao num tree ja gravado com os mesmos comandos (`ship --rerun-gate` forca) e grava o tree quando o portao passa nele. Arvore suja roda mas nao grava. Falha sai com 1. `--rerun` roda mesmo com o tree gravado.
 
 ### `audit`
 

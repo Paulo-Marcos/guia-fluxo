@@ -23,3 +23,5 @@ Thumbs.db
 .guia/backups/
 .guia/queue.lock
 .guia/queue.json.*.tmp
+# Trees que ja passaram no portao (D-182): o ship nao repete o mesmo conteudo.
+.guia/gate-passed.json

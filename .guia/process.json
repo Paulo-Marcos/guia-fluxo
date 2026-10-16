@@ -41,7 +41,7 @@
     },
     "gate": {
       "full": [
-        "python -m pytest -q",
+        "python -m pytest -q -n auto",
         "python core/build/render-skills.py --check"
       ]
     },

@@ -3,13 +3,12 @@
 Todas as conferencias vem antes de qualquer efeito: se uma recusa, nada foi
 empurrado, nenhum PR foi aberto e o estado nao mudou. Depois: push, PR
 aberto ou atualizado (titulo = assunto do commit, corpo montado da demanda),
-mensagem de squash gravada em `.guia/queue/<ID>.msg` e status `Em PR`.
+mensagem de squash gravada em `.guia/queue/<ID>.msg` e status `Em PR`. O
+portao nao roda de novo num tree que ja passou por ele (D-182, `_gate`).
 """
 
 from __future__ import annotations
 
-import os
-import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -28,6 +27,7 @@ from _constants import (
     STATUS_IN_DEVELOPMENT,
     STATUS_IN_PR,
 )
+from _gate import gate_commands, passed_entry, record_pass, run_gate
 from _git_ops import current_branch, git_output
 from _github import gh_pr_upsert
 
@@ -68,20 +68,23 @@ def _refuse(message: str) -> None:
     raise SystemExit(f"ship recusado: {message}")
 
 
-def _check_gate(root: Path, commands: list[str]) -> None:
+def _check_gate(root: Path, commands: list[str], rerun: bool) -> None:
+    """O portao, menos o tree que ja passou por ele (D-182); passando, grava."""
     if not commands:
         print("Guia Fluxo: sem delivery.gate.full - portao NAO conferido pelo ship.", file=sys.stderr)
-    for command in commands:
-        try:
-            result = subprocess.run(
-                shlex.split(command, posix=os.name != "nt"),
-                cwd=root, text=True, encoding="utf-8", errors="replace", capture_output=True,
-            )
-        except FileNotFoundError:
-            _refuse(f"portao: comando nao encontrado: {command}")
-        if result.returncode != 0:
-            tail = "\n".join((result.stdout + result.stderr).strip().splitlines()[-15:])
-            _refuse(f"portao falhou em `{command}` (exit {result.returncode}):\n{tail}")
+        return
+    entry = None if rerun else passed_entry(root, commands)
+    if entry:
+        print(
+            f"Guia Fluxo: portao ja passou neste tree em {entry.get('at')} (commit {str(entry.get('head'))[:12]}) "
+            "- nao roda de novo (--rerun-gate forca).",
+            file=sys.stderr,
+        )
+        return
+    failure = run_gate(root, commands)
+    if failure:
+        _refuse(failure)
+    record_pass(root, commands)
 
 
 def _marks_that_survive_rebase(root: Path, base: str) -> set[str]:
@@ -132,7 +135,7 @@ def preflight(task: dict[str, Any], config: dict[str, Any], args: Any, cwd: Path
             "(o commit que toca o arquivo travado). Commit vazio ou merge some no rebase da fila e o lock-check do PR "
             "reprova. Refaca o commit da mudanca com a mensagem do `commit-message` (ela ja traz a marca)."
         )
-    _check_gate(root, list((delivery.get("gate") or {}).get("full") or []))
+    _check_gate(root, gate_commands(config), bool(getattr(args, "rerun_gate", False)))
     return {"root": root, "base": base, "branch": branch, "message": message, "delivery": delivery}
 
 

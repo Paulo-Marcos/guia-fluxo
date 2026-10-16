@@ -20,6 +20,7 @@ ship [D-NNN] --subject "<emoji> <type>(D-NNN): <title>" --body "<why>" --unlock-
 ```
 
 - Commit first (`commit-message` builds the message); ship pushes what is committed.
+- Run the gate with `gate` (not by hand) once the tree is committed: it records the tree that passed, and ship skips a tree already recorded instead of running the gate twice (`--rerun-gate` forces).
 - Without an id, the demand comes from the `d-NNN-*` branch.
 - Next step: `audit` on the new head.
 

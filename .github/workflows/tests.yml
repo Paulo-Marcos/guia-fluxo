@@ -3,8 +3,9 @@
 # main e em todo pull_request. O job `CI ok` agrega tudo num check so, que e o
 # exigido pela protecao da main (D-106).
 #
-# O pack roda com stdlib + pyyaml; pytest e a unica dependencia extra de
-# teste. Sem pyproject/pytest.ini: pytest descobre tests/ pela raiz sem config.
+# O pack roda com stdlib + pyyaml; pytest e pytest-xdist sao as dependencias
+# de teste (requirements-dev.txt, D-182). Sem pyproject/pytest.ini: pytest
+# descobre tests/ pela raiz sem config; `-n auto` reparte entre os nucleos.
 
 name: tests
 
@@ -32,11 +33,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install deps (pyyaml + pytest)
-        run: pip install pyyaml pytest
+      - name: Install deps (requirements-dev.txt)
+        run: pip install -r requirements-dev.txt
 
       - name: pytest
-        run: pytest
+        run: pytest -n auto
 
   # Era o workflow render-check.yml, com filtro de caminhos. Check com filtro
   # nao pode ser exigido: quando o filtro nao casa, o check nunca roda e o PR

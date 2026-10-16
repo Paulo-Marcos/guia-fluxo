@@ -1,0 +1,5 @@
+# Dependencias de desenvolvimento (D-182). O pack em si roda com stdlib + pyyaml;
+# pytest e pytest-xdist sao so da suite (o portao roda `pytest -n auto`).
+pyyaml
+pytest>=8
+pytest-xdist>=3.6
