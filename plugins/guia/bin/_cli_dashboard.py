@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import socket
 import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -53,13 +54,26 @@ def _handler(port_ref: list[int]) -> type[BaseHTTPRequestHandler]:
     return Handler
 
 
+class _ExclusiveServer(ThreadingHTTPServer):
+    """Porta so nossa. O HTTPServer liga SO_REUSEADDR, que no Windows deixa um
+    segundo processo ocupar a mesma porta: dois paineis dividiriam a porta e a
+    busca pela proxima livre nunca andaria."""
+
+    allow_reuse_address = False
+
+    def server_bind(self) -> None:
+        if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
+
+
 def _bind(port: int) -> ThreadingHTTPServer:
     port_ref = [port]
     last_error: OSError | None = None
     for candidate in range(port, port + _PORT_TRIES):
         port_ref[0] = candidate
         try:
-            return ThreadingHTTPServer(("127.0.0.1", candidate), _handler(port_ref))
+            return _ExclusiveServer(("127.0.0.1", candidate), _handler(port_ref))
         except OSError as exc:
             last_error = exc
     raise SystemExit(f"Nenhuma porta livre entre {port} e {port + _PORT_TRIES - 1}: {last_error}")
