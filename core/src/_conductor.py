@@ -51,6 +51,12 @@ def _after_ready(task: dict[str, Any], level: str, mode: str) -> dict[str, Any]:
         return _stop("modo direct: sem PR - valide e decida o finish", level)
     if rank(level) < rank("pr"):
         return _stop("nivel manual: valide e decida o finish", level)
+    from _legacy_ready import legacy_ready  # D-180: lido so aqui, apos o ready
+
+    first_pr = legacy_ready(task)
+    if first_pr:
+        return _stop(f"legado: ready antes do primeiro PR do projeto ({first_pr[:10]}), o codigo ja entrou direto "
+                     "na base - valide e decida o finish ou o cancel", level)
     return _step(STEP_SHIP, "pronta: portao, push e PR", level)
 
 
