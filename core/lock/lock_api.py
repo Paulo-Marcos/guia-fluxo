@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import os
 import re
+import subprocess
 from dataclasses import dataclass, field
 from fnmatch import fnmatchcase
 from functools import lru_cache
@@ -132,9 +133,34 @@ def matches_pattern(pattern: str, path: str) -> bool:
     return n_pattern == n_path or fnmatchcase(n_path, n_pattern)
 
 
+def _in_head(path: str) -> bool | None:
+    """Whether `path` exists in HEAD (None: no git, no HEAD - can't tell)."""
+    try:
+        result = subprocess.run(
+            ["git", "cat-file", "-e", f"HEAD:{path}"],
+            cwd=REPO_ROOT, capture_output=True, text=True, check=False,
+        )
+    except OSError:
+        return None
+    if result.returncode == 0:
+        return True
+    head = subprocess.run(["git", "rev-parse", "--verify", "-q", "HEAD"],
+                          cwd=REPO_ROOT, capture_output=True, text=True, check=False)
+    return False if head.returncode == 0 else None
+
+
 def infer_operation(path: str) -> str:
-    """Infer add vs modify by whether the path currently exists on disk."""
-    return OPERATION_MODIFY if (REPO_ROOT / path).exists() else OPERATION_ADD
+    """Infer add vs modify the way the commit-msg hook will see it.
+
+    D-181: a file that is on disk but not in HEAD (a new test not committed
+    yet) is still an `add` - the hook reads `git diff --cached` (status A).
+    Judging by the disk alone, `check` and the PreToolUse hook called it
+    `modify` and a lock guarding only modify/delete/rename looked violated.
+    Without git (or before the first commit), the disk decides as before.
+    """
+    if not (REPO_ROOT / path).exists():
+        return OPERATION_ADD
+    return OPERATION_ADD if _in_head(path) is False else OPERATION_MODIFY
 
 
 # --- I/O (cached) ----------------------------------------------------------
