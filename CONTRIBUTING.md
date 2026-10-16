@@ -6,6 +6,7 @@ Obrigado por considerar contribuir. Este projeto e um pack de processo: skill, s
 
 - Python 3.8+ no PATH.
 - `pyyaml` (`pip install pyyaml`) - usado pelo hook `commit-msg` e pelo render.
+- Para a suite: `pip install -r requirements-dev.txt` (`pytest` + `pytest-xdist`; o portao roda `python -m pytest -q -n auto`).
 - Git 2.30+ (para `core.hooksPath`).
 - PowerShell 5.1+ (Windows) **ou** Bash equivalente para invocar `core/bin/guia.ps1`/`python core/src/guia.py` diretamente.
 

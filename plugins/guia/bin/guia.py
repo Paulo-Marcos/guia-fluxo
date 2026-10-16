@@ -103,6 +103,7 @@ from _cli_model import cmd_model  # noqa: E402
 from _cli_profile import cmd_profile  # noqa: E402
 from _cli_queue import cmd_approve, cmd_queue  # noqa: E402
 from _cli_scaffold import cmd_scaffold  # noqa: E402
+from _cli_gate import cmd_gate  # noqa: E402
 from _cli_ship import cmd_ship  # noqa: E402
 from _cli_worktree import cmd_worktree  # noqa: E402
 from _cli_tasks import (  # noqa: E402
@@ -531,7 +532,15 @@ def build_parser() -> argparse.ArgumentParser:
         help='Motivo das marcas [unlock:]: "<trava>=<motivo>" ou "<motivo>" (repetivel).',
     )
     p_ship.add_argument("--no-changelog", help="Motivo de nao haver fragmento (mudanca so interna); vai para o PR.")
+    p_ship.add_argument("--rerun-gate", action="store_true", help="Roda o portao mesmo se este tree ja passou (D-182).")
     p_ship.set_defaults(func=cmd_ship)
+
+    p_gate = sub.add_parser(
+        "gate",
+        help="Roda delivery.gate.full na arvore atual e grava o tree aprovado; o ship nao repete (D-182).",
+    )
+    p_gate.add_argument("--rerun", action="store_true", help="Roda mesmo se este tree ja passou.")
+    p_gate.set_defaults(func=cmd_gate)
 
     p_audit = sub.add_parser(
         "audit",
