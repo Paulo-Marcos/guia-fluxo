@@ -6,6 +6,7 @@ Cada comando do CLI imprime `NOME DA DEMANDA: ...`. Desde a [ADR-0020](../adr/00
 
 - **Rename real, pelo agente (desktop):** `mcp__ccd_session_mgmt__set_session_title` com `session_id: "self"` e a linha exata de `NOME DA DEMANDA`. Tool adiada: carregue com ToolSearch `select:mcp__ccd_session_mgmt__set_session_title`. Pede aprovacao quando o titulo atual foi dado pelo dono; recusa em sessao desatendida.
 - **Chat novo por demanda (desktop):** `mcp__ccd_session__start_session` com `title` = `NOME DA DEMANDA`, `model`/`effort` do `triage D-NNN --json` e brief `start D-NNN`. A sessao nasce relacionada a de origem. So desce de modelo: recomendacao acima do chat atual e avisada ao dono.
+- **Rename pela fila (D-188):** o chat grava o proprio `sessionId` (`mcp__ccd_session_mgmt__get_session` com `session_id: "self"`) via `chat D-NNN --title ... --session <id>`. Quando o `queue run` integra a demanda, imprime `RENOMEIE O CHAT: <sessionId> -> <NOME DA DEMANDA>` (etapa final: `#INTEGRADA`, ou `#FINALIZADO` quando o `pilot` fechou). O executor Python nao fala com o app: quem chama `set_session_title(session_id=<id>)` e o chat gerente da fila (`queue-control run`). Recusa (sessao desatendida, titulo dado pelo dono) vira so aviso.
 - **Sem a tool:** `mark_chapter` (`mcp__ccd_session__mark_chapter`, divisor + ToC); `/rename <titulo>` digitado pelo humano; `claude -n <titulo>` no lancamento (D-048); helper `core/bin/guia-rename.ps1` / `core/bin/guia-rename` (clipboard). Ver [how-to/renomear-chat.md](../how-to/renomear-chat.md).
 - Claude **nao** usa `codex_app.*`.
 

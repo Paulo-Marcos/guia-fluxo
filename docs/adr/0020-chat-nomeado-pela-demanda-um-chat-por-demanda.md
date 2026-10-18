@@ -19,7 +19,8 @@ Os dois mudaram no Claude Code desktop:
 2. **O chat da demanda nasce no modelo recomendado.** O `triage` roda antes de decidir onde a demanda corre; `triage --json` da `model` e `effort`, que vao direto nos parametros de mesmo nome do `start_session`. A demanda so fica no chat atual quando ele nao tem outra demanda **e** ja roda no modelo recomendado. Como o `start_session` so desce de modelo, recomendacao acima do chat atual (Opus a partir de Sonnet, sugestao Fable) e avisada ao dono, nunca assumida.
 3. **O chat leva o nome da demanda e acompanha a etapa.** Sempre que um verbo imprime `NOME DA DEMANDA` no chat da demanda, o agente renomeia a sessao para essa linha exata. O titulo passa de `#DEV` a `#VALIDACAO`, `#PR`, `#FILA`... e a barra lateral vira um painel das demandas.
 4. **Nome estavel continua gravado (D-157).** `chat <D-NNN> --title` guarda o nome sem etapa (`D-NNN ✨ Titulo`), que a fila e o `status --all` citam. O titulo vivo comeca pelo mesmo `D-NNN`, entao buscar o ID na barra lateral acha o chat.
-5. **Degradacao.** Sem a tool (CLI, outro host, sessao desatendida que recusa o rename): `mark_chapter` + `/rename` manual, como na ADR-0018. Codex segue com `codex_app.set_thread_title`.
+5. **A fila renomeia o chat ao integrar (D-188).** O chat grava o proprio `sessionId` junto do nome (`chat D-NNN --session <id>`). Ao integrar, o `queue run` imprime `RENOMEIE O CHAT: <sessionId> -> <NOME DA DEMANDA>` com a etapa final, e o chat gerente da fila chama `set_session_title` com esse id. O executor fica mecanico e sem MCP; sessao que recusa o rename vira aviso ao dono.
+6. **Degradacao.** Sem a tool (CLI, outro host, sessao desatendida que recusa o rename): `mark_chapter` + `/rename` manual, como na ADR-0018. Codex segue com `codex_app.set_thread_title`.
 
 ## Consequencias
 
