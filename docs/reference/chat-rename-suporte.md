@@ -1,16 +1,15 @@
 # Reference: suporte de renomeacao de chat por ferramenta
 
-Cada comando do CLI imprime `NOME DA DEMANDA: ...` — info da demanda corrente, **nao** um titulo de chat. Renomear o chat e **opcional** ([ADR-0018](../adr/0018-nome-da-demanda-chat-diferente-de-demanda.md)); so vale quando uma demanda mapeia limpo para o chat (um chat com varias demandas — epico D-049 — nao deve ser renomeado para uma so). Como aplicar a renomeacao na UI varia por ferramenta.
+Cada comando do CLI imprime `NOME DA DEMANDA: ...`. Desde a [ADR-0020](../adr/0020-chat-nomeado-pela-demanda-um-chat-por-demanda.md), cada demanda tem o seu chat e essa linha e o titulo dele, atualizado a cada etapa. Como aplicar varia por ferramenta.
 
 ## Claude Code
 
-- Surrogate confiavel (na sessao, pelo agente): `mark_chapter` (`mcp__ccd_session__mark_chapter`) com o titulo da demanda — coloca divisor + entrada na ToC. **Nao** renomeia de verdade no picker/titulo do terminal, mas cobre a navegacao.
-- Renomeacao real, na sessao, **pelo humano**: `/rename <titulo>` (slash command digitado; o agente nao consegue dispara-lo programaticamente).
-- Inicio de sessao: `claude -n <titulo>` — define o nome **no lancamento** (e o escopo da **D-048**, nao da renomeacao de sessao viva).
-- Helper fino: `core/bin/guia-rename.ps1` / `core/bin/guia-rename` le `.guia/demand-title.txt`, copia o titulo para o clipboard e imprime destacado — voce so da `/rename` + cola. Ver [how-to/renomear-chat.md](../how-to/renomear-chat.md).
-- Claude **nao** usa `codex_app.*`. Se nao houver superficie acessivel, basta repetir `NOME DA DEMANDA: ...` para o humano.
+- **Rename real, pelo agente (desktop):** `mcp__ccd_session_mgmt__set_session_title` com `session_id: "self"` e a linha exata de `NOME DA DEMANDA`. Tool adiada: carregue com ToolSearch `select:mcp__ccd_session_mgmt__set_session_title`. Pede aprovacao quando o titulo atual foi dado pelo dono; recusa em sessao desatendida.
+- **Chat novo por demanda (desktop):** `mcp__ccd_session__start_session` com `title` = `NOME DA DEMANDA`, `model`/`effort` do `triage D-NNN --json` e brief `start D-NNN`. A sessao nasce relacionada a de origem. So desce de modelo: recomendacao acima do chat atual e avisada ao dono.
+- **Sem a tool:** `mark_chapter` (`mcp__ccd_session__mark_chapter`, divisor + ToC); `/rename <titulo>` digitado pelo humano; `claude -n <titulo>` no lancamento (D-048); helper `core/bin/guia-rename.ps1` / `core/bin/guia-rename` (clipboard). Ver [how-to/renomear-chat.md](../how-to/renomear-chat.md).
+- Claude **nao** usa `codex_app.*`.
 
-> **Viabilidade (verificado na D-057):** **nao existe** mecanismo para um processo externo renomear uma sessao Claude Code **ja aberta** — sem flag de CLI, arquivo observado, IPC ou MCP ([claude-code#67680](https://github.com/anthropics/claude-code/issues/67680) pede exatamente isso, ainda aberta). Por isso a D-057 nao "aciona" rename nenhum: o essencial ja e o `mark_chapter` (in-session), e o helper acima so facilita o `/rename` manual via clipboard.
+> **Historico (D-057):** quando a ADR-0018 foi escrita nao havia como renomear uma sessao ja aberta ([claude-code#67680](https://github.com/anthropics/claude-code/issues/67680)). O Claude Code desktop passou a expor `set_session_title` - verificado na D-185. Processo **externo** ainda nao renomeia; quem renomeia e o agente dentro da sessao.
 
 ## Codex App
 
@@ -18,7 +17,7 @@ Cada comando do CLI imprime `NOME DA DEMANDA: ...` — info da demanda corrente,
 - Renomear: `codex_app.set_thread_title` com **exatamente** o titulo impresso em `NOME DA DEMANDA: ...`.
 - Identificar a thread atual: combine sinais como `status: active`, `cwd` correspondente, `preview` da mensagem corrente e `updatedAt` mais recente.
 
-**Importante:** o print de `NOME DA DEMANDA` **nao renomeia** a UI — e info da demanda, nao do chat. A renomeacao e um passo opcional; faca a chamada da API so quando ajudar a navegacao.
+**Importante:** o print de `NOME DA DEMANDA` sozinho **nao renomeia** a UI; o agente faz a chamada da API.
 
 ## Codex CLI / TUI
 
@@ -47,7 +46,9 @@ Fases:
 
 - `#DEV` - em desenvolvimento.
 - `#VALIDACAO` - aguardando validacao (`ready`).
+- `#PR` / `#FILA` / `#INTEGRADA` - entrega por PR.
 - `#FINALIZADO` - validado (`finish`).
+- Acima de `manual`, o nivel de autonomia vem junto: `#DEV·pilot`.
 
 Exemplos:
 

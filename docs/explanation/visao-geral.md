@@ -36,7 +36,7 @@ Backlog ──┬──> Planejada ──> Em desenvolvimento ──> Aguardando
 1. Comece com `/feature`, `/bug`, `/chore` ou `/backlog add`. Use `--status backlog|planned|in-development` para criar ja parqueado/triado.
 2. O script cria o ID `D-NNN`, atualiza `.guia/tasks.json`, `.guia/current-task.json` e `.guia/DEMANDAS.md` (exceto se `status=Backlog`, que fica fora do catalogo ate ser promovido).
 3. O script sempre imprime `NOME DA DEMANDA: D-NNN <emoji> - #<statusTag> - <title>` (info da demanda corrente, nao um titulo de chat) e grava `.guia/demand-title.txt`.
-4. O agente repete esse nome no chat (rastreabilidade). Renomear o chat e opcional — so quando uma demanda mapeia limpo para o chat (ADR-0018).
+4. O agente repete esse nome no chat (rastreabilidade) e, no Claude Code desktop, renomeia a sessao para ele a cada etapa. Cada demanda tem o seu chat, aberto no modelo recomendado pelo `triage` (ADR-0020).
 5. Para itens em backlog: `/promote <id> --kind feature|bug|chore` (avalia + comeca) ou `/start <id>` (atalho, pressupoe triagem feita).
 6. Para pausar: `/block <id> --reason "..."` (preserva WIP) ou `/plan <id>` (volta para `Planejada`). Para retomar: `/unblock <id>` ou `/start <id>`.
 7. Para cancelar: `/cancel <id> --reason "..."` (terminal).
