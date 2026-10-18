@@ -6,6 +6,15 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-18
+
+### Added
+- O agente renomeia o chat do Claude Code para o NOME DA DEMANDA (com a etapa) a cada passo, e cada demanda nova abre o seu proprio chat relacionado, ja no modelo e esforco recomendados pelo triage (ADR-0020). D-185
+- A fila renomeia o chat da demanda para a etapa final ao integrar: o chat grava o proprio sessionId (`chat --session`), o `queue run` imprime `RENOMEIE O CHAT: <id> -> <NOME DA DEMANDA>` e o chat gerente chama `set_session_title` (D-188).
+
+### Fixed
+- Painel: o refresh de 5 s nao devolve mais a rolagem (pagina e quadros horizontais) ao inicio.
+
 ## [0.9.0] - 2026-10-16
 
 ### Added
