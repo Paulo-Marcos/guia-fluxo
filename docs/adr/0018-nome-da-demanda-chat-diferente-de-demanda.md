@@ -1,6 +1,6 @@
 # ADR-0018: `NOME DA DEMANDA` — o chat nao e a demanda
 
-- **Status:** Aceita
+- **Status:** Substituida em parte por [ADR-0020](0020-chat-nomeado-pela-demanda-um-chat-por-demanda.md) (rename real e um chat por demanda)
 - **Data:** 2026-06-23
 - **Substitui:** [ADR-0004](0004-chat-title-sincronizado.md)
 
