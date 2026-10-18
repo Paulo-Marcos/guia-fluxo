@@ -494,6 +494,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_chat.add_argument("task_id", nargs="?", help="Sem id, vale a branch (D-110).")
     p_chat.add_argument("--title", help="O nome do chat em que a demanda e feita.")
+    p_chat.add_argument("--session", help="Id da sessao do app (D-188): a fila pede ao gerente que a renomeie ao integrar.")
     p_chat.add_argument("--json", action="store_true", help="Saida em JSON.")
     p_chat.set_defaults(func=cmd_chat)
 
