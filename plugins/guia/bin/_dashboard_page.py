@@ -208,7 +208,7 @@ function renderQueue(p, host) {
   if (q.paused) s.append(el("div", "banner", "Fila pausada" + (q.pausedReason ? ": " + q.pausedReason : "")));
   if (q.frozenReason) s.append(el("div", "banner", "Fila congelada: " + q.frozenReason));
   if (!q.items.length) s.append(el("div", "empty", "Ninguém na fila agora."));
-  else { const line = el("div", "queue"); q.items.forEach((it, i) => line.append(queueItem(it, i === 0))); s.append(line); }
+  else { const line = el("div", "queue"); line.dataset.scroll = "queue"; q.items.forEach((it, i) => line.append(queueItem(it, i === 0))); s.append(line); }
   host.append(s);
 }
 
@@ -237,7 +237,7 @@ function renderProject(p) {
   if (p.error) { main.append(el("div", "banner", p.error)); return; }
   renderQueue(p, main);
   const s = el("section"); s.append(el("h2", null, "Demandas por etapa"));
-  const board = el("div", "board");
+  const board = el("div", "board"); board.dataset.scroll = "board";
   for (const st of p.stages) {
     const col = el("div", "col" + (st.cards.length ? "" : " zero"));
     const h = el("h4"); h.append(el("span", null, st.label), el("span", null, st.cards.length));
@@ -268,7 +268,7 @@ function renderAll() {
   const s = el("section"); s.append(el("h2", null, "Quem está na ponta de cada fila"));
   const heads = data.projects.filter(p => !p.error && p.queue.head);
   if (!heads.length) s.append(el("div", "empty", "Todas as filas estão vazias."));
-  else { const line = el("div", "queue"); heads.forEach(p => { const b = queueItem(p.queue.head, true); b.querySelector(".pos b").textContent = "▶ " + p.name + " · " + p.queue.items.length + " na fila"; line.append(b); }); s.append(line); }
+  else { const line = el("div", "queue"); line.dataset.scroll = "heads"; heads.forEach(p => { const b = queueItem(p.queue.head, true); b.querySelector(".pos b").textContent = "▶ " + p.name + " · " + p.queue.items.length + " na fila"; line.append(b); }); s.append(line); }
   main.append(s);
   const t = el("section"); t.append(el("h2", null, "Demandas por etapa"));
   const table = el("table");
@@ -293,6 +293,17 @@ function render() {
   if (selected === ALL) renderAll(); else renderProject(data.projects.find(p => p.path === selected));
 }
 
+// D-186: o refresh redesenha tudo; sem isto a pagina e os quadros com
+// rolagem horizontal voltariam ao inicio a cada 5 s.
+function keepScroll(draw) {
+  const page = [window.scrollX, window.scrollY];
+  const inner = {};
+  document.querySelectorAll("[data-scroll]").forEach(n => { inner[n.dataset.scroll] = [n.scrollLeft, n.scrollTop]; });
+  draw();
+  document.querySelectorAll("[data-scroll]").forEach(n => { const v = inner[n.dataset.scroll]; if (v) { n.scrollLeft = v[0]; n.scrollTop = v[1]; } });
+  window.scrollTo(page[0], page[1]);
+}
+
 async function refresh() {
   try {
     const r = await fetch("/api/snapshot", { cache: "no-store" });
@@ -300,7 +311,7 @@ async function refresh() {
     data = await r.json();
     document.getElementById("dot").className = "dot";
     document.getElementById("stamp").textContent = "atualizado " + new Date().toLocaleTimeString("pt-BR") + " · a cada 5 s";
-    render();
+    keepScroll(render);
   } catch (e) {
     document.getElementById("dot").className = "dot off";
     document.getElementById("stamp").textContent = "sem conexão com o motor (" + e.message + ")";
