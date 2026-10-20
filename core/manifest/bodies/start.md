@@ -5,8 +5,10 @@
 {{include_per_target: _partials/run_cmd}}
 
 ```text
-start <D-NNN> [--note "Starting now because..."]
+start <D-NNN> [--note "Starting now because..."] [--step "step"]...
 ```
+
+`--step` (repeatable) records the execution plan with the start. Without a plan, `start` warns: write the steps before implementing, so the owner can see what the demand will do.
 
 Distinct from:
 - `$promote <B-NNN>`: triage a backlog item deciding kind and plan before starting.

@@ -87,6 +87,22 @@ tr.click:hover td { background: var(--chip); }
 .list div { padding: 7px 12px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: baseline; }
 .list div:last-child { border-bottom: 0; }
 .list .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card.click, .list .click { cursor: pointer; }
+.card.click:hover { border-color: var(--accent); }
+.card.click:focus-visible, .list .click:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.list .click:hover { background: var(--chip); }
+.shade { position: fixed; inset: 0; background: rgba(10,14,22,.35); z-index: 3; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100vw); background: var(--panel); border-left: 1px solid var(--line); z-index: 4; overflow-y: auto; padding: 16px 20px 32px; box-shadow: -4px 0 20px rgba(10,14,22,.15); }
+.drawer[hidden], .shade[hidden] { display: none; }
+.drawer .top { display: flex; align-items: flex-start; gap: 10px; }
+.drawer .top h3 { margin: 0; font-size: 17px; flex: 1; }
+.drawer .x { border: 1px solid var(--line); background: var(--chip); color: var(--ink); border-radius: 6px; padding: 2px 9px; cursor: pointer; font: inherit; }
+.drawer h5 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 16px 0 6px; }
+.drawer p { margin: 0; white-space: pre-wrap; }
+.drawer ol, .drawer ul { margin: 0; padding-left: 20px; }
+.drawer li { margin-bottom: 3px; overflow-wrap: anywhere; }
+.drawer .banner { margin-top: 12px; }
+.drawer .none { color: var(--muted); font-style: italic; }
 @media (max-width: 860px) {
   .layout { grid-template-columns: 1fr; }
   nav { border-right: 0; border-bottom: 1px solid var(--line); }
@@ -98,6 +114,7 @@ tr.click:hover td { background: var(--chip); }
 <body>
 <header>
   <h1>Guia Fluxo · Painel</h1>
+  <span id="version" class="chip" title="versão do Guia que serve este painel"></span>
   <div class="sub"><span id="dot" class="dot"></span><span id="stamp">carregando…</span></div>
 </header>
 <div class="layout">
@@ -106,6 +123,8 @@ tr.click:hover td { background: var(--chip); }
   </nav>
   <main id="main"></main>
 </div>
+<div id="shade" class="shade" hidden></div>
+<aside id="drawer" class="drawer" hidden aria-label="Detalhe da demanda"></aside>
 <script>
 "use strict";
 const ALL = "__all__";
@@ -213,7 +232,8 @@ function renderQueue(p, host) {
 }
 
 function card(c, current) {
-  const box = el("div", "card" + (c.id === current ? " cur" : ""));
+  const box = el("div", "card click" + (c.id === current ? " cur" : ""));
+  clickable(box, c.id);
   const id = el("div", "id"); id.append(el("span", null, c.marker + " " + c.id + (c.id === current ? " · atual" : "")), el("span", null, since(c.updatedAt)));
   box.append(id, el("div", "t", c.title));
   const meta = el("div", "meta");
@@ -223,10 +243,79 @@ function card(c, current) {
   if (c.parentId) meta.append(chip("épico " + c.parentId));
   if (c.blockedReason) meta.append(chip(c.blockedReason, "bad"));
   if (c.status === "Aguardando validacao" && c.pending && c.pending.length) meta.append(chip(c.pending[0], "warn"));
+  if (c.detail && c.detail.missingPlan) meta.append(chip("sem plano", "warn"));
   box.append(meta);
   if (c.chat) box.append(el("div", "chat", "💬 " + c.chat));
   return box;
 }
+
+// D-192: o cartao abre o detalhe da demanda. Somente leitura, como o resto.
+let opened = null;  // { path, id } da demanda aberta; sobrevive ao refresh de 5 s
+function clickable(node, id) {
+  node.tabIndex = 0;
+  node.setAttribute("role", "button");
+  node.onclick = () => openDetail(selected, id);
+  node.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(selected, id); } };
+}
+function findCard(path, id) {
+  const p = data.projects.find(x => x.path === path);
+  if (!p || p.error) return null;
+  for (const st of p.stages) { const c = st.cards.find(x => x.id === id); if (c) return c; }
+  return p.recentDone.find(x => x.id === id) || null;
+}
+function openDetail(path, id) { opened = { path, id }; drawDetail(); }
+function closeDetail() {
+  opened = null;
+  document.getElementById("drawer").hidden = true;
+  document.getElementById("shade").hidden = true;
+}
+function listBlock(host, title, items, ordered, empty) {
+  host.append(el("h5", null, title));
+  if (!items || !items.length) { host.append(el("div", "none", empty || "—")); return; }
+  const l = el(ordered ? "ol" : "ul");
+  items.forEach(i => l.append(el("li", null, i)));
+  host.append(l);
+}
+function drawDetail() {
+  const box = document.getElementById("drawer");
+  const c = opened && findCard(opened.path, opened.id);
+  if (!c) { closeDetail(); return; }
+  const keep = box.hidden ? 0 : box.scrollTop;
+  const d = c.detail || {};
+  box.replaceChildren();
+  const top = el("div", "top");
+  top.append(el("h3", null, c.marker + " " + c.id + " · " + c.title));
+  const x = el("button", "x", "✕"); x.title = "Fechar (Esc)"; x.onclick = closeDetail; top.append(x);
+  box.append(top);
+  const meta = el("div", "meta"); meta.style.display = "flex"; meta.style.flexWrap = "wrap"; meta.style.gap = "4px"; meta.style.marginTop = "8px";
+  meta.append(chip(c.status, "acc"), chip(c.kind || "?"));
+  if (c.autonomy) meta.append(chip("autonomia " + c.autonomy));
+  if (d.triage && d.triage.model) meta.append(chip("modelo " + d.triage.model + "/" + (d.triage.effort || "?")));
+  const link = prLink(c.pr); if (link) meta.append(link);
+  if (c.audit) meta.append(chip("auditoria: " + c.audit, c.audit === "approved" ? "ok" : "warn"));
+  if (d.branch) meta.append(chip("⎇ " + d.branch));
+  box.append(meta);
+  if (d.missingPlan) box.append(el("div", "banner", "Sem plano registrado. Grave os passos com guia plan " + c.id + " --step \"...\" para saber o que a demanda vai fazer."));
+  box.append(el("h5", null, "Contexto"));
+  box.append(d.context ? el("p", null, d.context) : el("div", "none", "Sem contexto."));
+  if (d.assessment && d.assessment.length) listBlock(box, "Avaliação", d.assessment, false);
+  listBlock(box, "Plano", d.plan, true, "Sem plano.");
+  listBlock(box, "Arquivos", d.files, false, "Nenhum arquivo ainda.");
+  listBlock(box, "Resumo", d.summary, false);
+  listBlock(box, "Validações", d.validations, false, "Nenhuma validação registrada.");
+  listBlock(box, "Pendências", d.pending, false, "Nada pendente.");
+  if (d.requests && d.requests.length) listBlock(box, "Pedido → Teste", d.requests.map(r => r.request + " → " + r.test), false);
+  box.append(el("h5", null, "Chat"));
+  box.append(d.chat ? el("p", null, "💬 " + d.chat.title + (d.chat.session ? "  (" + d.chat.session + ")" : "")) : el("div", "none", "Sem chat registrado."));
+  if (d.dependsOn && d.dependsOn.length) listBlock(box, "Depende de", d.dependsOn, false);
+  listBlock(box, "Etapas", (d.steps || []).map(s => s.at.slice(0, 16).replace("T", " ") + " · " + s.step), false);
+  if (d.origin) { box.append(el("h5", null, "Origem")); box.append(el("p", null, d.origin)); }
+  box.hidden = false;
+  document.getElementById("shade").hidden = false;
+  box.scrollTop = keep;
+}
+document.getElementById("shade").onclick = closeDetail;
+document.addEventListener("keydown", e => { if (e.key === "Escape" && opened) closeDetail(); });
 
 function renderProject(p) {
   const main = document.getElementById("main");
@@ -250,7 +339,7 @@ function renderProject(p) {
   const done = el("section"); done.append(el("h2", null, "Concluídas recentes (" + p.doneTotal + " no total)"));
   const dl = el("div", "list");
   if (!p.recentDone.length) dl.append(el("div", "hint", "Nada concluído ainda."));
-  p.recentDone.forEach(c => { const r = el("div"); r.append(el("span", null, c.marker + " " + c.id), el("span", "grow", c.title), chip(c.status, c.status === "Cancelada" ? "" : "ok")); dl.append(r); });
+  p.recentDone.forEach(c => { const r = el("div", "click"); clickable(r, c.id); r.append(el("span", null, c.marker + " " + c.id), el("span", "grow", c.title), chip(c.status, c.status === "Cancelada" ? "" : "ok")); dl.append(r); });
   done.append(dl);
   const hist = el("section"); hist.append(el("h2", null, "Saídas recentes da fila"));
   const hl = el("div", "list");
@@ -312,6 +401,11 @@ async function refresh() {
     document.getElementById("dot").className = "dot";
     document.getElementById("stamp").textContent = "atualizado " + new Date().toLocaleTimeString("pt-BR") + " · a cada 5 s";
     keepScroll(render);
+    const v = data.guia && data.guia.version;
+    const vEl = document.getElementById("version");
+    vEl.textContent = v ? "v" + v : "versão ?";
+    if (data.guia && data.guia.engine) vEl.title = "versão do Guia que serve este painel · " + data.guia.engine;
+    if (opened) drawDetail();
   } catch (e) {
     document.getElementById("dot").className = "dot off";
     document.getElementById("stamp").textContent = "sem conexão com o motor (" + e.message + ")";

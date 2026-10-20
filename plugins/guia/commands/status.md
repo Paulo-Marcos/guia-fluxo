@@ -1,5 +1,5 @@
 ---
-description: "READ-ONLY — show the current active task and its demand title. Optional: `<D-NNN>` to inspect a specific task instead of the current one. Never creates, modifies, advances, or closes a task. To create use `feature`/`bug`/`chore`; for state transitions use `ready`/`finish`/`block`/`unblock`/`cancel`."
+description: "READ-ONLY — show the current active task and its demand title, readable by default (context, plan, files, summary, validations, pending, chat, steps; warns when there is no plan). Optional: `<D-NNN>` to inspect a specific task instead of the current one; `--json` prints the raw task for scripts. Never creates, modifies, advances, or closes a task. To create use `feature`/`bug`/`chore`; for state transitions use `ready`/`finish`/`block`/`unblock`/`cancel`."
 ---
 
 # Status
@@ -18,7 +18,10 @@ The engine roots itself at the current project and auto-creates `.guia/` there o
 ```text
 status            # current task
 status <D-NNN>    # a specific task
+status <D-NNN> --json   # raw task JSON, for scripts
 ```
+
+The default output is readable: header (stage, kind, model, branch, PR, chat), then context, plan, files, summary, validations, pending, Request -> Test and the steps the demand went through. A `Planejada`/`Em desenvolvimento` demand without a plan gets a warning - record one with `plan <D-NNN> --step "..."`.
 
 ## After running the script
 

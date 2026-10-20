@@ -81,7 +81,7 @@ class BranchTaskIdTests(unittest.TestCase):
 
     @staticmethod
     def _shown_id(result: subprocess.CompletedProcess[str]) -> str | None:
-        """Id do JSON que o `status` imprime antes da linha NOME DA DEMANDA."""
+        """Id do JSON que o `status --json` imprime antes da linha NOME DA DEMANDA."""
         data, _ = json.JSONDecoder().raw_decode(result.stdout)
         return data.get("id")
 
@@ -91,7 +91,7 @@ class BranchTaskIdTests(unittest.TestCase):
 
     def test_status_without_id_uses_branch_over_pointer(self) -> None:
         self._setup("pr")
-        result = self._ok(self.worktree, "status")
+        result = self._ok(self.worktree, "status", "--json")
         self.assertEqual(self._shown_id(result), "D-001")
         self.assertIn("pela branch", result.stderr)
 
@@ -113,14 +113,14 @@ class BranchTaskIdTests(unittest.TestCase):
         self._setup("direct")
         # No direct o worktree tem estado proprio (vazio): sem id, o status
         # falha como antes; o que importa e nao resolver pela branch.
-        result = self._run(self.worktree, "status")
+        result = self._run(self.worktree, "status", "--json")
         self.assertNotIn("pela branch", result.stderr)
         if result.returncode == 0:
             self.assertNotEqual(self._shown_id(result), "D-001")
 
     def test_main_branch_keeps_pointer(self) -> None:
         self._setup("pr")
-        result = self._ok(self.main, "status")
+        result = self._ok(self.main, "status", "--json")
         self.assertEqual(self._shown_id(result), "D-002")
 
 

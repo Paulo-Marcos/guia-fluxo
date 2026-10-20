@@ -22,6 +22,7 @@ from typing import Any
 from _autonomy import effective_level
 from _constants import KIND_MARKER_FALLBACK, KIND_MARKERS, STATUS_TAGS
 from _merge_queue import OPEN_STATES, ordered
+from _task_view import detail
 
 # Colunas do quadro, na ordem do fluxo. O que nao cai aqui (Validada,
 # Finalizada, Cancelada, Resolvida) vai para "concluidas recentes".
@@ -161,6 +162,8 @@ def _card(task: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
         "autonomy": effective_level(task, config),
         "blockedReason": open_block.get("reason") if open_block else None,
         "pending": [p for p in task.get("pending") or [] if isinstance(p, str)],
+        # D-192: o que abre ao clicar no cartao (contexto, plano, etapas...).
+        "detail": detail(task),
     }
 
 
@@ -266,6 +269,22 @@ def snapshot(root: Path) -> dict[str, Any]:
     }
 
 
+def engine_version(engine_dir: Path | None = None) -> dict[str, Any]:
+    """A versao do Guia que serve o painel (D-192), lida ao lado do motor em
+    uso: no repo-mae `core/src/` -> `VERSION` da raiz; no plugin instalado
+    `bin/` -> `.claude-plugin/plugin.json`. Sem achar, `version` fica None."""
+    here = engine_dir or Path(__file__).resolve().parent
+    version_file = here.parent.parent / "VERSION"
+    if here.name == "src" and version_file.is_file():
+        try:
+            return {"version": version_file.read_text(encoding="utf-8").strip() or None, "source": "VERSION", "engine": str(here)}
+        except OSError:
+            pass
+    manifest = _read(here.parent / ".claude-plugin" / "plugin.json", {})
+    version = manifest.get("version") if isinstance(manifest, dict) else None
+    return {"version": version if isinstance(version, str) else None, "source": "plugin.json" if version else None, "engine": str(here)}
+
+
 def overview(paths: list[str]) -> dict[str, Any]:
     """Retrato de todos os projetos cadastrados; um projeto sumido ou com
     estado ilegivel vira um aviso no card, sem derrubar o painel."""
@@ -279,12 +298,13 @@ def overview(paths: list[str]) -> dict[str, Any]:
             projects.append(snapshot(root))
         except Exception as exc:  # noqa: BLE001 - o painel nao cai por um projeto
             projects.append({"path": raw, "name": root.name, "error": f"{type(exc).__name__}: {exc}"})
-    return {"projects": projects}
+    return {"projects": projects, "guia": engine_version()}
 
 
 __all__ = [
     "STAGES",
     "add_projects",
+    "engine_version",
     "is_project",
     "load_projects",
     "overview",

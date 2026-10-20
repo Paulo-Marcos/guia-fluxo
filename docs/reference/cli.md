@@ -117,16 +117,20 @@ Quando `--worktree` e passado, `finish` removera a worktree associada.
 ### `plan`
 
 ```powershell
-.\core\bin\guia.ps1 plan <id> [--note "Por que esta planejando"]
+.\core\bin\guia.ps1 plan <id> [--note "Por que esta planejando"] [--step "passo"]...
 ```
 
 Move task para `Planejada` (triada mas nao iniciada — ADR-0011 Fase 3 / B-017). Aceita transicao de `Backlog` ou `Em desenvolvimento`. Falha em estados terminais ou se ja `Planejada`.
 
+**Plano de execucao (`--step`, D-192).** Cada `--step` acrescenta um passo ao plano da demanda (`executionPlan`, o mesmo campo do `promote --plan`). Numa demanda ja `Planejada` ou `Em desenvolvimento`, `plan <id> --step ...` so grava o plano, sem mudar a etapa. `status` e o painel avisam quando uma demanda `Planejada`/`Em desenvolvimento` nao tem plano.
+
 ### `start`
 
 ```powershell
-.\core\bin\guia.ps1 start <id> [--note "Comecando agora porque..."]
+.\core\bin\guia.ps1 start <id> [--note "Comecando agora porque..."] [--step "passo"]...
 ```
+
+`--step` (repetivel, D-192) grava o plano junto com o inicio; sem plano, o `start` avisa como grava-lo.
 
 Move task para `Em desenvolvimento`. Aceita transicao de `Backlog` (atalho que pula `Planejada`) ou `Planejada`. Pressupoe que a triagem (kind) ja foi feita — para triar avaliando feature/bug/chore, use `promote`.
 
@@ -134,10 +138,11 @@ Move task para `Em desenvolvimento`. Aceita transicao de `Backlog` (atalho que p
 
 ```powershell
 .\core\bin\guia.ps1 status
+.\core\bin\guia.ps1 status D-NNN [--json]
 .\core\bin\guia.ps1 status --all
 ```
 
-Mostra a tarefa atual e o titulo da demanda corrente (`NOME DA DEMANDA: ...`).
+Mostra a tarefa atual e o titulo da demanda corrente (`NOME DA DEMANDA: ...`). **Legivel por padrao (D-192):** etapa, tipo, modelo, branch, PR e chat no cabecalho; depois contexto, plano, arquivos, resumo, validacoes, pendencias, Pedido -> Teste e as etapas pelas quais a demanda passou (reconstruidas dos carimbos `createdAt`, `startedAt`, `readyAt`, PR, auditoria, bloqueios e fechamento). Sem plano numa demanda `Planejada`/`Em desenvolvimento`, avisa. `--json` imprime a task crua, como antes da D-192, seguida da linha `NOME DA DEMANDA` - e o formato para scripts. Epico continua com a arvore agregada.
 Demanda `Integrada` ha mais de `autonomy.autoFinish.remindAfterDays` dias (padrao 3) aparece com a pergunta "fechar?" (D-135, R7).
 
 `--all` (B-014) imprime o quadro de todas as tasks `Em desenvolvimento`, marcando a `current`. Se houver mais de uma ativa ao mesmo tempo, avisa sobre a ambiguidade do `current-task.json` global (B-018) — comandos sem id explicito podem pegar a task errada.
@@ -310,7 +315,7 @@ Em que chat a demanda e feita, para voltar a ele (D-157). Sem `--title`, imprime
 .\core\bin\guia.ps1 dashboard [--port 8765] [--no-open] [--scan <pasta>] [--add <pasta>] [--remove <pasta>] [--depth N] [--list] [--json] [--serve]
 ```
 
-Painel local, somente leitura (D-175). Sobe um servidor so em `127.0.0.1` (responde apenas a `Host` local) e abre o navegador: os projetos do Guia cadastrados na maquina, as demandas de cada um por etapa (Backlog, Planejada, Em desenvolvimento, Aguardando validacao, Em PR, Na fila, Integrada, Bloqueada) e as concluidas recentes, a fila de integracao na ordem do executor (hotfix a frente, depois FIFO) com a **ponta**, o **proximo a integrar** (o primeiro elegivel) e o motivo de espera de cada item, e se o **executor da fila** esta vivo (pelo `.guia/queue/executor.lease`: batimento mais novo que `queue.leaseStaleMinutes`). A pagina se atualiza a cada 5 s. O cadastro mora em `~/.guia/projects.json` (`GUIA_HOME` muda a pasta): rodar `dashboard` dentro de um projeto o cadastra; `--scan` procura projetos (pastas com `.guia/tasks.json`, o que deixa worktrees de fora) ate `--depth` niveis; `--add`/`--remove` mexem em um. Com `--add`/`--remove`/`--scan` o comando so cadastra e sai, a menos que venha `--serve`. Nao faz auto-init: roda de qualquer pasta. O servidor fica no ar ate Ctrl+C - num agente, rode-o em segundo plano.
+Painel local, somente leitura (D-175). Sobe um servidor so em `127.0.0.1` (responde apenas a `Host` local) e abre o navegador: os projetos do Guia cadastrados na maquina, as demandas de cada um por etapa (Backlog, Planejada, Em desenvolvimento, Aguardando validacao, Em PR, Na fila, Integrada, Bloqueada) e as concluidas recentes, a fila de integracao na ordem do executor (hotfix a frente, depois FIFO) com a **ponta**, o **proximo a integrar** (o primeiro elegivel) e o motivo de espera de cada item, e se o **executor da fila** esta vivo (pelo `.guia/queue/executor.lease`: batimento mais novo que `queue.leaseStaleMinutes`). A pagina se atualiza a cada 5 s. **Detalhe da demanda (D-192):** clicar num cartao (ou numa concluida) abre, ao lado, o mesmo detalhe do `status D-NNN` - contexto, plano, arquivos, resumo, validacoes, pendencias, Pedido -> Teste, chat e etapas; Esc fecha. Cartao `Planejada`/`Em desenvolvimento` sem plano ganha o chip `sem plano`. O cabecalho mostra a **versao do Guia** que serve o painel (o `VERSION` da raiz no repo-mae, ou o `version` do `.claude-plugin/plugin.json` no plugin instalado; o caminho do motor aparece ao passar o mouse); o `/api/snapshot` traz o mesmo em `guia`. O cadastro mora em `~/.guia/projects.json` (`GUIA_HOME` muda a pasta): rodar `dashboard` dentro de um projeto o cadastra; `--scan` procura projetos (pastas com `.guia/tasks.json`, o que deixa worktrees de fora) ate `--depth` niveis; `--add`/`--remove` mexem em um. Com `--add`/`--remove`/`--scan` o comando so cadastra e sai, a menos que venha `--serve`. Nao faz auto-init: roda de qualquer pasta. O servidor fica no ar ate Ctrl+C - num agente, rode-o em segundo plano.
 
 ### `triage`
 
