@@ -29,6 +29,7 @@ ADR nao se confunde com [`explanation/`](../explanation/): explanation ensina o 
 | [0017](0017-manter-core-src-flat.md) | Manter `core/src/` flat: convencao de prefixo formalizada, D-053 (reorg em 4 camadas) recusada | Aceita |
 | [0018](0018-nome-da-demanda-chat-diferente-de-demanda.md) | `NOME DA DEMANDA` no lugar de `NOME DO CHAT`: chat ≠ demanda, rename opcional (substitui 0004) | Substituida em parte por [0020](0020-chat-nomeado-pela-demanda-um-chat-por-demanda.md) |
 | [0020](0020-chat-nomeado-pela-demanda-um-chat-por-demanda.md) | O chat leva o `NOME DA DEMANDA` (com a etapa) e cada demanda tem o seu chat (substitui 0018 em parte) | Aceita |
+| [0021](0021-perfil-solo-local.md) | Perfil SOLO local (`autonomy.solo`): `[unlock:]` nao segura a fila, achados voltam ao agente, feature fecha sozinha | Aceita |
 
 ## Como adicionar um ADR novo
 

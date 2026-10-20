@@ -7,6 +7,8 @@ import sys
 from pathlib import Path
 
 from _audit import AUDIT_CHECKLIST, audit_target, delta_range, record_audit
+from _auto_finish import findings_over_limit
+from _autonomy import solo
 from _cli_lifecycle import _plugin_templates_dir
 from _conductor import announce_next
 from _constants import PROCESS_FILE
@@ -57,11 +59,17 @@ def cmd_audit(args: argparse.Namespace) -> int:
         return 0
 
     report = Path(args.report).read_text(encoding="utf-8")
+    findings = _parse_findings(args.finding) if args.finding else None
+    over = findings_over_limit(findings, config) if findings and args.approve and solo(config) else {}
+    if over:
+        # D-193 (ADR-0021): no solo o achado volta para o agente, nao para o dono.
+        raise SystemExit(f"{task['id']}: perfil solo - achados abertos {over} acima do limite. "
+                         "Corrija na branch, rode o ship e audite o head novo.")
     via = "checklist" if use_checklist else ", ".join(args.skill_ran or skills)
     audit = record_audit(task, target, report, args.approve, via)
-    if args.finding:
+    if findings is not None:
         # D-135: contagem de achados abertos por severidade, para a R7.
-        audit["openFindings"] = _parse_findings(args.finding)
+        audit["openFindings"] = findings
     record_stage(task, STAGE_AUDIT, config, args.skill_ran, args.skill_missing)
     save_task(task)
     verdict = "aprovada, marcador comentado" if args.approve else "registrada sem aprovacao (sem marcador)"
