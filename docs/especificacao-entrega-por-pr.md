@@ -814,7 +814,7 @@ motor fecha sozinho quando **todas** as condições valem:
   "requireMainGreen": true,               // CI verde no SHA do squash
   "maxOpenFindings": {"BLOQUEANTE": 0, "CORRIGIR": 0},
   "blockIfUiChanged": true,               // tela pede o olho do Paulo
-  "uiPaths": ["frontend/src/**"],
+  "uiPaths": ["**/*.tsx", "**/*.css"],
   "blockIfAlwaysHuman": true
 }
 ```
