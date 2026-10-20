@@ -54,13 +54,15 @@ Editing a partial changes every shim that uses it. This skill (`guia-fluxo`) is 
 - **Antigravity** reads skills from the same `plugins/guia/.agents/skills/` tree as Codex. The shim skills in this pack work for both surfaces; treat any verb listed above as a callable workflow. No thread-rename API available — chat title falls back to printed text.
 - **Claude Code** reads this pack as an official plugin: `plugins/guia/.claude-plugin/plugin.json` (name `guia`) exposes each verb as a plugin **command** in `plugins/guia/commands/<verb>.md`, so the shortcuts surface namespaced as `/guia:feature`, `/guia:bug`, `/guia:chore`, `/guia:backlog`, `/guia:promote`, `/guia:ready`, `/guia:finish`, `/guia:status`, `/guia:init` — plugin *skills* would surface bare (`/init`, `/feature`) and collide with built-ins like `/init`. Claude also auto-invokes a command by its `description`. All bodies are generated from `core/manifest/manifest.yaml`.
 
-## Chat Rename per Host (optional)
+## Chat Rename per Host
 
 The script prints `NOME DA DEMANDA: ...` — info about the current demand; the script itself does **not** rename the chat. **One demand, one chat (D-185):** a demand that comes up while working another one (an epic story, a follow-up, a bug found on the way) is created with the CLI and worked in a chat of its own; only an epic's chat outlives its first demand, and it holds the epic alone. Where the host can rename the chat, the agent names it after the demand and renames it as the stage changes.
 
 - **Codex App:** when a single demand maps to the chat, call `codex_app.list_threads` to find the current thread id, then `codex_app.set_thread_title` with the title printed after `NOME DA DEMANDA:`.
 - **Claude Code (desktop app):** `mcp__ccd_session_mgmt__set_session_title` with `session_id: "self"` and the exact `NOME DA DEMANDA` line — a real rename, repeated on each stage change (load it with ToolSearch `select:mcp__ccd_session_mgmt__set_session_title` when deferred). A derived demand opens its own linked session with `mcp__ccd_session__start_session`, titled the same way. Without that tool: `mark_chapter` (`mcp__ccd_session__mark_chapter`, divider + ToC entry) and `/rename <demand-title>` typed by the developer; `claude -n <title>` only works when starting a new session. Do not use Codex App `codex_app.*` tools in Claude.
 - **Any host without a rename API:** the printed line is enough — keep working.
+
+{{include_per_target: _partials/name_chat}}
 
 If shell access fails, surface the exact command the developer can run by hand.
 

@@ -31,6 +31,7 @@ from _constants import (
 )
 from _lease import describe_executor
 from _merge_queue import find, load
+from _tasks import chat_warning
 
 STEP_READY, STEP_SHIP, STEP_AUDIT = "ready", "ship", "audit"
 STEP_QUEUE_ADD = "queue-add"
@@ -94,6 +95,7 @@ def next_step(task: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
     """O proximo passo da demanda segundo o estado, o nivel e a fila (com o chat dela, D-157)."""
     step = _next(task, config)
     step["chat"] = (task.get("chat") or {}).get("title")
+    step["chatWarning"] = chat_warning(task)  # D-190
     return step
 
 

@@ -80,6 +80,8 @@ class PartialFilesExistTests(unittest.TestCase):
             "title_context_rules.md",
             "lock_protocol.md",
             "conductor.md",  # D-152: o condutor, incluido no ready
+            "name_chat.agent.md",  # D-190: nomear e gravar o chat, em todo command que inicia trabalho
+            "name_chat.claude.md",
             "post_cli.agent.md",
             "post_cli.claude.md",
             "run_cmd.agent.md",

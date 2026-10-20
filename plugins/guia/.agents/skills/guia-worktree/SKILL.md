@@ -19,3 +19,6 @@ worktree remove D-NNN
 ```
 
 - State stays in the main tree; commands run inside the worktree resolve the demand by branch.
+- The worktree is where the demand's chat works: when this chat is that chat, it also carries the demand's name and session (below) - `worktree add` does not replace that step.
+
+**Name the chat and record it (D-157).** Run `chat <D-NNN>` for the stable name (`NOME DO CHAT: ...`). **Codex App:** when the thread tools are loaded and this chat is dedicated to the demand, call `codex_app.list_threads` to find the current thread id, then `codex_app.set_thread_title` with that name (search for the thread tools first if they are not loaded). When the chat already holds other demandas, do not rename it; use the name it already has. Either way record it with `chat <D-NNN> --title "<name>"` and show the name to the developer - the queue and `status --all` cite it so they can come back. A demand started from another demand's chat (an epic's story, a follow-up from the audit or the queue) is worked in a thread of its own, which records itself.

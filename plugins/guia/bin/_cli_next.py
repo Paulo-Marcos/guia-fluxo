@@ -24,6 +24,8 @@ def cmd_next(args: argparse.Namespace) -> int:
     print(f"{task['id']} [nivel {step['level']}]: {step['step']} - {step['why']}{owner}{chat}")
     for pending in pending_renames():
         print(rename_line(pending))
+    if step.get("chatWarning"):
+        print(step["chatWarning"])
     return 0
 
 

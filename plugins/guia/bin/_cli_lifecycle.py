@@ -62,6 +62,7 @@ from _docs_hook import (
 from _features_md import upsert_features_entry
 from _locks import lock_task_files
 from _paths import relative
+from _plugin_version import print_stale_plugin, stale_plugin_lines
 from _process_config import default_process
 from _quality_hook import (
     build_quality_review_record,
@@ -364,6 +365,7 @@ def cmd_status(args: argparse.Namespace) -> int:
         _print_pending_with_owner()
         _print_close_reminders()
         print_pending_renames()  # D-194
+        print_stale_plugin()
         return 0
 
     task = find_task_or_current(args.task_id)
@@ -382,7 +384,19 @@ def cmd_status(args: argparse.Namespace) -> int:
         return 0
     print(format_text(task, kind_marker(task.get("kind", ""))))
     print_demand_title(task)
+    _print_chat_warnings([task])
+    print_stale_plugin()
     return 0
+
+
+def _print_chat_warnings(tasks: list[dict[str, Any]]) -> None:
+    """D-190: demanda em desenvolvimento sem a sessao do chat gravada."""
+    from _tasks import chat_warning
+
+    for task in tasks:
+        warning = chat_warning(task)
+        if warning:
+            print(warning)
 
 
 def _print_epic_tree(epic: dict[str, Any]) -> None:
@@ -458,6 +472,7 @@ def _status_board() -> int:
         if task.get("id") == current_id:
             line += "  <- current"
         print(line)
+    _print_chat_warnings(active)
     if len(active) > 1:
         print(
             f"\nAviso: {len(active)} tasks em desenvolvimento ao mesmo tempo. "
@@ -1112,6 +1127,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     for path in (TASKS_FILE, BACKLOG_FILE, CURRENT_FILE):
         if not path.exists():
             warnings.append(f"estado ausente: {relative(path)} (projeto sem demandas ou estado fora do git)")
+    # D-190: plugin instalado atras do marketplace roda o texto velho dos commands.
+    warnings.extend(stale_plugin_lines())
 
     # 4. git (sempre)
     if not has_git():
