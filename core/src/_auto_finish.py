@@ -33,7 +33,10 @@ AUTO_FINISH_DEFAULT: dict[str, Any] = {
     "requireMainGreen": True,
     "maxOpenFindings": {"BLOQUEANTE": 0, "CORRIGIR": 0},
     "blockIfUiChanged": True,
-    "uiPaths": ["frontend/src/**", "**/*.css", "**/*.html", "**/*.tsx", "**/*.jsx", "**/*.vue", "**/*.svelte"],
+    # D-191: tela e arquivo de interface; hook/servico .ts sem UI nao e.
+    "uiPaths": [f"**/*.{ext}" for ext in (
+        "tsx", "jsx", "vue", "svelte", "css", "scss", "sass", "less", "html",
+        "svg", "png", "jpg", "jpeg", "gif", "webp", "ico", "woff", "woff2")],
     "testPaths": ["tests/**", "test/**", "**/tests/**", "**/test_*.py", "**/*_test.py", "**/*.test.*", "**/*.spec.*"],
     "blockIfAlwaysHuman": True,
     "remindAfterDays": 3,
