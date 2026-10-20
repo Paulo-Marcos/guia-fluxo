@@ -11,7 +11,7 @@ O dono pediu (D-187) que o painel faca essas duas coisas. Isso transforma um ser
 
 ## Decisao
 
-O painel ganha duas acoes, `POST /api/action/queue-resume` e `POST /api/action/queue-run`, mostradas como botoes so quando fazem sentido (fila parada; ou modo `pr`, fila andando e nenhum executor vivo). Nenhuma delas grava estado pelo painel: cada uma roda o proprio motor dentro do projeto (`GUIA_PROJECT_ROOT`), e so para projetos do cadastro. O `queue run` sobe em processo destacado e a unicidade do executor continua sendo a do lease (`O_EXCL`).
+O painel ganha duas acoes, `POST /api/action/queue-resume` e `POST /api/action/queue-run`, mostradas como botoes so quando fazem sentido (fila parada; ou modo `pr`, fila andando e nenhum executor vivo). Nenhuma delas grava estado pelo painel: cada uma roda o motor dentro do projeto (`GUIA_PROJECT_ROOT`), e so para projetos do cadastro. O motor e o do proprio projeto quando ele tem um (`core/src`, `plugins/guia/bin` ou `.guia-fluxo/bin`, o mesmo que o dono rodaria no terminal dali); sem nenhum - o caso do plugin - vale o do painel. O `queue run` sobe em processo separado, com console proprio escondido (`CREATE_NO_WINDOW`: sem console, cada `git`/`gh` abriria uma janela) e grupo proprio, e a unicidade do executor continua sendo a do lease (`O_EXCL`).
 
 O pedido de escrita so passa por quatro portoes, todos obrigatorios:
 
@@ -29,6 +29,7 @@ A pagina recusa ser emoldurada (`X-Frame-Options: DENY`, `frame-ancestors 'none'
 - + Dois cliques (ou duas abas) nao criam dois executores: o painel serializa o disparo e o lease recusa o segundo de qualquer forma.
 - - O painel deixa de ser "somente leitura" no sentido estrito; a superficie de ataque local cresce e passa a depender dos quatro portoes - mexer neles exige rever este ADR.
 - - O executor iniciado pelo painel roda sem terminal: a saida vai para `.guia/queue/executor-painel.log`, nao para a tela.
+- - O token protege contra paginas web, nao contra a propria maquina: quem consegue fazer `GET /` em `127.0.0.1` (outro usuario do Windows, um agente com `curl`) le o token e pode disparar as acoes. O limite de confianca e o da maquina e do usuario logado, o mesmo de quem ja pode rodar `guia queue run` no terminal.
 - - A trava "so do usuario" continua comportamental: um agente com acesso ao navegador poderia clicar. A regra escrita (o agente nunca usa os botoes) e a confirmacao sao o limite, o mesmo da D-098.
 
 ## Alternativas consideradas

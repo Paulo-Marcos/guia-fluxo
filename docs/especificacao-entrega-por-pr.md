@@ -664,8 +664,9 @@ script ou no diretório atual, e num worktree acharia (ou criaria) uma cópia
 | `/guia:release <versão\|patch\|minor>` | ato 1 da release (branch, script, PR, entra na fila como `release`) | **só o usuário** |
 | `/guia:deps [--now]` | mostra os PRs do Dependabot abertos e o que o executor fará com eles; `--now` dispara o lote (R11) | qualquer um; `--now` no nível ≥ `queue` |
 
-Os botões do painel não gravam estado: cada um roda o próprio motor dentro do
-projeto (`GUIA_PROJECT_ROOT`), só para projetos do cadastro do painel. O
+Os botões do painel não gravam estado: cada um roda o motor dentro do projeto
+(`GUIA_PROJECT_ROOT`) — o do próprio projeto quando ele tem um, senão o do
+painel —, só para projetos do cadastro do painel. O
 pedido de escrita (`POST /api/action/queue-resume|queue-run`) só passa com
 Host `127.0.0.1`/`localhost` na porta do painel, `Origin` do próprio painel,
 corpo `application/json` e o token desta sessão do painel (embutido na página,

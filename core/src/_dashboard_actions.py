@@ -1,8 +1,9 @@
 """Acoes do painel (D-187): retomar a fila e iniciar o executor de um projeto.
 
 As duas unicas escritas do painel, e nenhuma delas e escrita do painel: cada
-acao roda o PROPRIO motor dentro do projeto (`GUIA_PROJECT_ROOT` apontando
-para ele), entao o estado continua mudando so pelo script. O painel decide
+acao roda o motor dentro do projeto (`GUIA_PROJECT_ROOT` apontando para
+ele; o motor do proprio projeto quando ele tem um, senao o do painel), entao
+o estado continua mudando so pelo script. O painel decide
 apenas se a acao faz sentido agora, pelo mesmo retrato que mostra na tela.
 
 - `resume`: `queue resume`, curto, em primeiro plano; devolve a saida.
@@ -28,6 +29,9 @@ from typing import Any
 from _dashboard import is_project, load_projects, snapshot
 
 ENGINE = Path(__file__).resolve().parent / "guia.py"
+# Motor que mora dentro do projeto (repo-mae, dogfood, copia manual): e o que o
+# dono rodaria no terminal dali. Sem nenhum (o caso do plugin), vale o do painel.
+PROJECT_ENGINES = (Path("core/src/guia.py"), Path("plugins/guia/bin/guia.py"), Path(".guia-fluxo/bin/guia.py"))
 EXECUTOR_LOG = Path(".guia") / "queue" / "executor-painel.log"
 RESUME_TIMEOUT_SECONDS = 60
 
@@ -61,6 +65,12 @@ def registered_project(raw: Any) -> Path:
     raise ActionError(404, "projeto fora do cadastro do painel")
 
 
+def engine_for(root: Path) -> Path:
+    """O motor do proprio projeto quando ele tem um; senao o do painel. Um
+    painel aberto de outra versao nao integra PRs com o codigo dela."""
+    return next((root / rel for rel in PROJECT_ENGINES if (root / rel).is_file()), ENGINE)
+
+
 def _engine_env(root: Path) -> dict[str, str]:
     env = dict(os.environ)
     env["GUIA_PROJECT_ROOT"] = str(root)
@@ -73,7 +83,7 @@ def resume(root: Path) -> str:
     if not queue["paused"] and not queue["frozenReason"]:
         raise ActionError(409, "a fila nao esta pausada")
     result = subprocess.run(
-        [sys.executable, str(ENGINE), "queue", "resume"],
+        [sys.executable, str(engine_for(root)), "queue", "resume"],
         cwd=root, env=_engine_env(root), capture_output=True, text=True,
         encoding="utf-8", errors="replace", timeout=RESUME_TIMEOUT_SECONDS,
     )
@@ -85,7 +95,10 @@ def resume(root: Path) -> str:
 
 def _detach_kwargs() -> dict[str, Any]:
     if os.name == "nt":
-        flags = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP  # type: ignore[attr-defined]
+        # Console proprio e escondido: sem console (DETACHED_PROCESS), cada
+        # git/gh/pytest que o executor chama abriria uma janela visivel.
+        # Grupo proprio: o Ctrl+C do painel nao chega ao executor.
+        flags = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP  # type: ignore[attr-defined]
         return {"creationflags": flags}
     return {"start_new_session": True}
 
@@ -107,17 +120,18 @@ def start_executor(root: Path) -> str:
             raise ActionError(409, f"executor iniciado pelo painel ainda rodando (pid {previous.pid})")
         log_path = root / EXECUTOR_LOG
         log_path.parent.mkdir(parents=True, exist_ok=True)
+        engine = engine_for(root)
         with open(log_path, "ab") as log:
             process = subprocess.Popen(
-                [sys.executable, str(ENGINE), "queue", "run"],
+                [sys.executable, str(engine), "queue", "run"],
                 cwd=root, env=_engine_env(root), stdin=subprocess.DEVNULL,
                 stdout=log, stderr=subprocess.STDOUT, close_fds=True, **_detach_kwargs(),
             )
         _spawned[key] = process
-    return f"Executor iniciado (pid {process.pid}); saida em {EXECUTOR_LOG.as_posix()}."
+    return f"Executor iniciado (pid {process.pid}, motor {engine}); saida em {EXECUTOR_LOG.as_posix()}."
 
 
 ACTIONS = {"queue-resume": resume, "queue-run": start_executor}
 
 
-__all__ = ["ACTIONS", "ActionError", "registered_project", "resume", "start_executor"]
+__all__ = ["ACTIONS", "ActionError", "engine_for", "registered_project", "resume", "start_executor"]

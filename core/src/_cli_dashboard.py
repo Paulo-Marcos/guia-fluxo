@@ -115,11 +115,12 @@ def _handler(port_ref: list[int], token: str) -> type[BaseHTTPRequestHandler]:
                 return
             try:
                 body = json.loads(raw.decode("utf-8"))
-                root = registered_project(body.get("project") if isinstance(body, dict) else None)
-                message = action(root)
-            except ValueError:
+            except ValueError:  # inclui UnicodeDecodeError
                 self._send_json(400, {"ok": False, "message": "corpo nao e JSON valido"})
                 return
+            try:
+                root = registered_project(body.get("project") if isinstance(body, dict) else None)
+                message = action(root)
             except ActionError as exc:
                 self._send_json(exc.status, {"ok": False, "message": str(exc)})
                 return
