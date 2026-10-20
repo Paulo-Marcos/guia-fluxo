@@ -311,10 +311,10 @@ verbs:
       claude_command:
         body_file: bodies/configure.md
 
-  # D-175: painel local, somente leitura, dos projetos da maquina e da fila.
+  # D-175: painel local dos projetos da maquina e da fila; D-187: dois botoes do dono.
   dashboard:
     description: |
-      READ-ONLY — open the local dashboard in the browser: every Guia project registered on this machine, its demands by stage (Backlog, Planejada, DEV, validacao, PR, fila, Integrada, Bloqueada), the merge queue in order (who is at the head, why each item waits) and whether a queue executor is alive. Serves only on 127.0.0.1 and never changes state. Options: `--scan <folder>` / `--add <folder>` / `--remove <folder>` to manage the project list, `--list`, `--json`, `--port`, `--no-open`. For one task in the terminal use `status`; for the queue in text use `queue`.
+      DASHBOARD — open the local dashboard in the browser (read-only for the agent): every Guia project registered on this machine, its demands by stage (Backlog, Planejada, DEV, validacao, PR, fila, Integrada, Bloqueada), the merge queue in order (who is at the head, why each item waits) and whether a queue executor is alive. Serves only on 127.0.0.1. The agent never changes state through it: its only writes are two owner buttons (D-187: resume a paused queue, start the queue executor when none is alive), which run the engine inside the project behind Host/Origin checks and a per-session token. Options: `--scan <folder>` / `--add <folder>` / `--remove <folder>` to manage the project list, `--list`, `--json`, `--port`, `--no-open`. For one task in the terminal use `status`; for the queue in text use `queue`.
     targets:
       agent_skill:
         body_file: bodies/dashboard.md
