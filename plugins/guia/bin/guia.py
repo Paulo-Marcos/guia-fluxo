@@ -267,6 +267,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Quadro: lista todas as tasks Em desenvolvimento (avisa se houver mais de uma ativa).",
     )
+    p_status.add_argument(
+        "--json",
+        action="store_true",
+        help="A task em JSON cru (o formato de antes da D-192), para scripts.",
+    )
     p_status.set_defaults(func=cmd_status)
 
     p_ready = sub.add_parser("ready", help="Move task to developer validation stage.")
@@ -606,6 +611,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--note",
         help="Anotacao opcional sobre o planejamento.",
     )
+    p_plan.add_argument(
+        "--step",
+        action="append",
+        default=[],
+        help="Passo do plano de execucao (repetivel). Em task ja Planejada ou "
+             "Em desenvolvimento so grava o plano, sem mudar a etapa (D-192).",
+    )
     p_plan.set_defaults(func=cmd_plan)
 
     p_start = sub.add_parser(
@@ -616,6 +628,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_start.add_argument(
         "--note",
         help="Anotacao opcional sobre o inicio do trabalho.",
+    )
+    p_start.add_argument(
+        "--step",
+        action="append",
+        default=[],
+        help="Passo do plano de execucao (repetivel, D-192). Sem plano, o start avisa.",
     )
     p_start.set_defaults(func=cmd_start)
 

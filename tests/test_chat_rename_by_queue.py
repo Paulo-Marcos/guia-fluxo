@@ -97,7 +97,7 @@ class ChatRenameByQueueTests(unittest.TestCase):
         self._ok("chat", "D-001", "--title", "Outro nome")
         data = json.loads(self._ok("chat", "D-001", "--json").stdout)
         self.assertEqual((data["chat"], data["session"]), ("Outro nome", "local_123"))
-        self.assertIn('"session": "local_123"', self._ok("status", "D-001").stdout)
+        self.assertIn('"session": "local_123"', self._ok("status", "D-001", "--json").stdout)
 
     def test_integrated_demand_with_a_session_asks_to_rename_its_chat(self) -> None:
         self._ok("chat", "D-001", "--title", "Chat das notas", "--session", "local_abc")

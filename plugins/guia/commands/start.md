@@ -1,5 +1,5 @@
 ---
-description: "START — begin work on a `Planejada` or `Backlog` task (status → `Em desenvolvimento`). Assumes triage is done (kind already decided); use `promote` when kind still needs deciding. Options: `--note \"<starting note>\"`. To resume from `Bloqueada` use `unblock`; to create a fresh task use `feature`/`bug`/`chore`."
+description: "START — begin work on a `Planejada` or `Backlog` task (status → `Em desenvolvimento`). Assumes triage is done (kind already decided); use `promote` when kind still needs deciding. Options: `--note \"<starting note>\"`, `--step \"<step>\"` (repeatable: records the execution plan; without a plan, start warns). To resume from `Bloqueada` use `unblock`; to create a fresh task use `feature`/`bug`/`chore`."
 ---
 
 # Start
@@ -16,8 +16,10 @@ python "$env:CLAUDE_PLUGIN_ROOT/bin/guia.py" <command>    # PowerShell
 The engine roots itself at the current project and auto-creates `.guia/` there on the first command. Substitute `<command>` with the verb and arguments for this skill:
 
 ```text
-start <D-NNN> [--note "Starting now because..."]
+start <D-NNN> [--note "Starting now because..."] [--step "step"]...
 ```
+
+`--step` (repeatable) records the execution plan with the start. Without a plan, `start` warns: write the steps before implementing, so the owner can see what the demand will do.
 
 Distinct from:
 - `$promote <B-NNN>`: triage a backlog item deciding kind and plan before starting.

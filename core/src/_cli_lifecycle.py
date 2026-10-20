@@ -112,6 +112,7 @@ from _profiles import propose_profile
 from _hooks_check import hooks_path_warnings
 from _ship import parse_request_test
 from _skills import STAGE_QUALITY, STAGE_READY, announce_stage, record_stage
+from _task_view import MISSING_PLAN, format_text, missing_plan, plan_steps
 from _worktree import cleanup_task_worktree
 
 
@@ -363,15 +364,19 @@ def cmd_status(args: argparse.Namespace) -> int:
         return 0
 
     task = find_task_or_current(args.task_id)
+    # D-192: `--json` e o contrato de maquina (o JSON cru de antes, seguido
+    # do NOME DA DEMANDA); sem ele, o texto legivel para o dono.
+    if getattr(args, "json", False):
+        print(json.dumps(task, ensure_ascii=False, indent=2))
+        print_demand_title(task)
+        return 0
     _print_close_reminders()
-    # D-049: Epic ganha visualizacao agregada (arvore + progresso). JSON
-    # cru desaparece para epics, que sao orquestradores; quem quiser o
-    # JSON usa `tasks show <id>`.
+    # D-049: Epic ganha visualizacao agregada (arvore + progresso).
     if task.get("kind") == KIND_EPIC:
         _print_epic_tree(task)
         print_demand_title(task)
         return 0
-    print(json.dumps(task, ensure_ascii=False, indent=2))
+    print(format_text(task, kind_marker(task.get("kind", ""))))
     print_demand_title(task)
     return 0
 
@@ -871,11 +876,33 @@ def _attach_features_md(task: dict[str, Any]) -> None:
     task["modifiedFiles"] = files
 
 
+def _plan_steps_arg(args: argparse.Namespace) -> list[str]:
+    return [s for s in getattr(args, "step", None) or [] if s.strip()]
+
+
+def _record_plan(task: dict[str, Any], steps: list[str]) -> None:
+    """Acrescenta passos ao plano (o `executionPlan` que o `promote --plan`
+    ja gravava), sem repetir os que ja estao."""
+    task["executionPlan"] = plan_steps(task)
+    merge_list(task, "executionPlan", steps)
+    task["updatedAt"] = today()
+
+
 def cmd_plan(args: argparse.Namespace) -> int:
     """Move task para `Planejada` (B-017). Aceita Backlog ou
     Em desenvolvimento como ponto de partida. Rejeita estados terminais
-    e Aguardando validacao (use cancel/finish em vez disso)."""
+    e Aguardando validacao (use cancel/finish em vez disso).
+
+    D-192: `--step` grava o plano de execucao. Numa task ja Planejada ou Em
+    desenvolvimento so registra os passos, sem mudar a etapa."""
     task = find_task_or_current(args.task_id)
+    steps = _plan_steps_arg(args)
+    if steps and task["status"] in (STATUS_PLANNED, STATUS_IN_DEVELOPMENT):
+        _record_plan(task, steps)
+        save_task(task)
+        print(f"{task['id']}: plano com {len(task['executionPlan'])} passo(s).")
+        print_demand_title(task)
+        return 0
     if task["status"] == STATUS_PLANNED:
         raise SystemExit(f"Task {task['id']} ja esta Planejada.")
     if task["status"] not in _PLAN_VALID_FROM:
@@ -892,6 +919,8 @@ def cmd_plan(args: argparse.Namespace) -> int:
         note = f"{note}: {args.note}"
     note += "."
     merge_list(task, "summary", [note])
+    if steps:
+        _record_plan(task, steps)
     if coming_from_backlog:
         _attach_features_md(task)
 
@@ -933,6 +962,9 @@ def cmd_start(args: argparse.Namespace) -> int:
         note = f"{note}: {args.note}"
     note += "."
     merge_list(task, "summary", [note])
+    steps = _plan_steps_arg(args)
+    if steps:
+        _record_plan(task, steps)
     if coming_from_backlog:
         _attach_features_md(task)
 
@@ -942,6 +974,8 @@ def cmd_start(args: argparse.Namespace) -> int:
     write_report(task, "start")
 
     print(f"{task['id']} started.")
+    if missing_plan(task):
+        print(MISSING_PLAN.replace("D-NNN", task["id"]))
     print_demand_title(task)
     return 0
 

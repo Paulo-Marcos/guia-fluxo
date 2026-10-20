@@ -5,8 +5,10 @@
 {{include_per_target: _partials/run_cmd}}
 
 ```text
-plan <D-NNN> [--note "Why planning now"]
+plan <D-NNN> [--note "Why planning now"] [--step "step"]...
 ```
+
+`--step` (repeatable) records the execution plan - what the demand will do, shown by `status` and the dashboard. On a task already `Planejada` or `Em desenvolvimento`, `plan <D-NNN> --step ...` only records the plan, without moving the stage.
 
 Distinct from:
 - `$backlog add`: park an idea that has not been triaged yet.
