@@ -185,8 +185,9 @@ class StartExecutorTests(_Server):
         self.assertIn("4242", body["message"])
         args, kwargs = fake.call_args
         self.assertEqual(args[0][-2:], ["queue", "run"])
-        self.assertEqual(Path(kwargs["env"]["GUIA_PROJECT_ROOT"]), root)
-        self.assertEqual(Path(kwargs["cwd"]), root)
+        # resolve(): o cadastro guarda o caminho longo; no CI do Windows o temp vem curto (RUNNER~1)
+        self.assertEqual(Path(kwargs["env"]["GUIA_PROJECT_ROOT"]).resolve(), root.resolve())
+        self.assertEqual(Path(kwargs["cwd"]).resolve(), root.resolve())
         self.assertTrue(kwargs.get("creationflags") or kwargs.get("start_new_session"))
         self.assertTrue((root / ".guia" / "queue" / "executor-painel.log").is_file())
 
