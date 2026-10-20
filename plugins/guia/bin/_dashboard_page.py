@@ -3,15 +3,20 @@
 Fica num modulo Python (e nao num .html solto) porque o build copia
 `core/src/*.py` para `plugins/guia/bin/` - assim a pagina viaja com o motor.
 Todo texto vindo do estado entra por `textContent`, nunca por innerHTML.
+O servidor troca `TOKEN_PLACEHOLDER` pelo token da sessao do painel (D-187),
+que os botoes da fila mandam no cabecalho `X-Guia-Token`.
 """
 
 from __future__ import annotations
+
+TOKEN_PLACEHOLDER = "__GUIA_DASHBOARD_TOKEN__"
 
 PAGE_HTML = r"""<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="guia-token" content="__GUIA_DASHBOARD_TOKEN__">
 <title>Guia Fluxo · Painel</title>
 <style>
 :root {
@@ -56,6 +61,11 @@ section { margin-bottom: 22px; }
 .chip.bad { background: var(--bad-soft); color: var(--bad); }
 .chip.acc { background: var(--accent-soft); color: var(--accent); }
 .banner { padding: 10px 12px; border-radius: 8px; margin-bottom: 10px; background: var(--warn-soft); color: var(--warn); }
+.act { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 4px 10px; }
+.btn { font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+.btn:disabled { opacity: .55; cursor: wait; }
+.act .msg { font-size: 12px; color: var(--muted); }
+.act .msg.bad { color: var(--bad); }
 .queue { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; }
 .qi { flex: 0 0 260px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; box-shadow: var(--shadow); }
 .qi.head { border: 2px solid var(--accent); }
@@ -219,6 +229,52 @@ function executorLine(ex) {
   return box;
 }
 
+// D-187: as duas acoes do painel. Clique do dono, com confirmacao; o servidor
+// roda o motor no projeto. O ultimo retorno de cada projeto sobrevive ao refresh.
+const TOKEN = (document.querySelector('meta[name="guia-token"]') || {}).content || "";
+const actionNote = {};
+let acting = false;
+async function act(kind, p, question) {
+  if (acting || !window.confirm(question)) return;
+  acting = true;
+  actionNote[p.path] = { text: "enviando…", bad: false };
+  keepScroll(render);
+  try {
+    const r = await fetch("/api/action/" + kind, {
+      method: "POST", cache: "no-store",
+      headers: { "Content-Type": "application/json", "X-Guia-Token": TOKEN },
+      body: JSON.stringify({ project: p.path }),
+    });
+    const body = await r.json().catch(() => ({ message: "HTTP " + r.status }));
+    actionNote[p.path] = { text: body.message || ("HTTP " + r.status), bad: !r.ok };
+  } catch (e) {
+    actionNote[p.path] = { text: "sem conexão com o painel (" + e.message + ")", bad: true };
+  }
+  acting = false;
+  refresh();
+}
+function actionRow(p) {
+  const q = p.queue;
+  const row = el("div", "act");
+  if (q.paused || q.frozenReason) {
+    const b = el("button", "btn", "Retomar fila");
+    b.disabled = acting;
+    b.onclick = () => act("queue-resume", p, q.frozenReason
+      ? "A fila foi congelada (main vermelha). Confirme que a main voltou ao verde e retome a fila de " + p.name + "."
+      : "Retomar a fila de " + p.name + "? (equivale a guia queue resume)");
+    row.append(b);
+  } else if (p.mode === "pr" && !(q.executor && q.executor.alive)) {
+    const b = el("button", "btn", "Iniciar executor");
+    b.disabled = acting;
+    b.title = "guia queue run em segundo plano, neste projeto";
+    b.onclick = () => act("queue-run", p, "Iniciar o executor da fila de " + p.name + "? Ele integra os itens aprovados e sai quando a fila esvazia (guia queue run).");
+    row.append(b);
+  }
+  const note = actionNote[p.path];
+  if (note) row.append(el("span", "msg" + (note.bad ? " bad" : ""), note.text));
+  return row.firstChild ? row : null;
+}
+
 function renderQueue(p, host) {
   const s = el("section");
   s.append(el("h2", null, "Fila de integração"));
@@ -226,6 +282,7 @@ function renderQueue(p, host) {
   s.append(executorLine(q.executor));
   if (q.paused) s.append(el("div", "banner", "Fila pausada" + (q.pausedReason ? ": " + q.pausedReason : "")));
   if (q.frozenReason) s.append(el("div", "banner", "Fila congelada: " + q.frozenReason));
+  const actions = actionRow(p); if (actions) s.append(actions);
   if (!q.items.length) s.append(el("div", "empty", "Ninguém na fila agora."));
   else { const line = el("div", "queue"); line.dataset.scroll = "queue"; q.items.forEach((it, i) => line.append(queueItem(it, i === 0))); s.append(line); }
   host.append(s);

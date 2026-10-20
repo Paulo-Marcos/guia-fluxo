@@ -658,10 +658,23 @@ script ou no diretório atual, e num worktree acharia (ou criaria) uma cópia
 | `/guia:queue` | mostra a fila: ordem, estado, motivo de espera, ETA (média medida do CI × posição) | qualquer um |
 | `/guia:queue run [--once\|--watch]` | o executor (R5) | o usuário, ou uma tarefa agendada que ele criou |
 | `/guia:queue pause \| resume \| remove D-NNN \| priority D-NNN hotfix` | controle da fila | **só o usuário** |
+| painel (`guia dashboard`): botões **Retomar fila** e **Iniciar executor** (D-187) | o primeiro aparece com a fila pausada ou congelada e roda `queue resume`; o segundo aparece no modo `pr`, fila andando e nenhum executor vivo, e inicia `queue run` em processo destacado (saída em `.guia/queue/executor-painel.log`) | **só o usuário**, num clique confirmado no navegador |
 | `/guia:autonomy <nível> [D-NNN]` | define o nível (R6) | **só o usuário** |
 | `/guia:changelog add` | cria o fragmento da demanda | agente |
 | `/guia:release <versão\|patch\|minor>` | ato 1 da release (branch, script, PR, entra na fila como `release`) | **só o usuário** |
 | `/guia:deps [--now]` | mostra os PRs do Dependabot abertos e o que o executor fará com eles; `--now` dispara o lote (R11) | qualquer um; `--now` no nível ≥ `queue` |
+
+Os botões do painel não gravam estado: cada um roda o próprio motor dentro do
+projeto (`GUIA_PROJECT_ROOT`), só para projetos do cadastro do painel. O
+pedido de escrita (`POST /api/action/queue-resume|queue-run`) só passa com
+Host `127.0.0.1`/`localhost` na porta do painel, `Origin` do próprio painel,
+corpo `application/json` e o token desta sessão do painel (embutido na página,
+que outra origem não consegue ler); a página recusa ser emoldurada
+(`frame-ancestors 'none'`). Um executor por repositório continua garantido pelo
+lease com `O_EXCL` (R5); o painel só evita o clique que já nasceria recusado
+(executor vivo, ou um que ele iniciou e ainda não gravou o lease). O agente
+nunca usa esses botões — eles existem para o dono não precisar de terminal.
+Decisão em [ADR-0022](adr/0022-painel-local-com-acoes-do-dono.md).
 
 "Só o usuário" se implementa com `disable-model-invocation: true` no
 frontmatter da skill gerada (o gerador-cortes já usa o equivalente
