@@ -30,6 +30,7 @@ from _constants import (
     DEMAND_TITLE_FORMAT_DEFAULT,
     FEATURES_FILE,
     FEATURES_REL,
+    LEGACY_CHAT_TITLE_FILE,
     KIND_FEATURE,
     KIND_MARKER_FALLBACK,
     KIND_MARKERS,
@@ -415,6 +416,27 @@ def chat_hint(task: dict[str, Any]) -> str:
     return f" - volte ao chat: {chat}" if chat else ""
 
 
+CHAT_WARNING_PREFIX = "AVISO CHAT: "
+
+
+def chat_warning(task: dict[str, Any]) -> str | None:
+    """D-190: demanda em desenvolvimento sem o chat gravado com a sessao.
+
+    Sem `chat.session` a fila nao tem o que renomear ao integrar (D-188) - no
+    gerador-cortes so 1 de 51 demandas a gravava. O aviso traz o comando.
+    """
+    if task.get("status") != STATUS_IN_DEVELOPMENT:
+        return None
+    chat = task.get("chat") or {}
+    if chat.get("session"):
+        return None
+    what = "sem a sessao do chat" if chat.get("title") else "sem chat registrado"
+    title = chat.get("title") or chat_name(task)
+    return (f"{CHAT_WARNING_PREFIX}{task['id']} {what} - renomeie o chat da demanda (set_session_title) e grave: "
+            f'chat {task["id"]} --title "{title}" --session <sessionId>; sem a sessao a fila nao renomeia '
+            "o chat ao integrar (D-188)")
+
+
 def current_task_payload(task: dict[str, Any]) -> dict[str, str]:
     return {
         "taskId": task["id"],
@@ -427,6 +449,8 @@ def current_task_payload(task: dict[str, Any]) -> dict[str, str]:
 def set_current_task(task: dict[str, Any]) -> None:
     write_json(CURRENT_FILE, current_task_payload(task))
     DEMAND_TITLE_FILE.write_text(demand_title(task) + "\n", encoding="utf-8")
+    # D-190: o arquivo de antes do ADR-0018 ficava orfao e confundia quem o lia.
+    LEGACY_CHAT_TITLE_FILE.unlink(missing_ok=True)
 
 
 def print_demand_title(task: dict[str, Any]) -> None:

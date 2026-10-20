@@ -35,4 +35,6 @@ finish E-001                              # SO fecha quando todos os filhos fore
 - A single demand that just needs `--depends-on` to wait for another (use D-067, not D-049).
 - A two-line refactor that doesn't deserve a chat-pai. Just use `chore`.
 
-Reflect the printed `NOME DA DEMANDA` for the epic itself (`E-NNN ✨ - #DEV - <title>`) and, on Claude Code, name this chat after it. The epic's chat holds the epic alone (D-185): each story is created here with `--under E-NNN --status planned` and then runs in **its own linked chat** (`start_session`, titled with the story's `NOME DA DEMANDA`, brief starting with `start <D-NNN>`). Come back to the epic's chat for `epic status` and the epic's `finish`.
+Reflect the printed `NOME DA DEMANDA` for the epic itself (`E-NNN ✨ - #DEV - <title>`) and name this chat after it (below). The epic's chat holds the epic alone (D-185): each story is created here with `--under E-NNN --status planned` and then runs in **its own linked chat** (`start_session`, titled with the story's `NOME DA DEMANDA`, brief starting with `start <D-NNN>`). Never `start` the stories in batch here: a story started in the epic's chat records no chat of its own, and the queue cannot rename it when it integrates (D-190). Come back to the epic's chat for `epic status` and the epic's `finish`.
+
+{{include_per_target: _partials/name_chat}}

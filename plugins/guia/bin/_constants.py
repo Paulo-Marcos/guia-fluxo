@@ -149,6 +149,8 @@ CURRENT_FILE = GUIA_DIR / "current-task.json"
 # acao opcional/manual do usuario. Mantido como pointer estavel, host-agnostico,
 # que um helper externo de rename pode ler. Renomeado de chat-title.txt.
 DEMAND_TITLE_FILE = GUIA_DIR / "demand-title.txt"
+# D-190: o nome antigo (ADR-0018) que sobrava orfao nos consumidores; o motor o apaga.
+LEGACY_CHAT_TITLE_FILE = GUIA_DIR / "chat-title.txt"
 DOCS_MAP_FILE = GUIA_DIR / "docs-map.yaml"
 REPORTS_DIR = GUIA_DIR / "reports"
 # Catalogo legivel de demandas. D-055: renomeado de FEATURES.md (nome nao
@@ -359,6 +361,7 @@ __all__ = [
     "BACKLOG_FILE",
     "CURRENT_FILE",
     "DEMAND_TITLE_FILE",
+    "LEGACY_CHAT_TITLE_FILE",
     "DOCS_MAP_FILE",
     "REPORTS_DIR",
     "FEATURES_FILE",
