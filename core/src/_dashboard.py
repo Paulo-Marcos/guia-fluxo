@@ -43,6 +43,11 @@ QUEUE_HISTORY_LIMIT = 6
 # Mesmo padrao do executor (_executor.LEASE_STALE_MINUTES_DEFAULT); nao importado
 # de la porque o _executor puxa git/gh/worktree, peso que o painel nao precisa.
 LEASE_STALE_MINUTES = 10
+ENGINE = Path(__file__).resolve().parent / "guia.py"
+# Motor que mora dentro do projeto (repo-mae, dogfood, copia manual). Sem
+# nenhum (o caso do plugin), vale o do painel. Fica aqui, e nao em
+# _dashboard_actions, para o retrato mostrar o motor sem import circular.
+PROJECT_ENGINES = (Path("core/src/guia.py"), Path("plugins/guia/bin/guia.py"), Path(".guia-fluxo/bin/guia.py"))
 _SCAN_SKIP = frozenset({"node_modules", ".git", ".venv", "venv", "__pycache__", "dist", "build", "bin", "obj"})
 
 
@@ -234,6 +239,22 @@ def _queue(root: Path, by_id: dict[str, dict[str, Any]], config: dict[str, Any])
     }
 
 
+def engine_for(root: Path) -> Path:
+    """O motor que os botoes do painel rodam no projeto (D-187): o do proprio
+    projeto quando ele tem um; senao o do painel. Um painel aberto de outra
+    versao nao integra PRs com o codigo dela."""
+    return next((root / rel for rel in PROJECT_ENGINES if (root / rel).is_file()), ENGINE)
+
+
+def _engine(root: Path) -> dict[str, Any]:
+    """D-195: o motor que o botao rodaria, para o confirm mostrar. `own`
+    quando o script vem da pasta do projeto - e quem o controla e o projeto
+    (um clone de terceiro achado por --scan), nao o Guia que serve o painel."""
+    path = engine_for(root)
+    own = os.path.normcase(str(path.resolve())) != os.path.normcase(str(ENGINE))
+    return {"path": str(path), "own": own}
+
+
 def snapshot(root: Path) -> dict[str, Any]:
     """Tudo o que o painel mostra de um projeto, lido do `.guia/` dele."""
     guia = root / ".guia"
@@ -266,6 +287,7 @@ def snapshot(root: Path) -> dict[str, Any]:
         "recentDone": done[:RECENT_DONE_LIMIT],
         "doneTotal": len(done),
         "queue": _queue(root, by_id, config),
+        "engine": _engine(root),
     }
 
 
@@ -304,6 +326,7 @@ def overview(paths: list[str]) -> dict[str, Any]:
 __all__ = [
     "STAGES",
     "add_projects",
+    "engine_for",
     "engine_version",
     "is_project",
     "load_projects",
