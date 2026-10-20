@@ -24,6 +24,7 @@ from typing import Any
 
 from _audit import patch_id
 from _auto_finish import try_auto_finish
+from _chat_sync import pending_rename, rename_line
 from _clock import now_iso
 from _cloud_import import import_labeled
 from _constants import (
@@ -47,7 +48,6 @@ from _github import (
 from _lease import LEASE_FILE, LEASE_STALE_MINUTES_DEFAULT
 from _lease import read_lease as _read_lease
 from _merge_queue import STATE_CONFLICT, find, load, mutate, ordered
-from _chat_sync import pending_rename, rename_line
 from _tasks import chat_hint, find_task, save_task
 from _worktree import remove_worktree
 
