@@ -194,6 +194,12 @@ def _executor(root: Path, config: dict[str, Any], now: float) -> dict[str, Any] 
     }
 
 
+def queue_stopped(queue: dict[str, Any]) -> bool:
+    """Fila parada: pausada pelo dono ou congelada pela main vermelha. Uma
+    regra so para o botao (Retomar em vez de Iniciar executor) e as acoes."""
+    return bool(queue.get("paused") or queue.get("frozenReason"))
+
+
 def _queue(root: Path, by_id: dict[str, dict[str, Any]], config: dict[str, Any]) -> dict[str, Any]:
     data = _read(root / ".guia" / "queue.json", {})
     items = [i for i in data.get("items") or [] if isinstance(i, dict)]
@@ -228,6 +234,7 @@ def _queue(root: Path, by_id: dict[str, dict[str, Any]], config: dict[str, Any])
         "paused": bool(data.get("paused")),
         "pausedReason": data.get("pausedReason"),
         "frozenReason": data.get("frozenReason"),
+        "stopped": queue_stopped(data),
         "executor": _executor(root, config, time.time()),
         "items": line,
         "head": line[0] if line else None,
@@ -331,6 +338,7 @@ __all__ = [
     "is_project",
     "load_projects",
     "overview",
+    "queue_stopped",
     "registry_file",
     "remove_project",
     "scan",
