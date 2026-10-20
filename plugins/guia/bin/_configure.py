@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from _auto_finish import AUTO_FINISH_DEFAULT
-from _autonomy import LEVELS, rank
+from _autonomy import LEVELS, SOLO_ON, rank, solo
 from _constants import (
     COMMIT_FORMAT_GITMOJI,
     COMMIT_FORMAT_LEGACY,
@@ -408,6 +408,24 @@ STEPS: tuple[Step, ...] = (
         options=lambda ctx: [Option(level, LEVEL_LABELS[level], "") for level in LEVELS],
     ),
     Step(
+        "autonomy-solo", "Autonomia", "Perfil SOLO local",
+        "So para projeto que so voce usa e que voce reverte se der errado (ADR-0021). on: o pilot nao para em voce - "
+        "[unlock:] fica so como rastro e nao segura a fila; caminhos sensiveis (.github, migrations, lockfiles) so "
+        "param se voce listar em alwaysHuman; os achados da auditoria voltam para o agente corrigir (o approve com "
+        "achado e recusado) e a fila segue quando ela aprova; feature tambem fecha sozinha. O QUE SE PERDE: voce nao "
+        "ve antes do merge a edicao de teste travado, de workflow nem de lockfile, e feature fecha sem o seu uso "
+        "real. Com mais de uma pessoa no projeto, deixe off. So voce liga - o agente nunca.",
+        ("autonomy", "solo"), "choice", "off",
+        lambda ctx: (ctx.get(("autonomy", "solo")) or "off",
+                     "ligado por voce; desligue se o projeto ganhar outra pessoa" if solo(ctx.config)
+                     else "off: ligar e decisao sua, sabendo o que se perde"),
+        options=lambda ctx: [
+            Option("off", "desligado", "o pilot para em voce nas travas, nos caminhos sensiveis e na feature"),
+            Option(SOLO_ON, "ligado (projeto solo e local)", "fluxo inteiro no pilot; voce so ve pelo historico"),
+        ],
+        applies=lambda ctx: _is_pr(ctx) and (ctx.get(("autonomy", "ceiling")) or "pilot") == "pilot",
+    ),
+    Step(
         "deps-autonomy", "Autonomia", "Nivel do lote de dependencias",
         "Ate onde o `/guia:deps --now` vai sozinho com o lote do Dependabot. pr: lanca o PR e audita. queue: + "
         "entra na fila. pilot: + integra e fecha, e so pergunta quando ha algo alem de versao (codigo, linha de "
@@ -431,7 +449,8 @@ STEPS: tuple[Step, ...] = (
             Option([*AUTO_FINISH_DEFAULT["kinds"], "feature"], "todos, inclusive feature",
                    "a fila fecha tudo que as condicoes provarem; voce so entra quando algo nao se prova"),
         ],
-        applies=lambda ctx: (ctx.get(("autonomy", "ceiling")) or "pilot") == "pilot",
+        # D-193: no solo a feature ja entra nos tipos.
+        applies=lambda ctx: (ctx.get(("autonomy", "ceiling")) or "pilot") == "pilot" and not solo(ctx.config),
     ),
     Step(
         "models-triage", "Modelos", "Triagem de modelo por demanda",
@@ -491,7 +510,8 @@ STEPS: tuple[Step, ...] = (
         ("autonomy", "alwaysHumanLocks"), "list", "*", _recommend_locks,
         options=_lock_options,
         seen=lambda ctx: [f"travas do projeto: {', '.join(_lock_ids()) or 'nenhuma'}"],
-        applies=lambda ctx: rank(ctx.get(("autonomy", "ceiling")) or "pilot") >= rank("queue"),
+        # D-193: no solo o [unlock:] nao segura a fila - a etapa nao decide nada.
+        applies=lambda ctx: rank(ctx.get(("autonomy", "ceiling")) or "pilot") >= rank("queue") and not solo(ctx.config),
     ),
 )
 STEPS_BY_ID = {step.id: step for step in STEPS}

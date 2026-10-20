@@ -18,7 +18,7 @@ import fnmatch
 from datetime import datetime, timezone
 from typing import Any
 
-from _autonomy import effective_level
+from _autonomy import effective_level, solo
 from _clock import now_iso
 from _constants import ROOT, STATUS_INTEGRATED, STATUS_VALIDATED
 from _features_md import upsert_features_entry
@@ -45,7 +45,11 @@ AUTO_FINISH_DEFAULT: dict[str, Any] = {
 
 def settings(config: dict[str, Any]) -> dict[str, Any]:
     custom = (config.get("autonomy") or {}).get("autoFinish") or {}
-    return {**AUTO_FINISH_DEFAULT, **custom}
+    conf = {**AUTO_FINISH_DEFAULT, **custom}
+    if solo(config) and "feature" not in conf["kinds"]:
+        # D-193 (ADR-0021): no solo a feature tambem fecha sozinha.
+        conf["kinds"] = [*conf["kinds"], "feature"]
+    return conf
 
 
 def _matching(paths: list[str], patterns: list[str]) -> list[str]:
@@ -53,6 +57,12 @@ def _matching(paths: list[str], patterns: list[str]) -> list[str]:
         return fnmatch.fnmatch(path, pattern) or (pattern.startswith("**/") and fnmatch.fnmatch(path, pattern[3:]))
 
     return sorted({p for p in paths for pat in patterns if hit(p, pat)})
+
+
+def findings_over_limit(findings: dict[str, int], config: dict[str, Any]) -> dict[str, int]:
+    """Severidades com achados abertos acima de `maxOpenFindings`."""
+    limits = settings(config)["maxOpenFindings"]
+    return {sev: findings.get(sev, 0) for sev, limit in limits.items() if findings.get(sev, 0) > limit}
 
 
 def squash_paths(sha: str | None) -> list[str] | None:
@@ -88,11 +98,18 @@ def evaluate(task: dict[str, Any], item: dict[str, Any], config: dict[str, Any],
         ui = [p for p in _matching(paths or [], conf["uiPaths"]) if p not in tests_only]
         check("sem mudanca de tela", paths is not None and not ui,
               "caminhos do squash nao conferidos" if paths is None else (", ".join(ui) or "nenhum caminho de tela"))
-    findings = (task.get("audit") or {}).get("openFindings")
-    if findings is None:
+    audit = task.get("audit") or {}
+    findings = audit.get("openFindings")
+    if findings is None and solo(config):
+        # D-193: no solo o `audit --approve` recusa achados acima do limite,
+        # entao a aprovacao ja prova que o agente os corrigiu.
+        approved = audit.get("result") == "approved"
+        check("achados da auditoria", approved,
+              "solo: auditoria aprovada, achados corrigidos pelo agente" if approved else "auditoria nao aprovada")
+    elif findings is None:
         check("achados da auditoria", False, "auditoria sem contagem de achados (audit --finding SEV=N)")
     else:
-        over = {sev: findings.get(sev, 0) for sev, limit in conf["maxOpenFindings"].items() if findings.get(sev, 0) > limit}
+        over = findings_over_limit(findings, config)
         check("achados da auditoria", not over, f"abertos {findings}, limite {conf['maxOpenFindings']}")
     if conf["blockIfAlwaysHuman"]:
         reason = item.get("humanReason")
@@ -150,4 +167,7 @@ def stale_integrated(config: dict[str, Any], now: datetime | None = None) -> lis
     return stale
 
 
-__all__ = ["AUTO_FINISH_DEFAULT", "auto_finish", "evaluate", "settings", "squash_paths", "stale_integrated", "try_auto_finish"]
+__all__ = [
+    "AUTO_FINISH_DEFAULT", "auto_finish", "evaluate", "findings_over_limit", "settings", "squash_paths",
+    "stale_integrated", "try_auto_finish",
+]

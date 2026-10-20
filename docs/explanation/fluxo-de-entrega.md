@@ -61,6 +61,11 @@ nivel; frase solta no chat nao muda nada.
   `autonomy.alwaysHumanLocks`;
 - release, configuracao do GitHub e reescrita de historico.
 
+No **perfil SOLO local** (ADR-0021, etapa `autonomy-solo` do `configure`, so voce liga) os dois
+itens de PR deixam de parar: o `[unlock:]` vira so rastro, os caminhos sensiveis so param se
+voce listar, os achados da auditoria voltam para o agente, e ate `feature` fecha sozinha.
+Serve para projeto que so voce usa e reverte se der errado.
+
 ## Quando algo da errado
 
 | Sintoma | O que aconteceu | O que fazer |

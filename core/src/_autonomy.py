@@ -35,6 +35,14 @@ ALWAYS_HUMAN_DEFAULT = (
 )
 
 
+SOLO_ON = "on"
+
+
+def solo(config: dict[str, Any]) -> bool:
+    """D-193 (ADR-0021): perfil SOLO local, ligado so pelo dono (`configure`)."""
+    return (config.get("autonomy") or {}).get("solo") in (SOLO_ON, True)
+
+
 def rank(level: str) -> int:
     return LEVELS.index(level)
 
@@ -87,7 +95,12 @@ def human_reasons(changed_paths: list[str] | None, merge_message: str, config: d
     decide.
     """
     autonomy = config.get("autonomy") or {}
-    patterns = autonomy.get("alwaysHuman") or list(ALWAYS_HUMAN_DEFAULT)
+    is_solo = solo(config)
+    # D-193: `[]` explicito desliga os caminhos (o `or` voltava ao padrao);
+    # no solo, sem lista do dono, nenhum caminho para.
+    patterns = autonomy.get("alwaysHuman")
+    if patterns is None:
+        patterns = [] if is_solo else list(ALWAYS_HUMAN_DEFAULT)
     locks = autonomy.get("alwaysHumanLocks", "*")
     reasons: list[str] = []
     if changed_paths is None:
@@ -96,7 +109,8 @@ def human_reasons(changed_paths: list[str] | None, merge_message: str, config: d
         touched = sorted({p for p in changed_paths for pat in patterns if _matches(p, pat)})
         if touched:
             reasons.append("toca caminho alwaysHuman: " + ", ".join(touched))
-    marked = sorted(unlock_marks(merge_message or ""))
+    # D-193: no solo o [unlock:] fica so como rastro na mensagem do squash.
+    marked = [] if is_solo else sorted(unlock_marks(merge_message or ""))
     held = [lock for lock in marked if locks == "*" or lock in (locks or [])]
     if held:
         reasons.append("desbloqueia trava: " + ", ".join(held))
@@ -116,10 +130,12 @@ __all__ = [
     "BY_AGENT",
     "BY_USER",
     "LEVELS",
+    "SOLO_ON",
     "effective_level",
     "human_reasons",
     "implicit_approval",
     "rank",
     "set_level",
     "settings",
+    "solo",
 ]
