@@ -138,9 +138,11 @@ def _handler(port_ref: list[int], token: str) -> type[BaseHTTPRequestHandler]:
 class _ExclusiveServer(ThreadingHTTPServer):
     """Porta so nossa. O HTTPServer liga SO_REUSEADDR, que no Windows deixa um
     segundo processo ocupar a mesma porta: dois paineis dividiriam a porta e a
-    busca pela proxima livre nunca andaria."""
+    busca pela proxima livre nunca andaria. No POSIX o SO_REUSEADDR so deixa
+    reabrir uma porta em TIME_WAIT (nao divide uma porta escutando): sem ele,
+    um painel reaberto logo depois de fechar pularia de porta (D-187)."""
 
-    allow_reuse_address = False
+    allow_reuse_address = not hasattr(socket, "SO_EXCLUSIVEADDRUSE")
 
     def server_bind(self) -> None:
         if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
