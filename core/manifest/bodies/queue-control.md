@@ -19,7 +19,7 @@ When the developer asks for `run`, this chat **manages the queue**: the executor
 Repeat until nothing is left to do:
 
 1. **Integrate.** `queue run`. Read what it printed: integrated, returned, closed by `pilot`, frozen.
-   - **Rename the integrated demands' chats (D-188).** For each line `RENOMEIE O CHAT: <sessionId> -> <NOME DA DEMANDA>`, call `mcp__ccd_session_mgmt__set_session_title` with `session_id: "<sessionId>"` and `title` = the text after `-> `, exactly as printed (load it with ToolSearch `select:mcp__ccd_session_mgmt__set_session_title` when deferred). The executor only prints; renaming is yours. If the tool is missing or declines (an unattended session, the owner's own title), do not retry: report the line so the owner can rename that chat.
+   - **Rename the integrated demands' chats (D-188).** For each line `RENOMEIE O CHAT: <sessionId> -> <NOME DA DEMANDA>`, call `mcp__ccd_session_mgmt__set_session_title` with `session_id: "<sessionId>"` and `title` = the text after `-> `, exactly as printed (load it with ToolSearch `select:mcp__ccd_session_mgmt__set_session_title` when deferred). The executor only prints; renaming is yours. Then record it - `chat <D-NNN> --applied "<title>"`, or `--refused "<title>" --reason "<why>"` when the tool is missing or declines (an unattended session, the owner's own title) - do not retry a refusal; a line nobody applied comes back in any chat's `next`/`status`/`chat --pending` (D-194).
 2. **Find the conflicts.** `queue --json`: items whose `waiting` starts with `conflito:` are yours.
 3. **Resolve each conflict**, one demand at a time:
    1. `worktree add <D-NNN>` (it follows the PR branch from `origin`), then `git fetch origin`.

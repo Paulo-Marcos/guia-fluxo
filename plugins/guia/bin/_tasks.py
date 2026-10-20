@@ -415,17 +415,6 @@ def chat_hint(task: dict[str, Any]) -> str:
     return f" - volte ao chat: {chat}" if chat else ""
 
 
-CHAT_RENAME_PREFIX = "RENOMEIE O CHAT: "
-
-
-def chat_rename_line(task: dict[str, Any]) -> str | None:
-    """D-188: linha estavel para o chat gerente da fila renomear a sessao da
-    demanda (`<sessionId> -> <NOME DA DEMANDA>`). O motor nao fala com o app;
-    so imprime. Sem sessao gravada (`chat --session`), nada a renomear."""
-    session = (task.get("chat") or {}).get("session")
-    return f"{CHAT_RENAME_PREFIX}{session} -> {demand_title(task)}" if session else None
-
-
 def current_task_payload(task: dict[str, Any]) -> dict[str, str]:
     return {
         "taskId": task["id"],
