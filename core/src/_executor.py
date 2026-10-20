@@ -47,7 +47,8 @@ from _github import (
 from _lease import LEASE_FILE, LEASE_STALE_MINUTES_DEFAULT
 from _lease import read_lease as _read_lease
 from _merge_queue import STATE_CONFLICT, find, load, mutate, ordered
-from _tasks import chat_hint, chat_rename_line, find_task, save_task
+from _chat_sync import pending_rename, rename_line
+from _tasks import chat_hint, find_task, save_task
 from _worktree import remove_worktree
 
 # D-137: tudo importado no topo - o executor remove o worktree da demanda no
@@ -352,11 +353,12 @@ def _after_merge(item: dict[str, Any], ci_timeout_seconds: float, config: dict[s
 
 def _chat_rename(item: dict[str, Any]) -> None:
     """D-188: depois de integrar (e do pilot fechar ou nao), diz ao chat
-    gerente qual sessao renomear para a etapa final da demanda."""
+    gerente qual sessao renomear para a etapa final da demanda. D-194: se
+    ninguem ler, a proxima varredura de qualquer chat (`chat --pending`) acha."""
     task = find_task(item["id"])
-    line = chat_rename_line(task) if task is not None else None
-    if line:
-        print(line)
+    pending = pending_rename(task) if task is not None else None
+    if pending:
+        print(rename_line(pending))
 
 
 def _import_cloud_prs() -> None:

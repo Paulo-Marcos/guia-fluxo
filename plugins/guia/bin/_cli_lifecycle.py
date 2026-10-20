@@ -357,10 +357,13 @@ def cmd_upgrade(args: argparse.Namespace) -> int:
 def cmd_status(args: argparse.Namespace) -> int:
     import json
 
+    from _chat_sync import print_pending_renames
+
     if getattr(args, "all", False):
         _status_board()
         _print_pending_with_owner()
         _print_close_reminders()
+        print_pending_renames()  # D-194
         return 0
 
     task = find_task_or_current(args.task_id)
@@ -371,6 +374,7 @@ def cmd_status(args: argparse.Namespace) -> int:
         print_demand_title(task)
         return 0
     _print_close_reminders()
+    print_pending_renames()  # D-194
     # D-049: Epic ganha visualizacao agregada (arvore + progresso).
     if task.get("kind") == KIND_EPIC:
         _print_epic_tree(task)

@@ -305,9 +305,14 @@ O condutor (D-152): o proximo passo da demanda, decidido pelo motor a partir do 
 
 ```powershell
 .\core\bin\guia.ps1 chat [D-NNN] [--title "<nome do chat>"] [--json]
+.\core\bin\guia.ps1 chat [D-NNN] [--session <sessionId>]
+.\core\bin\guia.ps1 chat --pending [--json]
+.\core\bin\guia.ps1 chat D-NNN --applied "<nome>" | --refused "<nome>" [--reason "<motivo>"]
 ```
 
 Em que chat a demanda e feita, para voltar a ele (D-157). Sem `--title`, imprime `NOME DO CHAT: ...` - um nome estavel, sem a etiqueta de status (que muda) - para o agente renomear a sessao; com `--title`, grava o nome na demanda (`chat.title`). Chat dedicado a demanda: o agente renomeia e grava; chat com varias demandas: nao renomeia para uma delas, grava o nome que o chat ja tem. Quando a fila devolve (`DEVOLVIDA - ... - volte ao chat: ...`) ou deixa a demanda `Integrada` sem fechar, ela aponta o chat; `next` mostra `[chat: ...]` e `status --all` lista as **Pendencias** (devolvidas e integradas por fechar) com o chat de cada uma.
+
+**Nomes reconciliados (D-194).** `--session` grava o id da sessao do app (`local_...`, de `get_session`); o literal `self` e recusado - so vale dentro das tools do app. A demanda guarda o ultimo nome aplicado a sessao (`chat.applied`). `chat --pending` lista as sessoes cujo nome divergiu do `NOME DA DEMANDA` atual, uma linha `RENOMEIE O CHAT: <sessionId> -> <nome>` por sessao (`--json`: `pending[]` com `task`, `session`, `title`); `next` (`chatRenames` no `--json`), `status` e `queue run` imprimem as mesmas linhas. O chat que renomeia confirma com `--applied "<nome>"`; recusa do app vira `--refused "<nome>" --reason ...`: um aviso, e a sessao so volta a lista quando a etapa mudar. Sessao gravada de novo zera o registro.
 
 ### `dashboard`
 

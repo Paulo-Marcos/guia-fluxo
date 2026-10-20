@@ -40,6 +40,13 @@ ship [D-NNN] --subject "<emoji> <type>(D-NNN): <title>" --body "<why>" --unlock-
 5. **Recommend the model for this demand (D-153)** — when the demand is created or started in this chat, before step 3 decides where it runs: from what you read in the request and the code, run `triage <D-NNN> --scope <areas> [--risk auth|migration|concurrency|security|prod|data] [--uncertain] [--irreversible]` and show the `MODELO RECOMENDADO ...` line. If this chat runs on a different model, step 3 opens the demand's chat on the recommended one (lower) or tells the developer (higher). A Fable suggestion is only a suggestion: ask before using it. The audit never runs below Opus.
 6. **Record the model actually used (D-154)** — once per chat: `model <D-NNN> --who chat --model <haiku|sonnet|opus|fable> --purpose "<what this chat did>"`. When you delegate to a subagent, pick its model by what it does (locate/read code: haiku; a 1-2 file change: sonnet; review or audit: opus - never below) and record it the same way with `--who subagent`. Show the `MODELO USADO ...` line: the developer compares it with the recommendation (`model --summary`).
 
+**Reconcile the chats' names (D-194)** - whenever the script prints lines `RENOMEIE O CHAT: <sessionId> -> <NOME DA DEMANDA>` (`next`, `status`, `queue run`, or `chat --pending` on demand), some demand's chat - this one or another - still carries an old stage. For each line:
+
+- call `mcp__ccd_session_mgmt__set_session_title` with `session_id: "<sessionId>"` and `title` = the text after `-> `, exactly as printed (load it with ToolSearch `select:mcp__ccd_session_mgmt__set_session_title` when deferred);
+- then record what happened: `chat <D-NNN> --applied "<title>"` when it renamed, or `chat <D-NNN> --refused "<title>" --reason "<why>"` when the app declined (the owner's own title, an archived or unattended session). A refusal is a warning, shown once: the engine does not ask again until the demand's stage changes, so never retry it in a loop.
+
+Nobody needs to be the queue manager: any Guia chat that sees the lines applies them, and the engine stops listing a session once its name matches. The session is always the real id (`local_...` from `get_session`), never the literal `self` - `chat --session self` is refused.
+
 ## Then: let the engine conduct (D-152)
 
 When the implementation ends, run `ready` yourself (never the developer). Then do not decide the next step yourself. Ask the engine, act on its answer, and repeat until it says `stop` or `done` (every `ready`, `ship`, `audit` and `queue add` also ends with a `PROXIMO PASSO:` line saying the same):
