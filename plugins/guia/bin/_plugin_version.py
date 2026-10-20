@@ -23,51 +23,57 @@ def _claude_dir() -> Path:
     return Path(os.environ.get("CLAUDE_CONFIG_DIR") or Path.home() / ".claude")
 
 
-def _read(path: Path) -> Any:
+def _obj(value: Any) -> dict[str, Any]:
+    # Formato que o Claude Code mudar (ou arquivo corrompido) vira silencio, nao traceback.
+    return value if isinstance(value, dict) else {}
+
+
+def _read(path: Path) -> dict[str, Any]:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        return _obj(json.loads(path.read_text(encoding="utf-8")))
     except (OSError, ValueError):
-        return None
+        return {}
 
 
 def _version_key(version: str) -> tuple[int, ...] | None:
     try:
         return tuple(int(part) for part in version.strip().split("."))
-    except (AttributeError, ValueError):
+    except ValueError:
         return None
 
 
 def _available(market: dict[str, Any]) -> str | None:
     """A versao do plugin no marketplace: o `plugin.json` da fonte, ou a do catalogo."""
-    location = market.get("installLocation") or (market.get("source") or {}).get("path")
-    if not location:
+    location = market.get("installLocation") or _obj(market.get("source")).get("path")
+    if not isinstance(location, str) or not location:
         return None
     root = Path(location)
-    catalog = _read(root / ".claude-plugin" / "marketplace.json") or {}
-    entry = next((p for p in catalog.get("plugins") or [] if p.get("name") == PLUGIN_NAME), None)
+    plugins = _read(root / ".claude-plugin" / "marketplace.json").get("plugins")
+    entries = [_obj(p) for p in plugins] if isinstance(plugins, list) else []
+    entry = next((p for p in entries if p.get("name") == PLUGIN_NAME), None)
     if entry is None:
         return None
     source = entry.get("source")
     if isinstance(source, str):
-        manifest = _read(root / source / ".claude-plugin" / "plugin.json") or {}
-        if manifest.get("version"):
-            return str(manifest["version"])
-    return entry.get("version")
+        version = _read(root / source / ".claude-plugin" / "plugin.json").get("version")
+        if version:
+            return str(version)
+    return str(entry["version"]) if entry.get("version") else None
 
 
 def stale_plugin_lines() -> list[str]:
     """Uma linha por instalacao do `guia` atras da versao que o marketplace ja tem."""
     plugins_dir = _claude_dir() / "plugins"
-    installed = (_read(plugins_dir / "installed_plugins.json") or {}).get("plugins") or {}
-    markets = _read(plugins_dir / "known_marketplaces.json") or {}
+    installed = _obj(_read(plugins_dir / "installed_plugins.json").get("plugins"))
+    markets = _read(plugins_dir / "known_marketplaces.json")
     lines = []
     for key, installs in installed.items():
         name, _, market_name = key.partition("@")
         if name != PLUGIN_NAME or not isinstance(installs, list):
             continue
-        available = _available(markets.get(market_name) or {})
+        available = _available(_obj(markets.get(market_name)))
         for install in installs:
-            current = str(install.get("version") or "")
+            current = str(_obj(install).get("version") or "")
             have, want = _version_key(current), _version_key(available or "")
             if have is not None and want is not None and have < want:
                 lines.append(f"{STALE_PREFIX}{key} {current} instalado, {available} disponivel - os commands "
