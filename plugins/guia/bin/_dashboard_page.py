@@ -253,21 +253,30 @@ async function act(kind, p, question) {
   acting = false;
   refresh();
 }
+// D-195: o confirm diz qual script vai rodar. Motor da pasta do projeto vem
+// destacado - quem controla esse codigo e o projeto, nao o Guia do painel.
+function engineNote(p) {
+  const e = p.engine;
+  if (!e || !e.path) return "";
+  return e.own
+    ? "\n\n⚠ ATENÇÃO: roda o motor DO PRÓPRIO PROJETO, não o do painel:\n" + e.path + "\nConfirme só se você confia no código desta pasta."
+    : "\n\nMotor: " + e.path + " (o do painel).";
+}
 function actionRow(p) {
   const q = p.queue;
   const row = el("div", "act");
   if (q.paused || q.frozenReason) {
     const b = el("button", "btn", "Retomar fila");
     b.disabled = acting;
-    b.onclick = () => act("queue-resume", p, q.frozenReason
+    b.onclick = () => act("queue-resume", p, (q.frozenReason
       ? "A fila foi congelada (main vermelha). Confirme que a main voltou ao verde e retome a fila de " + p.name + "."
-      : "Retomar a fila de " + p.name + "? (equivale a guia queue resume)");
+      : "Retomar a fila de " + p.name + "? (equivale a guia queue resume)") + engineNote(p));
     row.append(b);
   } else if (p.mode === "pr" && !(q.executor && q.executor.alive)) {
     const b = el("button", "btn", "Iniciar executor");
     b.disabled = acting;
     b.title = "guia queue run em segundo plano, neste projeto";
-    b.onclick = () => act("queue-run", p, "Iniciar o executor da fila de " + p.name + "? Ele integra os itens aprovados e sai quando a fila esvazia (guia queue run).");
+    b.onclick = () => act("queue-run", p, "Iniciar o executor da fila de " + p.name + "? Ele integra os itens aprovados e sai quando a fila esvazia (guia queue run)." + engineNote(p));
     row.append(b);
   }
   const note = actionNote[p.path];

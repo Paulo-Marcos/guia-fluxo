@@ -26,12 +26,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from _dashboard import is_project, load_projects, snapshot
-
-ENGINE = Path(__file__).resolve().parent / "guia.py"
-# Motor que mora dentro do projeto (repo-mae, dogfood, copia manual): e o que o
-# dono rodaria no terminal dali. Sem nenhum (o caso do plugin), vale o do painel.
-PROJECT_ENGINES = (Path("core/src/guia.py"), Path("plugins/guia/bin/guia.py"), Path(".guia-fluxo/bin/guia.py"))
+from _dashboard import ENGINE, PROJECT_ENGINES, engine_for, is_project, load_projects, snapshot
 EXECUTOR_LOG = Path(".guia") / "queue" / "executor-painel.log"
 RESUME_TIMEOUT_SECONDS = 60
 
@@ -63,12 +58,6 @@ def registered_project(raw: Any) -> Path:
                 raise ActionError(404, f"{path} nao tem mais .guia/tasks.json")
             return root
     raise ActionError(404, "projeto fora do cadastro do painel")
-
-
-def engine_for(root: Path) -> Path:
-    """O motor do proprio projeto quando ele tem um; senao o do painel. Um
-    painel aberto de outra versao nao integra PRs com o codigo dela."""
-    return next((root / rel for rel in PROJECT_ENGINES if (root / rel).is_file()), ENGINE)
 
 
 def _engine_env(root: Path) -> dict[str, str]:
@@ -134,4 +123,4 @@ def start_executor(root: Path) -> str:
 ACTIONS = {"queue-resume": resume, "queue-run": start_executor}
 
 
-__all__ = ["ACTIONS", "ActionError", "engine_for", "registered_project", "resume", "start_executor"]
+__all__ = ["ACTIONS", "ENGINE", "PROJECT_ENGINES", "ActionError", "engine_for", "registered_project", "resume", "start_executor"]
