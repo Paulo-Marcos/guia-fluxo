@@ -26,10 +26,12 @@ from _constants import (
     STATUS_AWAITING_VALIDATION_ACCENTED,
     STATUS_IN_DEVELOPMENT,
     STATUS_IN_PR,
+    STATUS_IN_QUEUE,
 )
 from _gate import describe_pass, gate_commands, passed_entry, record_pass, run_gate
 from _git_ops import current_branch, git_output
 from _github import gh_pr_upsert
+from _merge_queue import STATE_CONFLICT, find, load
 
 QUEUE_DIR = GUIA_DIR / "queue"
 SHIPPABLE_STATUSES = frozenset({
@@ -98,11 +100,17 @@ def _marks_that_survive_rebase(root: Path, base: str) -> set[str]:
     return marks
 
 
+def _queue_conflict(task: dict[str, Any]) -> bool:
+    """D-197: `Na fila` com o item em conflict - o gerente rebaseou e atualiza o PR (queue-control 3.4)."""
+    item = find(load(), task["id"]) if task.get("status") == STATUS_IN_QUEUE else None
+    return bool(item) and item.get("state") == STATE_CONFLICT
+
+
 def preflight(task: dict[str, Any], config: dict[str, Any], args: Any, cwd: Path) -> dict[str, Any]:
     """Todas as conferencias; devolve o contexto do envio. Nao muda nada."""
     if DELIVERY_MODE != DELIVERY_MODE_PR:
         _refuse("ship e do modo pr (delivery.mode = \"pr\"); no direct o finish commita.")
-    if task.get("status") not in SHIPPABLE_STATUSES:
+    if task.get("status") not in SHIPPABLE_STATUSES and not _queue_conflict(task):
         _refuse(f"{task['id']} esta em '{task.get('status')}'.")
     delivery = config.get("delivery") or {}
     base = delivery.get("baseBranch") or DELIVERY_BASE_BRANCH_DEFAULT
@@ -147,7 +155,8 @@ def ship(task: dict[str, Any], config: dict[str, Any], args: Any, cwd: Path | No
     pr = gh_pr_upsert(root, context["base"], branch, title, body)
     QUEUE_DIR.mkdir(parents=True, exist_ok=True)
     (QUEUE_DIR / f"{task['id']}.msg").write_text(context["message"] + "\n", encoding="utf-8", newline="\n")
-    task["status"] = STATUS_IN_PR
+    if task.get("status") != STATUS_IN_QUEUE:  # D-197: o conflito segue na fila; o queue add o devolve a waiting
+        task["status"] = STATUS_IN_PR
     task["pr"] = {
         "number": pr["number"],
         "url": pr["url"],

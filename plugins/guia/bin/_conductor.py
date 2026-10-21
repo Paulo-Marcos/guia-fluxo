@@ -30,7 +30,7 @@ from _constants import (
     STATUS_INTEGRATED,
 )
 from _lease import describe_executor
-from _merge_queue import find, load
+from _merge_queue import STATE_CONFLICT, find, load
 from _tasks import chat_warning
 
 STEP_READY, STEP_SHIP, STEP_AUDIT = "ready", "ship", "audit"
@@ -72,10 +72,20 @@ def _in_pr(task: dict[str, Any], level: str) -> dict[str, Any]:
     return _step(STEP_QUEUE_ADD, "auditada no head atual", level)
 
 
+def _conflict(task: dict[str, Any], item: dict[str, Any], level: str) -> dict[str, Any]:
+    """D-197: o item em conflict espera o gerente - a aprovacao antiga nao vale ate o queue add."""
+    if (task.get("audit") or {}).get("auditedSha") == item.get("auditedSha"):
+        return _stop(f"conflito na fila ({item.get('conflictReason')}): rebase na base, portao, ship, auditoria "
+                     "do delta e queue add (queue-control run, passo 3)", level, "gerente da fila")
+    return _in_pr(task, level)  # delta ja auditado: o mesmo trilho do Em PR (audit no head atual -> queue add)
+
+
 def _in_queue(task: dict[str, Any], level: str, config: dict[str, Any]) -> dict[str, Any]:
     item = find(load(), task["id"])
     if item is None:
         return _stop("status Na fila, mas fora da fila: rode `guia queue` e confira", level)
+    if item.get("state") == STATE_CONFLICT:
+        return _conflict(task, item, level)
     if not item.get("approval"):
         reason = item.get("humanReason") or "sem aprovacao de merge"
         return _stop(f"aguarda o approve do dono ({reason})", level)
