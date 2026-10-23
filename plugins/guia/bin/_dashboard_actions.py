@@ -26,7 +26,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
-from _dashboard import ENGINE, PROJECT_ENGINES, engine_for, is_project, load_projects, snapshot
+from _dashboard import ENGINE, PROJECT_ENGINES, engine_for, is_project, load_projects, queue_stopped, snapshot
 EXECUTOR_LOG = Path(".guia") / "queue" / "executor-painel.log"
 RESUME_TIMEOUT_SECONDS = 60
 
@@ -69,7 +69,7 @@ def _engine_env(root: Path) -> dict[str, str]:
 
 def resume(root: Path) -> str:
     queue = snapshot(root)["queue"]
-    if not queue["paused"] and not queue["frozenReason"]:
+    if not queue_stopped(queue):
         raise ActionError(409, "a fila nao esta pausada")
     result = subprocess.run(
         [sys.executable, str(engine_for(root)), "queue", "resume"],
@@ -92,16 +92,20 @@ def _detach_kwargs() -> dict[str, Any]:
     return {"start_new_session": True}
 
 
-def start_executor(root: Path) -> str:
-    snap = snapshot(root)
+def _refuse_start(snap: dict[str, Any]) -> None:
+    """O que o retrato ja diz contra iniciar: sem fila, fila parada, executor vivo."""
     if snap["mode"] != "pr":
         raise ActionError(409, "projeto sem entrega por PR: nao ha fila para o executor")
     queue = snap["queue"]
-    if queue["paused"] or queue["frozenReason"]:
+    if queue_stopped(queue):
         raise ActionError(409, "a fila esta parada: retome antes de iniciar o executor")
     executor = queue["executor"]
     if executor and executor["alive"]:
         raise ActionError(409, f"executor ja ativo (pid {executor['pid']} em {executor['host']})")
+
+
+def start_executor(root: Path) -> str:
+    _refuse_start(snapshot(root))
     key = _key(str(root))
     with _spawn_lock:
         previous = _spawned.get(key)
