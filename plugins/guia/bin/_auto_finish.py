@@ -16,13 +16,14 @@ from __future__ import annotations
 
 import fnmatch
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Callable
 
 from _autonomy import effective_level, solo
 from _clock import now_iso
 from _constants import ROOT, STATUS_INTEGRATED, STATUS_VALIDATED
 from _features_md import upsert_features_entry
 from _git_ops import git_output
+from _merge_queue import load as load_queue
 from _reports import write_report
 from _tasks import list_tasks, save_task
 
@@ -83,6 +84,10 @@ def evaluate(task: dict[str, Any], item: dict[str, Any], config: dict[str, Any],
     def check(name: str, ok: bool, evidence: str) -> None:
         checks.append({"check": name, "ok": ok, "evidence": evidence})
 
+    def warn_in_solo(name: str, evidence: str) -> None:
+        # D-200 (ADR-0021): no solo o dono revisa depois - fica o aviso, nao a trava.
+        checks.append({"check": name, "ok": True, "warning": True, "evidence": f"solo, aviso: {evidence}"})
+
     level = effective_level(task, config)
     check("nivel pilot", level == "pilot", f"nivel efetivo {level}")
     check("tipo permitido", kind in conf["kinds"], f"{kind} em {conf['kinds']}")
@@ -96,8 +101,11 @@ def evaluate(task: dict[str, Any], item: dict[str, Any], config: dict[str, Any],
         # do frontend, e uma demanda que so tocou teste nao fechava sozinha.
         tests_only = set(_matching(paths or [], conf["testPaths"]))
         ui = [p for p in _matching(paths or [], conf["uiPaths"]) if p not in tests_only]
-        check("sem mudanca de tela", paths is not None and not ui,
-              "caminhos do squash nao conferidos" if paths is None else (", ".join(ui) or "nenhum caminho de tela"))
+        if paths is not None and ui and solo(config):
+            warn_in_solo("sem mudanca de tela", "tela mudou: " + ", ".join(ui))
+        else:
+            check("sem mudanca de tela", paths is not None and not ui,
+                  "caminhos do squash nao conferidos" if paths is None else (", ".join(ui) or "nenhum caminho de tela"))
     audit = task.get("audit") or {}
     findings = audit.get("openFindings")
     if findings is None and solo(config):
@@ -113,7 +121,10 @@ def evaluate(task: dict[str, Any], item: dict[str, Any], config: dict[str, Any],
         check("achados da auditoria", not over, f"abertos {findings}, limite {conf['maxOpenFindings']}")
     if conf["blockIfAlwaysHuman"]:
         reason = item.get("humanReason")
-        check("fora do alwaysHuman", not reason, reason or "nada em alwaysHuman")
+        if reason and solo(config):
+            warn_in_solo("fora do alwaysHuman", reason)
+        else:
+            check("fora do alwaysHuman", not reason, reason or "nada em alwaysHuman")
     return checks
 
 
@@ -121,10 +132,16 @@ def auto_finish(task: dict[str, Any], checks: list[dict[str, Any]], config: dict
     """Fecha como o `finish` no modo pr (sem commit), com o porque registrado."""
     task["status"] = (config.get("finish") or {}).get("status", STATUS_VALIDATED)
     task["finishedAt"] = now_iso()
+    warnings = [c for c in checks if c.get("warning")]
     task["finish"] = {"mode": "auto", "at": task["finishedAt"], "checks": checks}
+    if warnings:
+        task["finish"]["warnings"] = warnings
     task.setdefault("summary", []).append(
         "Fechada automaticamente no pilot (R7): " + "; ".join(f"{c['check']} ({c['evidence']})" for c in checks)
     )
+    for c in warnings:
+        # D-200: o dono revisa depois - o aviso fica no resumo (status, historico, painel).
+        task["summary"].append(f"Revisar depois ({c['check']}): {c['evidence']}")
     save_task(task)
     upsert_features_entry(task)
     write_report(task, "finish")
@@ -143,6 +160,27 @@ def try_auto_finish(task: dict[str, Any], item: dict[str, Any], config: dict[str
         task["autoFinish"] = {"at": now_iso(), "checks": checks}
         save_task(task)
     return checks
+
+
+def sweep_integrated(config: dict[str, Any], main_ci_of: Callable[[int], tuple[str | None, str | None]]) -> list[tuple[dict[str, Any], list[dict[str, Any]]]]:
+    """D-200: no solo, a `Integrada` que ficou para tras fecha na passada do executor.
+
+    Mesmo checklist do pos-merge; `main_ci_of(pr) -> (sha, veredito)` vem do
+    executor (o GitHub fica la). O item da fila e o do historico, se houver.
+    """
+    if not solo(config):
+        return []
+    history = {entry["id"]: entry for entry in load_queue().get("history", []) if entry.get("state") == "merged"}
+    swept = []
+    for task in list_tasks(status=STATUS_INTEGRATED):
+        number = (task.get("pr") or {}).get("number")
+        if not number or effective_level(task, config) != "pilot":
+            continue
+        sha, verdict = main_ci_of(number)
+        checks = try_auto_finish(task, history.get(task["id"], {}), config, verdict, sha)
+        if checks is not None:
+            swept.append((task, checks))
+    return swept
 
 
 def _age_days(stamp: str | None, now: datetime) -> float | None:
@@ -169,5 +207,5 @@ def stale_integrated(config: dict[str, Any], now: datetime | None = None) -> lis
 
 __all__ = [
     "AUTO_FINISH_DEFAULT", "auto_finish", "evaluate", "findings_over_limit", "settings", "squash_paths",
-    "stale_integrated", "try_auto_finish",
+    "stale_integrated", "sweep_integrated", "try_auto_finish",
 ]

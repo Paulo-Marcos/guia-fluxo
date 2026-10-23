@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 from _audit import patch_id
-from _auto_finish import try_auto_finish
+from _auto_finish import sweep_integrated, try_auto_finish
 from _chat_sync import pending_rename, rename_line
 from _clock import now_iso
 from _cloud_import import import_labeled
@@ -340,6 +340,21 @@ def _auto_finish(item: dict[str, Any], config: dict[str, Any], sha: str | None, 
     print(f"  {item['id']}: pilot nao fechou - {failed}. Fica Integrada para o dono{chat_hint(task)}.")
 
 
+def _sweep_integrated(config: dict[str, Any]) -> None:
+    """D-200: no solo, fecha a `Integrada` que ficou para tras (sem esperar o CI)."""
+
+    def main_ci_of(number: int) -> tuple[str | None, str | None]:
+        sha = gh_pr_merge_commit(ROOT, number)
+        return sha, (gh_commit_ci(ROOT, sha, 0)[0] if sha else None)
+
+    for task, checks in sweep_integrated(config, main_ci_of):
+        if task.get("finish", {}).get("mode") == "auto":
+            print(f"  {task['id']}: fechada pela varredura do pilot (R7) como {task['status']}.")
+        else:
+            failed = "; ".join(f"{c['check']}: {c['evidence']}" for c in checks if not c["ok"])
+            print(f"  {task['id']}: varredura do pilot nao fechou - {failed}. Fica Integrada{chat_hint(task)}.")
+
+
 def _after_merge(item: dict[str, Any], ci_timeout_seconds: float, config: dict[str, Any]) -> None:
     """R5 passo 6 (D-128): limpar, atualizar a principal e provar a combinacao."""
     _close_dependabot_prs(item["id"])
@@ -394,6 +409,7 @@ def run(config: dict[str, Any], once: bool = False) -> int:
     merged = 0
     tried: set[str] = set()
     try:
+        _sweep_integrated(config)
         while True:
             data = load()
             if data["paused"] or data.get("frozenReason"):
