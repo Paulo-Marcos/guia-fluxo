@@ -347,7 +347,13 @@ def _sweep_integrated(config: dict[str, Any]) -> None:
         sha = gh_pr_merge_commit(ROOT, number)
         return sha, (gh_commit_ci(ROOT, sha, 0)[0] if sha else None)
 
-    for task, checks in sweep_integrated(config, main_ci_of):
+    # Etapa acessoria: falha do gh aqui nao pode parar a integracao da fila.
+    try:
+        swept = sweep_integrated(config, main_ci_of)
+    except SystemExit as reason:
+        print(f"aviso: varredura das Integrada falhou ({reason}); a fila segue.")
+        return
+    for task, checks in swept:
         if task.get("finish", {}).get("mode") == "auto":
             print(f"  {task['id']}: fechada pela varredura do pilot (R7) como {task['status']}.")
         else:

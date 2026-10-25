@@ -121,7 +121,8 @@ def evaluate(task: dict[str, Any], item: dict[str, Any], config: dict[str, Any],
         check("achados da auditoria", not over, f"abertos {findings}, limite {conf['maxOpenFindings']}")
     if conf["blockIfAlwaysHuman"]:
         reason = item.get("humanReason")
-        if reason and solo(config):
+        # Squash que o git nao conferiu continua travando, mesmo no solo.
+        if reason and solo(config) and paths is not None:
             warn_in_solo("fora do alwaysHuman", reason)
         else:
             check("fora do alwaysHuman", not reason, reason or "nada em alwaysHuman")
