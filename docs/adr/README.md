@@ -31,6 +31,7 @@ ADR nao se confunde com [`explanation/`](../explanation/): explanation ensina o 
 | [0020](0020-chat-nomeado-pela-demanda-um-chat-por-demanda.md) | O chat leva o `NOME DA DEMANDA` (com a etapa) e cada demanda tem o seu chat (substitui 0018 em parte) | Aceita |
 | [0021](0021-perfil-solo-local.md) | Perfil SOLO local (`autonomy.solo`): `[unlock:]` nao segura a fila, achados voltam ao agente, feature fecha sozinha | Aceita |
 | [0022](0022-painel-local-com-acoes-do-dono.md) | O painel local ganha dois botoes do dono (retomar fila, iniciar executor) que rodam o motor no projeto, atras de Host, Origin, JSON e token da sessao | Aceita |
+| [0023](0023-chat-controlador-e-sessoes-executoras.md) | Chat controlador e sessoes executoras: papeis, autorizacao so do dono com as palavras dele, quem abre a sessao grava a sessao (estende 0020) | Aceita |
 
 ## Como adicionar um ADR novo
 

@@ -500,6 +500,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_chat.add_argument("task_id", nargs="?", help="Sem id, vale a branch (D-110).")
     p_chat.add_argument("--title", help="O nome do chat em que a demanda e feita.")
     p_chat.add_argument("--session", help="Id da sessao do app (D-188): a fila pede ao gerente que a renomeie ao integrar.")
+    p_chat.add_argument("--role", choices=("executor", "controller"),
+                        help="D-199 (ADR-0023): papel de quem faz a demanda - executora aberta por um chat controlador, "
+                             "ou o proprio controlador.")
+    p_chat.add_argument("--controller", metavar="SESSION",
+                        help="D-199: sessionId do chat controlador que abriu a executora (implica --role executor).")
     p_chat.add_argument("--pending", action="store_true",
                         help="D-194: lista as sessoes cujo nome divergiu do NOME DA DEMANDA (RENOMEIE O CHAT: ...).")
     p_chat.add_argument("--applied", metavar="NOME", help="D-194: confirma o nome aplicado a sessao da demanda.")

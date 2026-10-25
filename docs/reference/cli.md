@@ -314,6 +314,8 @@ Em que chat a demanda e feita, para voltar a ele (D-157). Sem `--title`, imprime
 
 **Nomes reconciliados (D-194).** `--session` grava o id da sessao do app (`local_...`, de `get_session`); o literal `self` e recusado - so vale dentro das tools do app. A demanda guarda o ultimo nome aplicado a sessao (`chat.applied`). `chat --pending` lista as sessoes cujo nome divergiu do `NOME DA DEMANDA` atual, uma linha `RENOMEIE O CHAT: <sessionId> -> <nome>` por sessao (`--json`: `pending[]` com `task`, `session`, `title`); `next` (`chatRenames` no `--json`), `status` e `queue run` imprimem as mesmas linhas. O chat que renomeia confirma com `--applied "<nome>"`; recusa do app vira `--refused "<nome>" --reason ...`: um aviso, e a sessao so volta a lista quando a etapa mudar. Sessao gravada de novo zera o registro.
 
+**Controlador e executora (D-199, [ADR-0023](../adr/0023-chat-controlador-e-sessoes-executoras.md)).** `chat D-NNN --session <id> --role executor --controller <sessionId do controlador>` diz que a demanda e feita por uma sessao executora aberta por um chat controlador (`--controller` sozinho implica `--role executor`; o literal `self` e recusado); `--role controller` marca a demanda que o proprio controlador faz (epico, release), sem `--controller`. Imprime `PAPEL DO CHAT: executora (controlador local_...)`; `--json` traz `role` e `controller`; `status D-NNN` mostra o papel na linha `Chat:` e o painel no cartao e no detalhe. Quem abre a sessao grava a sessao, inclusive na follow-up que uma executora abre. `chat --pending` tambem lista (`missing[]` no `--json`) as demandas abertas - DEV, validacao, PR, fila - sem sessao gravada, uma linha `AVISO CHAT: D-NNN (<etapa>) sem a sessao do chat ...` com o comando.
+
 ### `dashboard`
 
 ```powershell

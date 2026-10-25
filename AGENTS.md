@@ -43,6 +43,15 @@ Layout do repo-mae: **fontes** em `core/` (src, build, manifest, lock, hooks, te
    ```
    Le `.guia/docs-map.yaml` e lista os docs vivos que podem precisar atualizar. Avalie cada candidato, edite o que fizer sentido e feche com `--docs-touched <path>` (repetivel) e/ou `--docs-skip "<motivo>"`. Sem mapa, o passo vira no-op com aviso. Receita em [`docs/how-to/manter-docs-atualizados.md`](docs/how-to/manter-docs-atualizados.md).
 
+## Chat controlador e sessoes executoras
+
+Quando um chat recebe os pedidos do dono e abre uma sessao por demanda ([ADR-0023](docs/adr/0023-chat-controlador-e-sessoes-executoras.md), estende a ADR-0020):
+
+- **Controlador** (o chat principal): separa o pedido em demandas pelo motor (`feature`/`bug`/`chore` + `triage`), abre uma executora por demanda (`start_session` com `model`/`effort` do triage, brief comecando por `start D-NNN`, worktree do Guia), acompanha a fila e destrava (conflito -> manda a executora rebasear, reauditar e `queue add`), reconcilia os nomes (`chat --pending`), roda `finish` so com autorizacao do dono e abre a release. Demanda que ele mesmo faz (epico, release): `chat D-NNN --role controller`.
+- **Executora** (uma sessao por demanda): `start` ate `ready` e `next` ate `stop`/`done`, no worktree; reporta ao controlador e pergunta a ele quando trava numa decisao do dono.
+- **Quem abre a sessao grava a sessao**, inclusive a follow-up que uma executora abre: `chat D-NNN --title "<nome>" --session <id da sessao nova> --role executor --controller <id do controlador>`. A follow-up herda o controlador da demanda de origem. `status` e o painel mostram papel e controlador; `chat --pending` acusa demanda aberta sem sessao (`AVISO CHAT`).
+- **Nunca:** nenhum dos dois concede unlock, approve, autonomy, configure, controle da fila ou `finish` por conta propria - o controlador repassa a autorizacao **com as palavras do dono, entre aspas**, e a executora so age sobre autorizacao citada assim. Nenhum dos dois faz merge do PR.
+
 ## Comandos uteis
 
 | Para que | Comando |

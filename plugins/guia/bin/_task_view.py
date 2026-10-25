@@ -12,6 +12,19 @@ from typing import Any
 # Etapas em que a falta de plano importa: a demanda ja foi triada e vai ser
 # (ou esta sendo) feita. Backlog ainda e ideia; o resto ja passou da hora.
 PLAN_EXPECTED_STATUSES = frozenset({"Planejada", "Em desenvolvimento"})
+# D-199 (ADR-0023): o papel do chat que faz a demanda.
+ROLES = {"controller": "controlador", "executor": "executora"}
+
+
+def role_line(chat: dict[str, Any] | None) -> str | None:
+    """`executora (controlador local_...)`, `controlador`, ou None sem papel."""
+    role = ROLES.get((chat or {}).get("role") or "")
+    if not role:
+        return None
+    controller = (chat or {}).get("controller")
+    return f"{role} (controlador {controller})" if controller else role
+
+
 MISSING_PLAN = "Sem plano registrado: grave os passos com `plan D-NNN --step \"...\"` (ou `start --step`)."
 
 
@@ -19,6 +32,13 @@ def _strings(value: Any) -> list[str]:
     if isinstance(value, str):
         return [value] if value.strip() else []
     return [v for v in value or [] if isinstance(v, str) and v.strip()]
+
+
+def _chat(chat: dict[str, Any]) -> dict[str, Any]:
+    """Nome e sessao; papel e controlador (D-199) so quando gravados."""
+    out = {"title": chat.get("title"), "session": chat.get("session")}
+    out.update({k: chat[k] for k in ("role", "controller") if chat.get(k)})
+    return out
 
 
 def plan_steps(task: dict[str, Any]) -> list[str]:
@@ -74,7 +94,7 @@ def detail(task: dict[str, Any]) -> dict[str, Any]:
             {"request": r.get("request", ""), "test": r.get("test", "")}
             for r in task.get("requestToTest") or [] if isinstance(r, dict)
         ],
-        "chat": {"title": chat.get("title"), "session": chat.get("session")} if chat.get("title") else None,
+        "chat": _chat(chat) if chat.get("title") else None,
         "triage": {"model": triage.get("model"), "effort": triage.get("effort"), "tier": triage.get("tier")} if triage else None,
         "branch": worktree.get("branch"),
         "dependsOn": _strings(task.get("dependsOn")),
@@ -105,7 +125,8 @@ def format_text(task: dict[str, Any], marker: str = "") -> str:
         meta.append(f"PR #{pr['number']}")
     lines.append("  " + " · ".join(meta))
     if info["chat"]:
-        lines.append(f"  Chat: {info['chat']['title']}")
+        role = role_line(info["chat"])
+        lines.append(f"  Chat: {info['chat']['title']}" + (f" · {role}" if role else ""))
     if info["context"]:
         lines.append("")
         lines.append("Contexto:")
@@ -125,4 +146,4 @@ def format_text(task: dict[str, Any], marker: str = "") -> str:
     return "\n".join(lines)
 
 
-__all__ = ["MISSING_PLAN", "detail", "format_text", "missing_plan", "plan_steps", "timeline"]
+__all__ = ["MISSING_PLAN", "ROLES", "detail", "format_text", "missing_plan", "plan_steps", "role_line", "timeline"]

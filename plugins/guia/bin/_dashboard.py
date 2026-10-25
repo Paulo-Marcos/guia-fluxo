@@ -22,7 +22,7 @@ from typing import Any
 from _autonomy import effective_level
 from _constants import KIND_MARKER_FALLBACK, KIND_MARKERS, STATUS_TAGS
 from _merge_queue import OPEN_STATES, ordered
-from _task_view import detail
+from _task_view import detail, role_line
 
 # Colunas do quadro, na ordem do fluxo. O que nao cai aqui (Validada,
 # Finalizada, Cancelada, Resolvida) vai para "concluidas recentes".
@@ -161,6 +161,8 @@ def _card(task: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
         "finishedAt": task.get("finishedAt"),
         "parentId": task.get("parentId"),
         "chat": (task.get("chat") or {}).get("title"),
+        # D-199 (ADR-0023): executora (e de qual controlador) ou o proprio controlador.
+        "chatRole": role_line(task.get("chat")),
         "branch": (task.get("worktree") or {}).get("branch"),
         "pr": {"number": pr.get("number"), "url": pr.get("url")} if pr.get("number") else None,
         "audit": audit.get("result"),
