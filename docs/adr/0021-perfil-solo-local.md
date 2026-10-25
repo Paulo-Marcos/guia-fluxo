@@ -21,7 +21,12 @@ Uma chave so do dono, `autonomy.solo: "on"`, gravada pela etapa `autonomy-solo` 
 3. **A auditoria continua e quem corrige e o agente.** `audit --approve` com achados acima de `maxOpenFindings` e recusado: o agente corrige e audita de novo. No auto-finish, auditoria aprovada no head conta como prova mesmo sem `--finding`.
 4. **Feature fecha sozinha.** `feature` entra nos tipos do auto-finish.
 
-Continua igual: main verde, teste de regressao no bug, sem mudanca de tela, PR com caminhos que o git nao conferiu. `finish`/`approve` seguem acao do dono. No solo o executor fecha porque o dono ligou o perfil.
+5. **Tela e alwaysHuman viram aviso, nao trava (D-200).** No auto-finish, mudanca de tela (`blockIfUiChanged`) e item com `humanReason` (`blockIfAlwaysHuman`) contam como atendidos com `warning: true`. O aviso fica em `finish.warnings` e no resumo ("Revisar depois ..."), que aparece no `status`, no historico e no detalhe do painel. O dono revisa depois.
+6. **Varredura da `Integrada` (D-200).** No inicio de cada passada, o executor reavalia as demandas `Integrada` no pilot com o mesmo checklist. O CI da main e lido uma vez, sem esperar. Assim fecha o que integrou antes de o solo ser ligado, ou com a main ainda pendente.
+
+Continua igual: main verde, teste de regressao no bug, auditoria aprovada e caminhos do squash que o git nao conferiu. `finish`/`approve` seguem acao do dono. No solo o executor fecha porque o dono ligou o perfil.
+
+**Por que o bug sem teste continua travando (D-200).** Das demandas que ficaram em `Integrada` antes da D-200 (D-190, D-192, D-193, D-195, D-196), nenhuma parou por falta de teste: todos os bugs traziam o teste no squash. O que segurou foi auditoria sem contagem, `[unlock:]` e `feature` fora dos tipos. A trava custa pouco, porque quem escreve o teste e o agente, antes do `ship`. E e a unica prova de que o defeito nao volta.
 
 ## Consequencias
 
@@ -29,6 +34,7 @@ Continua igual: main verde, teste de regressao no bug, sem mudanca de tela, PR c
 - + O rastro fica: `[unlock:]` no squash e a evidencia do auto-finish na demanda.
 - - O dono deixa de ver, antes do merge, a edicao de teste homologado, de workflow e de lockfile. Ve so no historico.
 - - Feature fecha sem uso real. O dono testa depois e abre bug se precisar.
+- - Mudanca de tela e de caminho sensivel fecha sem olho humano. Fica so o aviso "Revisar depois" na demanda (D-200).
 - - Projeto com mais de uma pessoa nao deve ligar. O texto da etapa avisa.
 
 ## Alternativas consideradas

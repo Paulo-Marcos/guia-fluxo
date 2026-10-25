@@ -842,6 +842,10 @@ motor fecha sozinho quando **todas** as condições valem:
   já prevê. O agente roda `finish` e cita a frase no relatório.
 - Demanda `Integrada` há mais de N dias aparece no `status` com a pergunta
   "fechar?" — o empurrão que hoje falta.
+- **Perfil SOLO (ADR-0021, D-200):** tela e `alwaysHuman` viram aviso
+  registrado (`finish.warnings` e "Revisar depois" no resumo), não trava.
+  Cada passada do executor varre as `Integrada` do pilot com o mesmo
+  checklist. Bug sem teste de regressão continua travando.
 
 ### R8 — A auditoria que sobrevive a um rebase que não mudou nada
 
