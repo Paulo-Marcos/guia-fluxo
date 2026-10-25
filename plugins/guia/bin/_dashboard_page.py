@@ -311,7 +311,7 @@ function card(c, current) {
   if (c.status === "Aguardando validacao" && c.pending && c.pending.length) meta.append(chip(c.pending[0], "warn"));
   if (c.detail && c.detail.missingPlan) meta.append(chip("sem plano", "warn"));
   box.append(meta);
-  if (c.chat) box.append(el("div", "chat", "💬 " + c.chat));
+  if (c.chat) box.append(el("div", "chat", "💬 " + c.chat + (c.chatRole ? " · " + c.chatRole : "")));
   return box;
 }
 
@@ -373,6 +373,7 @@ function drawDetail() {
   if (d.requests && d.requests.length) listBlock(box, "Pedido → Teste", d.requests.map(r => r.request + " → " + r.test), false);
   box.append(el("h5", null, "Chat"));
   box.append(d.chat ? el("p", null, "💬 " + d.chat.title + (d.chat.session ? "  (" + d.chat.session + ")" : "")) : el("div", "none", "Sem chat registrado."));
+  if (d.chat && d.chat.role) box.append(el("p", null, (d.chat.role === "executor" ? "Executora" : "Controlador") + (d.chat.controller ? " · controlador " + d.chat.controller : "")));
   if (d.dependsOn && d.dependsOn.length) listBlock(box, "Depende de", d.dependsOn, false);
   listBlock(box, "Etapas", (d.steps || []).map(s => s.at.slice(0, 16).replace("T", " ") + " · " + s.step), false);
   if (d.origin) { box.append(el("h5", null, "Origem")); box.append(el("p", null, d.origin)); }

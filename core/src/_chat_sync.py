@@ -15,7 +15,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from _tasks import demand_title, list_tasks
+from _constants import STATUS_AWAITING_VALIDATION, STATUS_IN_DEVELOPMENT, STATUS_IN_PR, STATUS_IN_QUEUE
+from _tasks import chat_name, demand_title, list_tasks
 
 CHAT_RENAME_PREFIX = "RENOMEIE O CHAT: "
 
@@ -61,6 +62,27 @@ def print_pending_renames() -> None:
         print(rename_line(pending))
 
 
+# Etapas em que a demanda ja tem (ou devia ter) um chat trabalhando nela.
+_OPEN = (STATUS_IN_DEVELOPMENT, STATUS_AWAITING_VALIDATION, STATUS_IN_PR, STATUS_IN_QUEUE)
+
+
+def missing_sessions() -> list[dict[str, str]]:
+    """D-199: demandas abertas sem sessao gravada - a follow-up que a executora
+    abriu e nao registrou fica fora de `pending_renames`; aqui o controlador a ve."""
+    missing = []
+    for task in list_tasks():
+        chat = task.get("chat") or {}
+        if task.get("status") in _OPEN and not valid_session(chat.get("session")):
+            missing.append({"task": task["id"], "status": task["status"], "title": chat.get("title") or chat_name(task)})
+    return missing
+
+
+def missing_line(item: dict[str, str]) -> str:
+    return (f"AVISO CHAT: {item['task']} ({item['status']}) sem a sessao do chat - quem abriu a sessao grava: "
+            f'chat {item["task"]} --title "{item["title"]}" --session <sessionId> --role executor '
+            "--controller <sessionId do controlador>")
+
+
 def mark_applied(task: dict[str, Any], title: str) -> None:
     chat = task.setdefault("chat", {})
     chat["applied"] = title.strip()
@@ -80,6 +102,8 @@ __all__ = [
     "MSG_BAD_SESSION",
     "mark_applied",
     "mark_refused",
+    "missing_line",
+    "missing_sessions",
     "pending_rename",
     "pending_renames",
     "print_pending_renames",
