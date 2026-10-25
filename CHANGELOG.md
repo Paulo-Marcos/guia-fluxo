@@ -6,6 +6,27 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-10-25
+
+### Added
+- Painel (`guia dashboard`) ganha dois botoes do dono: **Retomar fila** com a fila pausada ou congelada e **Iniciar executor** quando nenhum esta vivo, para nao precisar de terminal; a escrita so passa com Host e Origin do painel, corpo JSON e token da sessao, e o lease segue impedindo um segundo executor (D-187).
+- Detalhe da demanda: `status D-NNN` fica legivel (contexto, plano, arquivos, validacoes, pendencias, etapas; JSON cru em `--json`), o cartao do painel abre o mesmo detalhe, `plan`/`start --step` gravam o plano e ambos avisam quando ele falta, e o painel mostra a versao do Guia em uso (D-192).
+- Perfil SOLO local (`autonomy.solo`, so pelo `configure`): no pilot o `[unlock:]` vira rastro e nao segura a fila, os achados da auditoria voltam para o agente e a feature tambem fecha sozinha; `alwaysHuman: []` explicito passa a desligar os caminhos (D-193).
+- Chat controlador e sessoes executoras (ADR-0023): chat --role/--controller grava quem conduz cada demanda, status e painel mostram, chat --pending acusa demanda aberta sem sessao e a regra (autorizacao so do dono, com as palavras dele) esta nos commands e no AGENTS.md (D-199)
+- Perfil SOLO: o pilot fecha a demanda integrada sem pedir. Mudanca de tela e caminho alwaysHuman viram aviso "Revisar depois" em vez de trava, e cada `queue run` varre as demandas `Integrada` com o mesmo checklist. Bug sem teste de regressao continua travando (D-200).
+
+### Changed
+- Painel: o retrato da fila expoe `stopped` (pausada ou congelada), e as acoes de retomar a fila e iniciar o executor usam essa mesma regra; testes cobrem o motor que falha (500 com a saida) e o projeto que perdeu o .guia/tasks.json (404). (D-196)
+
+### Fixed
+- Todo command que inicia trabalho numa demanda (inclusive `epic` e `worktree`) traz a receita inteira para renomear o chat e gravar a sessao; `next`/`status` avisam a demanda em desenvolvimento sem sessao (`AVISO CHAT`), `status`/`doctor` avisam o plugin instalado atras do marketplace (`PLUGIN DESATUALIZADO`) e o `.guia/chat-title.txt` orfao e apagado (D-190).
+- O auto-finish do `pilot` não conta `.ts` sem interface como mudança de tela (D-191). `uiPaths` trazia `frontend/src/**`, e um hook ou serviço (`useCortes.ts`, D-973 no gerador-cortes) ficava `Integrada` esperando o dono. Por padrão só arquivo de interface (`.tsx`, `.jsx`, `.vue`, `.svelte`, estilos, `.html` e assets) é tela; `uiPaths` segue configurável.
+- O nome do chat da demanda acompanha a etapa mesmo quando o executor da fila roda no terminal: a demanda guarda o ultimo nome aplicado a sessao, `chat --pending`/`next`/`status` listam os atrasados para qualquer chat aplicar e confirmar (`chat --applied`/`--refused`, sem repetir recusa), e `chat --session self` e recusado (D-194).
+- Conflito na fila: `next` aponta o passo real (rebase/ship/auditoria do delta, depois `queue add`) em vez de "na fila e aprovada", e o `ship` aceita a demanda `Na fila` com o item em conflict (D-197).
+
+### Security
+- Os botoes Retomar fila e Iniciar executor do painel mostram, na confirmacao, o caminho do motor que vao rodar e destacam quando ele vem da pasta do proprio projeto (um clone de terceiro achado por --scan); o retrato traz `engine.path`/`engine.own` (D-195).
+
 ## [0.10.0] - 2026-10-18
 
 ### Added
