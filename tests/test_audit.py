@@ -169,10 +169,56 @@ class AuditTests(unittest.TestCase):
         self._ok(self.wt, "audit", "--report", str(self.report), "--approve")
         self.assertEqual(self._task()["audit"]["mode"], "full")
 
-    def test_rejected_audit_never_becomes_a_delta_base(self) -> None:
+    def _reject_then_fix(self, path: str, content: str) -> str:
+        """D-207: auditoria reprovada com um achado; o autor corrige num commit novo. Devolve o head reprovado."""
+        self.report.write_text("## Auditoria\n\n### Achados\n- [CORRIGIR] app.txt:1 - nota sem ponto\n"
+                               "- [x] item de checklist\n\nRecomendação: ajustar antes.\n", encoding="utf-8")
+        self._ok(self.wt, "audit", "--report", str(self.report), "--finding", "CORRIGIR=1")
+        rejected = self._task()["audit"]
+        self.assertEqual(rejected["findings"], ["[CORRIGIR] app.txt:1 - nota sem ponto"])
+        (self.wt / path).parent.mkdir(parents=True, exist_ok=True)
+        (self.wt / path).write_text(content, encoding="utf-8")
+        _git(self.wt, "add", path)
+        _git(self.wt, "commit", "-q", "-m", "corrige o achado")
+        branch = _git(self.wt, "branch", "--show-current").stdout.strip()
+        self.assertEqual(_git(self.wt, "push", "-q", "origin", branch).returncode, 0)
+        return rejected["auditedSha"]
+
+    def test_rejected_audit_is_the_base_of_the_next_delta(self) -> None:
+        """D-207: a correcao dos achados audita so o delta, e o achado anterior volta para ser conferido."""
+        old_head = self._reject_then_fix("app.txt", "app com nota.\n")
+        base = _git(self.wt, "merge-base", "HEAD", "origin/main").stdout.strip()
+        expected = f"{base}..{old_head} {base}..{self._head()}"
+        out = self._ok(self.wt, "audit").stdout
+        self.assertIn("desde a reprovada", out)
+        self.assertIn(f"git range-diff {expected}", out)
+        self.assertIn("- [CORRIGIR] app.txt:1 - nota sem ponto", out)
+        self.report.write_text("## Auditoria\n\nAchado anterior fechado.\n", encoding="utf-8")
+        self._ok(self.wt, "audit", "--report", str(self.report), "--approve")
+        audit = self._task()["audit"]
+        self.assertEqual((audit["mode"], audit["deltaFrom"], audit["deltaFromResult"], audit["range"]),
+                         ("delta", old_head, "rejected", expected))
+        self.assertEqual(audit["findings"], [])
+        self.assertTrue(self._comments()[-1]["body"].startswith(f"Auditoria de delta desde {old_head[:12]} (reprovada)"))
+
+    def test_delta_touching_a_workflow_is_audited_in_full(self) -> None:
+        """D-207: workflow, trava ou seguranca no delta - volta a auditoria completa, com o motivo."""
+        self._reject_then_fix(".github/workflows/ci.yml", "on: push\n")
+        out = self._ok(self.wt, "audit").stdout
+        self.assertIn("Auditoria completa", out)
+        self.assertIn("caminho sensivel: .github/workflows/ci.yml", out)
         self._ok(self.wt, "audit", "--report", str(self.report))
-        self._rebase_with_change()
-        self.assertNotIn("range-diff", self._ok(self.wt, "audit").stdout)
+        audit = self._task()["audit"]
+        self.assertEqual(audit["mode"], "full")
+        self.assertIn(".github/workflows/ci.yml", audit["fullReason"])
+        self.assertTrue(self._comments()[-1]["body"].startswith("Auditoria completa desde"))
+
+    def test_large_delta_is_audited_in_full(self) -> None:
+        """D-207: delta acima de `delivery.audit.deltaMaxLines` nao se le com seguranca."""
+        process = self.main / ".guia" / "process.json"
+        process.write_text(json.dumps({"delivery": {"mode": "pr", "audit": {"deltaMaxLines": 1}}}), encoding="utf-8")
+        self._reject_then_fix("app.txt", "app com nota.\n")
+        self.assertIn("delta grande (2 linhas > 1)", self._ok(self.wt, "audit").stdout)
 
 
 if __name__ == "__main__":
