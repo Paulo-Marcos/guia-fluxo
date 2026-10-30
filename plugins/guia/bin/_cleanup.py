@@ -39,7 +39,7 @@ from _constants import (
 from _git_ops import git_output, git_worktree_remove, run_git
 from _state import read_json
 from _tasks import list_tasks, save_task
-from _worktree import find_links, remove_worktree
+from _worktree import _is_link, find_links, remove_worktree
 
 # Validada e o status padrao do finish (terminal, como Finalizada).
 INACTIVE_STATUSES = frozenset({STATUS_INTEGRATED, STATUS_FINISHED, STATUS_VALIDATED, STATUS_CANCELLED})
@@ -47,10 +47,18 @@ INACTIVE_STATUSES = frozenset({STATUS_INTEGRATED, STATUS_FINISHED, STATUS_VALIDA
 BRANCH_ID_RE = re.compile(r"^([a-z])-(\d+)-")
 # Artefato de agente: extensao que so sai de comando (log, mensagem, patch)...
 ARTIFACT_SUFFIXES = frozenset({".log", ".msg", ".patch", ".diff", ".rc", ".err", ".out"})
-# ...ou texto/relatorio com nome de rascunho: numero (`v12.txt`, `d963-audit.md`),
-# prefixo de etapa (`gate-backend.log`) ou nome curto (`vm.txt`).
+# ...ou texto/relatorio com nome de rascunho de agente. Padroes estritos: um
+# documento real (`IRPF2025.txt`, `tsconfig.json`, `cv.md`) nunca casa
+# (reauditoria do PR #96), porque a remocao e definitiva.
 DRAFT_SUFFIXES = frozenset({".txt", ".md", ".json"})
-DRAFT_PREFIXES = ("audit", "auditoria", "gate", "ship", "msg", "commit", "ci", "npmaud", "eslint", "tsc", "lint")
+DRAFT_NAME_RE = re.compile(
+    r"^(?:"
+    r"(?:.+[-_])?d-?\d{2,4}(?:[-_].*)?"            # id de demanda: d975-files, auditoria-d976-r2
+    r"|(?:v|c|t|l|p|ci|msg|ship|audit)\d{1,4}[a-z]?"  # rascunho curto: v12, c968b, msg968, ship957
+    r"|vm\d*"
+    r"|(?:gate|npmaud|audit|auditoria|ship|commit-msg)[-_].+"  # etapa com separador: gate-x, npmaud-fe
+    r")$"
+)
 # Redirecionamento para `null`/`nul` no shell errado vira arquivo.
 NULL_NAMES = frozenset({"null", "nul"})
 # Fiapos das worktrees: nao contam como mudanca local.
@@ -101,12 +109,17 @@ def _local_work(path: Path, task: dict[str, Any]) -> str | None:
     status = git_output(path, "status", "--porcelain", "--ignored")
     if status is None:
         return "git status falhou, conferir a mao"
-    junctions = [j.rstrip("/") + "/" for j in (task.get("worktree") or {}).get("junctions") or []]
+    junctions = {j.strip("/") for j in (task.get("worktree") or {}).get("junctions") or []}
     for line in status.splitlines():
         code, name = line[:2], line[3:].strip('"')
         if code != "!!":
             return "tem mudanca local nao commitada"
-        if not (name.endswith(BENIGN_IGNORED) or name in junctions or name.rstrip("/") + "/" in junctions):
+        bare = name.rstrip("/")
+        benign = any(name == b or name.endswith("/" + b) for b in BENIGN_IGNORED)
+        # Juncao gravada so e "nada a perder" se ainda for link: uma pasta
+        # real no lugar dela seria apagada pelo `git worktree remove`.
+        linked = bare in junctions and _is_link(path / bare)
+        if not (benign or linked):
             return f"tem arquivo ignorado que a remocao apagaria ({name})"
     return None
 
@@ -119,7 +132,7 @@ def _is_artifact(path: Path) -> bool:
         return True
     if suffix not in DRAFT_SUFFIXES:
         return False
-    return any(ch.isdigit() for ch in stem) or stem.startswith(DRAFT_PREFIXES) or len(stem) <= 3
+    return bool(DRAFT_NAME_RE.match(stem))
 
 
 def _task_for(entry: dict[str, Any], tasks: list[dict[str, Any]]) -> dict[str, Any] | None:
