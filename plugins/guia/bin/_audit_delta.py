@@ -46,22 +46,42 @@ DELTA_FULL_PATHS = (
     "*security*",
 )
 _FILE_HEADER = re.compile(r"^diff --git a/(.+?) b/(.+)$")
+_MODE_LINES = ("old mode ", "new mode ", "new file mode ", "deleted file mode ")
 
 
 def _file_patches(root: Path, base: str, head: str) -> dict[str, Counter[str]] | None:
-    """Linhas `+`/`-` do PR por arquivo, sem cabecalho de hunk: rebase limpo nao muda nada."""
-    result = subprocess.run(["git", "diff", "--no-color", "--no-ext-diff", "--unified=0", f"{base}..{head}"],
+    """Linhas `+`/`-` do PR por arquivo, sem cabecalho de hunk: rebase limpo nao muda nada.
+
+    Sem renames (mover `.github/workflows/ci.yml` vira remocao + adicao, com
+    linhas), e o que nao tem linha tambem conta: modo do arquivo e binario
+    (pelo blob do head). Caminho que o git poe entre aspas nao se le com
+    seguranca: None, e a auditoria e completa.
+    """
+    result = subprocess.run(["git", "-c", "core.quotePath=false", "diff", "--no-color", "--no-ext-diff",
+                             "--no-renames", "--full-index", "--unified=0", f"{base}..{head}"],
                             cwd=root, capture_output=True)
     if result.returncode != 0:
         return None
     patches: dict[str, Counter[str]] = {}
-    current: Counter[str] | None = None
+    current: Counter[str] = Counter()
+    in_hunk, post_blob = False, ""
     for line in result.stdout.decode("utf-8", errors="replace").splitlines():
-        header = _FILE_HEADER.match(line)
-        if header:
-            current = patches.setdefault(header.group(2), Counter())
-        elif current is not None and line[:1] in "+-" and not line.startswith(("+++ ", "--- ")):
+        if line.startswith("diff --git "):
+            header = _FILE_HEADER.match(line)
+            if not header:
+                return None
+            current, in_hunk, post_blob = patches.setdefault(header.group(2), Counter()), False, ""
+        elif line.startswith("@@"):
+            in_hunk = True
+        elif in_hunk:
+            if line[:1] in "+-":
+                current[line] += 1
+        elif line.startswith("index "):
+            post_blob = line.split()[1].split("..")[-1]
+        elif line.startswith(_MODE_LINES):
             current[line] += 1
+        elif line.startswith("Binary files "):
+            current[f"binary {post_blob}"] += 1
     return patches
 
 
@@ -87,7 +107,10 @@ def _measure(root: Path, old: tuple[str, str], new: tuple[str, str]) -> dict[str
 
 def _full_reason(measure: dict[str, Any], config: dict[str, Any]) -> str | None:
     audit_cfg = (config.get("delivery") or {}).get("audit") or {}
-    max_lines = int(audit_cfg.get("deltaMaxLines") or DELTA_MAX_LINES_DEFAULT)
+    try:
+        max_lines = int(audit_cfg.get("deltaMaxLines") or DELTA_MAX_LINES_DEFAULT)
+    except (TypeError, ValueError):
+        max_lines = DELTA_MAX_LINES_DEFAULT
     lines = measure["lines"]
     if lines > max_lines:
         return f"delta grande ({lines} linhas > {max_lines})"
