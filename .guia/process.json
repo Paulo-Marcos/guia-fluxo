@@ -75,6 +75,7 @@
   "autonomy": {
     "default": "pilot",
     "ceiling": "pilot",
-    "alwaysHumanLocks": "*"
+    "alwaysHumanLocks": "*",
+    "solo": "on"
   }
 }
