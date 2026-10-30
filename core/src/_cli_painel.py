@@ -60,8 +60,9 @@ def running_dashboard(port: int) -> str | None:
         url = f"http://127.0.0.1:{candidate}/"
         try:
             with urllib.request.urlopen(f"{url}api/snapshot", timeout=_PROBE_TIMEOUT_SECONDS) as response:
-                if isinstance(json.loads(response.read()), dict):
-                    return url
+                payload = json.loads(response.read())
+            if isinstance(payload, dict) and {"projects", "guia"} <= payload.keys():
+                return url
         except (OSError, ValueError):
             continue
     return None
