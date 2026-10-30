@@ -117,20 +117,22 @@ Quando `--worktree` e passado, `finish` removera a worktree associada.
 ### `plan`
 
 ```powershell
-.\core\bin\guia.ps1 plan <id> [--note "Por que esta planejando"] [--step "passo"]...
+.\core\bin\guia.ps1 plan <id> [--note "Por que esta planejando"] [--step "passo"]... [--brief-file <arquivo> | --brief "texto"]
 ```
 
 Move task para `Planejada` (triada mas nao iniciada — ADR-0011 Fase 3 / B-017). Aceita transicao de `Backlog` ou `Em desenvolvimento`. Falha em estados terminais ou se ja `Planejada`.
 
 **Plano de execucao (`--step`, D-192).** Cada `--step` acrescenta um passo ao plano da demanda (`executionPlan`, o mesmo campo do `promote --plan`). Numa demanda ja `Planejada` ou `Em desenvolvimento`, `plan <id> --step ...` so grava o plano, sem mudar a etapa. `status` e o painel avisam quando uma demanda `Planejada`/`Em desenvolvimento` nao tem plano.
 
+**Explicacao ao dono (`--brief`/`--brief-file`, D-205).** O plano contado ao dono em linguagem acessivel (skill `explica-como-professor`), antes do codigo; o arquivo e Markdown UTF-8. Grava (ou reescreve) `briefing` da demanda com a mesma regra do `--step`: numa demanda ja `Planejada`/`Em desenvolvimento` so grava. Com `briefing.required: true` no `process.json`, o `next` responde `brief` e o `ready` recusa enquanto ela falta.
+
 ### `start`
 
 ```powershell
-.\core\bin\guia.ps1 start <id> [--note "Comecando agora porque..."] [--step "passo"]...
+.\core\bin\guia.ps1 start <id> [--note "Comecando agora porque..."] [--step "passo"]... [--brief-file <arquivo> | --brief "texto"]
 ```
 
-`--step` (repetivel, D-192) grava o plano junto com o inicio; sem plano, o `start` avisa como grava-lo.
+`--step` (repetivel, D-192) grava o plano junto com o inicio; sem plano, o `start` avisa como grava-lo. `--brief`/`--brief-file` (D-205) grava a explicacao ao dono; quando exigida e ausente, o `start` tambem avisa.
 
 Move task para `Em desenvolvimento`. Aceita transicao de `Backlog` (atalho que pula `Planejada`) ou `Planejada`. Pressupoe que a triagem (kind) ja foi feita — para triar avaliando feature/bug/chore, use `promote`.
 
@@ -142,7 +144,7 @@ Move task para `Em desenvolvimento`. Aceita transicao de `Backlog` (atalho que p
 .\core\bin\guia.ps1 status --all
 ```
 
-Mostra a tarefa atual e o titulo da demanda corrente (`NOME DA DEMANDA: ...`). **Legivel por padrao (D-192):** etapa, tipo, modelo, branch, PR e chat no cabecalho; depois contexto, plano, arquivos, resumo, validacoes, pendencias, Pedido -> Teste e as etapas pelas quais a demanda passou (reconstruidas dos carimbos `createdAt`, `startedAt`, `readyAt`, PR, auditoria, bloqueios e fechamento). Sem plano numa demanda `Planejada`/`Em desenvolvimento`, avisa. `--json` imprime a task crua, como antes da D-192, seguida da linha `NOME DA DEMANDA` - e o formato para scripts. Epico continua com a arvore agregada.
+Mostra a tarefa atual e o titulo da demanda corrente (`NOME DA DEMANDA: ...`). **Legivel por padrao (D-192):** etapa, tipo, modelo, branch, PR e chat no cabecalho; depois contexto, plano, arquivos, resumo, validacoes, pendencias, Pedido -> Teste e as etapas pelas quais a demanda passou (reconstruidas dos carimbos `createdAt`, `startedAt`, `readyAt`, PR, auditoria, bloqueios e fechamento). Sem plano numa demanda `Planejada`/`Em desenvolvimento`, avisa. A explicacao ao dono (D-205) aparece em "Explicacao ao dono"; quando o projeto a exige e ela falta, avisa tambem. `--json` imprime a task crua, como antes da D-192, seguida da linha `NOME DA DEMANDA` - e o formato para scripts. Epico continua com a arvore agregada.
 Demanda `Integrada` ha mais de `autonomy.autoFinish.remindAfterDays` dias (padrao 3) aparece com a pergunta "fechar?" (D-135, R7).
 
 `--all` (B-014) imprime o quadro de todas as tasks `Em desenvolvimento`, marcando a `current`. Se houver mais de uma ativa ao mesmo tempo, avisa sobre a ambiguidade do `current-task.json` global (B-018) — comandos sem id explicito podem pegar a task errada.
@@ -260,7 +262,9 @@ Fila de integracao (D-126, R5). Estado em `.guia/queue.json` (local, na arvore p
 .\core\bin\guia.ps1 queue run [--once]
 ```
 
-**Executor (D-127, R5 + R8).** Mecanica pura no motor, sem LLM. Um executor por repositorio: lease em `.guia/queue/executor.lease` com batimento (segundo `run` com lease viva recusa e diz quem roda; lease sem batimento ha `delivery.queue.leaseStaleMinutes`, padrao 10, e assumida). Por item elegivel, na ordem da fila: le o PR (mergeado por fora reconcilia; fechado devolve); head diferente do auditado so segue se o **patch-id** for o mesmo - ai comenta o marcador do head novo com `carry-from=<sha> patch-id=<id>` (R8), senao devolve; `BEHIND` faz `gh pr update-branch --rebase` (conflito devolve; head novo passa de novo pelo patch-id); espera os checks exigidos ate `delivery.queue.ciTimeoutMinutes` (padrao 40; vermelho devolve, estouro deixa esperando); `gh pr merge --squash --match-head-commit` com a mensagem de `.guia/queue/<ID>.msg` e ` (#N)` no assunto; demanda `Integrada`. **Devolver** tira o item da fila, volta a demanda a `Em desenvolvimento` com `queue.returnReason`, e o executor segue para o proximo. `--once` integra no maximo um item. Fila pausada ou congelada: nada roda.
+**Executor (D-127, R5 + R8).** Mecanica pura no motor, sem LLM. Um executor por repositorio: lease em `.guia/queue/executor.lease` com batimento (segundo `run` com lease viva recusa e diz quem roda; lease sem batimento ha `delivery.queue.leaseStaleMinutes`, padrao 10, e assumida). Por item elegivel, na ordem da fila: le o PR (mergeado por fora reconcilia; fechado devolve); head diferente do auditado so segue se o **patch-id** for o mesmo - ai comenta o marcador do head novo com `carry-from=<sha> patch-id=<id>` (R8), senao devolve; `BEHIND` faz `gh pr update-branch --rebase` (conflito devolve; head novo passa de novo pelo patch-id); espera os checks exigidos ate `delivery.queue.ciTimeoutMinutes` (padrao 40; vermelho devolve, estouro deixa esperando); `gh pr merge --squash --match-head-commit` com a mensagem de `.guia/queue/<ID>.msg` e ` (#N)` no assunto; demanda `Integrada`. **Devolver** tira o item da fila, volta a demanda a `Em desenvolvimento` com `queue.returnReason`, e o executor segue para o proximo. `--once` integra no maximo um item. Fila pausada ou congelada: nada roda. Ao achar a fila vazia, solta o lease e so depois rele a fila: item que chegou nessa janela faz o executor pegar o lease de novo e retomar (D-204).
+
+**No pilot, o chat liga a fila (D-204, [ADR-0024](../adr/0024-pilot-liga-a-fila.md)).** Com a demanda no nivel `pilot`, o item gravado aprovado e a fila andando, `queue add` (e `next` com a demanda `Na fila`) le o lease depois de gravar: executor vivo -> nada; sem executor -> sobe `queue run` destacado, saida em `.guia/queue/executor-auto.log`. Abaixo do `pilot` nada muda. `GUIA_AUTO_EXECUTOR=off` desliga o spawn (os testes usam).
 
 **Quais checks liberam o merge (D-201).** `gh pr checks --required` so devolve array quando o repositorio tem politica de checks obrigatorios; sem protecao de branch ele sai com erro (`no required checks reported on the '<branch>'`) e o leitor antigo lia isso como "obrigatorios ainda nao reportaram" - veredito `pending` para sempre, **nenhum merge**, 40 min por item com `estado CLEAN, checks pending` no log. Agora o executor separa tres casos e **diz no log qual deles encontrou**: ha politica de obrigatorios (ela manda); nao ha politica, mas checks rodaram (`delivery.queue.requiredChecks`, padrao `fallback`, julga pelo que rodou - todos verdes libera, qualquer vermelho barra; `strict` recusa esse recuo e espera a protecao); nenhum check reportou (`delivery.queue.noChecks`, padrao `wait`, deixa o item esperando com o motivo; `merge` libera - decisao explicita do dono, para repositorio que nao tem o que provar). Em todos eles o `mergeStateStatus` do GitHub continua sendo quem nega o merge sem protecao liberada. Check `cancel` nao e vermelho: e ausencia de prova, e o item espera em vez de voltar ao autor.
 
@@ -301,7 +305,7 @@ Imprime a mensagem de commit da demanda no formato de `delivery.commit.format` (
 .\core\bin\guia.ps1 next [D-NNN] [--json]
 ```
 
-O condutor (D-152): o proximo passo da demanda, decidido pelo motor a partir do status, do nivel de autonomia e da fila - `ready`, `ship`, `audit`, `queue-add`, `stop` (com o motivo e quem destrava: `dono`, `agente` ou `fila`) ou `done`. Depois do `ready` o agente repete `next` e executa o passo ate ouvir `stop`/`done`, sem improvisar o fluxo. `manual` (ou modo `direct`) para logo apos o `ready`, como sempre; `pr` faz `ship` e auditoria; `queue` e `pilot` ainda entram na fila. O chat encerra no `queue add`: integrar, limpar e fechar e da fila (`queue run`). So leitura.
+O condutor (D-152): o proximo passo da demanda, decidido pelo motor a partir do status, do nivel de autonomia e da fila - `brief` (D-205: `Em desenvolvimento` sem a explicacao ao dono, quando `briefing.required`), `ready`, `ship`, `audit`, `queue-add`, `stop` (com o motivo e quem destrava: `dono`, `agente` ou `fila`) ou `done`. Depois do `ready` o agente repete `next` e executa o passo ate ouvir `stop`/`done`, sem improvisar o fluxo. `manual` (ou modo `direct`) para logo apos o `ready`, como sempre; `pr` faz `ship` e auditoria; `queue` e `pilot` ainda entram na fila. O chat encerra no `queue add`: integrar, limpar e fechar e da fila (`queue run`). So leitura.
 
 ### `chat`
 
@@ -327,6 +331,14 @@ Em que chat a demanda e feita, para voltar a ele (D-157). Sem `--title`, imprime
 Painel local (D-175). Sobe um servidor so em `127.0.0.1` (responde apenas a `Host` local) e abre o navegador: os projetos do Guia cadastrados na maquina, as demandas de cada um por etapa (Backlog, Planejada, Em desenvolvimento, Aguardando validacao, Em PR, Na fila, Integrada, Bloqueada) e as concluidas recentes, a fila de integracao na ordem do executor (hotfix a frente, depois FIFO) com a **ponta**, o **proximo a integrar** (o primeiro elegivel) e o motivo de espera de cada item, e se o **executor da fila** esta vivo (pelo `.guia/queue/executor.lease`: batimento mais novo que `queue.leaseStaleMinutes`). A pagina se atualiza a cada 5 s. **Detalhe da demanda (D-192):** clicar num cartao (ou numa concluida) abre, ao lado, o mesmo detalhe do `status D-NNN` - contexto, plano, arquivos, resumo, validacoes, pendencias, Pedido -> Teste, chat e etapas; Esc fecha. Cartao `Planejada`/`Em desenvolvimento` sem plano ganha o chip `sem plano`. O cabecalho mostra a **versao do Guia** que serve o painel (o `VERSION` da raiz no repo-mae, ou o `version` do `.claude-plugin/plugin.json` no plugin instalado; o caminho do motor aparece ao passar o mouse); o `/api/snapshot` traz o mesmo em `guia`. O cadastro mora em `~/.guia/projects.json` (`GUIA_HOME` muda a pasta): rodar `dashboard` dentro de um projeto o cadastra; `--scan` procura projetos (pastas com `.guia/tasks.json`, o que deixa worktrees de fora) ate `--depth` niveis; `--add`/`--remove` mexem em um. Com `--add`/`--remove`/`--scan` o comando so cadastra e sai, a menos que venha `--serve`. Nao faz auto-init: roda de qualquer pasta. O servidor fica no ar ate Ctrl+C - num agente, rode-o em segundo plano.
 
 O painel le o estado e tem so dois botoes, do dono (D-187, [ADR-0022](../adr/0022-painel-local-com-acoes-do-dono.md)): **Retomar fila**, com a fila pausada ou congelada (roda `queue resume` no projeto), e **Iniciar executor**, no modo `pr` com a fila andando e nenhum executor vivo (roda `queue run` em processo destacado, saida em `.guia/queue/executor-painel.log`; o lease impede um segundo executor). Os dois pedem confirmacao e rodam o motor do projeto - o painel nao grava estado. A escrita exige `Host` e `Origin` do painel, corpo JSON e o token desta sessao do painel (embutido na pagina); o agente nunca usa esses botoes.
+
+### `painel`
+
+```powershell
+.\core\bin\guia.ps1 painel [--sem-fila] [--atalho] [--port 8765] [--no-open]
+```
+
+Atalho do dono (D-203): o painel e a fila sem abrir um chat de IA. Rodado na pasta de um projeto do Guia, liga o executor da fila pelo mesmo caminho do botao **Iniciar executor** (`queue run` destacado, saida em `.guia/queue/executor-painel.log`) - executor ja vivo, fila parada ou projeto sem modo `pr` so imprimem `FILA: <motivo>`, nunca um segundo executor - e abre o painel: se ja ha um painel do Guia escutando a partir de `--port`, so abre o navegador nele; senao sobe um, como `dashboard`. `--sem-fila` so abre o painel. `--atalho` (Windows) cria `Guia - <projeto>.lnk` na area de trabalho e no menu Iniciar, que roda `painel` no projeto com o Python e o motor atuais; quando o motor e o do plugin (caminho do cache), rode `painel --atalho` de novo depois de `/plugin update`. Sem command de plugin: quem dispara e o dono (D-098); o agente nao roda `painel`.
 
 ### `triage`
 

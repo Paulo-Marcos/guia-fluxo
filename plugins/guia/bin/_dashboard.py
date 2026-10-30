@@ -21,8 +21,11 @@ from typing import Any
 
 from _autonomy import effective_level
 from _constants import KIND_MARKER_FALLBACK, KIND_MARKERS, STATUS_TAGS
+# D-204: o motor que os botoes rodam (o do projeto, senao o do painel) mora
+# com o spawn do executor, que o chat do pilot tambem usa.
+from _executor_spawn import ENGINE, PROJECT_ENGINES, engine_for
 from _merge_queue import OPEN_STATES, ordered
-from _task_view import detail, role_line
+from _task_view import briefing_required, detail, role_line
 
 # Colunas do quadro, na ordem do fluxo. O que nao cai aqui (Validada,
 # Finalizada, Cancelada, Resolvida) vai para "concluidas recentes".
@@ -43,11 +46,6 @@ QUEUE_HISTORY_LIMIT = 6
 # Mesmo padrao do executor (_executor.LEASE_STALE_MINUTES_DEFAULT); nao importado
 # de la porque o _executor puxa git/gh/worktree, peso que o painel nao precisa.
 LEASE_STALE_MINUTES = 10
-ENGINE = Path(__file__).resolve().parent / "guia.py"
-# Motor que mora dentro do projeto (repo-mae, dogfood, copia manual). Sem
-# nenhum (o caso do plugin), vale o do painel. Fica aqui, e nao em
-# _dashboard_actions, para o retrato mostrar o motor sem import circular.
-PROJECT_ENGINES = (Path("core/src/guia.py"), Path("plugins/guia/bin/guia.py"), Path(".guia-fluxo/bin/guia.py"))
 _SCAN_SKIP = frozenset({"node_modules", ".git", ".venv", "venv", "__pycache__", "dist", "build", "bin", "obj"})
 
 
@@ -170,7 +168,7 @@ def _card(task: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
         "blockedReason": open_block.get("reason") if open_block else None,
         "pending": [p for p in task.get("pending") or [] if isinstance(p, str)],
         # D-192: o que abre ao clicar no cartao (contexto, plano, etapas...).
-        "detail": detail(task),
+        "detail": detail(task, briefing_required(config)),
     }
 
 
@@ -246,13 +244,6 @@ def _queue(root: Path, by_id: dict[str, dict[str, Any]], config: dict[str, Any])
             for h in reversed(history)
         ],
     }
-
-
-def engine_for(root: Path) -> Path:
-    """O motor que os botoes do painel rodam no projeto (D-187): o do proprio
-    projeto quando ele tem um; senao o do painel. Um painel aberto de outra
-    versao nao integra PRs com o codigo dela."""
-    return next((root / rel for rel in PROJECT_ENGINES if (root / rel).is_file()), ENGINE)
 
 
 def _engine(root: Path) -> dict[str, Any]:

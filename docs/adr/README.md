@@ -32,6 +32,7 @@ ADR nao se confunde com [`explanation/`](../explanation/): explanation ensina o 
 | [0021](0021-perfil-solo-local.md) | Perfil SOLO local (`autonomy.solo`): `[unlock:]` nao segura a fila, achados voltam ao agente, feature fecha sozinha | Aceita |
 | [0022](0022-painel-local-com-acoes-do-dono.md) | O painel local ganha dois botoes do dono (retomar fila, iniciar executor) que rodam o motor no projeto, atras de Host, Origin, JSON e token da sessao | Aceita |
 | [0023](0023-chat-controlador-e-sessoes-executoras.md) | Chat controlador e sessoes executoras: papeis, autorizacao so do dono com as palavras dele, quem abre a sessao grava a sessao (estende 0020) | Aceita |
+| [0024](0024-pilot-liga-a-fila.md) | No nivel pilot, o chat que enfileira liga a fila (`queue add`/`next` sobem o executor sem lease vivo); o executor rele a fila ao sair (muda D-098 so no pilot) | Aceita |
 
 ## Como adicionar um ADR novo
 

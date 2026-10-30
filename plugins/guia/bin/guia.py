@@ -97,6 +97,7 @@ from _cli_deps_bot import cmd_deps  # noqa: E402
 from _cli_configure import cmd_configure  # noqa: E402
 from _cli_chat import cmd_chat  # noqa: E402
 from _cli_dashboard import add_dashboard_parser  # noqa: E402
+from _cli_painel import add_painel_parser  # noqa: E402
 from _cli_next import cmd_next  # noqa: E402
 from _cli_triage import cmd_triage  # noqa: E402
 from _cli_model import cmd_model  # noqa: E402
@@ -163,6 +164,13 @@ def _add_task_args(parser: argparse.ArgumentParser) -> None:
             "`in-development` (default) = comeca a implementacao agora."
         ),
     )
+
+
+def _add_brief_args(parser: argparse.ArgumentParser) -> None:
+    """D-205: a explicacao do plano ao dono, em linguagem acessivel."""
+    brief = parser.add_mutually_exclusive_group()
+    brief.add_argument("--brief", help="Explicacao do plano ao dono, em linguagem acessivel (D-205).")
+    brief.add_argument("--brief-file", help="Arquivo (Markdown, UTF-8) com a explicacao do plano ao dono.")
 
 
 def _add_promote_args(parser: argparse.ArgumentParser) -> None:
@@ -515,6 +523,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_chat.set_defaults(func=cmd_chat)
 
     add_dashboard_parser(sub)
+    add_painel_parser(sub)
 
     p_scaffold = sub.add_parser(
         "scaffold",
@@ -629,6 +638,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Passo do plano de execucao (repetivel). Em task ja Planejada ou "
              "Em desenvolvimento so grava o plano, sem mudar a etapa (D-192).",
     )
+    _add_brief_args(p_plan)
     p_plan.set_defaults(func=cmd_plan)
 
     p_start = sub.add_parser(
@@ -646,6 +656,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         help="Passo do plano de execucao (repetivel, D-192). Sem plano, o start avisa.",
     )
+    _add_brief_args(p_start)
     p_start.set_defaults(func=cmd_start)
 
     p_cancel = sub.add_parser(

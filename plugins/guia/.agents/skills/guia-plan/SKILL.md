@@ -1,6 +1,6 @@
 ---
 name: guia-plan
-description: "PLAN — mark a task as `Planejada` (triaged but not started yet). Accepts transition from `Backlog` (parked item that gained priority) or from `Em desenvolvimento` (deprioritized but already known). Options: `--note \"<rationale>\"`, `--step \"<step>\"` (repeatable: records the execution plan; on a task already `Planejada`/`Em desenvolvimento` it only records, without moving the stage). To begin work use `start` (already triaged) or `promote` (still needs triage); to park without deciding use `backlog`."
+description: "PLAN — mark a task as `Planejada` (triaged but not started yet). Accepts transition from `Backlog` (parked item that gained priority) or from `Em desenvolvimento` (deprioritized but already known). Options: `--note \"<rationale>\"`, `--step \"<step>\"` (repeatable: records the execution plan; on a task already `Planejada`/`Em desenvolvimento` it only records, without moving the stage), `--brief-file <file>`/`--brief \"<text>\"` (the plan explained to the owner in plain language). To begin work use `start` (already triaged) or `promote` (still needs triage); to park without deciding use `backlog`."
 ---
 
 # Plan
@@ -16,10 +16,12 @@ description: "PLAN — mark a task as `Planejada` (triaged but not started yet).
 Substitute `<command>` with the verb and arguments for this skill:
 
 ```text
-plan <D-NNN> [--note "Why planning now"] [--step "step"]...
+plan <D-NNN> [--note "Why planning now"] [--step "step"]... [--brief-file <file.md> | --brief "<text>"]
 ```
 
 `--step` (repeatable) records the execution plan - what the demand will do, shown by `status` and the dashboard. On a task already `Planejada` or `Em desenvolvimento`, `plan <D-NNN> --step ...` only records the plan, without moving the stage.
+
+`--brief-file`/`--brief` records the explanation of the plan to the owner, in plain language (D-205); same rule as `--step`: on a task already `Planejada` or `Em desenvolvimento` it only records.
 
 Distinct from:
 - `$backlog add`: park an idea that has not been triaged yet.

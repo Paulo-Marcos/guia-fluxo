@@ -28,6 +28,7 @@ A pagina recusa ser emoldurada (`X-Frame-Options: DENY`, `frame-ancestors 'none'
 - + O estado continua mudando so pelo motor (ADR-0001); o painel decide apenas se o botao aparece.
 - + Dois cliques (ou duas abas) nao criam dois executores: o painel serializa o disparo e o lease recusa o segundo de qualquer forma.
 - - O painel deixa de ser "somente leitura" no sentido estrito; a superficie de ataque local cresce e passa a depender dos quatro portoes - mexer neles exige rever este ADR.
+- + D-203: `guia painel` (e o atalho do Windows de `painel --atalho`) liga o executor por este mesmo `start_executor` e abre o painel, sem chat de IA; as mesmas recusas viram aviso.
 - - O executor iniciado pelo painel roda sem terminal: a saida vai para `.guia/queue/executor-painel.log`, nao para a tela.
 - - O token protege contra paginas web, nao contra a propria maquina: quem consegue fazer `GET /` em `127.0.0.1` (outro usuario do Windows, um agente com `curl`) le o token e pode disparar as acoes. O limite de confianca e o da maquina e do usuario logado, o mesmo de quem ja pode rodar `guia queue run` no terminal.
 - - A trava "so do usuario" continua comportamental: um agente com acesso ao navegador poderia clicar. A regra escrita (o agente nunca usa os botoes) e a confirmacao sao o limite, o mesmo da D-098.
