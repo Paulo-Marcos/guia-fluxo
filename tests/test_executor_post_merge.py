@@ -56,7 +56,7 @@ class PostMergeTests(unittest.TestCase):
         for title in ("primeira", "segunda"):
             self._ok("feature", title)
         self._ok("worktree", "add", "D-001")
-        self.worktree = base / "app-d001"
+        self.worktree = base / "app-worktrees" / "d001"
 
     def tearDown(self) -> None:
         self._tmp.cleanup()

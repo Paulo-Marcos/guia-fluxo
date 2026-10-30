@@ -405,6 +405,19 @@ Andaimes de entrega a partir dos modelos do Guia (`templates/scaffold/`, D-120).
 
 Cria ou remove o worktree de uma demanda que ja existe (D-113). `add` segue `delivery.worktree`: caminho e branch pelos modelos, a partir de `from` (busca a base no `origin` antes), copia os `envFiles` e cria as `junctions`, registrando tudo na demanda (`WORKTREE_PATH=`, `WORKTREE_BRANCH=`). `remove` desfaz as juncoes registradas **antes** do `git worktree remove` e **recusa** se sobrar qualquer link no worktree - uma remocao que atravessa juncao apaga o destino na principal (D-880 no gerador-cortes). Sem `--force`, worktree com mudanca nao commitada fica, com a mensagem do git. No modo `pr`, o `finish` remove o worktree da demanda (se `removeOnFinish`) do mesmo jeito, sem `--force`, e so avisa se nao conseguir. Sem id, vale a branch (D-110).
 
+Desde a D-202 o modelo padrao e `../{repo}-worktrees/{idCompact}` (uma pasta por projeto, nao uma irma do repo por demanda); worktree criado no padrao antigo segue funcionando, porque o caminho fica gravado na demanda.
+
+### `cleanup`
+
+```powershell
+.\core\bin\guia.ps1 cleanup [--json]
+.\core\bin\guia.ps1 cleanup --remove <caminho|D-NNN|arquivo> [--remove ...]
+.\core\bin\guia.ps1 cleanup --remove all
+.\core\bin\guia.ps1 cleanup --session-start
+```
+
+Faxina da pasta que guarda os projetos (ex.: `C:/DEV`, D-202). Sem flag, **so lista**: worktrees inativas deste projeto (demanda Integrada/Finalizada/Validada/Cancelada; worktree sem demanda nunca e proposta) e artefatos de agente soltos na pasta pai (logs, `.msg`, patches, saida de comando, rascunho `.txt`/`.md`/`.json` com numero ou prefixo de etapa no nome - nunca dotfile nem documento). Inativa com mudanca local, arquivo ignorado que a remocao apagaria (ex.: `.env`) ou HEAD destacado aparece como mantida, com o porque. `--remove` remove so itens que o relatorio propos - e so com o ok do dono; worktree sai pelo mesmo caminho seguro do `worktree remove` (juncoes desfeitas antes). `all` vale so para o que a ultima listagem mostrou (gravada em `.guia/tmp/`) e tambem roda `git worktree prune` nos registros sem pasta. `--session-start` e o relatorio de uma linha do hook SessionStart do plugin: mudo quando nao ha o que limpar e fora de projeto Guia, e nunca falha. Artefatos de agente (auditoria, logs de portao, `.msg`, patches) tem lugar fixo em `.guia/tmp/<D-NNN>/` - `start` imprime `ARTIFACTS_DIR=` e `next --json` devolve `artifactsDir`.
+
 ### `docs-check`
 
 ```powershell

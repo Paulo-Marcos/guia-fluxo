@@ -469,7 +469,7 @@ existentes; o perfil (R2) preenche os valores.
     "baseBranch": "main",
     "worktree": {
       "required": true,
-      "path": "..\\{repo}-{idCompact}",   // ..\gerador-cortes-d886
+      "path": "..\\{repo}-worktrees\\{idCompact}", // ..\gerador-cortes-worktrees\d886 (D-202)
       "branch": "{idLower}-{slug}",       // d-886-nota-e-porque
       "from": "origin/{baseBranch}",
       "envFiles": ["frontend/.env.local"],// copiados/avisados ao criar

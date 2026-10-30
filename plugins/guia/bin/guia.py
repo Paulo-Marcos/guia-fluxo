@@ -108,6 +108,7 @@ from _cli_scaffold import cmd_scaffold  # noqa: E402
 from _cli_gate import cmd_gate  # noqa: E402
 from _cli_ship import cmd_ship  # noqa: E402
 from _cli_worktree import cmd_worktree  # noqa: E402
+from _cli_cleanup import cmd_cleanup  # noqa: E402
 from _cli_tasks import (  # noqa: E402
     cmd_stats,
     cmd_tasks_filter,
@@ -450,6 +451,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="remove: descarta mudancas nao commitadas do worktree.",
     )
     p_worktree.set_defaults(func=cmd_worktree)
+
+    p_cleanup = sub.add_parser(
+        "cleanup",
+        help="Faxina da pasta pai: lista worktrees inativas e arquivos soltos; remove so com --remove (D-202).",
+    )
+    p_cleanup.add_argument(
+        "--remove",
+        action="append",
+        metavar="ALVO",
+        help="Remove um item proposto (caminho do worktree, D-NNN ou nome do arquivo); repetivel; 'all' = tudo. So com ok do dono.",
+    )
+    p_cleanup.add_argument("--json", action="store_true", help="Relatorio em JSON.")
+    p_cleanup.add_argument(
+        "--session-start",
+        action="store_true",
+        help="Uma linha para o hook SessionStart; muda fora de projeto Guia e nunca falha.",
+    )
+    p_cleanup.set_defaults(func=cmd_cleanup)
 
     p_profile = sub.add_parser(
         "profile",
@@ -872,8 +891,9 @@ def build_parser() -> argparse.ArgumentParser:
 # Commands that must NOT auto-init the project (D-075). `init` seeds it
 # itself; `doctor` reports `.guia/` health and must not mask a missing dir;
 # `render` is a dev-only build step over the manifest, unrelated to project
-# state; `dashboard` (D-175) only reads and may run from any folder.
-_NO_AUTO_INIT = frozenset({"init", "doctor", "render", "upgrade", "dashboard"})
+# state; `dashboard` (D-175) only reads and may run from any folder;
+# `cleanup` (D-202) runs from the SessionStart hook in any folder.
+_NO_AUTO_INIT = frozenset({"init", "doctor", "render", "upgrade", "dashboard", "cleanup"})
 
 
 def main(argv: list[str] | None = None) -> int:

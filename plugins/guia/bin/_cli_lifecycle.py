@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from _artifacts import artifacts_dir
 from _clock import now_iso, today
 from _commit import commit_task
 from _conductor import announce_next
@@ -1034,6 +1035,8 @@ def cmd_start(args: argparse.Namespace) -> int:
     write_report(task, "start")
 
     print(f"{task['id']} started.")
+    # D-202: artefatos do agente (auditoria, logs, .msg) moram aqui, nao na pasta pai.
+    print(f"ARTIFACTS_DIR={artifacts_dir(task['id'])}")
     if missing_plan(task):
         print(MISSING_PLAN.replace("D-NNN", task["id"]))
     if missing_briefing(task, briefing_required(read_json(PROCESS_FILE, default_process(ROOT.name)))):

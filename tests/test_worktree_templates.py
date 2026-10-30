@@ -1,6 +1,6 @@
 """D-113: worktree da demanda por modelo, com juncoes criadas e desfeitas pelo motor.
 
-No modo `pr`, `guia worktree add D-NNN` cria `..\\{repo}-{idCompact}` na
+No modo `pr`, `guia worktree add D-NNN` cria `..\\{repo}-worktrees\\{idCompact}` na
 branch `{idLower}-{slug}` a partir de `origin/{baseBranch}`, copia os
 `envFiles` e cria as `junctions` declaradas (juncao no Windows, link simbolico
 no resto) apontando para a arvore principal. `guia worktree remove` desfaz as
@@ -73,7 +73,7 @@ class WorktreeTemplateTests(unittest.TestCase):
         (self.main / "deps" / "pacote.txt").write_text("compartilhado\n", encoding="utf-8")
         (self.main / ".env.local").write_text("API=local\n", encoding="utf-8")
         self._ok("chore", "Nota e porquê com junções")
-        self.worktree = base / "app-d001"
+        self.worktree = base / "app-worktrees" / "d001"
 
     def tearDown(self) -> None:
         self._tmp.cleanup()
