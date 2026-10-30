@@ -36,6 +36,9 @@ from _constants import (
 from _dependabot import close_incorporated, on_idle
 from _git_ops import git_output
 from _github import (
+    CASE_REQUIRED,
+    CHECKS_FALLBACK,
+    NO_CHECKS_WAIT,
     gh_commit_ci,
     gh_pr_checks,
     gh_pr_comment,
@@ -156,16 +159,25 @@ MERGEABLE_STATES = frozenset({"CLEAN", "HAS_HOOKS", "UNSTABLE"})
 POLL_SECONDS = 20.0
 
 
-def integrate(item: dict[str, Any], base: str, ci_timeout_seconds: float) -> str:
+def integrate(item: dict[str, Any], base: str, ci_timeout_seconds: float,
+              queue_cfg: dict[str, Any] | None = None) -> str:
     """Leva um item ate o merge; devolve 'merged' ou 'waiting'. Levanta Returned.
 
     Checks verdes nao bastam: um status exigido que ainda nem existe (ex.: o
     da auditoria sendo gravado) nao aparece em `gh pr checks`. Quem diz que
     a protecao liberou e o `mergeStateStatus` do GitHub. `BLOCKED` ate o
     prazo nao e culpa do autor: o item fica esperando, nao e devolvido.
+
+    D-201: o leitor de checks diz tambem **qual caso** encontrou (obrigatorios,
+    sem politica, nenhum check, erro do `gh`) - e e isso que vai para o log,
+    em vez de um `pending` mudo que escondia um repositorio sem protecao.
     """
+    queue_cfg = queue_cfg or {}
+    policy = queue_cfg.get("requiredChecks") or CHECKS_FALLBACK
+    no_checks = queue_cfg.get("noChecks") or NO_CHECKS_WAIT
     deadline = time.monotonic() + ci_timeout_seconds
     updated = False
+    noted = False
     while True:
         heartbeat()
         state = gh_pr_state(ROOT, item["pr"])
@@ -185,15 +197,20 @@ def integrate(item: dict[str, Any], base: str, ci_timeout_seconds: float) -> str
             updated = True
             continue
         remaining = max(deadline - time.monotonic(), 0.0)
-        verdict, failing = gh_pr_checks(ROOT, item["pr"], remaining)
-        if verdict == "fail":
+        checks = gh_pr_checks(ROOT, item["pr"], remaining, policy=policy, no_checks=no_checks)
+        if checks.verdict == "fail":
             if updated:
                 # D-169: o rebase passou, mas o CI reprovou - conflito que o git nao ve
                 # (arquivo gerado defasado, contrato que a main mudou). E do gerente.
-                raise Conflict(f"check vermelho depois da atualizacao da fila: {', '.join(failing)} - "
+                raise Conflict(f"check vermelho depois da atualizacao da fila: {', '.join(checks.failing)} - "
                                "rebase, regenere o que e gerado e rode o portao")
-            raise Returned(f"check vermelho: {', '.join(failing)}")
-        if verdict == "pass" and state["mergeState"] in MERGEABLE_STATES:
+            raise Returned(f"check vermelho: {', '.join(checks.failing)}")
+        if checks.verdict == "pass" and state["mergeState"] in MERGEABLE_STATES:
+            if checks.case != CASE_REQUIRED and not noted:
+                # Merge liberado por algo que nao e a politica de obrigatorios:
+                # fica escrito na fila, uma vez, qual caso foi.
+                _log(item["id"], f"checks: {checks.detail}")
+                noted = True
             subject, body = _merge_message(item)
             error = gh_pr_merge(ROOT, item["pr"], head, subject, body)
             if error is None:
@@ -201,7 +218,8 @@ def integrate(item: dict[str, Any], base: str, ci_timeout_seconds: float) -> str
                 return "merged"
             _log(item["id"], f"merge ainda recusado: {error.splitlines()[0]}")
         if time.monotonic() >= deadline:
-            _log(item["id"], f"protecao ainda nao liberou no prazo (estado {state['mergeState']}, checks {verdict}); fica esperando")
+            _log(item["id"], f"protecao ainda nao liberou no prazo (estado {state['mergeState']}, "
+                             f"checks: {checks.detail}); fica esperando")
             return "waiting"
         time.sleep(min(POLL_SECONDS, max(deadline - time.monotonic(), 0.0)))
 
@@ -301,20 +319,22 @@ def _watch_main_ci(item: dict[str, Any], ci_timeout_seconds: float) -> tuple[str
     if not sha:
         print(f"  {item['id']}: commit do squash nao encontrado; CI da main nao acompanhado.")
         return None, None
-    verdict, failing = gh_commit_ci(ROOT, sha, ci_timeout_seconds)
-    if verdict == "fail":
-        reason = f"main vermelha em {sha[:12]} depois do PR #{item['pr']} ({', '.join(failing)})"
+    ci = gh_commit_ci(ROOT, sha, ci_timeout_seconds)
+    if ci.verdict == "fail":
+        reason = f"main vermelha em {sha[:12]} depois do PR #{item['pr']} ({', '.join(ci.failing)})"
 
         def freeze(data: dict[str, Any]) -> None:
             data["frozenReason"] = reason
 
         mutate(freeze)
         print(f"  FILA CONGELADA: {reason}. Corrija a main e rode `guia queue resume`.")
-    elif verdict == "pending":
-        print(f"  {item['id']}: CI da main em {sha[:12]} ainda sem resultado no prazo; acompanhe.")
+    elif ci.verdict == "pending":
+        # D-201: ausencia de prova nao e prova de falha - a fila segue e o
+        # motivo real (run cancelado, run rodando) vai no texto.
+        print(f"  {item['id']}: CI da main em {sha[:12]} sem veredito ({ci.detail}); acompanhe.")
     else:
         print(f"  {item['id']}: CI da main verde em {sha[:12]}.")
-    return sha, verdict
+    return sha, ci.verdict
 
 
 def _close_dependabot_prs(item_id: str) -> None:
@@ -345,7 +365,7 @@ def _sweep_integrated(config: dict[str, Any]) -> None:
 
     def main_ci_of(number: int) -> tuple[str | None, str | None]:
         sha = gh_pr_merge_commit(ROOT, number)
-        return sha, (gh_commit_ci(ROOT, sha, 0)[0] if sha else None)
+        return sha, (gh_commit_ci(ROOT, sha, 0).verdict if sha else None)
 
     # Etapa acessoria: falha do gh aqui nao pode parar a integracao da fila.
     try:
@@ -432,7 +452,7 @@ def run(config: dict[str, Any], once: bool = False) -> int:
             print(f"Integrando {item['id']} (PR #{item['pr']})...")
             heartbeat()
             try:
-                outcome = integrate(item, base, ci_timeout)
+                outcome = integrate(item, base, ci_timeout, queue_cfg)
             except Conflict as reason:
                 if queue_cfg.get("conflicts", CONFLICTS_RETURN) == CONFLICTS_MANAGER:
                     _hold_conflict(item, str(reason))

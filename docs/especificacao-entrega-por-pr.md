@@ -509,7 +509,9 @@ existentes; o perfil (R2) preenche os valores.
     "queue": {
       "enabled": true,
       "mergeMethod": "squash",
-      "requiredChecks": "fromProtection", // lê da proteção; ou lista explícita
+      "requiredChecks": "fallback",       // D-201: sem política de obrigatórios, julga
+                                          // pelos checks que rodaram; "strict" espera a proteção
+      "noChecks": "wait",                 // D-201: repo que não reporta check algum
       "freezeOnRedMain": true,
       "ciTimeoutMinutes": 40
     },
