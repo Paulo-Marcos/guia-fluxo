@@ -76,11 +76,8 @@ def spawn_executor(root: Path, log: Path) -> tuple[subprocess.Popen[bytes], Path
     return process, engine
 
 
-def _why_not(task: dict[str, Any], config: dict[str, Any]) -> str | None:
-    """Por que o chat NAO liga a fila agora; None quando deve ligar."""
-    level = effective_level(task, config)
-    if level != AUTO_LEVEL:
-        return f"nivel {level}: ligar a fila (queue run) e do dono"
+def _why_not(task: dict[str, Any]) -> str | None:
+    """Por que a fila nao tem o que integrar deste item agora; None quando tem."""
     data = load()
     if data.get("paused") or data.get("frozenReason"):
         return f"fila parada ({data.get('pausedReason') or data.get('frozenReason')}): o dono retoma"
@@ -99,9 +96,11 @@ def ensure_executor(task: dict[str, Any], config: dict[str, Any]) -> str | None:
     """
     if os.environ.get(AUTO_SWITCH_ENV, "").lower() in ("0", "off", "false"):
         return None
-    why = _why_not(task, config)
+    if effective_level(task, config) != AUTO_LEVEL:
+        return None
+    why = _why_not(task)
     if why is not None:
-        return None if why.startswith("nivel ") else f"Executor nao ligado: {why}."
+        return f"Executor nao ligado: {why}."
     alive = executor_status(config)
     if alive:
         return f"Executor ja ativo (pid {alive['pid']} em {alive['host']}): ele integra este item."
