@@ -52,7 +52,7 @@ from _constants import (
     TASKS_FILE,
 )
 from _git_ops import current_branch
-from _state import read_json, read_text, write_json
+from _state import file_lock, read_json, read_text, replace_json, write_json
 
 
 def new_task(
@@ -341,14 +341,20 @@ def _warn_ambiguous_current(chosen_id: str) -> None:
     )
 
 
+TASKS_LOCK = TASKS_FILE.with_name("tasks.lock")
+
+
 def save_task(updated: dict[str, Any]) -> None:
-    data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
-    for index, task in enumerate(data.get("tasks", [])):
-        if task.get("id") == updated.get("id"):
-            updated["updatedAt"] = today()
-            data["tasks"][index] = updated
-            write_json(TASKS_FILE, data)
-            return
+    # D-204: o chat (queue add) e o executor gravam demandas diferentes ao mesmo
+    # tempo; sem a trava, um le-muda-grava apagava a gravacao do outro.
+    with file_lock(TASKS_LOCK):
+        data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
+        for index, task in enumerate(data.get("tasks", [])):
+            if task.get("id") == updated.get("id"):
+                updated["updatedAt"] = today()
+                data["tasks"][index] = updated
+                replace_json(TASKS_FILE, data)
+                return
     raise SystemExit(MSG_TASK_NOT_FOUND.format(id=updated.get("id")))
 
 

@@ -14,6 +14,7 @@ from _git_ops import git_output
 from _github import gh_pr_state
 from _state import read_json
 from _dependabot import lote_human_reasons
+from _executor_spawn import ensure_executor
 from _merge_queue import PRIORITY_HOTFIX, PRIORITY_NORMAL, STATE_CONFLICT, STATE_WAITING, find, load, mutate, ordered
 from _ship import QUEUE_DIR
 from _tasks import find_task, find_task_or_current, save_task
@@ -128,6 +129,10 @@ def _enqueue(args: argparse.Namespace) -> int:
         print(f"Aprovado pela autonomia (nivel {approval['level']}): o executor integra sem novo ok.")
     elif reasons:
         print(f"alwaysHuman: espera o approve do dono - {'; '.join(reasons)}.")
+    # D-204: no pilot, o item ja gravado e SO DEPOIS o lease lido (ordem da corrida).
+    started = ensure_executor(task, config)
+    if started:
+        print(started)
     announce_next(task, config)
     return 0
 

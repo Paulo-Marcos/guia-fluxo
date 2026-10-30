@@ -27,6 +27,9 @@ from pathlib import Path
 from typing import Any
 
 from _dashboard import ENGINE, PROJECT_ENGINES, engine_for, is_project, load_projects, queue_stopped, snapshot
+from _executor_spawn import detach_kwargs as _detach_kwargs  # noqa: F401 - nome antigo, testes da D-187
+from _executor_spawn import spawn_executor
+
 EXECUTOR_LOG = Path(".guia") / "queue" / "executor-painel.log"
 RESUME_TIMEOUT_SECONDS = 60
 
@@ -82,16 +85,6 @@ def resume(root: Path) -> str:
     return output
 
 
-def _detach_kwargs() -> dict[str, Any]:
-    if os.name == "nt":
-        # Console proprio e escondido: sem console (DETACHED_PROCESS), cada
-        # git/gh/pytest que o executor chama abriria uma janela visivel.
-        # Grupo proprio: o Ctrl+C do painel nao chega ao executor.
-        flags = subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP  # type: ignore[attr-defined]
-        return {"creationflags": flags}
-    return {"start_new_session": True}
-
-
 def _refuse_start(snap: dict[str, Any]) -> None:
     """O que o retrato ja diz contra iniciar: sem fila, fila parada, executor vivo."""
     if snap["mode"] != "pr":
@@ -111,15 +104,7 @@ def start_executor(root: Path) -> str:
         previous = _spawned.get(key)
         if previous is not None and previous.poll() is None:
             raise ActionError(409, f"executor iniciado pelo painel ainda rodando (pid {previous.pid})")
-        log_path = root / EXECUTOR_LOG
-        log_path.parent.mkdir(parents=True, exist_ok=True)
-        engine = engine_for(root)
-        with open(log_path, "ab") as log:
-            process = subprocess.Popen(
-                [sys.executable, str(engine), "queue", "run"],
-                cwd=root, env=_engine_env(root), stdin=subprocess.DEVNULL,
-                stdout=log, stderr=subprocess.STDOUT, close_fds=True, **_detach_kwargs(),
-            )
+        process, engine = spawn_executor(root, EXECUTOR_LOG)
         _spawned[key] = process
     return f"Executor iniciado (pid {process.pid}, motor {engine}); saida em {EXECUTOR_LOG.as_posix()}."
 

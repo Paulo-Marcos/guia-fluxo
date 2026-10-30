@@ -404,51 +404,90 @@ def _dependabot_on_idle(config: dict[str, Any]) -> None:
         print(f"Fila vazia: lote do Dependabot criado como {lote['id']} ({prs}). Rode a pr-bump num chat.")
 
 
-def run(config: dict[str, Any], once: bool = False) -> int:
-    """Uma passada pela fila; devolve quantos itens foram integrados."""
+PASS_EMPTY, PASS_STOPPED, PASS_ONCE = "empty", "stopped", "once"
+
+
+def _eligible(data: dict[str, Any], tried: set[str]) -> list[dict[str, Any]]:
+    status_of = lambda task_id: (find_task(task_id) or {}).get("status")  # noqa: E731
+    return [item for item, why in ordered(data["items"], status_of) if why is None and item["id"] not in tried]
+
+
+def _pass(config: dict[str, Any], tried: set[str], once: bool) -> tuple[int, str]:
+    """Integra o que esta elegivel; devolve (integrados, por que parou)."""
     delivery = config.get("delivery") or {}
     queue_cfg = delivery.get("queue") or {}
     base = delivery.get("baseBranch") or DELIVERY_BASE_BRANCH_DEFAULT
     ci_timeout = float(queue_cfg.get("ciTimeoutMinutes") or CI_TIMEOUT_MINUTES_DEFAULT) * 60
-    acquire_lease(float(queue_cfg.get("leaseStaleMinutes") or LEASE_STALE_MINUTES_DEFAULT))
+    merged = 0
+    while True:
+        data = load()
+        if data["paused"] or data.get("frozenReason"):
+            print(f"Fila parada: {data.get('pausedReason') or data.get('frozenReason')}")
+            return merged, PASS_STOPPED
+        eligible = _eligible(data, tried)
+        if not eligible:
+            if not data["items"]:
+                _dependabot_on_idle(config)
+            return merged, PASS_EMPTY
+        item = eligible[0]
+        tried.add(item["id"])
+        print(f"Integrando {item['id']} (PR #{item['pr']})...")
+        heartbeat()
+        try:
+            outcome = integrate(item, base, ci_timeout)
+        except Conflict as reason:
+            if queue_cfg.get("conflicts", CONFLICTS_RETURN) == CONFLICTS_MANAGER:
+                _hold_conflict(item, str(reason))
+            else:
+                _finish_item(item, "returned", str(reason))
+            continue
+        except Returned as reason:
+            _finish_item(item, "returned", str(reason))
+            continue
+        if outcome == "merged":
+            _finish_item(item, "merged")
+            heartbeat()
+            _after_merge(item, ci_timeout, config)
+            merged += 1
+            if once:
+                return merged, PASS_ONCE
+
+
+def _handed_over(tried: set[str], stale_minutes: float) -> bool:
+    """D-204: fila vazia e lease solto - chegou item depois da ultima leitura?
+
+    Quem enfileira grava o item e so depois le o lease (`_executor_spawn`);
+    aqui o lease ja saiu e so depois a fila e relida. Se o chat viu o lease
+    ainda vivo e nao subiu ninguem, este executor ve o item e retoma. Retomar
+    e pegar o lease de novo: se outro executor ja o pegou, ele integra.
+    """
+    data = load()
+    if data["paused"] or data.get("frozenReason") or not _eligible(data, tried):
+        return False
+    try:
+        acquire_lease(stale_minutes)
+    except SystemExit:
+        return False
+    print("Item novo chegou enquanto o executor saia: retomando.")
+    return True
+
+
+def run(config: dict[str, Any], once: bool = False) -> int:
+    """Passa pela fila ate esvaziar; devolve quantos itens foram integrados."""
+    queue_cfg = (config.get("delivery") or {}).get("queue") or {}
+    stale = float(queue_cfg.get("leaseStaleMinutes") or LEASE_STALE_MINUTES_DEFAULT)
+    acquire_lease(stale)
     _import_cloud_prs()
     merged = 0
     tried: set[str] = set()
     try:
         _sweep_integrated(config)
         while True:
-            data = load()
-            if data["paused"] or data.get("frozenReason"):
-                print(f"Fila parada: {data.get('pausedReason') or data.get('frozenReason')}")
+            count, why = _pass(config, tried, once)
+            merged += count
+            release_lease()
+            if why != PASS_EMPTY or not _handed_over(tried, stale):
                 break
-            status_of = lambda task_id: (find_task(task_id) or {}).get("status")  # noqa: E731
-            eligible = [item for item, why in ordered(data["items"], status_of) if why is None and item["id"] not in tried]
-            if not eligible:
-                if not data["items"]:
-                    _dependabot_on_idle(config)
-                break
-            item = eligible[0]
-            tried.add(item["id"])
-            print(f"Integrando {item['id']} (PR #{item['pr']})...")
-            heartbeat()
-            try:
-                outcome = integrate(item, base, ci_timeout)
-            except Conflict as reason:
-                if queue_cfg.get("conflicts", CONFLICTS_RETURN) == CONFLICTS_MANAGER:
-                    _hold_conflict(item, str(reason))
-                else:
-                    _finish_item(item, "returned", str(reason))
-                continue
-            except Returned as reason:
-                _finish_item(item, "returned", str(reason))
-                continue
-            if outcome == "merged":
-                _finish_item(item, "merged")
-                heartbeat()
-                _after_merge(item, ci_timeout, config)
-                merged += 1
-                if once:
-                    break
     finally:
         release_lease()
     return merged
