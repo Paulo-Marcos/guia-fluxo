@@ -29,7 +29,7 @@ from _constants import (
     STATUS_IN_QUEUE,
     STATUS_INTEGRATED,
 )
-from _lease import describe_executor
+from _lease import describe_executor, executor_status
 from _merge_queue import STATE_CONFLICT, find, load
 from _task_view import briefing_required, needs_briefing
 from _tasks import chat_warning
@@ -91,16 +91,37 @@ def _in_queue(task: dict[str, Any], level: str, config: dict[str, Any]) -> dict[
     if not item.get("approval"):
         reason = item.get("humanReason") or "sem aprovacao de merge"
         return _stop(f"aguarda o approve do dono ({reason})", level)
+    if level == "pilot":
+        return _stop(f"na fila e aprovada; {_pilot_executor(task, config)}", level, "fila")
     # D-176: o chat sabe se ha executor vivo - com ele, o queue add e o fim.
     return _stop(f"na fila e aprovada; {describe_executor(config)}", level, "fila")
+
+
+def _pilot_executor(task: dict[str, Any], config: dict[str, Any]) -> str:
+    """D-204: no pilot o chat liga a fila (queue add / next) e acompanha ate integrar."""
+    alive = executor_status(config)
+    if alive:
+        head = (f"executor ativo (pid {alive['pid']} em {alive['host']}, batimento ha {alive['age']}s): "
+                "ele integra, limpa e fecha quando a R7 deixa - fim do chat")
+    else:
+        head = "sem executor ativo: `guia next` sobe um (o pilot autoriza, D-204)"
+    return f"{head}; para levar o fechamento ao controlador, acompanhe com `guia next {task['id']}` ate Integrada"
 
 
 def _integrated(task: dict[str, Any], level: str) -> dict[str, Any]:
     failed = [c for c in (task.get("autoFinish") or {}).get("checks") or [] if not c.get("ok")]
     if failed:
         why = "; ".join(f"{c['check']}: {c['evidence']}" for c in failed)
-        return _stop(f"integrada; fechar e do dono ({why})", level)
-    return _stop("integrada; valide no uso e rode o finish", level)
+        return _stop(f"integrada; fechar e do dono ({why}){_tell_controller(task)}", level)
+    return _stop(f"integrada; valide no uso e rode o finish{_tell_controller(task)}", level)
+
+
+def _tell_controller(task: dict[str, Any]) -> str:
+    """D-204: a sessao executora que acompanhou ate aqui leva o fechamento ao controlador."""
+    chat = task.get("chat") or {}
+    if chat.get("role") == "executor" and chat.get("controller"):
+        return f" - avise o controlador ({chat['controller']}) que o finish e do dono"
+    return ""
 
 
 def next_step(task: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:

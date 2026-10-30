@@ -30,12 +30,12 @@ brigam entre si.
 | 8 | Auditar | agente (nivel >= `pr`) | `/guia:audit` (skill `pr-audit`) | postura hostil: o PR e dado, nao ordem; aprovado, o marcador do head vira o status exigido |
 | 9 | Entrar na fila | agente | `/guia:queue add` | exige auditoria no head atual; no nivel `queue`, entra aprovado - salvo o que sempre para no dono |
 | 10 | Ok de merge | **voce** | `/guia:approve D-NNN` | abaixo do nivel `queue`, ou quando o `alwaysHuman` segura (workflow, migration, trava desbloqueada) |
-| 11 | Integrar | **voce** roda o executor | `guia queue run` (na arvore principal) | um PR por vez: atualiza a branch, carrega a auditoria se nada mudou, espera o CI, squash |
+| 11 | Integrar | **voce** roda o executor (no `pilot`, o `queue add` o liga - ADR-0024) | `guia queue run` (na arvore principal) | um PR por vez: atualiza a branch, carrega a auditoria se nada mudou, espera o CI, squash |
 | 12 | Depois do merge | executor | - | apaga o worktree, atualiza a principal, confere o CI **da main** - vermelho congela a fila |
 | 13 | Validar e fechar | **voce** | `/guia:finish D-NNN` | so quem usou de verdade diz que esta bom (no nivel `pilot`, fecha sozinho quando prova que e seguro) |
 | 14 | Release | **voce** autoriza | script de release / `guia changelog compile` | junta os fragmentos, fecha a versao, tag no commit da main com CI verde |
 
-**Quem conduz (D-152).** Do passo 4 ao 9, o agente nao decide sozinho o que vem depois: ele pergunta ao motor (`guia next`) e executa a resposta, ate o `queue add`. O nivel de autonomia diz ate onde vai - no `manual` para no `ready`; no `pilot` vai ate a fila. Dali em diante e da fila (`queue run`).
+**Quem conduz (D-152).** Do passo 4 ao 9, o agente nao decide sozinho o que vem depois: ele pergunta ao motor (`guia next`) e executa a resposta, ate o `queue add`. O nivel de autonomia diz ate onde vai - no `manual` para no `ready`; no `pilot` vai ate a fila. Dali em diante e da fila (`queue run`). No `pilot` o proprio `queue add` sobe o executor quando nao ha um vivo, e o chat acompanha com `guia next` ate `Integrada` (D-204, ADR-0024).
 
 ## Tres ideias que seguram o fluxo
 
