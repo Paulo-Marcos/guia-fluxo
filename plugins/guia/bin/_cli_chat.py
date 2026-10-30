@@ -17,6 +17,7 @@ from _chat_sync import (
     valid_session,
 )
 from _clock import now_iso
+from _controller import DONE_STATUSES
 from _task_view import role_line
 from _tasks import chat_name, find_task_or_current, save_task
 
@@ -30,12 +31,15 @@ def cmd_chat(args: argparse.Namespace) -> int:
     `--refused` registram o que o chat fez com cada uma.
     D-199 (ADR-0023): `--role` e `--controller` dizem se quem faz a demanda e
     uma executora e qual chat controlador a abriu.
+    D-210 (ADR-0025): `--archived`/`--unarchived` registram a sessao arquivada.
     """
     if args.pending:
         return _print_pending(args.json)
     task = find_task_or_current(args.task_id)
     if args.applied or args.refused:
         return _confirm(task, args)
+    if args.archived or args.unarchived:
+        return _archive(task, args.archived)
     session = (args.session or "").strip()
     if session and not valid_session(session):
         raise SystemExit(MSG_BAD_SESSION.format(session=session))
@@ -93,6 +97,22 @@ def _print_pending(as_json: bool) -> int:
         print("Nenhum chat com nome atrasado.")
     for item in missing:
         print(missing_line(item))
+    return 0
+
+
+def _archive(task: dict[str, Any], archived: bool) -> int:
+    """D-210: a sessao concluida arquivada (com ok do dono) sai do quadro do `controle`."""
+    chat = task.setdefault("chat", {})
+    if archived and task.get("status") not in DONE_STATUSES:
+        raise SystemExit(f"Recusado: {task['id']} esta {task.get('status')} - so se arquiva a sessao de demanda "
+                         f"concluida ({', '.join(DONE_STATUSES)}).")
+    if archived:
+        chat["archived"] = now_iso()
+        print(f"SESSAO ARQUIVADA: {task['id']} ({chat.get('session') or 'sem sessao'}) - desfaz com --unarchived.")
+    else:
+        chat.pop("archived", None)
+        print(f"SESSAO REABERTA: {task['id']} ({chat.get('session') or 'sem sessao'}).")
+    save_task(task)
     return 0
 
 
