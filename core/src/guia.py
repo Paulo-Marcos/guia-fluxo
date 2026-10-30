@@ -97,6 +97,7 @@ from _cli_deps_bot import cmd_deps  # noqa: E402
 from _cli_configure import cmd_configure  # noqa: E402
 from _cli_chat import cmd_chat  # noqa: E402
 from _cli_dashboard import add_dashboard_parser  # noqa: E402
+from _cli_painel import add_painel_parser  # noqa: E402
 from _cli_next import cmd_next  # noqa: E402
 from _cli_triage import cmd_triage  # noqa: E402
 from _cli_model import cmd_model  # noqa: E402
@@ -522,6 +523,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_chat.set_defaults(func=cmd_chat)
 
     add_dashboard_parser(sub)
+    add_painel_parser(sub)
 
     p_scaffold = sub.add_parser(
         "scaffold",
