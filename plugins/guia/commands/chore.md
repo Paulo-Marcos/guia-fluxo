@@ -97,6 +97,18 @@ Never bypass a lock silently. The hook at commit time will reject the commit any
 
 Then continue with the maintenance work.
 
+## Before implementing: explain the plan to the owner (D-205)
+
+Before the first code edit, write the plan **in plain language for the owner**, so they know what is about to change before it changes. Use the method of the `explica-como-professor` skill when it is available: read the code first, one organizing image, every idea anchored on a fact measured in the repository (file, line, real message), what the change decides, and a quick test the owner can run. Short: what will be done and why, not the list of steps (that is `--step`).
+
+Show it to the owner in the chat, save it to a file and record it on the demand:
+
+```text
+plan <D-NNN> --brief-file <file.md>
+```
+
+(`--brief "<text>"` for a short one; `start` accepts the same flags.) It appears in `status <D-NNN>` and in the dashboard detail. When the project requires it (`"briefing": {"required": true}` in `.guia/process.json`), `next` answers `brief` and `ready` refuses until it is recorded. Do not wait for the owner's answer to start: the explanation is to inform, not to ask permission. The final report (`ready`) stays as it is.
+
 ## Then: let the engine conduct (D-152)
 
 When the implementation ends, run `ready` yourself (never the developer). Then do not decide the next step yourself. Ask the engine, act on its answer, and repeat until it says `stop` or `done` (every `ready`, `ship`, `audit` and `queue add` also ends with a `PROXIMO PASSO:` line saying the same):
@@ -107,6 +119,7 @@ next <D-NNN> --json
 
 | `step` | What you do |
 |---|---|
+| `brief` | Still `Em desenvolvimento` and the project requires the explanation to the owner: write it, show it and record it with `plan <D-NNN> --brief-file <file>` (first section), then loop again. |
 | `ship` | Commit first (`commit-message` builds the message; fragment with `changelog add` when the project uses fragments), then `ship --subject ... --body "<why>" --unlock-reason "<reason>"`. |
 | `audit` | Run the audit skill the stage announces (default `pr-audit`) on the PR head - hostile, read everything before executing anything. Record it: `audit --report <file> --finding BLOQUEANTE=<n> --finding CORRIGIR=<n> --skill-ran <skill>`, with `--approve` only if it passes. |
 | `queue-add` | `queue add <D-NNN>`. |

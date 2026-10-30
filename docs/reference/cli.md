@@ -117,20 +117,22 @@ Quando `--worktree` e passado, `finish` removera a worktree associada.
 ### `plan`
 
 ```powershell
-.\core\bin\guia.ps1 plan <id> [--note "Por que esta planejando"] [--step "passo"]...
+.\core\bin\guia.ps1 plan <id> [--note "Por que esta planejando"] [--step "passo"]... [--brief-file <arquivo> | --brief "texto"]
 ```
 
 Move task para `Planejada` (triada mas nao iniciada — ADR-0011 Fase 3 / B-017). Aceita transicao de `Backlog` ou `Em desenvolvimento`. Falha em estados terminais ou se ja `Planejada`.
 
 **Plano de execucao (`--step`, D-192).** Cada `--step` acrescenta um passo ao plano da demanda (`executionPlan`, o mesmo campo do `promote --plan`). Numa demanda ja `Planejada` ou `Em desenvolvimento`, `plan <id> --step ...` so grava o plano, sem mudar a etapa. `status` e o painel avisam quando uma demanda `Planejada`/`Em desenvolvimento` nao tem plano.
 
+**Explicacao ao dono (`--brief`/`--brief-file`, D-205).** O plano contado ao dono em linguagem acessivel (skill `explica-como-professor`), antes do codigo; o arquivo e Markdown UTF-8. Grava (ou reescreve) `briefing` da demanda com a mesma regra do `--step`: numa demanda ja `Planejada`/`Em desenvolvimento` so grava. Com `briefing.required: true` no `process.json`, o `next` responde `brief` e o `ready` recusa enquanto ela falta.
+
 ### `start`
 
 ```powershell
-.\core\bin\guia.ps1 start <id> [--note "Comecando agora porque..."] [--step "passo"]...
+.\core\bin\guia.ps1 start <id> [--note "Comecando agora porque..."] [--step "passo"]... [--brief-file <arquivo> | --brief "texto"]
 ```
 
-`--step` (repetivel, D-192) grava o plano junto com o inicio; sem plano, o `start` avisa como grava-lo.
+`--step` (repetivel, D-192) grava o plano junto com o inicio; sem plano, o `start` avisa como grava-lo. `--brief`/`--brief-file` (D-205) grava a explicacao ao dono; quando exigida e ausente, o `start` tambem avisa.
 
 Move task para `Em desenvolvimento`. Aceita transicao de `Backlog` (atalho que pula `Planejada`) ou `Planejada`. Pressupoe que a triagem (kind) ja foi feita — para triar avaliando feature/bug/chore, use `promote`.
 
@@ -142,7 +144,7 @@ Move task para `Em desenvolvimento`. Aceita transicao de `Backlog` (atalho que p
 .\core\bin\guia.ps1 status --all
 ```
 
-Mostra a tarefa atual e o titulo da demanda corrente (`NOME DA DEMANDA: ...`). **Legivel por padrao (D-192):** etapa, tipo, modelo, branch, PR e chat no cabecalho; depois contexto, plano, arquivos, resumo, validacoes, pendencias, Pedido -> Teste e as etapas pelas quais a demanda passou (reconstruidas dos carimbos `createdAt`, `startedAt`, `readyAt`, PR, auditoria, bloqueios e fechamento). Sem plano numa demanda `Planejada`/`Em desenvolvimento`, avisa. `--json` imprime a task crua, como antes da D-192, seguida da linha `NOME DA DEMANDA` - e o formato para scripts. Epico continua com a arvore agregada.
+Mostra a tarefa atual e o titulo da demanda corrente (`NOME DA DEMANDA: ...`). **Legivel por padrao (D-192):** etapa, tipo, modelo, branch, PR e chat no cabecalho; depois contexto, plano, arquivos, resumo, validacoes, pendencias, Pedido -> Teste e as etapas pelas quais a demanda passou (reconstruidas dos carimbos `createdAt`, `startedAt`, `readyAt`, PR, auditoria, bloqueios e fechamento). Sem plano numa demanda `Planejada`/`Em desenvolvimento`, avisa. A explicacao ao dono (D-205) aparece em "Explicacao ao dono"; quando o projeto a exige e ela falta, avisa tambem. `--json` imprime a task crua, como antes da D-192, seguida da linha `NOME DA DEMANDA` - e o formato para scripts. Epico continua com a arvore agregada.
 Demanda `Integrada` ha mais de `autonomy.autoFinish.remindAfterDays` dias (padrao 3) aparece com a pergunta "fechar?" (D-135, R7).
 
 `--all` (B-014) imprime o quadro de todas as tasks `Em desenvolvimento`, marcando a `current`. Se houver mais de uma ativa ao mesmo tempo, avisa sobre a ambiguidade do `current-task.json` global (B-018) — comandos sem id explicito podem pegar a task errada.
@@ -299,7 +301,7 @@ Imprime a mensagem de commit da demanda no formato de `delivery.commit.format` (
 .\core\bin\guia.ps1 next [D-NNN] [--json]
 ```
 
-O condutor (D-152): o proximo passo da demanda, decidido pelo motor a partir do status, do nivel de autonomia e da fila - `ready`, `ship`, `audit`, `queue-add`, `stop` (com o motivo e quem destrava: `dono`, `agente` ou `fila`) ou `done`. Depois do `ready` o agente repete `next` e executa o passo ate ouvir `stop`/`done`, sem improvisar o fluxo. `manual` (ou modo `direct`) para logo apos o `ready`, como sempre; `pr` faz `ship` e auditoria; `queue` e `pilot` ainda entram na fila. O chat encerra no `queue add`: integrar, limpar e fechar e da fila (`queue run`). So leitura.
+O condutor (D-152): o proximo passo da demanda, decidido pelo motor a partir do status, do nivel de autonomia e da fila - `brief` (D-205: `Em desenvolvimento` sem a explicacao ao dono, quando `briefing.required`), `ready`, `ship`, `audit`, `queue-add`, `stop` (com o motivo e quem destrava: `dono`, `agente` ou `fila`) ou `done`. Depois do `ready` o agente repete `next` e executa o passo ate ouvir `stop`/`done`, sem improvisar o fluxo. `manual` (ou modo `direct`) para logo apos o `ready`, como sempre; `pr` faz `ship` e auditoria; `queue` e `pilot` ainda entram na fila. O chat encerra no `queue add`: integrar, limpar e fechar e da fila (`queue run`). So leitura.
 
 ### `chat`
 

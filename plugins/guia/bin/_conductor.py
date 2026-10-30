@@ -31,8 +31,10 @@ from _constants import (
 )
 from _lease import describe_executor
 from _merge_queue import STATE_CONFLICT, find, load
+from _task_view import briefing_required, needs_briefing
 from _tasks import chat_warning
 
+STEP_BRIEF = "brief"
 STEP_READY, STEP_SHIP, STEP_AUDIT = "ready", "ship", "audit"
 STEP_QUEUE_ADD = "queue-add"
 STEP_STOP, STEP_DONE = "stop", "done"
@@ -116,6 +118,8 @@ def _next(task: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
         returned = (task.get("queue") or {}).get("returnReason")
         if returned:
             return _stop(f"devolvida pelo executor: {returned} - corrija e rode o ship", level, "agente")
+        if needs_briefing(task, briefing_required(config)):  # D-205
+            return _step(STEP_BRIEF, "explicar o plano ao dono antes de implementar", level, "agente")
         return _step(STEP_READY, "implementar e dar o ready", level, "agente")
     if status in _AWAITING:
         mode = (config.get("delivery") or {}).get("mode") or DELIVERY_MODE_DIRECT
@@ -130,6 +134,8 @@ def _next(task: dict[str, Any], config: dict[str, Any]) -> dict[str, Any]:
 
 
 _HOW = {
+    STEP_BRIEF: "escreva o plano em linguagem acessivel (skill explica-como-professor), mostre ao dono "
+                "e grave com `guia plan {id} --brief-file <arquivo>`",
     STEP_READY: "implemente e rode `guia ready {id} --file ... --request-test ...`",
     STEP_SHIP: "commite e rode `guia ship {id} --subject ... --body ...`",
     STEP_AUDIT: "rode `guia audit {id}`, audite com a skill anunciada e registre com `--report ... --approve`",
