@@ -34,6 +34,7 @@ from _constants import (
     STATUS_RESOLVED,
     TASKS_FILE,
 )
+from _controller import controller_of, inherit_controller
 
 
 # Mapping CLI -> status interno. Mantem o vocabulario do parser amigavel
@@ -122,13 +123,38 @@ def cmd_create_task(args: argparse.Namespace, kind: str) -> int:
         depends_on=getattr(args, "depends_on", None) or None,
         parent_id=parent_id,
     )
+    origin = _proposal_origin(getattr(args, "proposed_from", None))
+    if origin:
+        inherit_controller(task, origin)
     data.setdefault("tasks", []).insert(0, task)
     write_json(TASKS_FILE, data)
     set_current_task(task)
     if status != STATUS_BACKLOG:
         upsert_features_entry(task)
     print_task_created(task)
+    if origin:
+        _print_proposal(task)
     return 0
+
+
+def _proposal_origin(origin_id: str | None) -> dict[str, Any] | None:
+    """D-210: a demanda de onde a follow-up foi proposta (`--from`)."""
+    if not origin_id:
+        return None
+    origin = find_task(origin_id)
+    if origin is None:
+        raise SystemExit(f"Recusado: --from {origin_id} nao existe em tasks.json.")
+    return origin
+
+
+def _print_proposal(task: dict[str, Any]) -> None:
+    controller = controller_of(task)
+    if controller:
+        print(f"PROPOSTA: {task['id']} (de {task['proposedFrom']}) espera a sessao do controlador {controller} - "
+              "nao abra sessao; avise o controlador, que a ve em `guia controle`.")
+    else:
+        print(f"PROPOSTA: {task['id']} (de {task['proposedFrom']}) sem controlador gravado na origem - "
+              "quem conduz a origem decide se abre a sessao.")
 
 
 def cmd_backlog_add(args: argparse.Namespace) -> int:

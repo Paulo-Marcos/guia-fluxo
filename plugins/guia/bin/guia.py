@@ -96,6 +96,7 @@ from _cli_changelog import cmd_changelog  # noqa: E402
 from _cli_deps_bot import cmd_deps  # noqa: E402
 from _cli_configure import cmd_configure  # noqa: E402
 from _cli_chat import cmd_chat  # noqa: E402
+from _cli_controller import add_controller_parsers  # noqa: E402
 from _cli_dashboard import add_dashboard_parser  # noqa: E402
 from _cli_painel import add_painel_parser  # noqa: E402
 from _cli_next import cmd_next  # noqa: E402
@@ -147,6 +148,13 @@ def _add_task_args(parser: argparse.ArgumentParser) -> None:
         metavar="D-XYZ",
         help="Declara dependencia de outra demanda (D-067). Repetivel. "
              "start/promote serao bloqueados ate a dependencia ficar Validada/Finalizada/Resolvida/Cancelada.",
+    )
+    parser.add_argument(
+        "--from",
+        dest="proposed_from",
+        metavar="D-NNN",
+        help="D-210 (ADR-0025): follow-up proposta pela executora de D-NNN - herda o controlador e "
+             "espera a sessao que so ele abre (use com --status planned).",
     )
     parser.add_argument(
         "--under",
@@ -519,11 +527,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_chat.add_argument("--refused", metavar="NOME",
                         help="D-194: o app recusou este nome; vira aviso e so volta quando a etapa mudar.")
     p_chat.add_argument("--reason", help="Motivo da recusa (com --refused).")
+    p_chat.add_argument("--archived", action="store_true",
+                        help="D-210: a sessao da demanda concluida foi arquivada (com ok do dono); sai do `controle`.")
+    p_chat.add_argument("--unarchived", action="store_true", help="D-210: desfaz o --archived (sessao reaberta).")
     p_chat.add_argument("--json", action="store_true", help="Saida em JSON.")
     p_chat.set_defaults(func=cmd_chat)
 
     add_dashboard_parser(sub)
     add_painel_parser(sub)
+    add_controller_parsers(sub)
 
     p_scaffold = sub.add_parser(
         "scaffold",

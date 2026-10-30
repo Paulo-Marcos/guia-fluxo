@@ -3,6 +3,7 @@
 - **Status:** Aceita
 - **Data:** 2026-10-23
 - **Estende:** [ADR-0020](0020-chat-nomeado-pela-demanda-um-chat-por-demanda.md) (uma demanda, um chat)
+- **Estendida por:** [ADR-0025](0025-controlador-concentra-as-decisoes.md) (a follow-up passa a ser proposta; so o controlador abre sessao)
 
 ## Contexto
 
