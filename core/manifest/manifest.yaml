@@ -272,6 +272,15 @@ verbs:
       claude_command:
         body_file: bodies/worktree.md
 
+  cleanup:
+    description: |
+      CLEANUP — list what pollutes the folder that holds the projects (e.g. `C:/DEV`): inactive worktrees of this project (demand Integrada/Finalizada/Cancelada, or branch already in the base, and no local changes) and loose files (audit reports, gate logs, `.msg`, patches). Report only; `--remove <path|D-NNN|file>` (repeatable) or `--remove all` removes ONLY with the developer's ok, through the safe `worktree remove` path. `--json` for machine output; `--session-start` is the one-line report of the plugin's SessionStart hook. New worktrees live in `../<repo>-worktrees/<idCompact>`; agent artifacts go in `.guia/tmp/<D-NNN>/`.
+    targets:
+      agent_skill:
+        body_file: bodies/cleanup.md
+      claude_command:
+        body_file: bodies/cleanup.md
+
   profile:
     description: |
       SETUP — propose the delivery profile from the repository facts (`solo-direct`, `pr-basic`, `pr-audited`); `--apply` writes the block without overwriting existing keys, `--name` picks another profile, `--json` for machine output. Changing delivery defaults is the developer's decision: show the proposal and ask before `--apply`.

@@ -61,7 +61,7 @@ class GateTreeTests(unittest.TestCase):
         self.fixture.write_text(json.dumps({"__auth__": True}), encoding="utf-8")
         self._ok(self.main, "feature", "Mostrar a nota")
         self._ok(self.main, "worktree", "add", "D-001")
-        self.wt = base / "app-d001"
+        self.wt = base / "app-worktrees" / "d001"
         self._commit("app.txt", "app com nota\n")
         self._ok(self.wt, "ready", "--file", "app.txt", "--request-test", "nota :: tests/test_nota.py")
         self._ok(self.wt, "changelog", "add", "--text", "Mostra a nota (D-001).")

@@ -114,7 +114,7 @@ class CloudLabelTests(unittest.TestCase):
     def test_pc_worktree_follows_the_cloud_branch_and_add_completes_the_item(self) -> None:
         self._ok("queue", "import")
         self._ok("worktree", "add", "D-001")
-        worktree = self.base / "app-d001"
+        worktree = self.base / "app-worktrees" / "d001"
         self.assertEqual(_git(worktree, "rev-parse", "HEAD").stdout.strip(), self.cloud_head)
         self.assertEqual((worktree / "app.txt").read_text(encoding="utf-8"), "app da nuvem\n")
         # auditoria e mensagem de squash como o ship/audit gravariam (sintetico)

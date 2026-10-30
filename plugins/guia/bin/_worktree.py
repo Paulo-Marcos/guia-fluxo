@@ -5,7 +5,7 @@ Modo `direct` (historico, achados 2.9/2.13):
     Path:   .claude/worktrees/<slug>
 
 Modo `pr` (D-113, R1 `delivery.worktree`):
-    Path:   ..\\{repo}-{idCompact}      (ex.: ..\\gerador-cortes-d886)
+    Path:   ..\\{repo}-worktrees\\{idCompact}  (ex.: ..\\gerador-cortes-worktrees\\d886)
     Branch: {idLower}-{slug}            (ex.: d-886-nota-e-porque)
     From:   origin/{baseBranch}
     envFiles copiados da principal; junctions criadas apontando para ela.
@@ -40,7 +40,10 @@ from _git_ops import git_branch_exists, git_output, git_worktree_add, git_worktr
 from _paths import slugify
 from _state import read_json
 
-WORKTREE_PATH_TEMPLATE_DEFAULT = "../{repo}-{idCompact}"
+# D-202: uma pasta por projeto, nao uma irma do repo por demanda - o
+# `../{repo}-{idCompact}` enchia a pasta pai (C:/DEV tinha 31 pastas em
+# 2026-10-29). Worktree antigo segue valendo: o caminho fica gravado na demanda.
+WORKTREE_PATH_TEMPLATE_DEFAULT = "../{repo}-worktrees/{idCompact}"
 WORKTREE_BRANCH_TEMPLATE_DEFAULT = "{idLower}-{slug}"
 WORKTREE_FROM_TEMPLATE_DEFAULT = "origin/{baseBranch}"
 BRANCH_SLUG_MAX = 50
