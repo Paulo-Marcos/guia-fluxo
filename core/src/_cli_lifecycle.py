@@ -113,7 +113,16 @@ from _profiles import propose_profile
 from _hooks_check import hooks_path_warnings
 from _ship import parse_request_test
 from _skills import STAGE_QUALITY, STAGE_READY, announce_stage, record_stage
-from _task_view import MISSING_PLAN, format_text, missing_plan, plan_steps
+from _task_view import (
+    MISSING_BRIEFING,
+    MISSING_PLAN,
+    briefing_required,
+    format_text,
+    missing_briefing,
+    missing_plan,
+    needs_briefing,
+    plan_steps,
+)
 from _worktree import cleanup_task_worktree
 
 
@@ -382,7 +391,8 @@ def cmd_status(args: argparse.Namespace) -> int:
         _print_epic_tree(task)
         print_demand_title(task)
         return 0
-    print(format_text(task, kind_marker(task.get("kind", ""))))
+    config = read_json(PROCESS_FILE, default_process(ROOT.name))
+    print(format_text(task, kind_marker(task.get("kind", "")), briefing_required(config)))
     print_demand_title(task)
     _print_chat_warnings([task])
     print_stale_plugin()
@@ -506,6 +516,9 @@ def cmd_ready(args: argparse.Namespace) -> int:
     # da arvore inteira. `git diff HEAD` incluiria o trabalho de outras demandas
     # em paralelo, contaminando modifiedFiles (que o finish depois commita).
     changed_files = list(args.file)
+    # D-205: com `briefing.required`, o dono le o plano explicado antes do ready.
+    if needs_briefing(task, briefing_required(config)):
+        raise SystemExit(f"ready recusado - {MISSING_BRIEFING.replace('D-NNN', task['id'])}")
     task["status"] = config.get("ready", {}).get("status", STATUS_AWAITING_VALIDATION)
     # D-052: marca a entrega para validacao. readyAt guarda o ultimo ready;
     # readyCount conta os ciclos ready->finish (cada re-ready incrementa).
@@ -907,6 +920,24 @@ def _record_plan(task: dict[str, Any], steps: list[str]) -> None:
     task["updatedAt"] = today()
 
 
+def _briefing_arg(args: argparse.Namespace) -> str:
+    """D-205: o texto de `--brief` ou de `--brief-file` (Markdown, UTF-8)."""
+    text = getattr(args, "brief", None) or ""
+    path = getattr(args, "brief_file", None)
+    if path:
+        try:
+            text = Path(path).read_text(encoding="utf-8")
+        except OSError as exc:
+            raise SystemExit(f"--brief-file: nao li {path} ({exc}).")
+    return text.strip()
+
+
+def _record_briefing(task: dict[str, Any], text: str) -> None:
+    """Grava (ou reescreve) a explicacao do plano ao dono."""
+    task["briefing"] = {"text": text, "at": now_iso()}
+    task["updatedAt"] = today()
+
+
 def cmd_plan(args: argparse.Namespace) -> int:
     """Move task para `Planejada` (B-017). Aceita Backlog ou
     Em desenvolvimento como ponto de partida. Rejeita estados terminais
@@ -916,10 +947,15 @@ def cmd_plan(args: argparse.Namespace) -> int:
     desenvolvimento so registra os passos, sem mudar a etapa."""
     task = find_task_or_current(args.task_id)
     steps = _plan_steps_arg(args)
-    if steps and task["status"] in (STATUS_PLANNED, STATUS_IN_DEVELOPMENT):
-        _record_plan(task, steps)
+    brief = _briefing_arg(args)
+    if (steps or brief) and task["status"] in (STATUS_PLANNED, STATUS_IN_DEVELOPMENT):
+        if steps:
+            _record_plan(task, steps)
+        if brief:
+            _record_briefing(task, brief)
         save_task(task)
-        print(f"{task['id']}: plano com {len(task['executionPlan'])} passo(s).")
+        print(f"{task['id']}: plano com {len(plan_steps(task))} passo(s)"
+              + (" e explicacao ao dono gravada." if brief else "."))
         print_demand_title(task)
         return 0
     if task["status"] == STATUS_PLANNED:
@@ -940,6 +976,8 @@ def cmd_plan(args: argparse.Namespace) -> int:
     merge_list(task, "summary", [note])
     if steps:
         _record_plan(task, steps)
+    if brief:
+        _record_briefing(task, brief)
     if coming_from_backlog:
         _attach_features_md(task)
 
@@ -984,6 +1022,9 @@ def cmd_start(args: argparse.Namespace) -> int:
     steps = _plan_steps_arg(args)
     if steps:
         _record_plan(task, steps)
+    brief = _briefing_arg(args)
+    if brief:
+        _record_briefing(task, brief)
     if coming_from_backlog:
         _attach_features_md(task)
 
@@ -995,6 +1036,8 @@ def cmd_start(args: argparse.Namespace) -> int:
     print(f"{task['id']} started.")
     if missing_plan(task):
         print(MISSING_PLAN.replace("D-NNN", task["id"]))
+    if missing_briefing(task, briefing_required(read_json(PROCESS_FILE, default_process(ROOT.name)))):
+        print(MISSING_BRIEFING.replace("D-NNN", task["id"]))
     print_demand_title(task)
     return 0
 

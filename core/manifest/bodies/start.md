@@ -5,7 +5,7 @@
 {{include_per_target: _partials/run_cmd}}
 
 ```text
-start <D-NNN> [--note "Starting now because..."] [--step "step"]...
+start <D-NNN> [--note "Starting now because..."] [--step "step"]... [--brief-file <file.md>]
 ```
 
 `--step` (repeatable) records the execution plan with the start. Without a plan, `start` warns: write the steps before implementing, so the owner can see what the demand will do.

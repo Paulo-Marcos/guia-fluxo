@@ -151,7 +151,7 @@ verbs:
 
   plan:
     description: |
-      PLAN — mark a task as `Planejada` (triaged but not started yet). Accepts transition from `Backlog` (parked item that gained priority) or from `Em desenvolvimento` (deprioritized but already known). Options: `--note "<rationale>"`, `--step "<step>"` (repeatable: records the execution plan; on a task already `Planejada`/`Em desenvolvimento` it only records, without moving the stage). To begin work use `start` (already triaged) or `promote` (still needs triage); to park without deciding use `backlog`.
+      PLAN — mark a task as `Planejada` (triaged but not started yet). Accepts transition from `Backlog` (parked item that gained priority) or from `Em desenvolvimento` (deprioritized but already known). Options: `--note "<rationale>"`, `--step "<step>"` (repeatable: records the execution plan; on a task already `Planejada`/`Em desenvolvimento` it only records, without moving the stage), `--brief-file <file>`/`--brief "<text>"` (the plan explained to the owner in plain language). To begin work use `start` (already triaged) or `promote` (still needs triage); to park without deciding use `backlog`.
     targets:
       agent_skill:
         body_file: bodies/plan.md
@@ -160,7 +160,7 @@ verbs:
 
   start:
     description: |
-      START — begin work on a `Planejada` or `Backlog` task (status → `Em desenvolvimento`). Assumes triage is done (kind already decided); use `promote` when kind still needs deciding. Options: `--note "<starting note>"`, `--step "<step>"` (repeatable: records the execution plan; without a plan, start warns). To resume from `Bloqueada` use `unblock`; to create a fresh task use `feature`/`bug`/`chore`.
+      START — begin work on a `Planejada` or `Backlog` task (status → `Em desenvolvimento`). Assumes triage is done (kind already decided); use `promote` when kind still needs deciding. Options: `--note "<starting note>"`, `--step "<step>"` (repeatable: records the execution plan; without a plan, start warns), `--brief-file <file>`/`--brief "<text>"` (the plan explained to the owner in plain language, before implementing). To resume from `Bloqueada` use `unblock`; to create a fresh task use `feature`/`bug`/`chore`.
     targets:
       agent_skill:
         body_file: bodies/start.md

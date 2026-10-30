@@ -310,6 +310,7 @@ function card(c, current) {
   if (c.blockedReason) meta.append(chip(c.blockedReason, "bad"));
   if (c.status === "Aguardando validacao" && c.pending && c.pending.length) meta.append(chip(c.pending[0], "warn"));
   if (c.detail && c.detail.missingPlan) meta.append(chip("sem plano", "warn"));
+  if (c.detail && c.detail.missingBriefing) meta.append(chip("sem explicação", "warn"));
   box.append(meta);
   if (c.chat) box.append(el("div", "chat", "💬 " + c.chat + (c.chatRole ? " · " + c.chatRole : "")));
   return box;
@@ -362,9 +363,12 @@ function drawDetail() {
   if (d.branch) meta.append(chip("⎇ " + d.branch));
   box.append(meta);
   if (d.missingPlan) box.append(el("div", "banner", "Sem plano registrado. Grave os passos com guia plan " + c.id + " --step \"...\" para saber o que a demanda vai fazer."));
+  if (d.missingBriefing) box.append(el("div", "banner", "Sem explicação ao dono. O agente escreve o plano em linguagem acessível e grava com guia plan " + c.id + " --brief-file <arquivo> antes de implementar."));
   box.append(el("h5", null, "Contexto"));
   box.append(d.context ? el("p", null, d.context) : el("div", "none", "Sem contexto."));
   if (d.assessment && d.assessment.length) listBlock(box, "Avaliação", d.assessment, false);
+  // D-205: a explicacao do plano ao dono, em linguagem acessivel (texto, nunca HTML).
+  if (d.briefing) { box.append(el("h5", null, "Explicação ao dono")); box.append(el("p", null, d.briefing.text)); }
   listBlock(box, "Plano", d.plan, true, "Sem plano.");
   listBlock(box, "Arquivos", d.files, false, "Nenhum arquivo ainda.");
   listBlock(box, "Resumo", d.summary, false);

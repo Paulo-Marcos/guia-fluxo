@@ -26,6 +26,9 @@ def role_line(chat: dict[str, Any] | None) -> str | None:
 
 
 MISSING_PLAN = "Sem plano registrado: grave os passos com `plan D-NNN --step \"...\"` (ou `start --step`)."
+# D-205: a explicacao do plano ao dono, em linguagem acessivel, antes do codigo.
+MISSING_BRIEFING = ("Sem explicacao ao dono: escreva o plano em linguagem acessivel (skill explica-como-professor), "
+                    "mostre ao dono e grave com `plan D-NNN --brief-file <arquivo>` (ou `--brief \"...\"`).")
 
 
 def _strings(value: Any) -> list[str]:
@@ -48,6 +51,27 @@ def plan_steps(task: dict[str, Any]) -> list[str]:
 def missing_plan(task: dict[str, Any]) -> bool:
     status = task.get("status")
     return status in PLAN_EXPECTED_STATUSES and task.get("kind") != "epic" and not plan_steps(task)
+
+
+def briefing_required(config: dict[str, Any] | None) -> bool:
+    """D-205: `briefing.required` do process.json; ausente = nao exigido."""
+    briefing = (config or {}).get("briefing")
+    return isinstance(briefing, dict) and briefing.get("required") is True
+
+
+def briefing_text(task: dict[str, Any]) -> str:
+    briefing = task.get("briefing")
+    text = briefing.get("text") if isinstance(briefing, dict) else None
+    return text.strip() if isinstance(text, str) else ""
+
+
+def needs_briefing(task: dict[str, Any], required: bool) -> bool:
+    """Exigida e ainda nao escrita. Epico nao implementa, entao nao explica."""
+    return required and task.get("kind") != "epic" and not briefing_text(task)
+
+
+def missing_briefing(task: dict[str, Any], required: bool) -> bool:
+    return task.get("status") in PLAN_EXPECTED_STATUSES and needs_briefing(task, required)
 
 
 def timeline(task: dict[str, Any]) -> list[dict[str, str]]:
@@ -75,7 +99,7 @@ def timeline(task: dict[str, Any]) -> list[dict[str, str]]:
     return steps
 
 
-def detail(task: dict[str, Any]) -> dict[str, Any]:
+def detail(task: dict[str, Any], briefing_req: bool = False) -> dict[str, Any]:
     """O que o dono precisa para entender a demanda, sem o JSON inteiro."""
     chat = task.get("chat") or {}
     triage = task.get("triage") or {}
@@ -86,6 +110,9 @@ def detail(task: dict[str, Any]) -> dict[str, Any]:
         "assessment": _strings(task.get("assessment")),
         "plan": plan_steps(task),
         "missingPlan": missing_plan(task),
+        "briefing": {"text": briefing_text(task), "at": (task.get("briefing") or {}).get("at")}
+        if briefing_text(task) else None,
+        "missingBriefing": missing_briefing(task, briefing_req),
         "files": _strings(task.get("modifiedFiles")),
         "summary": _strings(task.get("summary")),
         "validations": _strings(task.get("validations")),
@@ -111,9 +138,9 @@ def _section(lines: list[str], title: str, items: list[str], numbered: bool = Fa
         lines.append(f"  {index}. {item}" if numbered else f"  - {item}")
 
 
-def format_text(task: dict[str, Any], marker: str = "") -> str:
+def format_text(task: dict[str, Any], marker: str = "", briefing_req: bool = False) -> str:
     """O `status D-NNN` legivel: cabecalho, contexto e as listas que importam."""
-    info = detail(task)
+    info = detail(task, briefing_req)
     lines = [f"{task.get('id')} {marker} {task.get('title', '')}".replace("  ", " ").strip()]
     meta = [f"Etapa: {task.get('status', '?')}", f"tipo {task.get('kind', '?')}"]
     if info["triage"] and info["triage"].get("model"):
@@ -134,6 +161,14 @@ def format_text(task: dict[str, Any], marker: str = "") -> str:
     if info["missingPlan"]:
         lines.append("")
         lines.append(f"! {MISSING_PLAN.replace('D-NNN', str(task.get('id')))}")
+    if info["missingBriefing"]:
+        if not info["missingPlan"]:
+            lines.append("")
+        lines.append(f"! {MISSING_BRIEFING.replace('D-NNN', str(task.get('id')))}")
+    if info["briefing"]:
+        lines.append("")
+        lines.append("Explicacao ao dono:")
+        lines.extend(f"  {line}".rstrip() for line in info["briefing"]["text"].splitlines())
     _section(lines, "Plano", info["plan"], numbered=True)
     _section(lines, "Arquivos", info["files"])
     _section(lines, "Resumo", info["summary"])
@@ -146,4 +181,5 @@ def format_text(task: dict[str, Any], marker: str = "") -> str:
     return "\n".join(lines)
 
 
-__all__ = ["MISSING_PLAN", "ROLES", "detail", "format_text", "missing_plan", "plan_steps", "role_line", "timeline"]
+__all__ = ["MISSING_BRIEFING", "MISSING_PLAN", "ROLES", "briefing_required", "briefing_text", "detail", "format_text",
+           "missing_briefing", "missing_plan", "needs_briefing", "plan_steps", "role_line", "timeline"]
