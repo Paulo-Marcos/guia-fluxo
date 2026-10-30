@@ -112,14 +112,16 @@ def _local_work(path: Path, task: dict[str, Any]) -> str | None:
     junctions = {j.strip("/") for j in (task.get("worktree") or {}).get("junctions") or []}
     for line in status.splitlines():
         code, name = line[:2], line[3:].strip('"')
+        bare = name.rstrip("/")
+        # Juncao gravada so e "nada a perder" se ainda for link: uma pasta
+        # real no lugar dela seria apagada pelo `git worktree remove`. No
+        # Linux ela e symlink, que `uploads/` no .gitignore nao casa: o git a
+        # mostra como `??`, nao `!!` (CI ubuntu do PR #96).
+        if code in ("??", "!!") and bare in junctions and _is_link(path / bare):
+            continue
         if code != "!!":
             return "tem mudanca local nao commitada"
-        bare = name.rstrip("/")
-        benign = any(name == b or name.endswith("/" + b) for b in BENIGN_IGNORED)
-        # Juncao gravada so e "nada a perder" se ainda for link: uma pasta
-        # real no lugar dela seria apagada pelo `git worktree remove`.
-        linked = bare in junctions and _is_link(path / bare)
-        if not (benign or linked):
+        if not any(name == b or name.endswith("/" + b) for b in BENIGN_IGNORED):
             return f"tem arquivo ignorado que a remocao apagaria ({name})"
     return None
 
