@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Callable
 from typing import Any
 
 from _chat_sync import MSG_BAD_SESSION, valid_session
-from _constants import PROCESS_FILE
+from _clock import today
+from _constants import PROCESS_FILE, TASKS_FILE
 from _controller import answer, ask, board, deliver_line
-from _state import read_json
-from _tasks import find_task_or_current, kind_marker, list_tasks, save_task
+from _state import file_lock, read_json, replace_json
+from _tasks import TASKS_LOCK, find_task_or_current, kind_marker, list_tasks
 
 
 def cmd_controle(args: argparse.Namespace) -> int:
@@ -49,14 +51,30 @@ def _print_block(block: dict[str, Any]) -> None:
               f"depois: chat {item['task']} --archived")
 
 
+def _locked_update(task_id: str, change: Callable[[dict[str, Any]], Any]) -> tuple[dict[str, Any], Any]:
+    """Le-muda-grava a demanda sob a trava do tasks.json: um `ask` e um `answer`
+    ao mesmo tempo nao apagam um ao outro, e o id P<n> nao se repete."""
+    with file_lock(TASKS_LOCK):
+        data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
+        task = next(t for t in data.get("tasks", []) if t.get("id") == task_id)
+        result = change(task)
+        task["updatedAt"] = today()
+        replace_json(TASKS_FILE, data)
+    return task, result
+
+
+def _session_arg(value: str | None) -> str | None:
+    session = (value or "").strip() or None
+    if session and not valid_session(session):
+        raise SystemExit(MSG_BAD_SESSION.format(session=session))
+    return session
+
+
 def cmd_ask(args: argparse.Namespace) -> int:
     """A executora grava a pergunta ao dono na demanda, em vez de mandar uma mensagem por vez."""
-    task = find_task_or_current(args.task_id)
-    by = (args.by or "").strip() or None
-    if by and not valid_session(by):
-        raise SystemExit(MSG_BAD_SESSION.format(session=by))
-    entry = ask(task, args.question, args.option or [], by)
-    save_task(task)
+    task_id = find_task_or_current(args.task_id)["id"]
+    by = _session_arg(args.by)
+    task, entry = _locked_update(task_id, lambda t: ask(t, args.question, args.option or [], by))
     controller = (task.get("chat") or {}).get("controller")
     where = f"o controlador ({controller})" if controller else "o dono"
     print(f"PERGUNTA {task['id']} {entry['id']} gravada; {where} a ve em `guia controle` e responde com "
@@ -66,9 +84,9 @@ def cmd_ask(args: argparse.Namespace) -> int:
 
 def cmd_answer(args: argparse.Namespace) -> int:
     """O controlador grava a resposta do dono, citada, e diz a quem leva-la."""
-    task = find_task_or_current(args.task_id)
-    entry = answer(task, args.question_id, args.quote, (args.by or "").strip() or None)
-    save_task(task)
+    task_id = find_task_or_current(args.task_id)["id"]
+    by = _session_arg(args.by)
+    task, entry = _locked_update(task_id, lambda t: answer(t, args.question_id, args.quote, by))
     print(deliver_line(task, entry))
     return 0
 

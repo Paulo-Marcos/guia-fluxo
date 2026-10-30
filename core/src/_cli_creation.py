@@ -114,6 +114,9 @@ def cmd_create_task(args: argparse.Namespace, kind: str) -> int:
     como filho de um Epic existente."""
     status_cli = getattr(args, "status", "in-development") or "in-development"
     status = _STATUS_FROM_CLI.get(status_cli, STATUS_IN_DEVELOPMENT)
+    if getattr(args, "proposed_from", None) and status == STATUS_IN_DEVELOPMENT:
+        # D-210: proposta espera a sessao do controlador - nunca nasce em DEV sem sessao.
+        status = STATUS_PLANNED
     parent_id = _validate_parent(getattr(args, "under", None))
     data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
     task_id = next_task_id(kind, data.get("tasks", []))

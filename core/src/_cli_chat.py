@@ -17,6 +17,7 @@ from _chat_sync import (
     valid_session,
 )
 from _clock import now_iso
+from _controller import DONE_STATUSES
 from _task_view import role_line
 from _tasks import chat_name, find_task_or_current, save_task
 
@@ -102,6 +103,9 @@ def _print_pending(as_json: bool) -> int:
 def _archive(task: dict[str, Any], archived: bool) -> int:
     """D-210: a sessao concluida arquivada (com ok do dono) sai do quadro do `controle`."""
     chat = task.setdefault("chat", {})
+    if archived and task.get("status") not in DONE_STATUSES:
+        raise SystemExit(f"Recusado: {task['id']} esta {task.get('status')} - so se arquiva a sessao de demanda "
+                         f"concluida ({', '.join(DONE_STATUSES)}).")
     if archived:
         chat["archived"] = now_iso()
         print(f"SESSAO ARQUIVADA: {task['id']} ({chat.get('session') or 'sem sessao'}) - desfaz com --unarchived.")

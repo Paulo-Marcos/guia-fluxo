@@ -28,14 +28,15 @@ from _constants import (
     STATUS_BLOCKED,
     STATUS_CANCELLED,
     STATUS_FINISHED,
-    STATUS_INTEGRATED,
     STATUS_PLANNED,
+    STATUS_RESOLVED,
     STATUS_VALIDATED,
 )
 
 MAX_EXECUTORS_DEFAULT = 4
-# Concluida para a executora: o trabalho dela acabou (Integrada: o finish e do dono, D-204).
-_DONE = (STATUS_INTEGRATED, STATUS_FINISHED, STATUS_VALIDATED, STATUS_CANCELLED)
+# Concluida: a sessao pode ser arquivada. Integrada fica de fora - o finish ainda e
+# do dono (D-204) e a executora leva o fechamento ao controlador.
+DONE_STATUSES = (STATUS_FINISHED, STATUS_VALIDATED, STATUS_CANCELLED, STATUS_RESOLVED)
 _PROPOSED = (STATUS_PLANNED, STATUS_BACKLOG)
 BALL_OWNER, BALL_QUEUE, BALL_EXECUTOR = "dono", "fila", "executora"
 _QUEUE_OWNERS = ("fila", "gerente da fila")
@@ -67,6 +68,8 @@ def open_questions(task: dict[str, Any]) -> list[dict[str, Any]]:
 
 def ask(task: dict[str, Any], question: str, options: list[str], by: str | None) -> dict[str, Any]:
     """Grava a pergunta na demanda; o id (P1, P2...) e por demanda."""
+    if not question.strip():
+        raise SystemExit("Recusado: a pergunta esta vazia.")
     decisions = task.setdefault("decisions", [])
     entry = {
         "id": f"P{len(decisions) + 1}",
@@ -82,6 +85,8 @@ def ask(task: dict[str, Any], question: str, options: list[str], by: str | None)
 
 def answer(task: dict[str, Any], question_id: str, quote: str, by: str | None) -> dict[str, Any]:
     """Grava a resposta do dono, com as palavras dele, na pergunta aberta."""
+    if not quote.strip():
+        raise SystemExit("Recusado: --quote vazio - grave as palavras do dono, sem parafrasear.")
     wanted = question_id.strip().upper()
     for entry in task.get("decisions") or []:
         if entry.get("id") == wanted:
@@ -137,7 +142,9 @@ def board(tasks: list[dict[str, Any]], config: dict[str, Any], controller: str |
     blocks = []
     for ctrl in controllers:
         mine = [t for t in tasks if controller_of(t) == ctrl]
-        active = [t for t in mine if t.get("status") not in _DONE + _PROPOSED and not _archived(t)]
+        # Planejada com sessao ja aberta (start ainda nao rodou) ocupa vaga e aparece.
+        active = [t for t in mine if t.get("status") not in DONE_STATUSES and not _archived(t)
+                  and (t.get("status") not in _PROPOSED or _session(t))]
         blocks.append({
             "controller": ctrl,
             "limit": limit,
@@ -148,7 +155,7 @@ def board(tasks: list[dict[str, Any]], config: dict[str, Any], controller: str |
                           "from": t.get("proposedFrom")}
                          for t in mine if t.get("status") in _PROPOSED and not _session(t)],
             "archive": [{"task": t["id"], "status": t.get("status"), "session": _session(t)}
-                        for t in mine if t.get("status") in _DONE and _session(t) and not _archived(t)],
+                        for t in mine if t.get("status") in DONE_STATUSES and _session(t) and not _archived(t)],
         })
     return blocks
 
@@ -166,6 +173,7 @@ __all__ = [
     "BALL_EXECUTOR",
     "BALL_OWNER",
     "BALL_QUEUE",
+    "DONE_STATUSES",
     "MAX_EXECUTORS_DEFAULT",
     "answer",
     "ask",

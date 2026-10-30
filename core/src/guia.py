@@ -154,7 +154,7 @@ def _add_task_args(parser: argparse.ArgumentParser) -> None:
         dest="proposed_from",
         metavar="D-NNN",
         help="D-210 (ADR-0025): follow-up proposta pela executora de D-NNN - herda o controlador e "
-             "espera a sessao que so ele abre (use com --status planned).",
+             "espera a sessao que so ele abre (nasce Planejada; aceita --status backlog).",
     )
     parser.add_argument(
         "--under",
@@ -527,9 +527,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_chat.add_argument("--refused", metavar="NOME",
                         help="D-194: o app recusou este nome; vira aviso e so volta quando a etapa mudar.")
     p_chat.add_argument("--reason", help="Motivo da recusa (com --refused).")
-    p_chat.add_argument("--archived", action="store_true",
-                        help="D-210: a sessao da demanda concluida foi arquivada (com ok do dono); sai do `controle`.")
-    p_chat.add_argument("--unarchived", action="store_true", help="D-210: desfaz o --archived (sessao reaberta).")
+    archive = p_chat.add_mutually_exclusive_group()
+    archive.add_argument("--archived", action="store_true",
+                         help="D-210: a sessao da demanda concluida foi arquivada (com ok do dono); sai do `controle`.")
+    archive.add_argument("--unarchived", action="store_true", help="D-210: desfaz o --archived (sessao reaberta).")
     p_chat.add_argument("--json", action="store_true", help="Saida em JSON.")
     p_chat.set_defaults(func=cmd_chat)
 
