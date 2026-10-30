@@ -328,6 +328,14 @@ Painel local (D-175). Sobe um servidor so em `127.0.0.1` (responde apenas a `Hos
 
 O painel le o estado e tem so dois botoes, do dono (D-187, [ADR-0022](../adr/0022-painel-local-com-acoes-do-dono.md)): **Retomar fila**, com a fila pausada ou congelada (roda `queue resume` no projeto), e **Iniciar executor**, no modo `pr` com a fila andando e nenhum executor vivo (roda `queue run` em processo destacado, saida em `.guia/queue/executor-painel.log`; o lease impede um segundo executor). Os dois pedem confirmacao e rodam o motor do projeto - o painel nao grava estado. A escrita exige `Host` e `Origin` do painel, corpo JSON e o token desta sessao do painel (embutido na pagina); o agente nunca usa esses botoes.
 
+### `painel`
+
+```powershell
+.\core\bin\guia.ps1 painel [--sem-fila] [--atalho] [--port 8765] [--no-open]
+```
+
+Atalho do dono (D-203): o painel e a fila sem abrir um chat de IA. Rodado na pasta de um projeto do Guia, liga o executor da fila pelo mesmo caminho do botao **Iniciar executor** (`queue run` destacado, saida em `.guia/queue/executor-painel.log`) - executor ja vivo, fila parada ou projeto sem modo `pr` so imprimem `FILA: <motivo>`, nunca um segundo executor - e abre o painel: se ja ha um painel do Guia escutando a partir de `--port`, so abre o navegador nele; senao sobe um, como `dashboard`. `--sem-fila` so abre o painel. `--atalho` (Windows) cria `Guia - <projeto>.lnk` na area de trabalho e no menu Iniciar, que roda `painel` no projeto com o Python e o motor atuais; quando o motor e o do plugin (caminho do cache), rode `painel --atalho` de novo depois de `/plugin update`. Sem command de plugin: quem dispara e o dono (D-098); o agente nao roda `painel`.
+
 ### `triage`
 
 ```powershell
