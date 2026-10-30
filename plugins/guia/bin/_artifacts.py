@@ -17,14 +17,20 @@ from _constants import GUIA_DIR
 ARTIFACTS_ROOT = GUIA_DIR / "tmp"
 
 
-def artifacts_dir(task_id: str) -> Path:
-    """Cria (se preciso) e devolve a pasta de artefatos da demanda."""
-    folder = ARTIFACTS_ROOT / task_id
-    folder.mkdir(parents=True, exist_ok=True)
+def artifacts_root() -> Path:
+    """Cria (se preciso) `.guia/tmp/` ja fora do git e a devolve."""
+    ARTIFACTS_ROOT.mkdir(parents=True, exist_ok=True)
     ignore = ARTIFACTS_ROOT / ".gitignore"
     if not ignore.exists():
         ignore.write_text("*\n", encoding="utf-8")
+    return ARTIFACTS_ROOT
+
+
+def artifacts_dir(task_id: str) -> Path:
+    """Cria (se preciso) e devolve a pasta de artefatos da demanda."""
+    folder = artifacts_root() / task_id
+    folder.mkdir(exist_ok=True)
     return folder.resolve()
 
 
-__all__ = ["ARTIFACTS_ROOT", "artifacts_dir"]
+__all__ = ["ARTIFACTS_ROOT", "artifacts_dir", "artifacts_root"]

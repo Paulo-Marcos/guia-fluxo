@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 
-from _cleanup import remove, render, scan
+from _cleanup import remove, render, save_shown, scan
 from _constants import GUIA_DIR
 
 
@@ -26,6 +26,7 @@ def cmd_cleanup(args: argparse.Namespace) -> int:
             print(f"Removido: {path}")
         return 0
     report = scan()
+    save_shown(report)
     print(json.dumps(report, ensure_ascii=False, indent=2) if args.json else render(report))
     return 0
 
