@@ -48,6 +48,7 @@ STATUS_CLI_CHOICES = tuple(_STATUS_FROM_CLI.keys())
 from _features_md import upsert_features_entry
 from _state import read_json, write_json
 from _tasks import (
+    edit_tasks,
     find_task,
     kind_marker,
     list_tasks,
@@ -90,15 +91,17 @@ def cmd_create_epic(args: argparse.Namespace) -> int:
     pode depender de outras tasks, mas o gate sera o mesmo do D-067)."""
     status_cli = getattr(args, "status", "in-development") or "in-development"
     status = _STATUS_FROM_CLI.get(status_cli, STATUS_IN_DEVELOPMENT)
-    data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
-    epic_id = next_epic_id(data.get("tasks", []))
-    task = new_task(
-        epic_id, KIND_EPIC, args.title, args.context, args.origin,
-        status=status,
-        depends_on=getattr(args, "depends_on", None) or None,
-    )
-    data.setdefault("tasks", []).insert(0, task)
-    write_json(TASKS_FILE, data)
+
+    def add(data: dict[str, Any]) -> dict[str, Any]:
+        task = new_task(
+            next_epic_id(data.get("tasks", [])), KIND_EPIC, args.title, args.context, args.origin,
+            status=status,
+            depends_on=getattr(args, "depends_on", None) or None,
+        )
+        data.setdefault("tasks", []).insert(0, task)
+        return task
+
+    task = edit_tasks(add)
     set_current_task(task)
     if status != STATUS_BACKLOG:
         upsert_features_entry(task)
@@ -118,19 +121,22 @@ def cmd_create_task(args: argparse.Namespace, kind: str) -> int:
         # D-210: proposta espera a sessao do controlador - nunca nasce em DEV sem sessao.
         status = STATUS_PLANNED
     parent_id = _validate_parent(getattr(args, "under", None))
-    data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
-    task_id = next_task_id(kind, data.get("tasks", []))
-    task = new_task(
-        task_id, kind, args.title, args.context, args.origin,
-        status=status,
-        depends_on=getattr(args, "depends_on", None) or None,
-        parent_id=parent_id,
-    )
     origin = _proposal_origin(getattr(args, "proposed_from", None))
-    if origin:
-        inherit_controller(task, origin)
-    data.setdefault("tasks", []).insert(0, task)
-    write_json(TASKS_FILE, data)
+
+    def add(data: dict[str, Any]) -> dict[str, Any]:
+        # O id nasce sob a trava (D-208): dois chats nao pegam o mesmo numero.
+        task = new_task(
+            next_task_id(kind, data.get("tasks", [])), kind, args.title, args.context, args.origin,
+            status=status,
+            depends_on=getattr(args, "depends_on", None) or None,
+            parent_id=parent_id,
+        )
+        if origin:
+            inherit_controller(task, origin)
+        data.setdefault("tasks", []).insert(0, task)
+        return task
+
+    task = edit_tasks(add)
     set_current_task(task)
     if status != STATUS_BACKLOG:
         upsert_features_entry(task)
@@ -167,18 +173,20 @@ def cmd_backlog_add(args: argparse.Namespace) -> int:
     em backlog ficam de fora do catalogo de .guia/DEMANDAS.md ate serem
     promovidos (cmd_promote ou ai start).
     """
-    data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
-    task_id = next_task_id(KIND_FEATURE, data.get("tasks", []))
-    task = new_task(
-        task_id,
-        KIND_FEATURE,
-        args.title,
-        args.context,
-        f"Backlog ({today()})",
-        status=STATUS_BACKLOG,
-    )
-    data.setdefault("tasks", []).insert(0, task)
-    write_json(TASKS_FILE, data)
+
+    def add(data: dict[str, Any]) -> dict[str, Any]:
+        task = new_task(
+            next_task_id(KIND_FEATURE, data.get("tasks", [])),
+            KIND_FEATURE,
+            args.title,
+            args.context,
+            f"Backlog ({today()})",
+            status=STATUS_BACKLOG,
+        )
+        data.setdefault("tasks", []).insert(0, task)
+        return task
+
+    task_id = edit_tasks(add)["id"]
     print(f"{task_id} added to backlog: {args.title}")
     return 0
 
@@ -226,16 +234,18 @@ def cmd_backlog_resolve(args: argparse.Namespace) -> int:
 
     reason = (args.reason or "").strip()
     if source == "tasks":
-        tasks_data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
-        for task in tasks_data.get("tasks", []):
-            if task.get("id") == args.backlog_id:
-                task["status"] = STATUS_RESOLVED
-                task["updatedAt"] = today()
-                task["resolvedAt"] = today()
-                if reason:
-                    task["resolution"] = reason
-                break
-        write_json(TASKS_FILE, tasks_data)
+
+        def resolve(tasks_data: dict[str, Any]) -> None:
+            for task in tasks_data.get("tasks", []):
+                if task.get("id") == args.backlog_id:
+                    task["status"] = STATUS_RESOLVED
+                    task["updatedAt"] = today()
+                    task["resolvedAt"] = today()
+                    if reason:
+                        task["resolution"] = reason
+                    break
+
+        edit_tasks(resolve)
         # Limpa current-task.json se apontava para o item resolvido.
         current = read_json(CURRENT_FILE, {})
         if current.get("taskId") == args.backlog_id:
@@ -295,21 +305,23 @@ def cmd_backlog_migrate(args: argparse.Namespace) -> int:
         print("\nUse --force para aplicar.")
         return 0
 
-    for item in to_migrate:
-        task = new_task(
-            item["id"],
-            KIND_FEATURE,
-            item.get("title", ""),
-            item.get("context", ""),
-            f"Backlog legacy migrado ({today()})",
-            status=STATUS_BACKLOG,
-        )
-        # Preservar createdAt original do backlog item, se houver.
-        if item.get("createdAt"):
-            task["createdAt"] = item["createdAt"]
-        tasks_data.setdefault("tasks", []).insert(0, task)
+    def migrate(tasks_data: dict[str, Any]) -> None:
+        present = {task.get("id") for task in tasks_data.get("tasks", [])}
+        for item in (i for i in to_migrate if i["id"] not in present):
+            task = new_task(
+                item["id"],
+                KIND_FEATURE,
+                item.get("title", ""),
+                item.get("context", ""),
+                f"Backlog legacy migrado ({today()})",
+                status=STATUS_BACKLOG,
+            )
+            # Preservar createdAt original do backlog item, se houver.
+            if item.get("createdAt"):
+                task["createdAt"] = item["createdAt"]
+            tasks_data.setdefault("tasks", []).insert(0, task)
 
-    write_json(TASKS_FILE, tasks_data)
+    edit_tasks(migrate)
     legacy["items"] = []
     write_json(BACKLOG_FILE, legacy)
 
@@ -424,12 +436,13 @@ def cmd_promote(args: argparse.Namespace) -> int:
             attach_worktree(task, args, item)
 
         # Re-escreve tasks.json com a task mutada.
-        tasks_data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
-        for idx, existing in enumerate(tasks_data.get("tasks", [])):
-            if existing.get("id") == task["id"]:
-                tasks_data["tasks"][idx] = task
-                break
-        write_json(TASKS_FILE, tasks_data)
+        def replace(tasks_data: dict[str, Any]) -> None:
+            for idx, existing in enumerate(tasks_data.get("tasks", [])):
+                if existing.get("id") == task["id"]:
+                    tasks_data["tasks"][idx] = task
+                    break
+
+        edit_tasks(replace)
     else:
         # Legacy: cria task nova com D-NNN e remove de backlog.json.
         task = _new_promoted_task(args, item)
@@ -440,9 +453,7 @@ def cmd_promote(args: argparse.Namespace) -> int:
         pop_item(legacy.get("items", []), args.backlog_id)
         write_json(BACKLOG_FILE, legacy)
 
-        tasks_data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
-        tasks_data.setdefault("tasks", []).insert(0, task)
-        write_json(TASKS_FILE, tasks_data)
+        edit_tasks(lambda tasks_data: tasks_data.setdefault("tasks", []).insert(0, task))
 
     set_current_task(task)
     upsert_features_entry(task)

@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import re
 import sys
-from typing import Any
+from typing import Any, Callable, TypeVar
 
 from _clock import now_iso, today
 from _constants import (
@@ -341,21 +341,36 @@ def _warn_ambiguous_current(chosen_id: str) -> None:
     )
 
 
+T = TypeVar("T")
 TASKS_LOCK = TASKS_FILE.with_name("tasks.lock")
+
+
+def edit_tasks(change: Callable[[dict[str, Any]], T]) -> T:
+    """Le o tasks.json, aplica `change(data)` e grava - tudo sob a trava (D-208).
+
+    Toda gravacao que parte de uma leitura passa por aqui: a criacao, o lote do
+    Dependabot e o `save_task` (D-204). `change` nao deve chamar `save_task`
+    (a trava nao e reentrante) nem demorar: quem espera e outro processo.
+    """
+    with file_lock(TASKS_LOCK):
+        data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
+        result = change(data)
+        replace_json(TASKS_FILE, data)
+        return result
 
 
 def save_task(updated: dict[str, Any]) -> None:
     # D-204: o chat (queue add) e o executor gravam demandas diferentes ao mesmo
     # tempo; sem a trava, um le-muda-grava apagava a gravacao do outro.
-    with file_lock(TASKS_LOCK):
-        data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
+    def replace(data: dict[str, Any]) -> None:
         for index, task in enumerate(data.get("tasks", [])):
             if task.get("id") == updated.get("id"):
                 updated["updatedAt"] = today()
                 data["tasks"][index] = updated
-                replace_json(TASKS_FILE, data)
                 return
-    raise SystemExit(MSG_TASK_NOT_FOUND.format(id=updated.get("id")))
+        raise SystemExit(MSG_TASK_NOT_FOUND.format(id=updated.get("id")))
+
+    edit_tasks(replace)
 
 
 def pop_item(items: list[dict[str, Any]], item_id: str) -> dict[str, Any] | None:
@@ -480,6 +495,7 @@ __all__ = [
     "find_task",
     "find_task_or_current",
     "save_task",
+    "edit_tasks",
     "pop_item",
     "merge_list",
     "status_tag",
