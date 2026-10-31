@@ -22,8 +22,8 @@ from _constants import KIND_CHORE, ROOT, STATUS_PLANNED, TASKS_FILE
 from _features_md import upsert_features_entry
 from _git_ops import git_output
 from _github import gh_bot_prs, gh_pr_close
-from _state import read_json, write_json
-from _tasks import next_task_id, new_task
+from _state import read_json
+from _tasks import edit_tasks, next_task_id, new_task
 
 LOTE_TITLE = "Atualizar as dependências do Dependabot em lote"
 TRIGGER_ON_IDLE = "on-idle"
@@ -128,7 +128,10 @@ def inventory() -> dict[str, Any]:
 
 
 def open_lote() -> dict[str, Any] | None:
-    tasks = read_json(TASKS_FILE, {"tasks": []}).get("tasks", [])
+    return _open_in(read_json(TASKS_FILE, {"tasks": []}).get("tasks", []))
+
+
+def _open_in(tasks: list[dict[str, Any]]) -> dict[str, Any] | None:
     return next((t for t in tasks if t.get("dependabot") and t.get("status") not in _CLOSED_STATUSES), None)
 
 
@@ -146,9 +149,8 @@ def lote_level(config: dict[str, Any]) -> str | None:
 
 def create_lote(inv: dict[str, Any], config: dict[str, Any] | None = None) -> dict[str, Any] | None:
     """Cria a demanda do lote (Planejada: quem a executa e um chat com a skill da etapa deps)."""
-    if not inv["bumps"] or open_lote():
+    if not inv["bumps"]:
         return None
-    data = read_json(TASKS_FILE, {"schemaVersion": 1, "tasks": []})
     numbers = [b["number"] for b in inv["bumps"]]
     context = (
         "Lote dos PRs do Dependabot " + ", ".join(f"#{n}" for n in numbers)
@@ -156,15 +158,25 @@ def create_lote(inv: dict[str, Any], config: dict[str, Any] | None = None) -> di
         "supply-chain, portao uma vez), um PR so com `Closes #N` de cada um."
         + (" Inclui atualizacao de SEGURANCA: prioridade hotfix na fila." if inv["security"] else "")
     )
-    task = new_task(next_task_id(KIND_CHORE, data.get("tasks", [])), KIND_CHORE, LOTE_TITLE, context,
-                    "Dependabot (executor do Guia)", status=STATUS_PLANNED)
-    task["dependabot"] = {"prs": numbers, "security": inv["security"]}
     level = lote_level(config or {})
-    if level:
-        # Nivel dado pela configuracao do dono (o configurador), nao pelo agente.
-        task["autonomy"] = {"level": level, "setBy": "config", "at": now_iso()}
-    data.setdefault("tasks", []).insert(0, task)
-    write_json(TASKS_FILE, data)
+
+    def add(data: dict[str, Any]) -> dict[str, Any] | None:
+        # Conferir "ja ha lote aberto" e gravar sob a mesma trava (D-208): duas
+        # leituras seguidas deixavam dois executores criarem dois lotes.
+        if _open_in(data.get("tasks", [])):
+            return None
+        task = new_task(next_task_id(KIND_CHORE, data.get("tasks", [])), KIND_CHORE, LOTE_TITLE, context,
+                        "Dependabot (executor do Guia)", status=STATUS_PLANNED)
+        task["dependabot"] = {"prs": numbers, "security": inv["security"]}
+        if level:
+            # Nivel dado pela configuracao do dono (o configurador), nao pelo agente.
+            task["autonomy"] = {"level": level, "setBy": "config", "at": now_iso()}
+        data.setdefault("tasks", []).insert(0, task)
+        return task
+
+    task = edit_tasks(add)
+    if task is None:
+        return None
     upsert_features_entry(task)
     return task
 
