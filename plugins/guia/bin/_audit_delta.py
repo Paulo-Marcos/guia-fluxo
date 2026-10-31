@@ -35,20 +35,25 @@ DELTA_FULL_PATHS = (
     ".guia/locks/**",
     "core/lock/**",
     ".claude/**",
-    ".gitattributes",
+    "**/.gitattributes",
     "**/agents.md",
     "**/claude.md",
     ".claude-plugin/**",
     "**/.claude-plugin/**",
     ".guia/process.json",
-    # As travas e a propria regua do delta: afrouxar qualquer um esconde o resto.
+    # As travas e a propria regua do delta (e o que a alimenta): afrouxar qualquer um esconde o resto.
     "**/check-lock.py",
     "**/_locks.py",
     "**/lock_api.py",
     "**/_audit_delta.py",
+    "**/_audit.py",
+    "**/_cli_audit.py",
+    "**/_autonomy.py",
+    "**/_commit.py",
     "core/build/**",
     "**/conftest.py",
     "**/pytest.ini",
+    "**/vitest.config.*",
     "**/tox.ini",
     "**/.pre-commit-config.yaml",
     "**/setup.py",
@@ -73,7 +78,8 @@ _MODE_LINES = ("old mode ", "new mode ", "new file mode ", "deleted file mode ")
 # Cabecalho de arquivo que a medida entende; qualquer outra linha antes do hunk = nao medido.
 _KNOWN_HEADER = ("diff --git ", "index ", "--- ", "+++ ", *_MODE_LINES)
 # A config do usuario nao esconde nada: submodulo aparece, textconv/diff externo ficam de fora.
-_DIFF = ["diff", "--no-color", "--no-ext-diff", "--no-textconv", "--no-renames",
+# `--text`: um `.gitattributes` com `-diff` nao transforma texto em "Binary files differ".
+_DIFF = ["diff", "--no-color", "--no-ext-diff", "--no-textconv", "--text", "--no-renames",
          "--ignore-submodules=none", "--submodule=short"]
 
 
@@ -88,13 +94,21 @@ def _git_bytes(root: Path, *args: str) -> bytes:
     return result.stdout
 
 
-def _file_lines(root: Path, base: str, head: str, path: str) -> list[str]:
+def _binaries(root: Path, base: str, head: str) -> set[str]:
+    """O que o git trata como binario (`-\\t-` no numstat, sem `--text`): leva o marcador do blob."""
+    out = _git_bytes(root, *[arg for arg in _DIFF if arg != "--text"], "--numstat", "-z", f"{base}..{head}")
+    entries = out.decode("utf-8", errors="surrogateescape").split("\0")
+    return {entry.split("\t", 2)[2] for entry in entries if entry.startswith("-\t-\t")}
+
+
+def _file_lines(root: Path, base: str, head: str, path: str, binary: bool = False) -> list[str]:
     """O patch de um arquivo, na ordem, sem cabecalho de hunk: rebase limpo nao muda nada.
 
     Conta tambem o que nao e linha de conteudo: modo, binario (pelo blob do
-    head) e `\\ No newline at end of file`. Conteudo em bytes nao UTF-8 vira
-    `surrogateescape` (sem perda). Linha de cabecalho desconhecida ou arquivo
-    listado sem nada medido levantam `Unmeasurable`.
+    head) e `\\ No newline at end of file`. Com `--text`, o conteudo do
+    binario tambem e medido. Bytes nao UTF-8 viram `surrogateescape` (sem
+    perda). Linha de cabecalho desconhecida ou arquivo listado sem nada
+    medido levantam `Unmeasurable`.
     """
     out = _git_bytes(root, *_DIFF, "--full-index", "--unified=0", f"{base}..{head}", "--", f":(literal){path}")
     lines: list[str] = []
@@ -112,6 +126,8 @@ def _file_lines(root: Path, base: str, head: str, path: str) -> list[str]:
             lines.append(f"binary {post_blob}")
         elif not line.startswith(_KNOWN_HEADER):
             raise Unmeasurable(f"linha de diff nao reconhecida em {path}")
+    if binary and f"binary {post_blob}" not in lines:
+        lines.append(f"binary {post_blob}")
     if not lines:
         raise Unmeasurable(f"{path} esta no diff, mas o patch veio vazio")
     return lines
@@ -130,7 +146,8 @@ def _file_patches(root: Path, base: str, head: str) -> dict[str, list[str]]:
         decoded = names.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise Unmeasurable("nome de arquivo fora de UTF-8") from exc
-    return {path: _file_lines(root, base, head, path) for path in filter(None, decoded.split("\0"))}
+    binaries = _binaries(root, base, head)
+    return {path: _file_lines(root, base, head, path, path in binaries) for path in filter(None, decoded.split("\0"))}
 
 
 def _changed(old: list[str], new: list[str]) -> int:
