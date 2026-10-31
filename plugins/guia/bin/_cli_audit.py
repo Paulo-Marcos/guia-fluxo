@@ -5,8 +5,10 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import Any
 
-from _audit import AUDIT_CHECKLIST, audit_target, delta_range, record_audit
+from _audit import AUDIT_CHECKLIST, audit_target, record_audit
+from _audit_delta import MODE_FULL, delta_plan, verdict_label
 from _auto_finish import findings_over_limit
 from _autonomy import solo
 from _cli_lifecycle import _plugin_templates_dir
@@ -24,6 +26,27 @@ def _print_checklist() -> None:
         print("Checklist embutido nao encontrado (templates/).", file=sys.stderr)
         return
     print(path.read_text(encoding="utf-8"))
+
+
+def _print_delta(previous: dict[str, Any] | None, plan: dict[str, Any] | None) -> None:
+    """D-140/D-207: head novo desde a ultima auditoria - o range-diff e o que conferir nele."""
+    if not plan:
+        return
+    verdict = verdict_label(plan["fromResult"])
+    if plan["mode"] == MODE_FULL:
+        print(f"Auditoria completa: o head mudou desde a {verdict} ({plan['from'][:12]}), mas {plan['reason']}.")
+        if plan.get("range"):
+            print(f"Para o relatorio, o que mudou: git range-diff {plan['range']}")
+        return
+    print(f"Auditoria de delta: o head mudou desde a {verdict} ({plan['from'][:12]}); "
+          f"{plan['lines']} linhas em {len(plan['files'])} arquivo(s).")
+    print(f"Audite so o que mudou: git range-diff {plan['range']}")
+    findings = (previous or {}).get("findings") or []
+    if findings:
+        print("Confira cada achado anterior como fechado (ou ainda aberto, e repita-o no relatorio):")
+        for finding in findings:
+            print(f"  - {finding}")
+    print("E confira se a correcao tocou o que ja estava ok.")
 
 
 def _parse_findings(values: list[str]) -> dict[str, int]:
@@ -48,11 +71,7 @@ def cmd_audit(args: argparse.Namespace) -> int:
     if not args.report:
         announce_stage(STAGE_AUDIT, config)
         print(f"{task['id']}: head {target['head']} (remoto {target['remoteHead'] or '-'}), patch-id {target['patchId'] or '-'}")
-        delta = delta_range(target["root"], task.get("audit"), target)
-        if delta:
-            # D-140 (R8): o PR mudou desde a auditoria aprovada - audite so o delta.
-            print(f"Auditoria de delta: o head mudou desde a aprovada ({task['audit']['auditedSha'][:12]}).")
-            print(f"Audite so o que mudou: git range-diff {delta}")
+        _print_delta(task.get("audit"), delta_plan(target["root"], task.get("audit"), target, config))
         if use_checklist:
             print("Sem a skill de auditoria: audite pelo checklist embutido abaixo.\n")
             _print_checklist()
@@ -66,7 +85,7 @@ def cmd_audit(args: argparse.Namespace) -> int:
         raise SystemExit(f"{task['id']}: perfil solo - achados abertos {over} acima do limite. "
                          "Corrija na branch, rode o ship e audite o head novo.")
     via = "checklist" if use_checklist else ", ".join(args.skill_ran or skills)
-    audit = record_audit(task, target, report, args.approve, via)
+    audit = record_audit(task, target, report, args.approve, via, config)
     if findings is not None:
         # D-135: contagem de achados abertos por severidade, para a R7.
         audit["openFindings"] = findings

@@ -47,14 +47,23 @@ falha com o código do base e passa com o do head.
 
 Cada item do pedido tem teste; item sem teste fica "faltando" no relatório.
 
-## 6. Delta (head novo depois de uma auditoria aprovada)
+## 6. Delta (head novo depois de uma auditoria)
 
-Quando `guia audit` mostra `git range-diff ...`, o PR mudou desde a auditoria
-aprovada (conflito resolvido, contexto da base diferente). Audite **só o que o
-range-diff mostra** com o mesmo rigor das seções 1 a 4: commit novo ou
-alterado é dado novo, e mudança nas linhas de contexto também conta. O
-relatório diz que é delta, de qual head partiu, e o portão roda de novo no
-head novo.
+Quando `guia audit` mostra `git range-diff ...`, o PR mudou desde a última
+auditoria: aprovada (conflito resolvido, contexto da base diferente) ou
+reprovada (a correção dos achados). Audite **só o que o range-diff mostra**
+com o mesmo rigor das seções 1 a 4: commit novo ou alterado é dado novo, e
+mudança nas linhas de contexto também conta. Depois de uma reprovação, confira
+cada achado que o `guia audit` listou: fechado, ou ainda aberto e repetido no
+relatório; e se a correção tocou o que já estava ok. O relatório diz que é
+delta, de qual head partiu, e o portão roda de novo no head novo.
+
+Quando o `guia audit` diz **Auditoria completa** (delta grande, ou que toca
+workflow, hook, trava, configuração do agente, dependência ou segurança), volte
+às seções 1 a 4 no diff inteiro.
+
+Escreva cada achado numa linha `- [SEVERIDADE] caminho:linha - ...`: o motor
+guarda essas linhas para a rodada seguinte.
 
 ## 7. Relatório
 
