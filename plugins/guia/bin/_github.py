@@ -16,8 +16,9 @@ import shutil
 import subprocess
 import tempfile
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 FIXTURE_ENV = "GUIA_GH_FIXTURE"
 _REMOTE_RE = re.compile(r"github\.com[:/]([^/\s]+)/([^/\s]+?)(?:\.git)?/?$")
@@ -205,25 +206,202 @@ def gh_pr_update_branch(cwd: Path, number: int) -> tuple[str | None, str | None]
     return gh_pr_state(cwd, number)["head"], None
 
 
-def gh_pr_checks(cwd: Path, number: int, timeout_seconds: float, poll_seconds: float = 20.0) -> tuple[str, list[str]]:
-    """Espera os checks exigidos: ("pass" | "fail" | "pending", checks que falharam)."""
+# --- leitura dos checks (D-201) --------------------------------------------
+#
+# `gh pr checks --required` so devolve array quando o repositorio tem politica
+# de checks obrigatorios. Sem protecao de branch ele sai com rc=1 e "no required
+# checks reported on the '<branch>' branch": a lista ficava vazia, o `all(...)`
+# era falso para sempre e o veredito morria em `pending` - nenhum item da fila
+# mergeava (medido no backend-simulators em 29/10/2026, com o GitHub dizendo
+# `mergeStateStatus CLEAN` o tempo todo).
+#
+# "Nao existe politica de obrigatorios" e estado **estavel** - esperar nao muda
+# nada. "Os obrigatorios ainda nao reportaram" e **transitorio**. Sao casos
+# diferentes, e agora o log diz qual deles foi detectado.
+
+CHECKS_FALLBACK, CHECKS_STRICT = "fallback", "strict"
+NO_CHECKS_WAIT, NO_CHECKS_MERGE = "wait", "merge"
+
+CASE_REQUIRED = "obrigatorios"
+CASE_NO_POLICY = "sem-politica"
+CASE_SILENT = "sem-check"
+CASE_GH_ERROR = "erro-gh"
+
+PASSING_BUCKETS = ("pass", "skipping")
+_NO_REQUIRED_RE = re.compile(r"no required checks reported", re.IGNORECASE)
+_NO_CHECKS_RE = re.compile(r"no checks reported", re.IGNORECASE)
+
+
+class GhRun(NamedTuple):
+    """Chamada ao `gh`, crua - com o `returncode` e o `stderr` que o leitor antigo jogava fora."""
+
+    returncode: int = 0
+    stdout: str = ""
+    stderr: str = ""
+
+
+class ChecksReading(NamedTuple):
+    """Veredito dos checks de um PR e o caso que o produziu (para o log da fila)."""
+
+    verdict: str
+    failing: list[str]
+    case: str
+    detail: str
+
+
+def _as_array(stdout: str) -> list[dict[str, Any]]:
+    """Lista do `gh --json`, ou vazia quando a saida nao e um array."""
+    text = (stdout or "").strip()
+    if not text.startswith("["):
+        return []
+    try:
+        parsed = json.loads(text)
+    except ValueError:
+        return []
+    return parsed if isinstance(parsed, list) else []
+
+
+def _bucket_reading(checks: list[dict[str, Any]], case: str, note: str) -> ChecksReading:
+    """Veredito de uma lista de checks ja reportados.
+
+    `cancel` nao conta como vermelho: check cancelado e ausencia de prova, nao
+    prova de falha (mesma regra do `read_commit_runs`). Sem veredito o item
+    espera - nao volta ao autor por algo que ninguem mediu.
+    """
+    failing = [c.get("name") or "?" for c in checks if c.get("bucket") == "fail"]
+    if failing:
+        return ChecksReading("fail", failing, case, f"{note}; vermelho em {', '.join(failing)}")
+    silent = [f"{c.get('name') or '?'} ({c.get('bucket')})" for c in checks
+              if c.get("bucket") not in PASSING_BUCKETS]
+    if silent:
+        return ChecksReading("pending", [], case, f"{note}; ainda sem veredito em {', '.join(silent)}")
+    return ChecksReading("pass", [], case, f"{note}; todos verdes")
+
+
+def _gh_error(run: GhRun) -> str | None:
+    """Erro real do `gh`, ou None quando nao houve erro.
+
+    "Nao ha check (obrigatorio) a reportar" sai do `gh` como rc=1, e e
+    resposta legitima - nao falha. Qualquer outro rc=1 e o `gh` quebrado
+    (credencial, rede, PR inexistente), e precisa aparecer como tal: tratar
+    isso como "repositorio sem check" e mentir sobre o que foi medido, que e
+    exatamente o defeito que esta demanda conserta. Vale para **cada** chamada
+    (achado da auditoria do PR #97: valia so para a primeira).
+    """
+    if run.returncode == 0:
+        return None
+    message = (run.stderr or run.stdout).strip()
+    if _NO_REQUIRED_RE.search(message) or _NO_CHECKS_RE.search(message):
+        return None
+    return (message.splitlines() or ["erro"])[0]
+
+
+def read_pr_checks(required: GhRun, plain_of: Callable[[], GhRun],
+                   policy: str = CHECKS_FALLBACK) -> ChecksReading:
+    """Veredito dos checks do PR a partir das respostas cruas do `gh`.
+
+    Havendo politica de obrigatorios, ela manda - mas o que o `gh` entrega e o
+    **subconjunto ja reportado**: um contexto obrigatorio que ainda nem existe
+    nao aparece no rollup, e por isso o `pass` daqui nunca basta sozinho. Quem
+    barra o obrigatorio ausente e o `mergeStateStatus` do GitHub, conferido no
+    executor.
+
+    Sem politica, a pergunta que resta e a mesma que o `read_commit_runs` ja
+    faz e que funciona: *o que rodou terminou verde?* - mas so quando algo
+    rodou, e um vermelho qualquer continua barrando.
+    `delivery.queue.requiredChecks = strict` recusa esse recuo, e qualquer
+    valor que nao seja exatamente `fallback` cai no lado estrito: num portao de
+    merge, valor nao reconhecido nao escolhe a opcao mais frouxa.
+    """
+    checks = _as_array(required.stdout)
+    if checks:
+        return _bucket_reading(checks, CASE_REQUIRED, f"{len(checks)} checks obrigatorios reportados")
+    error = _gh_error(required)
+    if error:
+        return ChecksReading("pending", [], CASE_GH_ERROR, f"`gh pr checks --required` falhou: {error}")
+    plain = plain_of()
+    error = _gh_error(plain)
+    if error:
+        return ChecksReading("pending", [], CASE_GH_ERROR, f"`gh pr checks` falhou: {error}")
+    reported = _as_array(plain.stdout)
+    if not reported:
+        return ChecksReading("pending", [], CASE_SILENT, "nenhum check reportou neste PR")
+    if policy != CHECKS_FALLBACK:
+        return ChecksReading("pending", [], CASE_NO_POLICY,
+                             f"sem politica de checks obrigatorios e requiredChecks={policy}: "
+                             f"os {len(reported)} checks reportados nao contam")
+    return _bucket_reading(reported, CASE_NO_POLICY,
+                           f"sem politica de checks obrigatorios; julgado pelos {len(reported)} que rodaram")
+
+
+def checks_policy(queue_cfg: dict[str, Any] | None) -> tuple[str, str]:
+    """(`requiredChecks`, `noChecks`) de `delivery.queue`, validados.
+
+    Num portao de merge, valor nao reconhecido nao pode escolher comportamento
+    em silencio (achado da auditoria do PR #97): a propria spec documentava
+    `fromProtection`, e um `stict` digitado errado se comportava como
+    `fallback` - liberava o merge. O motor recusa e diz o que aceita.
+    """
+    queue_cfg = queue_cfg or {}
+    policy = queue_cfg.get("requiredChecks") or CHECKS_FALLBACK
+    no_checks = queue_cfg.get("noChecks") or NO_CHECKS_WAIT
+    for key, value, valid in (("requiredChecks", policy, (CHECKS_FALLBACK, CHECKS_STRICT)),
+                              ("noChecks", no_checks, (NO_CHECKS_WAIT, NO_CHECKS_MERGE))):
+        if value not in valid:
+            raise SystemExit(f"delivery.queue.{key}: valor desconhecido {value!r}. "
+                             f"Aceitos: {' | '.join(valid)}.")
+    return policy, no_checks
+
+
+def settle(reading: ChecksReading, no_checks: str = NO_CHECKS_WAIT) -> ChecksReading:
+    """Fim do prazo: repositorio que nao reporta check algum e decisao do dono.
+
+    `delivery.queue.noChecks`: `wait` (padrao) deixa o item esperando e diz por
+    que; `merge` libera - o dono assume que ali nao ha nada a provar. Nenhum
+    dos dois alcanca check vermelho ou check que so esta atrasado.
+    """
+    if reading.case == CASE_SILENT and no_checks == NO_CHECKS_MERGE:
+        return reading._replace(verdict="pass",
+                                detail="nenhum check reportou; delivery.queue.noChecks=merge libera")
+    return reading
+
+
+def _gh_run(cwd: Path, *args: str) -> GhRun:
+    result = subprocess.run(["gh", *args], cwd=cwd, text=True, encoding="utf-8", capture_output=True)
+    return GhRun(result.returncode, result.stdout or "", result.stderr or "")
+
+
+def _scripted_run(script: dict[str, Any] | None) -> GhRun:
+    """Resposta do `gh` roteirizada no fixture: `{"rc": 1, "stderr": "..."}` ou
+    `{"stdout": [{...}]}` (lista vira JSON, como `gh --json` devolveria)."""
+    if script is None:
+        return GhRun(1, "", "no checks reported on the 'fixture' branch")
+    stdout = script.get("stdout", "")
+    return GhRun(int(script.get("rc", 0)),
+                 stdout if isinstance(stdout, str) else json.dumps(stdout),
+                 script.get("stderr", ""))
+
+
+def gh_pr_checks(cwd: Path, number: int, timeout_seconds: float, poll_seconds: float = 20.0,
+                 policy: str = CHECKS_FALLBACK, no_checks: str = NO_CHECKS_WAIT) -> ChecksReading:
+    """Espera os checks do PR e devolve o veredito com o caso que o produziu."""
     if _fixture() is not None:
         _prs, entry = _fixture_pr(number)
-        return entry.get("checks", "pass"), list(entry.get("failing") or [])
+        scripted = entry.get("ghChecks")
+        if scripted is not None:
+            return settle(read_pr_checks(_scripted_run(scripted.get("required")),
+                                         lambda: _scripted_run(scripted.get("plain")), policy), no_checks)
+        verdict = entry.get("checks", "pass")
+        return ChecksReading(verdict, list(entry.get("failing") or []), CASE_REQUIRED, f"roteirizado: {verdict}")
     deadline = time.monotonic() + timeout_seconds
     while True:
-        result = subprocess.run(
-            ["gh", "pr", "checks", str(number), "--required", "--json", "name,bucket"],
-            cwd=cwd, text=True, encoding="utf-8", capture_output=True,
+        reading = read_pr_checks(
+            _gh_run(cwd, "pr", "checks", str(number), "--required", "--json", "name,bucket"),
+            lambda: _gh_run(cwd, "pr", "checks", str(number), "--json", "name,bucket"),
+            policy,
         )
-        checks = json.loads(result.stdout or "[]") if result.stdout.strip().startswith("[") else []
-        failing = [c["name"] for c in checks if c.get("bucket") in ("fail", "cancel")]
-        if failing:
-            return "fail", failing
-        if checks and all(c.get("bucket") in ("pass", "skipping") for c in checks):
-            return "pass", []
-        if time.monotonic() > deadline:
-            return "pending", []
+        if reading.verdict in ("pass", "fail") or time.monotonic() > deadline:
+            return settle(reading, no_checks)
         time.sleep(poll_seconds)
 
 
@@ -264,30 +442,66 @@ def gh_pr_merge_commit(cwd: Path, number: int) -> str | None:
     return (data.get("mergeCommit") or {}).get("oid")
 
 
-def gh_commit_ci(cwd: Path, sha: str, timeout_seconds: float, poll_seconds: float = 30.0) -> tuple[str, list[str]]:
-    """CI dos workflows no commit `sha` da base: ("pass" | "fail" | "pending", falhas).
+CI_GREEN = ("success", "skipped", "neutral")
+CI_NO_PROOF = ("cancelled", "canceled", "stale")
+
+
+class CiReading(NamedTuple):
+    """Veredito do CI de um commit e o que o sustenta (para o log da fila)."""
+
+    verdict: str
+    failing: list[str]
+    detail: str
+
+
+def read_commit_runs(runs: list[dict[str, Any]]) -> CiReading:
+    """Veredito do CI de um commit a partir dos runs do `gh run list` (D-201).
+
+    `cancelled`/`stale` e **ausencia de prova**, nao prova de falha: com
+    `cancel-in-progress`, o merge seguinte cancela o run do anterior em
+    segundos. Contar isso como vermelho congelou a fila por uma main verde -
+    4 merges em 21 s deixaram 3 runs cancelados, e foi preciso `queue resume` +
+    `queue run` tres vezes para reconciliar. Sem prova nao se aprova nem se
+    reprova: o veredito e `pending`, o executor avisa com o nome dos runs e
+    segue, e o auto-finish da R7 (que exige `main verde == pass`) continua nao
+    fechando a demanda sozinho. `timed_out` e `failure` seguem vermelhos.
+    """
+    if not runs:
+        return CiReading("pending", [], "nenhum run no commit")
+    done = [run for run in runs if run.get("status") == "completed"]
+    failing = [run.get("name") or "?" for run in done
+               if run.get("conclusion") not in CI_GREEN and run.get("conclusion") not in CI_NO_PROOF]
+    if failing:
+        return CiReading("fail", failing, f"vermelho em {', '.join(failing)}")
+    if len(done) != len(runs):
+        return CiReading("pending", [], f"{len(runs) - len(done)} de {len(runs)} runs ainda rodando")
+    no_proof = [f"{run.get('name') or '?'} ({run.get('conclusion')})" for run in done
+                if run.get("conclusion") in CI_NO_PROOF]
+    if no_proof:
+        return CiReading("pending", [], f"sem prova: {', '.join(no_proof)}; os demais verdes")
+    return CiReading("pass", [], f"{len(done)} runs verdes")
+
+
+def gh_commit_ci(cwd: Path, sha: str, timeout_seconds: float, poll_seconds: float = 30.0) -> CiReading:
+    """CI dos workflows no commit `sha` da base.
 
     O CI do PR prova o PR; o da main prova a combinacao (D-128).
     """
     if _fixture() is not None:
         entry = next((pr for pr in _fixture_prs() if pr.get("mergeCommit") == sha), {})
+        if entry.get("mainRuns") is not None:
+            return read_commit_runs(entry["mainRuns"])
         verdict = entry.get("mainCi", "pass")
-        return verdict, (["ci da main"] if verdict == "fail" else [])
+        return CiReading(verdict, (["ci da main"] if verdict == "fail" else []), f"roteirizado: {verdict}")
     deadline = time.monotonic() + timeout_seconds
     while True:
         result = subprocess.run(
             ["gh", "run", "list", "--commit", sha, "--json", "name,status,conclusion"],
             cwd=cwd, text=True, encoding="utf-8", capture_output=True,
         )
-        runs = json.loads(result.stdout) if result.returncode == 0 and result.stdout.strip() else []
-        done = [run for run in runs if run.get("status") == "completed"]
-        failing = [run["name"] for run in done if run.get("conclusion") not in ("success", "skipped", "neutral")]
-        if failing:
-            return "fail", failing
-        if runs and len(done) == len(runs):
-            return "pass", []
-        if time.monotonic() > deadline:
-            return "pending", []
+        reading = read_commit_runs(_as_array(result.stdout) if result.returncode == 0 else [])
+        if reading.verdict in ("pass", "fail") or time.monotonic() > deadline:
+            return reading
         time.sleep(poll_seconds)
 
 
@@ -354,7 +568,18 @@ def pr_patch_id(cwd: Path, number: int, head: str, base_branch: str) -> str | No
 
 
 __all__ = [
+    "CASE_GH_ERROR",
+    "CASE_NO_POLICY",
+    "CASE_REQUIRED",
+    "CASE_SILENT",
+    "CHECKS_FALLBACK",
+    "CHECKS_STRICT",
     "FIXTURE_ENV",
+    "NO_CHECKS_MERGE",
+    "NO_CHECKS_WAIT",
+    "ChecksReading",
+    "CiReading",
+    "GhRun",
     "gh_api",
     "gh_bot_prs",
     "gh_commit_ci",
@@ -369,6 +594,10 @@ __all__ = [
     "gh_pr_update_branch",
     "gh_pr_upsert",
     "gh_status",
+    "checks_policy",
     "pr_patch_id",
+    "read_commit_runs",
+    "read_pr_checks",
     "repo_slug",
+    "settle",
 ]
