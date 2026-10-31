@@ -37,8 +37,7 @@ from _dependabot import close_incorporated, on_idle
 from _git_ops import git_output
 from _github import (
     CASE_REQUIRED,
-    CHECKS_FALLBACK,
-    NO_CHECKS_WAIT,
+    checks_policy,
     gh_commit_ci,
     gh_pr_checks,
     gh_pr_comment,
@@ -172,9 +171,7 @@ def integrate(item: dict[str, Any], base: str, ci_timeout_seconds: float,
     sem politica, nenhum check, erro do `gh`) - e e isso que vai para o log,
     em vez de um `pending` mudo que escondia um repositorio sem protecao.
     """
-    queue_cfg = queue_cfg or {}
-    policy = queue_cfg.get("requiredChecks") or CHECKS_FALLBACK
-    no_checks = queue_cfg.get("noChecks") or NO_CHECKS_WAIT
+    policy, no_checks = checks_policy(queue_cfg)
     deadline = time.monotonic() + ci_timeout_seconds
     updated = False
     noted = False

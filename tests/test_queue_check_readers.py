@@ -123,6 +123,33 @@ class PrChecksReaderTests(unittest.TestCase):
         self.assertEqual(reading.case, _github.CASE_GH_ERROR)
         self.assertIn("404", reading.detail)
 
+    def test_erro_do_gh_na_segunda_chamada_tambem_e_erro(self) -> None:
+        """Achado da auditoria do PR #97: a triagem valia so para a 1a chamada.
+
+        `gh` quebrado na consulta sem filtro caia no mesmo caminho que "este
+        repositorio nao tem check algum" - e o log afirmava isso. Era o proprio
+        pecado desta demanda (ignorar returncode/stderr) repetido na linha
+        seguinte.
+        """
+        reading = _github.read_pr_checks(
+            _run(returncode=1, stderr=SEM_OBRIGATORIOS),
+            lambda: _run(returncode=1, stderr="gh: Bad credentials (HTTP 401)"),
+        )
+        self.assertEqual(reading.case, _github.CASE_GH_ERROR)
+        self.assertEqual(reading.verdict, "pending")
+        self.assertIn("401", reading.detail)
+
+    def test_politica_desconhecida_nao_cai_para_o_lado_frouxo(self) -> None:
+        """Num portao de merge, valor nao reconhecido escolhe o lado estrito.
+
+        A propria spec documentava `fromProtection`, e um `stict` digitado
+        errado se comportava como `fallback` - liberava o merge.
+        """
+        reading = _github.read_pr_checks(
+            _run(returncode=1, stderr=SEM_OBRIGATORIOS), lambda: _run(stdout=VERDES), policy="stict",
+        )
+        self.assertEqual(reading.verdict, "pending")
+
 
 class NoChecksPolicyTests(unittest.TestCase):
     """Repositorio que nunca reporta check: decisao explicita, nao acidente."""
@@ -148,6 +175,37 @@ class NoChecksPolicyTests(unittest.TestCase):
             lambda: _run(stdout=[{"bucket": "fail", "name": "backend"}]),
         )
         self.assertEqual(_github.settle(reading, _github.NO_CHECKS_MERGE).verdict, "fail")
+
+    def test_noChecks_merge_nao_libera_erro_do_gh(self) -> None:
+        """`gh` quebrado nao e "repositorio sem check": nao pode virar merge."""
+        reading = _github.read_pr_checks(
+            _run(returncode=1, stderr=SEM_OBRIGATORIOS),
+            lambda: _run(returncode=1, stderr="gh: Bad credentials (HTTP 401)"),
+        )
+        self.assertEqual(_github.settle(reading, _github.NO_CHECKS_MERGE).verdict, "pending")
+
+
+class ChecksPolicyConfigTests(unittest.TestCase):
+    """`delivery.queue`: valor nao reconhecido e recusado, nao assumido."""
+
+    def test_padroes_quando_a_chave_falta(self) -> None:
+        self.assertEqual(_github.checks_policy({}), (_github.CHECKS_FALLBACK, _github.NO_CHECKS_WAIT))
+        self.assertEqual(_github.checks_policy(None), (_github.CHECKS_FALLBACK, _github.NO_CHECKS_WAIT))
+
+    def test_aceita_os_valores_validos(self) -> None:
+        self.assertEqual(
+            _github.checks_policy({"requiredChecks": "strict", "noChecks": "merge"}), ("strict", "merge")
+        )
+
+    def test_recusa_requiredChecks_desconhecido_dizendo_o_que_aceita(self) -> None:
+        with self.assertRaises(SystemExit) as raised:
+            _github.checks_policy({"requiredChecks": "fromProtection"})
+        self.assertIn("requiredChecks", str(raised.exception))
+        self.assertIn("fallback", str(raised.exception))
+
+    def test_recusa_noChecks_desconhecido(self) -> None:
+        with self.assertRaises(SystemExit):
+            _github.checks_policy({"noChecks": "mergear"})
 
 
 class CommitRunsReaderTests(unittest.TestCase):
@@ -261,7 +319,14 @@ class QueueEndToEndTests(unittest.TestCase):
         return json.loads((self.sb / ".guia" / "queue.json").read_text(encoding="utf-8"))
 
     def test_repo_sem_protecao_de_branch_integra(self) -> None:
-        """O defeito que impediu todo merge: CLEAN + checks verdes, veredito `pending`."""
+        """O defeito que impediu todo merge: CLEAN + checks verdes, veredito `pending`.
+
+        O prazo curto e de proposito (achado da auditoria do PR #97): sem ele,
+        uma regressao aqui nao falha - **pendura** 40 min e vira timeout de job
+        no CI em vez de um FAILED legivel.
+        """
+        self.process["delivery"]["queue"] = {"ciTimeoutMinutes": 0.01}
+        self._save_process()
         self._queued("D-001", 1, ghChecks={
             "required": {"rc": 1, "stderr": SEM_OBRIGATORIOS},
             "plain": {"stdout": VERDES},

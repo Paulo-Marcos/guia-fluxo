@@ -278,33 +278,79 @@ def _bucket_reading(checks: list[dict[str, Any]], case: str, note: str) -> Check
     return ChecksReading("pass", [], case, f"{note}; todos verdes")
 
 
+def _gh_error(run: GhRun) -> str | None:
+    """Erro real do `gh`, ou None quando nao houve erro.
+
+    "Nao ha check (obrigatorio) a reportar" sai do `gh` como rc=1, e e
+    resposta legitima - nao falha. Qualquer outro rc=1 e o `gh` quebrado
+    (credencial, rede, PR inexistente), e precisa aparecer como tal: tratar
+    isso como "repositorio sem check" e mentir sobre o que foi medido, que e
+    exatamente o defeito que esta demanda conserta. Vale para **cada** chamada
+    (achado da auditoria do PR #97: valia so para a primeira).
+    """
+    if run.returncode == 0:
+        return None
+    message = (run.stderr or run.stdout).strip()
+    if _NO_REQUIRED_RE.search(message) or _NO_CHECKS_RE.search(message):
+        return None
+    return (message.splitlines() or ["erro"])[0]
+
+
 def read_pr_checks(required: GhRun, plain_of: Callable[[], GhRun],
                    policy: str = CHECKS_FALLBACK) -> ChecksReading:
     """Veredito dos checks do PR a partir das respostas cruas do `gh`.
 
-    Havendo politica de obrigatorios, ela manda. Sem ela, a pergunta que resta
-    e a mesma que o `read_commit_runs` ja faz e que funciona: *o que rodou
-    terminou verde?* - mas so quando algo rodou, e um vermelho qualquer
-    continua barrando o merge. Quem nega o merge por falta de protecao segue
-    sendo o `mergeStateStatus` do GitHub, conferido no executor.
-    `delivery.queue.requiredChecks = strict` recusa esse recuo.
+    Havendo politica de obrigatorios, ela manda - mas o que o `gh` entrega e o
+    **subconjunto ja reportado**: um contexto obrigatorio que ainda nem existe
+    nao aparece no rollup, e por isso o `pass` daqui nunca basta sozinho. Quem
+    barra o obrigatorio ausente e o `mergeStateStatus` do GitHub, conferido no
+    executor.
+
+    Sem politica, a pergunta que resta e a mesma que o `read_commit_runs` ja
+    faz e que funciona: *o que rodou terminou verde?* - mas so quando algo
+    rodou, e um vermelho qualquer continua barrando.
+    `delivery.queue.requiredChecks = strict` recusa esse recuo, e qualquer
+    valor que nao seja exatamente `fallback` cai no lado estrito: num portao de
+    merge, valor nao reconhecido nao escolhe a opcao mais frouxa.
     """
     checks = _as_array(required.stdout)
     if checks:
-        return _bucket_reading(checks, CASE_REQUIRED, f"{len(checks)} checks obrigatorios")
-    message = (required.stderr or required.stdout).strip()
-    if required.returncode != 0 and not _NO_REQUIRED_RE.search(message) and not _NO_CHECKS_RE.search(message):
-        first = (message.splitlines() or ["erro"])[0]
-        return ChecksReading("pending", [], CASE_GH_ERROR, f"`gh pr checks` falhou: {first}")
-    reported = _as_array(plain_of().stdout)
+        return _bucket_reading(checks, CASE_REQUIRED, f"{len(checks)} checks obrigatorios reportados")
+    error = _gh_error(required)
+    if error:
+        return ChecksReading("pending", [], CASE_GH_ERROR, f"`gh pr checks --required` falhou: {error}")
+    plain = plain_of()
+    error = _gh_error(plain)
+    if error:
+        return ChecksReading("pending", [], CASE_GH_ERROR, f"`gh pr checks` falhou: {error}")
+    reported = _as_array(plain.stdout)
     if not reported:
         return ChecksReading("pending", [], CASE_SILENT, "nenhum check reportou neste PR")
-    if policy == CHECKS_STRICT:
+    if policy != CHECKS_FALLBACK:
         return ChecksReading("pending", [], CASE_NO_POLICY,
-                             f"sem politica de checks obrigatorios e requiredChecks=strict: "
+                             f"sem politica de checks obrigatorios e requiredChecks={policy}: "
                              f"os {len(reported)} checks reportados nao contam")
     return _bucket_reading(reported, CASE_NO_POLICY,
                            f"sem politica de checks obrigatorios; julgado pelos {len(reported)} que rodaram")
+
+
+def checks_policy(queue_cfg: dict[str, Any] | None) -> tuple[str, str]:
+    """(`requiredChecks`, `noChecks`) de `delivery.queue`, validados.
+
+    Num portao de merge, valor nao reconhecido nao pode escolher comportamento
+    em silencio (achado da auditoria do PR #97): a propria spec documentava
+    `fromProtection`, e um `stict` digitado errado se comportava como
+    `fallback` - liberava o merge. O motor recusa e diz o que aceita.
+    """
+    queue_cfg = queue_cfg or {}
+    policy = queue_cfg.get("requiredChecks") or CHECKS_FALLBACK
+    no_checks = queue_cfg.get("noChecks") or NO_CHECKS_WAIT
+    for key, value, valid in (("requiredChecks", policy, (CHECKS_FALLBACK, CHECKS_STRICT)),
+                              ("noChecks", no_checks, (NO_CHECKS_WAIT, NO_CHECKS_MERGE))):
+        if value not in valid:
+            raise SystemExit(f"delivery.queue.{key}: valor desconhecido {value!r}. "
+                             f"Aceitos: {' | '.join(valid)}.")
+    return policy, no_checks
 
 
 def settle(reading: ChecksReading, no_checks: str = NO_CHECKS_WAIT) -> ChecksReading:
@@ -548,6 +594,7 @@ __all__ = [
     "gh_pr_update_branch",
     "gh_pr_upsert",
     "gh_status",
+    "checks_policy",
     "pr_patch_id",
     "read_commit_runs",
     "read_pr_checks",
