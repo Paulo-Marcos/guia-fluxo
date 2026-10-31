@@ -13,9 +13,8 @@ novo. O motor decide pelo git, nunca pelo que o agente declara.
 
 from __future__ import annotations
 
-import re
 import subprocess
-from collections import Counter
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
 
@@ -28,61 +27,92 @@ MODE_FULL = "full"
 DELTA_MAX_LINES_DEFAULT = 300
 # Abaixo disso o delta e pequeno demais para a regra da metade valer a pena.
 DELTA_RATIO_FLOOR = 50
+# Caminhos do proprio projeto entram por `autonomy.alwaysHuman`.
 DELTA_FULL_PATHS = (
     ".github/**",
     ".githooks/**",
+    "**/hooks/**",
     ".guia/locks/**",
-    ".claude/settings*.json",
-    "AGENTS.md",
-    "CLAUDE.md",
+    "core/lock/**",
+    ".claude/**",
+    ".gitattributes",
+    "agents.md",
+    "claude.md",
+    "**/conftest.py",
+    "**/setup.py",
+    "**/setup.cfg",
+    "**/pyproject.toml",
     "**/requirements*.txt",
+    "**/pipfile*",
+    "**/*.lock",
     "**/package.json",
     "**/package-lock.json",
-    "**/pyproject.toml",
+    "**/pnpm-lock.yaml",
     "*auth*",
     "*secret*",
     "*credential*",
     "*token*",
     "*security*",
 )
-_FILE_HEADER = re.compile(r"^diff --git a/(.+?) b/(.+)$")
 _MODE_LINES = ("old mode ", "new mode ", "new file mode ", "deleted file mode ")
+_DIFF = ["diff", "--no-color", "--no-ext-diff", "--no-renames"]
 
 
-def _file_patches(root: Path, base: str, head: str) -> dict[str, Counter[str]] | None:
-    """Linhas `+`/`-` do PR por arquivo, sem cabecalho de hunk: rebase limpo nao muda nada.
+def _git_bytes(root: Path, *args: str) -> bytes | None:
+    result = subprocess.run(["git", "-c", "core.quotePath=false", *args], cwd=root, capture_output=True)
+    return result.stdout if result.returncode == 0 else None
 
-    Sem renames (mover `.github/workflows/ci.yml` vira remocao + adicao, com
-    linhas), e o que nao tem linha tambem conta: modo do arquivo e binario
-    (pelo blob do head). Caminho que o git poe entre aspas nao se le com
-    seguranca: None, e a auditoria e completa.
+
+def _file_lines(root: Path, base: str, head: str, path: str) -> list[str] | None:
+    """O patch de um arquivo, na ordem, sem cabecalho de hunk: rebase limpo nao muda nada.
+
+    O que nao tem linha tambem conta: modo do arquivo e binario (pelo blob do head).
     """
-    result = subprocess.run(["git", "-c", "core.quotePath=false", "diff", "--no-color", "--no-ext-diff",
-                             "--no-renames", "--full-index", "--unified=0", f"{base}..{head}"],
-                            cwd=root, capture_output=True)
-    if result.returncode != 0:
+    out = _git_bytes(root, *_DIFF, "--full-index", "--unified=0", f"{base}..{head}", "--", f":(literal){path}")
+    if out is None:
         return None
-    patches: dict[str, Counter[str]] = {}
-    current: Counter[str] = Counter()
+    lines: list[str] = []
     in_hunk, post_blob = False, ""
-    for line in result.stdout.decode("utf-8", errors="replace").splitlines():
-        if line.startswith("diff --git "):
-            header = _FILE_HEADER.match(line)
-            if not header:
-                return None
-            current, in_hunk, post_blob = patches.setdefault(header.group(2), Counter()), False, ""
-        elif line.startswith("@@"):
+    for line in out.decode("utf-8", errors="replace").splitlines():
+        if line.startswith("@@"):
             in_hunk = True
         elif in_hunk:
             if line[:1] in "+-":
-                current[line] += 1
+                lines.append(line)
         elif line.startswith("index "):
             post_blob = line.split()[1].split("..")[-1]
         elif line.startswith(_MODE_LINES):
-            current[line] += 1
+            lines.append(line)
         elif line.startswith("Binary files "):
-            current[f"binary {post_blob}"] += 1
+            lines.append(f"binary {post_blob}")
+    return lines
+
+
+def _file_patches(root: Path, base: str, head: str) -> dict[str, list[str]] | None:
+    """Por arquivo do PR, as linhas do patch na ordem (a ordem muda o que o codigo faz).
+
+    Os nomes vem de `--name-only -z`, nunca do cabecalho `diff --git a/X b/Y`
+    (um caminho com ` b/` no meio cortaria errado). Sem renames: mover
+    `.github/workflows/ci.yml` vira remocao + adicao, com linhas.
+    """
+    names = _git_bytes(root, *_DIFF, "--name-only", "-z", f"{base}..{head}")
+    if names is None:
+        return None
+    patches: dict[str, list[str]] = {}
+    for path in filter(None, names.decode("utf-8", errors="replace").split("\0")):
+        lines = _file_lines(root, base, head, path)
+        if lines is None:
+            return None
+        patches[path] = lines
     return patches
+
+
+def _changed(old: list[str], new: list[str]) -> int:
+    """Linhas que saem ou entram de uma sequencia para a outra; trocar duas de lugar conta."""
+    if old == new:
+        return 0
+    same = sum(block.size for block in SequenceMatcher(None, old, new, autojunk=False).get_matching_blocks())
+    return len(old) + len(new) - 2 * same
 
 
 def _unlocks(root: Path, base: str, head: str) -> set[str]:
@@ -95,14 +125,19 @@ def _measure(root: Path, old: tuple[str, str], new: tuple[str, str]) -> dict[str
         return None
     files, lines = [], 0
     for path in sorted(set(before) | set(after)):
-        old_lines, new_lines = before.get(path, Counter()), after.get(path, Counter())
-        changed = sum(((old_lines - new_lines) + (new_lines - old_lines)).values())
+        changed = _changed(before.get(path, []), after.get(path, []))
         if changed:
             files.append(path)
             lines += changed
-    total = sum(sum(c.values()) for c in after.values())
+    total = sum(len(patch) for patch in after.values())
     return {"files": files, "lines": lines, "total": total,
             "newUnlocks": sorted(_unlocks(root, *new) - _unlocks(root, *old))}
+
+
+def _sensitive(files: list[str], config: dict[str, Any]) -> list[str]:
+    """Caixa baixa nos dois lados: `AGENTS.md` casa no Linux tambem."""
+    patterns = [pat.lower() for pat in DELTA_FULL_PATHS + tuple((config.get("autonomy") or {}).get("alwaysHuman") or ())]
+    return sorted({p for p in files for pat in patterns if _matches(p.lower(), pat)})
 
 
 def _full_reason(measure: dict[str, Any], config: dict[str, Any]) -> str | None:
@@ -116,13 +151,16 @@ def _full_reason(measure: dict[str, Any], config: dict[str, Any]) -> str | None:
         return f"delta grande ({lines} linhas > {max_lines})"
     if lines > DELTA_RATIO_FLOOR and lines * 2 > measure["total"]:
         return f"delta e mais da metade do PR ({lines} de {measure['total']} linhas)"
-    patterns = DELTA_FULL_PATHS + tuple((config.get("autonomy") or {}).get("alwaysHuman") or ())
-    sensitive = sorted({p for p in measure["files"] for pat in patterns if _matches(p.lower(), pat)})
+    sensitive = _sensitive(measure["files"], config)
     if sensitive:
         return "delta toca caminho sensivel: " + ", ".join(sensitive)
     if measure["newUnlocks"]:
         return "delta traz [unlock:] novo: " + ", ".join(measure["newUnlocks"])
     return None
+
+
+def verdict_label(result: str | None) -> str:
+    return {"approved": "aprovada", "rejected": "reprovada"}.get(result or "", "anterior")
 
 
 def delta_plan(root: Path, previous: dict[str, Any] | None, target: dict[str, Any],
@@ -153,4 +191,4 @@ def delta_plan(root: Path, previous: dict[str, Any] | None, target: dict[str, An
     return {**plan, "reason": reason} if reason else {**plan, "mode": MODE_DELTA}
 
 
-__all__ = ["DELTA_FULL_PATHS", "DELTA_MAX_LINES_DEFAULT", "MODE_DELTA", "MODE_FULL", "delta_plan"]
+__all__ = ["DELTA_FULL_PATHS", "DELTA_MAX_LINES_DEFAULT", "MODE_DELTA", "MODE_FULL", "delta_plan", "verdict_label"]

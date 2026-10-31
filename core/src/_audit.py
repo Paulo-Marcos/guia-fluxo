@@ -14,7 +14,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from _audit_delta import MODE_DELTA, MODE_FULL, delta_plan
+from _audit_delta import MODE_DELTA, MODE_FULL, delta_plan, verdict_label
 from _changelog import work_root
 from _clock import now_iso
 from _constants import DELIVERY_BASE_BRANCH_DEFAULT
@@ -78,8 +78,7 @@ def delta_header(plan: dict[str, Any] | None) -> str:
     if not plan:
         return ""
     if plan["mode"] == MODE_DELTA:
-        verdict = "aprovada" if plan["fromResult"] == RESULT_APPROVED else "reprovada"
-        return f"Auditoria de delta desde {plan['from'][:12]} ({verdict}): `git range-diff {plan['range']}`\n\n"
+        return f"Auditoria de delta desde {plan['from'][:12]} ({verdict_label(plan['fromResult'])}): `git range-diff {plan['range']}`\n\n"
     return f"Auditoria completa desde {plan['from'][:12]}: {plan['reason']}\n\n"
 
 

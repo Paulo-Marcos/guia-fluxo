@@ -7,8 +7,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from _audit import AUDIT_CHECKLIST, RESULT_APPROVED, audit_target, record_audit
-from _audit_delta import MODE_FULL, delta_plan
+from _audit import AUDIT_CHECKLIST, audit_target, record_audit
+from _audit_delta import MODE_FULL, delta_plan, verdict_label
 from _auto_finish import findings_over_limit
 from _autonomy import solo
 from _cli_lifecycle import _plugin_templates_dir
@@ -32,7 +32,7 @@ def _print_delta(previous: dict[str, Any] | None, plan: dict[str, Any] | None) -
     """D-140/D-207: head novo desde a ultima auditoria - o range-diff e o que conferir nele."""
     if not plan:
         return
-    verdict = "aprovada" if plan["fromResult"] == RESULT_APPROVED else "reprovada"
+    verdict = verdict_label(plan["fromResult"])
     if plan["mode"] == MODE_FULL:
         print(f"Auditoria completa: o head mudou desde a {verdict} ({plan['from'][:12]}), mas {plan['reason']}.")
         if plan.get("range"):
