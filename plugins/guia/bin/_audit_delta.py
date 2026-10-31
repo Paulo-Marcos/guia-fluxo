@@ -36,18 +36,33 @@ DELTA_FULL_PATHS = (
     "core/lock/**",
     ".claude/**",
     ".gitattributes",
-    "agents.md",
-    "claude.md",
+    "**/agents.md",
+    "**/claude.md",
+    ".claude-plugin/**",
+    "**/.claude-plugin/**",
+    ".guia/process.json",
+    # As travas e a propria regua do delta: afrouxar qualquer um esconde o resto.
+    "**/check-lock.py",
+    "**/_locks.py",
+    "**/lock_api.py",
+    "**/_audit_delta.py",
+    "core/build/**",
     "**/conftest.py",
+    "**/pytest.ini",
+    "**/tox.ini",
+    "**/.pre-commit-config.yaml",
     "**/setup.py",
     "**/setup.cfg",
     "**/pyproject.toml",
     "**/requirements*.txt",
     "**/pipfile*",
     "**/*.lock",
+    "**/*.lockb",
     "**/package.json",
     "**/package-lock.json",
+    "**/npm-shrinkwrap.json",
     "**/pnpm-lock.yaml",
+    "**/.npmrc",
     "*auth*",
     "*secret*",
     "*credential*",
@@ -55,56 +70,67 @@ DELTA_FULL_PATHS = (
     "*security*",
 )
 _MODE_LINES = ("old mode ", "new mode ", "new file mode ", "deleted file mode ")
-_DIFF = ["diff", "--no-color", "--no-ext-diff", "--no-renames"]
+# Cabecalho de arquivo que a medida entende; qualquer outra linha antes do hunk = nao medido.
+_KNOWN_HEADER = ("diff --git ", "index ", "--- ", "+++ ", *_MODE_LINES)
+# A config do usuario nao esconde nada: submodulo aparece, textconv/diff externo ficam de fora.
+_DIFF = ["diff", "--no-color", "--no-ext-diff", "--no-textconv", "--no-renames",
+         "--ignore-submodules=none", "--submodule=short"]
 
 
-def _git_bytes(root: Path, *args: str) -> bytes | None:
+class Unmeasurable(Exception):
+    """A medida nao entendeu algo do diff: a auditoria e completa (falha fechada)."""
+
+
+def _git_bytes(root: Path, *args: str) -> bytes:
     result = subprocess.run(["git", "-c", "core.quotePath=false", *args], cwd=root, capture_output=True)
-    return result.stdout if result.returncode == 0 else None
+    if result.returncode != 0:
+        raise Unmeasurable(f"git {args[0]} falhou")
+    return result.stdout
 
 
-def _file_lines(root: Path, base: str, head: str, path: str) -> list[str] | None:
+def _file_lines(root: Path, base: str, head: str, path: str) -> list[str]:
     """O patch de um arquivo, na ordem, sem cabecalho de hunk: rebase limpo nao muda nada.
 
-    O que nao tem linha tambem conta: modo do arquivo e binario (pelo blob do head).
+    Conta tambem o que nao e linha de conteudo: modo, binario (pelo blob do
+    head) e `\\ No newline at end of file`. Conteudo em bytes nao UTF-8 vira
+    `surrogateescape` (sem perda). Linha de cabecalho desconhecida ou arquivo
+    listado sem nada medido levantam `Unmeasurable`.
     """
     out = _git_bytes(root, *_DIFF, "--full-index", "--unified=0", f"{base}..{head}", "--", f":(literal){path}")
-    if out is None:
-        return None
     lines: list[str] = []
     in_hunk, post_blob = False, ""
-    for line in out.decode("utf-8", errors="replace").splitlines():
+    for line in out.decode("utf-8", errors="surrogateescape").splitlines():
         if line.startswith("@@"):
             in_hunk = True
         elif in_hunk:
-            if line[:1] in "+-":
-                lines.append(line)
+            lines.append(line)
         elif line.startswith("index "):
             post_blob = line.split()[1].split("..")[-1]
         elif line.startswith(_MODE_LINES):
             lines.append(line)
         elif line.startswith("Binary files "):
             lines.append(f"binary {post_blob}")
+        elif not line.startswith(_KNOWN_HEADER):
+            raise Unmeasurable(f"linha de diff nao reconhecida em {path}")
+    if not lines:
+        raise Unmeasurable(f"{path} esta no diff, mas o patch veio vazio")
     return lines
 
 
-def _file_patches(root: Path, base: str, head: str) -> dict[str, list[str]] | None:
+def _file_patches(root: Path, base: str, head: str) -> dict[str, list[str]]:
     """Por arquivo do PR, as linhas do patch na ordem (a ordem muda o que o codigo faz).
 
     Os nomes vem de `--name-only -z`, nunca do cabecalho `diff --git a/X b/Y`
     (um caminho com ` b/` no meio cortaria errado). Sem renames: mover
-    `.github/workflows/ci.yml` vira remocao + adicao, com linhas.
+    `.github/workflows/ci.yml` vira remocao + adicao, com linhas. Nome que nao
+    e UTF-8 nao se le com seguranca: `Unmeasurable`.
     """
     names = _git_bytes(root, *_DIFF, "--name-only", "-z", f"{base}..{head}")
-    if names is None:
-        return None
-    patches: dict[str, list[str]] = {}
-    for path in filter(None, names.decode("utf-8", errors="replace").split("\0")):
-        lines = _file_lines(root, base, head, path)
-        if lines is None:
-            return None
-        patches[path] = lines
-    return patches
+    try:
+        decoded = names.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise Unmeasurable("nome de arquivo fora de UTF-8") from exc
+    return {path: _file_lines(root, base, head, path) for path in filter(None, decoded.split("\0"))}
 
 
 def _changed(old: list[str], new: list[str]) -> int:
@@ -119,17 +145,16 @@ def _unlocks(root: Path, base: str, head: str) -> set[str]:
     return unlock_marks(git_output(root, "log", "--format=%B", f"{base}..{head}") or "")
 
 
-def _measure(root: Path, old: tuple[str, str], new: tuple[str, str]) -> dict[str, Any] | None:
+def _measure(root: Path, old: tuple[str, str], new: tuple[str, str]) -> dict[str, Any]:
+    """`lines` e `total` na mesma regua: linhas dos dois lados (antes + depois)."""
     before, after = _file_patches(root, *old), _file_patches(root, *new)
-    if before is None or after is None:
-        return None
     files, lines = [], 0
     for path in sorted(set(before) | set(after)):
         changed = _changed(before.get(path, []), after.get(path, []))
         if changed:
             files.append(path)
             lines += changed
-    total = sum(len(patch) for patch in after.values())
+    total = sum(len(patch) for patch in before.values()) + sum(len(patch) for patch in after.values())
     return {"files": files, "lines": lines, "total": total,
             "newUnlocks": sorted(_unlocks(root, *new) - _unlocks(root, *old))}
 
@@ -150,7 +175,7 @@ def _full_reason(measure: dict[str, Any], config: dict[str, Any]) -> str | None:
     if lines > max_lines:
         return f"delta grande ({lines} linhas > {max_lines})"
     if lines > DELTA_RATIO_FLOOR and lines * 2 > measure["total"]:
-        return f"delta e mais da metade do PR ({lines} de {measure['total']} linhas)"
+        return f"delta e mais da metade do PR ({lines} de {measure['total']} linhas, antes + depois)"
     sensitive = _sensitive(measure["files"], config)
     if sensitive:
         return "delta toca caminho sensivel: " + ", ".join(sensitive)
@@ -183,9 +208,10 @@ def delta_plan(root: Path, previous: dict[str, Any] | None, target: dict[str, An
     if any(git_output(root, "cat-file", "-e", f"{sha}^{{commit}}") is None for sha in (old_head, old_base)):
         return {**plan, "reason": "o head auditado nao esta no repositorio local"}
     plan["range"] = f"{old_base}..{old_head} {base}..{head}"
-    measure = _measure(root, (old_base, old_head), (base, head))
-    if measure is None:
-        return {**plan, "reason": "o git nao mediu o delta"}
+    try:
+        measure = _measure(root, (old_base, old_head), (base, head))
+    except Unmeasurable as exc:
+        return {**plan, "reason": f"a medida do delta nao entendeu o diff ({exc})"}
     plan.update(files=measure["files"], lines=measure["lines"])
     reason = _full_reason(measure, config)
     return {**plan, "reason": reason} if reason else {**plan, "mode": MODE_DELTA}
