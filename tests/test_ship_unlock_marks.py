@@ -64,7 +64,7 @@ class ShipUnlockMarkTests(unittest.TestCase):
         self.fixture.write_text(json.dumps({"__auth__": True}), encoding="utf-8")
         self._ok(self.main, "chore", "Ajustar o teste")
         self._ok(self.main, "worktree", "add", "D-001")
-        self.wt = base / "app-d001"
+        self.wt = base / "app-worktrees" / "d001"
         self._ok(self.wt, "ready", "--file", "tests/test_x.py", "--request-test", "x :: tests/test_x.py")
         (self.wt / "tests" / "test_x.py").write_text("x = 2\n", encoding="utf-8")
 

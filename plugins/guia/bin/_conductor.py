@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from _artifacts import artifacts_dir
 from _autonomy import effective_level, rank
 from _constants import (
     DELIVERY_MODE_DIRECT,
@@ -159,7 +160,8 @@ _HOW = {
                 "e grave com `guia plan {id} --brief-file <arquivo>`",
     STEP_READY: "implemente e rode `guia ready {id} --file ... --request-test ...`",
     STEP_SHIP: "commite e rode `guia ship {id} --subject ... --body ...`",
-    STEP_AUDIT: "rode `guia audit {id}`, audite com a skill anunciada e registre com `--report ... --approve`",
+    STEP_AUDIT: "rode `guia audit {id}`, audite com a skill anunciada e registre com "
+                "`--report {artifacts}/auditoria.md --approve`",
     STEP_QUEUE_ADD: "rode `guia queue add {id}`",
 }
 
@@ -173,7 +175,10 @@ def announce_next(task: dict[str, Any], config: dict[str, Any]) -> None:
     step = next_step(task, config)
     how = _HOW.get(step["step"])
     if how:
-        print(f"PROXIMO PASSO: {step['step']} - {step['why']}: {how.format(id=task['id'])}. "
+        # D-202: so a etapa que escreve arquivo (auditoria) cria a pasta.
+        artifacts = artifacts_dir(task["id"]).as_posix() if "{artifacts}" in how else ""
+        how = how.format(id=task["id"], artifacts=artifacts)
+        print(f"PROXIMO PASSO: {step['step']} - {step['why']}: {how}. "
               f"Siga sem perguntar: o nivel {step['level']} ja autoriza "
               "(nunca `gh pr merge` nem `queue run`).")
     elif step["step"] == STEP_STOP:

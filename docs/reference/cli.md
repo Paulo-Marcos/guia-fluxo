@@ -320,7 +320,21 @@ Em que chat a demanda e feita, para voltar a ele (D-157). Sem `--title`, imprime
 
 **Nomes reconciliados (D-194).** `--session` grava o id da sessao do app (`local_...`, de `get_session`); o literal `self` e recusado - so vale dentro das tools do app. A demanda guarda o ultimo nome aplicado a sessao (`chat.applied`). `chat --pending` lista as sessoes cujo nome divergiu do `NOME DA DEMANDA` atual, uma linha `RENOMEIE O CHAT: <sessionId> -> <nome>` por sessao (`--json`: `pending[]` com `task`, `session`, `title`); `next` (`chatRenames` no `--json`), `status` e `queue run` imprimem as mesmas linhas. O chat que renomeia confirma com `--applied "<nome>"`; recusa do app vira `--refused "<nome>" --reason ...`: um aviso, e a sessao so volta a lista quando a etapa mudar. Sessao gravada de novo zera o registro.
 
-**Controlador e executora (D-199, [ADR-0023](../adr/0023-chat-controlador-e-sessoes-executoras.md)).** `chat D-NNN --session <id> --role executor --controller <sessionId do controlador>` diz que a demanda e feita por uma sessao executora aberta por um chat controlador (`--controller` sozinho implica `--role executor`; o literal `self` e recusado); `--role controller` marca a demanda que o proprio controlador faz (epico, release), sem `--controller`. Imprime `PAPEL DO CHAT: executora (controlador local_...)`; `--json` traz `role` e `controller`; `status D-NNN` mostra o papel na linha `Chat:` e o painel no cartao e no detalhe. Quem abre a sessao grava a sessao, inclusive na follow-up que uma executora abre. `chat --pending` tambem lista (`missing[]` no `--json`) as demandas abertas - DEV, validacao, PR, fila - sem sessao gravada, uma linha `AVISO CHAT: D-NNN (<etapa>) sem a sessao do chat ...` com o comando.
+**Controlador e executora (D-199, [ADR-0023](../adr/0023-chat-controlador-e-sessoes-executoras.md)).** `chat D-NNN --session <id> --role executor --controller <sessionId do controlador>` diz que a demanda e feita por uma sessao executora aberta por um chat controlador (`--controller` sozinho implica `--role executor`; o literal `self` e recusado); `--role controller` marca a demanda que o proprio controlador faz (epico, release), sem `--controller`. Imprime `PAPEL DO CHAT: executora (controlador local_...)`; `--json` traz `role` e `controller`; `status D-NNN` mostra o papel na linha `Chat:` e o painel no cartao e no detalhe. Quem abre a sessao grava a sessao; desde a D-210 a follow-up da executora e proposta (`--from`) e so o controlador abre a sessao. `chat --pending` tambem lista (`missing[]` no `--json`) as demandas abertas - DEV, validacao, PR, fila - sem sessao gravada, uma linha `AVISO CHAT: D-NNN (<etapa>) sem a sessao do chat ...` com o comando.
+
+### `controle`, `ask`, `answer`
+
+```powershell
+.\core\bin\guia.ps1 controle [--session <sessionId do controlador>] [--json]
+.\core\bin\guia.ps1 ask D-NNN "<pergunta>" [--option "<A>"]... [--by <sessionId>]
+.\core\bin\guia.ps1 answer D-NNN P<n> --quote "<palavras do dono>" [--by <sessionId>]
+.\core\bin\guia.ps1 feature|bug|chore "<titulo>" --status planned --from D-NNN
+.\core\bin\guia.ps1 chat D-NNN --archived | --unarchived
+```
+
+O controlador coordena as sessoes e concentra as decisoes (D-210, [ADR-0025](../adr/0025-controlador-concentra-as-decisoes.md)). `controle` imprime, por controlador, `CONTROLADOR <id> - executoras N de M (V vaga(s))` e uma linha por executora aberta - etapa, `PR #n`, `bola: dono|fila|executora (<motivo>)` e a sessao -, as `PERGUNTA D-NNN P<n>: ...` abertas, as `PROPOSTA D-NNN ...` (follow-ups sem sessao; `SEM VAGA` no teto) e as `ARQUIVE COM OK DO DONO: <sessao> ...` (demandas Validada, Finalizada, Cancelada ou Resolvida; a Integrada continua na lista com a bola no dono, pelo `finish`). A bola sai do mesmo `next`: pergunta aberta ou demanda bloqueada e do dono; `stop` da fila ou do gerente da fila e da fila; passo a fazer ou `stop` do agente e da executora. O teto vem de `controller.maxExecutors` (`.guia/process.json`, padrao 4); acima dele o cabecalho diz `ACIMA DO LIMITE`. So leitura.
+
+`ask` grava a pergunta ao dono na demanda (`decisions[]`: P1, P2...; `askedBy` e a sessao da demanda sem `--by`). `answer` grava a resposta com as palavras do dono e imprime `LEVE A EXECUTORA: <sessao> <- D-NNN P<n>: o dono disse "..."`; responder de novo e recusado. `--from D-NNN` na criacao (nasce Planejada; aceita `--status backlog`) marca a follow-up proposta pela executora (`proposedFrom`) e herda o controlador da origem, sem sessao: `PROPOSTA: ... espera a sessao do controlador`. `chat --archived` registra a sessao arquivada com o ok do dono e a tira do quadro (recusado em demanda nao concluida); `--unarchived` desfaz. Pergunta ou `--quote` vazios sao recusados.
 
 ### `dashboard`
 
@@ -392,6 +406,19 @@ Andaimes de entrega a partir dos modelos do Guia (`templates/scaffold/`, D-120).
 ```
 
 Cria ou remove o worktree de uma demanda que ja existe (D-113). `add` segue `delivery.worktree`: caminho e branch pelos modelos, a partir de `from` (busca a base no `origin` antes), copia os `envFiles` e cria as `junctions`, registrando tudo na demanda (`WORKTREE_PATH=`, `WORKTREE_BRANCH=`). `remove` desfaz as juncoes registradas **antes** do `git worktree remove` e **recusa** se sobrar qualquer link no worktree - uma remocao que atravessa juncao apaga o destino na principal (D-880 no gerador-cortes). Sem `--force`, worktree com mudanca nao commitada fica, com a mensagem do git. No modo `pr`, o `finish` remove o worktree da demanda (se `removeOnFinish`) do mesmo jeito, sem `--force`, e so avisa se nao conseguir. Sem id, vale a branch (D-110).
+
+Desde a D-202 o modelo padrao e `../{repo}-worktrees/{idCompact}` (uma pasta por projeto, nao uma irma do repo por demanda); worktree criado no padrao antigo segue funcionando, porque o caminho fica gravado na demanda.
+
+### `cleanup`
+
+```powershell
+.\core\bin\guia.ps1 cleanup [--json]
+.\core\bin\guia.ps1 cleanup --remove <caminho|D-NNN|arquivo> [--remove ...]
+.\core\bin\guia.ps1 cleanup --remove all
+.\core\bin\guia.ps1 cleanup --session-start
+```
+
+Faxina da pasta que guarda os projetos (ex.: `C:/DEV`, D-202). Sem flag, **so lista**: worktrees inativas deste projeto (demanda Integrada/Finalizada/Validada/Cancelada; worktree sem demanda nunca e proposta) e artefatos de agente soltos na pasta pai (logs, `.msg`, patches, saida de comando, rascunho `.txt`/`.md`/`.json` com numero ou prefixo de etapa no nome - nunca dotfile nem documento). Inativa com mudanca local, arquivo ignorado que a remocao apagaria (ex.: `.env`) ou HEAD destacado aparece como mantida, com o porque. `--remove` remove so itens que o relatorio propos - e so com o ok do dono; worktree sai pelo mesmo caminho seguro do `worktree remove` (juncoes desfeitas antes). `all` vale so para o que a ultima listagem mostrou (gravada em `.guia/tmp/`) e tambem roda `git worktree prune` nos registros sem pasta. `--session-start` e o relatorio de uma linha do hook SessionStart do plugin: mudo quando nao ha o que limpar e fora de projeto Guia, e nunca falha. Artefatos de agente (auditoria, logs de portao, `.msg`, patches) tem lugar fixo em `.guia/tmp/<D-NNN>/` - `start` imprime `ARTIFACTS_DIR=` e `next --json` devolve `artifactsDir`.
 
 ### `docs-check`
 

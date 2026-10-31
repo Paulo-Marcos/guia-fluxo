@@ -55,7 +55,7 @@ class AuditTests(unittest.TestCase):
         self.fixture.write_text(json.dumps({"__auth__": True}), encoding="utf-8")
         self._ok(self.main, "feature", "Mostrar a nota")
         self._ok(self.main, "worktree", "add", "D-001")
-        self.wt = base / "app-d001"
+        self.wt = base / "app-worktrees" / "d001"
         (self.wt / "app.txt").write_text("app com nota\n", encoding="utf-8")
         _git(self.wt, "commit", "-q", "-am", "nota")
         self._ok(self.wt, "ready", "--file", "app.txt", "--request-test", "nota :: teste")
