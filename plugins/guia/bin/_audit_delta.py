@@ -9,6 +9,9 @@ O delta volta a ser completo quando nao se le com seguranca: falta um dos
 quatro SHAs, o delta e grande, toca caminho sensivel (workflows, hooks,
 travas, configuracao do agente, dependencias, seguranca) ou traz `[unlock:]`
 novo. O motor decide pelo git, nunca pelo que o agente declara.
+
+D-211: a copia gerada identica a fonte (`delivery.audit.mirrors`) conta uma
+vez so na regua; binario que muda no delta pede a auditoria completa.
 """
 
 from __future__ import annotations
@@ -50,10 +53,34 @@ DELTA_FULL_PATHS = (
     "**/_cli_audit.py",
     "**/_autonomy.py",
     "**/_commit.py",
+    "**/_git_ops.py",
+    "**/_state.py",
+    "**/_constants.py",
+    "**/_tasks.py",
+    "**/_changelog.py",
+    "**/_github.py",
+    "**/_auto_finish.py",
+    "**/_skills.py",
+    "**/_conductor.py",
+    # Pontos de entrada, o texto que orienta o auditor e as travas que vao para outros projetos.
+    "**/guia.py",
+    "**/guia.ps1",
+    "core/manifest/**",
+    "**/audit-checklist.md",
+    "**/commands/audit.md",
+    "**/.agents/skills/**",
+    "**/templates/locks/**",
+    "**/templates/scaffold/auditoria.yml",
     "core/build/**",
     "**/conftest.py",
     "**/pytest.ini",
     "**/vitest.config.*",
+    "**/jest.config.*",
+    "**/vite.config.*",
+    "**/eslint.config.*",
+    "**/.eslintrc*",
+    "**/pyrightconfig.json",
+    "**/.gitmodules",
     "**/tox.ini",
     "**/.pre-commit-config.yaml",
     "**/setup.py",
@@ -81,6 +108,8 @@ _KNOWN_HEADER = ("diff --git ", "index ", "--- ", "+++ ", *_MODE_LINES)
 # `--text`: um `.gitattributes` com `-diff` nao transforma texto em "Binary files differ".
 _DIFF = ["diff", "--no-color", "--no-ext-diff", "--no-textconv", "--text", "--no-renames",
          "--ignore-submodules=none", "--submodule=short"]
+# Binario de verdade sai sem `--text`: lido linha a linha seria lento, e mudar binario ja e completa.
+_DIFF_BINARY = [arg for arg in _DIFF if arg != "--text"]
 
 
 class Unmeasurable(Exception):
@@ -96,7 +125,7 @@ def _git_bytes(root: Path, *args: str) -> bytes:
 
 def _binaries(root: Path, base: str, head: str) -> set[str]:
     """O que o git trata como binario (`-\\t-` no numstat, sem `--text`): leva o marcador do blob."""
-    out = _git_bytes(root, *[arg for arg in _DIFF if arg != "--text"], "--numstat", "-z", f"{base}..{head}")
+    out = _git_bytes(root, *_DIFF_BINARY, "--numstat", "-z", f"{base}..{head}")
     entries = out.decode("utf-8", errors="surrogateescape").split("\0")
     return {entry.split("\t", 2)[2] for entry in entries if entry.startswith("-\t-\t")}
 
@@ -105,12 +134,12 @@ def _file_lines(root: Path, base: str, head: str, path: str, binary: bool = Fals
     """O patch de um arquivo, na ordem, sem cabecalho de hunk: rebase limpo nao muda nada.
 
     Conta tambem o que nao e linha de conteudo: modo, binario (pelo blob do
-    head) e `\\ No newline at end of file`. Com `--text`, o conteudo do
-    binario tambem e medido. Bytes nao UTF-8 viram `surrogateescape` (sem
-    perda). Linha de cabecalho desconhecida ou arquivo listado sem nada
+    head, sem `--text`) e `\\ No newline at end of file`. Bytes nao UTF-8
+    viram `surrogateescape` (sem perda). Linha de cabecalho desconhecida ou arquivo listado sem nada
     medido levantam `Unmeasurable`.
     """
-    out = _git_bytes(root, *_DIFF, "--full-index", "--unified=0", f"{base}..{head}", "--", f":(literal){path}")
+    out = _git_bytes(root, *(_DIFF_BINARY if binary else _DIFF), "--full-index", "--unified=0", f"{base}..{head}",
+                     "--", f":(literal){path}")
     lines: list[str] = []
     in_hunk, post_blob = False, ""
     for line in out.decode("utf-8", errors="surrogateescape").splitlines():
@@ -134,7 +163,11 @@ def _file_lines(root: Path, base: str, head: str, path: str, binary: bool = Fals
 
 
 def _file_patches(root: Path, base: str, head: str) -> dict[str, list[str]]:
-    """Por arquivo do PR, as linhas do patch na ordem (a ordem muda o que o codigo faz).
+    return _side(root, base, head)[0]
+
+
+def _side(root: Path, base: str, head: str) -> tuple[dict[str, list[str]], set[str]]:
+    """Por arquivo do PR, as linhas do patch na ordem (a ordem muda o que o codigo faz), e os binarios.
 
     Os nomes vem de `--name-only -z`, nunca do cabecalho `diff --git a/X b/Y`
     (um caminho com ` b/` no meio cortaria errado). Sem renames: mover
@@ -147,7 +180,8 @@ def _file_patches(root: Path, base: str, head: str) -> dict[str, list[str]]:
     except UnicodeDecodeError as exc:
         raise Unmeasurable("nome de arquivo fora de UTF-8") from exc
     binaries = _binaries(root, base, head)
-    return {path: _file_lines(root, base, head, path, path in binaries) for path in filter(None, decoded.split("\0"))}
+    paths = filter(None, decoded.split("\0"))
+    return {path: _file_lines(root, base, head, path, path in binaries) for path in paths}, binaries
 
 
 def _changed(old: list[str], new: list[str]) -> int:
@@ -159,20 +193,44 @@ def _changed(old: list[str], new: list[str]) -> int:
 
 
 def _unlocks(root: Path, base: str, head: str) -> set[str]:
-    return unlock_marks(git_output(root, "log", "--format=%B", f"{base}..{head}") or "")
+    """Pelo `_git_bytes`: um `git log` que falha vira `Unmeasurable`, nunca "nenhuma marca"."""
+    return unlock_marks(_git_bytes(root, "log", "--format=%B", f"{base}..{head}").decode("utf-8", errors="replace"))
 
 
-def _measure(root: Path, old: tuple[str, str], new: tuple[str, str]) -> dict[str, Any]:
-    """`lines` e `total` na mesma regua: linhas dos dois lados (antes + depois)."""
-    before, after = _file_patches(root, *old), _file_patches(root, *new)
+def _mirrors(config: dict[str, Any]) -> dict[str, str]:
+    """`delivery.audit.mirrors` (prefixo da copia -> prefixo da fonte); mapa malformado nao desconta nada."""
+    mirrors = ((config.get("delivery") or {}).get("audit") or {}).get("mirrors")
+    if not isinstance(mirrors, dict) or not all(isinstance(copy, str) and isinstance(source, str) and copy and source
+                                                for copy, source in mirrors.items()):
+        return {}
+    return mirrors
+
+
+def _echoes(before: dict[str, list[str]], after: dict[str, list[str]], mirrors: dict[str, str]) -> set[str]:
+    """Copias do mapa cujo patch e o da fonte nos dois lados: o auditor le uma vez, a regua conta uma vez."""
+    echoes = set()
+    for path in set(before) | set(after):
+        for copy, source in mirrors.items():
+            src = source + path[len(copy):]
+            if (path.startswith(copy) and src != path
+                    and before.get(path) == before.get(src) and after.get(path) == after.get(src)):
+                echoes.add(path)
+    return echoes
+
+
+def _measure(root: Path, old: tuple[str, str], new: tuple[str, str], config: dict[str, Any]) -> dict[str, Any]:
+    """`lines` e `total` na mesma regua: linhas dos dois lados (antes + depois), sem os ecos do mapa."""
+    (before, old_binaries), (after, new_binaries) = _side(root, *old), _side(root, *new)
+    echoes = _echoes(before, after, _mirrors(config))
     files, lines = [], 0
     for path in sorted(set(before) | set(after)):
         changed = _changed(before.get(path, []), after.get(path, []))
         if changed:
             files.append(path)
-            lines += changed
-    total = sum(len(patch) for patch in before.values()) + sum(len(patch) for patch in after.values())
+            lines += 0 if path in echoes else changed
+    total = sum(len(patch) for side in (before, after) for path, patch in side.items() if path not in echoes)
     return {"files": files, "lines": lines, "total": total,
+            "binaries": [path for path in files if path in old_binaries | new_binaries],
             "newUnlocks": sorted(_unlocks(root, *new) - _unlocks(root, *old))}
 
 
@@ -196,6 +254,8 @@ def _full_reason(measure: dict[str, Any], config: dict[str, Any]) -> str | None:
     sensitive = _sensitive(measure["files"], config)
     if sensitive:
         return "delta toca caminho sensivel: " + ", ".join(sensitive)
+    if measure["binaries"]:
+        return "delta toca binario: " + ", ".join(measure["binaries"])
     if measure["newUnlocks"]:
         return "delta traz [unlock:] novo: " + ", ".join(measure["newUnlocks"])
     return None
@@ -226,9 +286,10 @@ def delta_plan(root: Path, previous: dict[str, Any] | None, target: dict[str, An
         return {**plan, "reason": "o head auditado nao esta no repositorio local"}
     plan["range"] = f"{old_base}..{old_head} {base}..{head}"
     # O range-diff (e o `git show`) respeita `-diff` do .gitattributes e esconde a linha; o auditor le com --text.
-    plan["textDiff"] = f"git diff --text {old_head} {head}"
+    # Sem textconv nem diff externo, como a medida: o astextplain do Git for Windows derruba o comando.
+    plan["textDiff"] = f"git diff --text --no-textconv --no-ext-diff {old_head} {head}"
     try:
-        measure = _measure(root, (old_base, old_head), (base, head))
+        measure = _measure(root, (old_base, old_head), (base, head), config)
     except Unmeasurable as exc:
         return {**plan, "reason": f"a medida do delta nao entendeu o diff ({exc})"}
     plan.update(files=measure["files"], lines=measure["lines"])
