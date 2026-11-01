@@ -46,7 +46,9 @@ um jeito novo a cada vez.
 **2. A auditoria vale para um conteudo, nao para um SHA.** Quando outro PR entra, o seu fica
 atras da main e o rebase cria um head novo. Se o conteudo nao mudou (mesmo patch-id), o executor
 carrega a aprovacao sozinho. Se mudou, a auditoria seguinte olha **so o delta**
-(`git range-diff`), nunca o diff inteiro de novo.
+(`git range-diff`), nunca o diff inteiro de novo. O mesmo vale depois de uma auditoria
+reprovada: a correcao dos achados e auditada pelo delta, conferindo cada achado como fechado
+(D-207); volta a ser completa quando o delta e grande ou toca workflow, trava ou seguranca.
 
 **3. Autonomia e por demanda, e so voce sobe.** `manual` (implementa e da ready) < `pr` (+ PR e
 auditoria) < `queue` (+ fila ja aprovada) < `pilot` (+ fecha sozinho quando seguro). Uma limpeza

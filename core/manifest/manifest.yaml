@@ -196,7 +196,7 @@ verbs:
 
   audit:
     description: |
-      AUDIT — show what to audit on the PR head (the `skills.audit` skill, default `pr-audit`, or the built-in checklist when it is missing), then record the result: `--report <file>` comments it on the PR; `--approve` adds the `<!-- auditoria-aprovada sha=<head> -->` marker and saves `auditedSha` + `auditedPatchId`; `--finding SEV=N` (repeatable) records open findings for the `pilot` auto-finish. Also `--skill-ran`, `--skill-missing`. Agent at level >= `pr`. Before: `ship`; after: `queue add`.
+      AUDIT — show what to audit on the PR head (the `skills.audit` skill, default `pr-audit`, or the built-in checklist when it is missing), then record the result: `--report <file>` comments it on the PR; `--approve` adds the `<!-- auditoria-aprovada sha=<head> -->` marker and saves `auditedSha` + `auditedPatchId`; `--finding SEV=N` (repeatable) records open findings for the `pilot` auto-finish. After a rejected or approved audit, a new head is audited as a delta (`git range-diff` since the audited head, previous findings listed), full again when the delta is large or sensitive. Also `--skill-ran`, `--skill-missing`. Agent at level >= `pr`. Before: `ship`; after: `queue add`.
     targets:
       agent_skill:
         body_file: bodies/audit.md
