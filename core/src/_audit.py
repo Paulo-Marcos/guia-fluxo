@@ -78,7 +78,8 @@ def delta_header(plan: dict[str, Any] | None) -> str:
     if not plan:
         return ""
     if plan["mode"] == MODE_DELTA:
-        return f"Auditoria de delta desde {plan['from'][:12]} ({verdict_label(plan['fromResult'])}): `git range-diff {plan['range']}`\n\n"
+        return (f"Auditoria de delta desde {plan['from'][:12]} ({verdict_label(plan['fromResult'])}): "
+                f"`git range-diff {plan['range']}` (conteudo: `{plan['textDiff']}`)\n\n")
     return f"Auditoria completa desde {plan['from'][:12]}: {plan['reason']}\n\n"
 
 

@@ -225,6 +225,8 @@ def delta_plan(root: Path, previous: dict[str, Any] | None, target: dict[str, An
     if any(git_output(root, "cat-file", "-e", f"{sha}^{{commit}}") is None for sha in (old_head, old_base)):
         return {**plan, "reason": "o head auditado nao esta no repositorio local"}
     plan["range"] = f"{old_base}..{old_head} {base}..{head}"
+    # O range-diff (e o `git show`) respeita `-diff` do .gitattributes e esconde a linha; o auditor le com --text.
+    plan["textDiff"] = f"git diff --text {old_head} {head}"
     try:
         measure = _measure(root, (old_base, old_head), (base, head))
     except Unmeasurable as exc:

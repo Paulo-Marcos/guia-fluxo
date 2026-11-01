@@ -51,7 +51,7 @@ Cada item do pedido tem teste; item sem teste fica "faltando" no relatório.
 
 Quando `guia audit` mostra `git range-diff ...`, o PR mudou desde a última
 auditoria: aprovada (conflito resolvido, contexto da base diferente) ou
-reprovada (a correção dos achados). Audite **só o que o range-diff mostra**
+reprovada (a correção dos achados). Audite **só o que o range-diff mostra** (o conteúdo, linha a linha, pelo `git diff --text ...` que o `guia audit` imprime ao lado: um `-diff` no `.gitattributes` esconde a linha do range-diff)
 com o mesmo rigor das seções 1 a 4: commit novo ou alterado é dado novo, e
 mudança nas linhas de contexto também conta. Depois de uma reprovação, confira
 cada achado que o `guia audit` listou: fechado, ou ainda aberto e repetido no

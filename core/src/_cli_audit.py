@@ -37,10 +37,12 @@ def _print_delta(previous: dict[str, Any] | None, plan: dict[str, Any] | None) -
         print(f"Auditoria completa: o head mudou desde a {verdict} ({plan['from'][:12]}), mas {plan['reason']}.")
         if plan.get("range"):
             print(f"Para o relatorio, o que mudou: git range-diff {plan['range']}")
+            print(f"O conteudo, sem o -diff do .gitattributes esconder linha: {plan['textDiff']}")
         return
     print(f"Auditoria de delta: o head mudou desde a {verdict} ({plan['from'][:12]}); "
           f"{plan['lines']} linhas em {len(plan['files'])} arquivo(s).")
     print(f"Audite so o que mudou: git range-diff {plan['range']}")
+    print(f"O conteudo, sem o -diff do .gitattributes esconder linha: {plan['textDiff']}")
     findings = (previous or {}).get("findings") or []
     if findings:
         print("Confira cada achado anterior como fechado (ou ainda aberto, e repita-o no relatorio):")
