@@ -124,10 +124,19 @@ def _git_bytes(root: Path, *args: str) -> bytes:
 
 
 def _binaries(root: Path, base: str, head: str) -> set[str]:
-    """O que o git trata como binario (`-\\t-` no numstat, sem `--text`): leva o marcador do blob."""
+    """Binario de verdade: `-\\t-` no numstat (sem `--text`), menos o texto que um `-diff` esconde.
+
+    O `-diff` (atributo `diff` como `unset` no head) continua medido com
+    `--text`: e a linha escondida que o `textDiff` mostra ao auditor.
+    """
     out = _git_bytes(root, *_DIFF_BINARY, "--numstat", "-z", f"{base}..{head}")
     entries = out.decode("utf-8", errors="surrogateescape").split("\0")
-    return {entry.split("\t", 2)[2] for entry in entries if entry.startswith("-\t-\t")}
+    flagged = {entry.split("\t", 2)[2] for entry in entries if entry.startswith("-\t-\t")}
+    if not flagged:
+        return flagged
+    attrs = _git_bytes(root, "check-attr", "--source", head, "-z", "diff", "--", *sorted(flagged))
+    fields = attrs.decode("utf-8", errors="surrogateescape").split("\0")
+    return flagged - {fields[i] for i in range(0, len(fields) - 2, 3) if fields[i + 2] == "unset"}
 
 
 def _file_lines(root: Path, base: str, head: str, path: str, binary: bool = False) -> list[str]:

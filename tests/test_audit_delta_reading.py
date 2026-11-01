@@ -66,7 +66,7 @@ class DeltaReadingTests(unittest.TestCase):
         out = io.StringIO()
         with redirect_stdout(out):
             _print_delta(self.previous, self.plan)
-        command = f"git diff --text {self.rejected} {self.head}"
+        command = f"git diff --text --no-textconv --no-ext-diff {self.rejected} {self.head}"
         self.assertIn(command, out.getvalue())
         self.assertNotIn("escondido", _git(self.root, "diff", self.rejected, self.head))
         self.assertIn("+valor = 3  # escondido pelo -diff", _git(self.root, *command.split()[1:]))
@@ -75,10 +75,10 @@ class DeltaReadingTests(unittest.TestCase):
         out = io.StringIO()
         with redirect_stdout(out):
             _print_delta(self.previous, {**self.plan, "mode": "full", "reason": "teste"})
-        self.assertIn(f"git diff --text {self.rejected} {self.head}", out.getvalue())
+        self.assertIn(f"git diff --text --no-textconv --no-ext-diff {self.rejected} {self.head}", out.getvalue())
 
     def test_pr_comment_header_carries_the_text_diff(self) -> None:
-        self.assertIn(f"`git diff --text {self.rejected} {self.head}`", delta_header(self.plan))
+        self.assertIn(f"`git diff --text --no-textconv --no-ext-diff {self.rejected} {self.head}`", delta_header(self.plan))
 
 
 if __name__ == "__main__":

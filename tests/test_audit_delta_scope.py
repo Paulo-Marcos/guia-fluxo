@@ -242,6 +242,34 @@ class DeltaScopeTests(unittest.TestCase):
         self.assertTrue(per_file)
         self.assertTrue(all("--text" not in c for c in per_file), per_file)
 
+    def test_text_hidden_by_no_diff_is_measured_not_binary(self) -> None:
+        """`*.py -diff` e texto: medido com `--text` (o `textDiff` mostra a linha), nao vira completa."""
+        self._write(".gitattributes", "*.py -diff\n")
+        self.base = self._commit()
+        self._write("x.py", "valor = 1\n")
+        rejected = self._commit()
+        self._write("x.py", "valor = 2\n")
+        plan = self._plan(rejected, self._commit())
+        self.assertEqual((plan["mode"], plan["lines"]), ("delta", 2), plan.get("reason"))
+
+    def test_check_attr_failing_is_a_full_audit(self) -> None:
+        (self.root / "logo.bin").write_bytes(b"\x00\x01")
+        rejected = self._commit()
+        (self.root / "logo.bin").write_bytes(b"\x00\x01")
+        self._write("app.txt", "dois\n")
+        head = self._commit()
+        real_run = subprocess.run
+
+        def failing_attr(args, *rest, **kwargs):
+            if "check-attr" in args:
+                return subprocess.CompletedProcess(args, 128, b"", b"fatal")
+            return real_run(args, *rest, **kwargs)
+
+        with mock.patch("subprocess.run", side_effect=failing_attr):
+            plan = self._plan(rejected, head)
+        self.assertEqual(plan["mode"], "full")
+        self.assertIn("git check-attr falhou", plan["reason"])
+
     def test_unchanged_binary_stays_a_delta(self) -> None:
         (self.root / "logo.bin").write_bytes(b"\x00\x01")
         self._write("app.txt", "um\n")
