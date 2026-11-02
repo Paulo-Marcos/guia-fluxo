@@ -50,7 +50,11 @@
     },
     "baseBranch": "main",
     "audit": {
-      "statusContext": "Auditoria registrada"
+      "statusContext": "Auditoria registrada",
+      "mirrors": {
+        "plugins/guia/bin/": "core/src/",
+        "plugins/guia/templates/": "core/templates/"
+      }
     },
     "worktree": {
       "junctions": [],

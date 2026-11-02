@@ -113,7 +113,7 @@ class DeltaRulesTests(unittest.TestCase):
     def test_the_code_that_feeds_the_ruler_is_sensitive(self) -> None:
         paths = ["core/src/_audit.py", "plugins/guia/bin/_cli_audit.py", "core/src/_autonomy.py",
                  "plugins/guia/bin/_commit.py", "web/vitest.config.ts", "pkg/.gitattributes"]
-        self.assertEqual(_sensitive(paths + ["core/src/_tasks.py"], {}), sorted(paths))
+        self.assertEqual(_sensitive(paths + ["core/src/_task_view.py"], {}), sorted(paths))
 
 
 if __name__ == "__main__":
