@@ -6,6 +6,24 @@ versionamento segue [SemVer](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-01
+
+### Added
+- Comando `painel` (e atalho do Windows com `painel --atalho`): o dono liga o executor da fila e abre o painel sem abrir um chat de IA; executor vivo so vira aviso e um painel ja aberto e reaproveitado (D-203).
+- Antes de implementar, o agente explica o plano ao dono em linguagem acessivel: plan/start --brief-file grava a explicacao na demanda, o status e o painel a mostram, e com briefing.required no process.json o next pede brief e o ready recusa enquanto ela falta (D-205).
+- Chat controlador concentra as decisoes: `controle` mostra as executoras com etapa, PR e com quem esta a bola, as perguntas ao dono (`ask`/`answer`, resposta citada), as follow-ups propostas (`--from`, so o controlador abre sessao), as sessoes concluidas a arquivar com ok do dono e as vagas (`controller.maxExecutors`) (D-210).
+
+### Changed
+- No nivel pilot, o chat que enfileira liga a fila: `queue add` (e `next`) sobe o `queue run` destacado quando nao ha executor vivo, e o executor rele a fila ao soltar o lease para nao deixar item orfao. Decisao do dono, muda o D-098 so no pilot (ADR-0024). `save_task` grava sob trava e por troca atomica. (D-204)
+- Reauditoria apos achados audita so o delta: depois de uma auditoria reprovada, o `guia audit` imprime o `git range-diff` desde o head reprovado e os achados anteriores para conferir como fechados, e registra `mode = delta`; volta a ser completa quando o delta e grande ou toca workflow, trava ou seguranca (D-207).
+- Versiona autonomy.solo=on no process.json, ligando o modo SOLO (D-200) no repositorio em vez de so na arvore local do dono (D-209).
+- A regua do delta (D-207) ficou mais estrita e mais justa: o `git log` das marcas `[unlock:]` falha fechado (erro vira auditoria completa); o codigo que alimenta a regua, os pontos de entrada, o texto que orienta o auditor, os templates de travas e configs de lint/teste viram caminho sensivel; binario de verdade que muda no delta pede auditoria completa e e medido pelo blob, sem `--text` (texto marcado `-diff` continua medido); a copia gerada identica a fonte (`delivery.audit.mirrors`) conta uma vez so; e o `git diff` que o `audit` aponta leva `--no-textconv --no-ext-diff` (D-211).
+
+### Fixed
+- A fila volta a integrar em repositorio sem protecao de branch: sem politica de checks obrigatorios o leitor julga pelos checks que rodaram (`delivery.queue.requiredChecks`), e run `cancelled` deixa de contar como main vermelha - era ausencia de prova congelando a fila por uma main verde (D-201).
+- D-202: worktrees novos nascem em `../<repo>-worktrees/<idCompact>` (uma pasta por projeto) em vez de irmaos do repo; novo verbo `cleanup` lista worktrees de demandas encerradas e arquivos soltos na pasta pai e so remove com o ok do dono (`--remove`); o hook SessionStart do plugin avisa numa linha quando ha o que limpar; artefatos de agente ganham lugar fixo em `.guia/tmp/<D-NNN>/`.
+- Criar demanda e montar o lote do Dependabot gravam o tasks.json pela mesma trava e troca atomica do save_task: dois processos ao mesmo tempo (chat e executor da fila) nao apagam mais a demanda um do outro (D-208).
+
 ## [0.11.0] - 2026-10-25
 
 ### Added
