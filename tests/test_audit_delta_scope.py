@@ -208,7 +208,10 @@ class DeltaScopeTests(unittest.TestCase):
 
     def test_malformed_map_counts_everything(self) -> None:
         rejected, head = self._engine_fix(80)
-        for mirrors in (["plugins/guia/bin/"], {"plugins/guia/bin/": 3}, "x"):
+        for mirrors in (["plugins/guia/bin/"], {"plugins/guia/bin/": 3}, "x",
+                        {"plugins/guia/bin": "core/src"},
+                        {"plugins/guia/bin/": "core/src/", "core/src/": "plugins/guia/bin/"},
+                        {"plugins/guia/": "core/src/", "plugins/guia/bin/": "core/src/"}):
             with self.subTest(mirrors=mirrors):
                 plan = self._plan(rejected, head, {"delivery": {"audit": {"mirrors": mirrors}}})
                 self.assertIn("delta grande (320", plan["reason"])
@@ -252,23 +255,34 @@ class DeltaScopeTests(unittest.TestCase):
         plan = self._plan(rejected, self._commit())
         self.assertEqual((plan["mode"], plan["lines"]), ("delta", 2), plan.get("reason"))
 
-    def test_check_attr_failing_is_a_full_audit(self) -> None:
+    def test_binary_marked_binary_or_no_diff_is_still_binary(self) -> None:
+        """`*.png binary` (o macro liga `-diff`) nao faz o PNG passar por texto: decide o conteudo."""
+        for attr in ("*.png binary\n", "*.png -diff\n"):
+            with self.subTest(attr=attr):
+                self._write(".gitattributes", attr)
+                (self.root / "logo.png").write_bytes(b"\x89PNG\x00" + bytes(range(256)) * 20)
+                rejected = self._commit()
+                (self.root / "logo.png").write_bytes(b"\x89PNG\x00" + bytes(range(255, -1, -1)) * 20)
+                plan = self._plan(rejected, self._commit())
+                self.assertEqual(plan["mode"], "full")
+                self.assertIn("delta toca binario: logo.png", plan["reason"])
+
+    def test_empty_tree_unavailable_is_a_full_audit(self) -> None:
         (self.root / "logo.bin").write_bytes(b"\x00\x01")
         rejected = self._commit()
-        (self.root / "logo.bin").write_bytes(b"\x00\x01")
         self._write("app.txt", "dois\n")
         head = self._commit()
         real_run = subprocess.run
 
-        def failing_attr(args, *rest, **kwargs):
-            if "check-attr" in args:
+        def failing_hash(args, *rest, **kwargs):
+            if "hash-object" in args:
                 return subprocess.CompletedProcess(args, 128, b"", b"fatal")
             return real_run(args, *rest, **kwargs)
 
-        with mock.patch("subprocess.run", side_effect=failing_attr):
+        with mock.patch("subprocess.run", side_effect=failing_hash):
             plan = self._plan(rejected, head)
         self.assertEqual(plan["mode"], "full")
-        self.assertIn("git check-attr falhou", plan["reason"])
+        self.assertIn("git hash-object falhou", plan["reason"])
 
     def test_unchanged_binary_stays_a_delta(self) -> None:
         (self.root / "logo.bin").write_bytes(b"\x00\x01")

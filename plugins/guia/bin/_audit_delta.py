@@ -124,19 +124,20 @@ def _git_bytes(root: Path, *args: str) -> bytes:
 
 
 def _binaries(root: Path, base: str, head: str) -> set[str]:
-    """Binario de verdade: `-\\t-` no numstat (sem `--text`), menos o texto que um `-diff` esconde.
+    """Binario de verdade, pelo conteudo: `-\\t-` no numstat com os `.gitattributes` da arvore vazios.
 
-    O `-diff` (atributo `diff` como `unset` no head) continua medido com
-    `--text`: e a linha escondida que o `textDiff` mostra ao auditor.
+    O atributo diz como mostrar, nao o que o arquivo e: `*.png binary` e
+    `*.py -diff` dao o mesmo `diff` unset. Com `--attr-source` na arvore
+    vazia, so a heuristica do git (NUL no conteudo) decide; o texto que um
+    `-diff` esconde continua medido com `--text`.
     """
-    out = _git_bytes(root, *_DIFF_BINARY, "--numstat", "-z", f"{base}..{head}")
+    empty_tree = subprocess.run(["git", "hash-object", "-t", "tree", "--stdin"], cwd=root, input=b"",
+                                capture_output=True).stdout.decode().strip()
+    if not empty_tree:
+        raise Unmeasurable("git hash-object falhou")
+    out = _git_bytes(root, f"--attr-source={empty_tree}", *_DIFF_BINARY, "--numstat", "-z", f"{base}..{head}")
     entries = out.decode("utf-8", errors="surrogateescape").split("\0")
-    flagged = {entry.split("\t", 2)[2] for entry in entries if entry.startswith("-\t-\t")}
-    if not flagged:
-        return flagged
-    attrs = _git_bytes(root, "check-attr", "--source", head, "-z", "diff", "--", *sorted(flagged))
-    fields = attrs.decode("utf-8", errors="surrogateescape").split("\0")
-    return flagged - {fields[i] for i in range(0, len(fields) - 2, 3) if fields[i + 2] == "unset"}
+    return {entry.split("\t", 2)[2] for entry in entries if entry.startswith("-\t-\t")}
 
 
 def _file_lines(root: Path, base: str, head: str, path: str, binary: bool = False) -> list[str]:
@@ -207,11 +208,21 @@ def _unlocks(root: Path, base: str, head: str) -> set[str]:
 
 
 def _mirrors(config: dict[str, Any]) -> dict[str, str]:
-    """`delivery.audit.mirrors` (prefixo da copia -> prefixo da fonte); mapa malformado nao desconta nada."""
+    """`delivery.audit.mirrors` (pasta da copia -> pasta da fonte); mapa malformado nao desconta nada.
+
+    Cada prefixo e uma pasta (termina em `/`: `bin` nao pega `bin2/`) e a
+    pasta de uma copia nao se sobrepoe a nenhuma outra pasta do mapa (um
+    mapa circular faria fonte e copia se descontarem uma a outra).
+    """
     mirrors = ((config.get("delivery") or {}).get("audit") or {}).get("mirrors")
-    if not isinstance(mirrors, dict) or not all(isinstance(copy, str) and isinstance(source, str) and copy and source
+    if not isinstance(mirrors, dict) or not all(isinstance(copy, str) and isinstance(source, str)
+                                                and copy.endswith("/") and source.endswith("/")
                                                 for copy, source in mirrors.items()):
         return {}
+    for copy in mirrors:
+        others = [p for p in mirrors if p != copy] + list(mirrors.values())
+        if any(copy.startswith(p) or p.startswith(copy) for p in others):
+            return {}
     return mirrors
 
 
@@ -221,7 +232,7 @@ def _echoes(before: dict[str, list[str]], after: dict[str, list[str]], mirrors: 
     for path in set(before) | set(after):
         for copy, source in mirrors.items():
             src = source + path[len(copy):]
-            if (path.startswith(copy) and src != path
+            if (path.startswith(copy)
                     and before.get(path) == before.get(src) and after.get(path) == after.get(src)):
                 echoes.add(path)
     return echoes
